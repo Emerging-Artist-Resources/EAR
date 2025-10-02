@@ -1,129 +1,216 @@
-# Performance Calendar
+# Performance Calendar Application
 
-A full-stack web and mobile application for managing performance submissions with an admin review process.
+A full-stack web application built with Next.js 15 that allows users to submit performance events for review and display on a shared calendar.
 
 ## Features
 
-- **User Authentication**: Sign up, sign in, and role-based access control
-- **Performance Submission**: Users can submit performance details through a form
-- **Admin Review Process**: Admins can review, approve, or reject submissions
-- **Shared Calendar**: View all approved performances in a calendar format
-- **Mobile Responsive**: Optimized for both desktop and mobile devices
-- **Real-time Updates**: Live updates when performances are approved/rejected
+### 🎭 **Core Functionality**
+- **Performance Submissions**: Users can submit performance events with details like title, date, time, location, and contact information
+- **Anonymous Submissions**: No account required to submit performances
+- **Admin Review System**: Administrators can approve or reject submissions with comments
+- **Shared Calendar View**: Displays approved performances in a monthly calendar format
+- **User Profiles**: Signed-in users can track their submitted events and review status
 
-## Tech Stack
+### 🔐 **Authentication & Authorization**
+- **NextAuth.js Integration**: Secure user authentication with credentials
+- **Role-Based Access**: Separate user and admin roles
+- **Session Management**: Persistent login sessions
+- **Protected Routes**: Admin-only access to review dashboard
 
-- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, Prisma ORM
-- **Database**: PostgreSQL
+### 📱 **User Experience**
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
+- **Modern UI**: Clean interface built with Tailwind CSS
+- **Modal Forms**: Intuitive performance submission experience
+- **Real-time Updates**: Calendar updates immediately after admin approvals
+- **Mobile Navigation**: Hamburger menu for mobile users
+
+### 🛠 **Technical Stack**
+- **Frontend**: Next.js 15 (App Router), React, TypeScript
+- **Styling**: Tailwind CSS with custom design system
+- **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: NextAuth.js
-- **Form Handling**: React Hook Form with Zod validation
-- **Date Handling**: date-fns
+- **Form Validation**: React Hook Form with Zod schemas
+- **Date Handling**: date-fns for calendar operations
 
 ## Getting Started
 
 ### Prerequisites
-
 - Node.js 18+ 
 - PostgreSQL database
-- npm or yarn
+- npm or yarn package manager
 
 ### Installation
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd performance-calendar
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd performance-calendar
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Configure your `.env` file:
+   ```env
+   DATABASE_URL="postgresql://username:password@localhost:5432/performance_calendar"
+   NEXTAUTH_SECRET="your-secret-key-here"
+   NEXTAUTH_URL="http://localhost:3000"
+   ```
+
+4. **Set up the database**
+   ```bash
+   # Generate Prisma client
+   npx prisma generate
+   
+   # Run database migrations
+   npx prisma migrate dev
+   
+   # Seed the database with initial admin user
+   npm run db:seed
+   ```
+
+5. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+
+6. **Access the application**
+   - Open [http://localhost:3000](http://localhost:3000) in your browser
+   - Default admin credentials:
+     - Email: `admin@example.com`
+     - Password: `admin123`
+
+## Project Structure
+
+```
+performance-calendar/
+├── prisma/
+│   ├── migrations/          # Database migration files
+│   ├── schema.prisma        # Database schema
+│   └── seed.ts             # Database seeding script
+├── src/
+│   ├── app/                # Next.js App Router pages
+│   │   ├── admin/          # Admin dashboard
+│   │   ├── api/            # API routes
+│   │   ├── auth/           # Authentication pages
+│   │   ├── calendar/       # Main calendar view
+│   │   ├── dashboard/      # User dashboard
+│   │   └── profile/        # User profile page
+│   ├── components/         # Reusable React components
+│   │   ├── layout/         # Layout components
+│   │   ├── ui/             # UI components
+│   │   └── ...             # Other components
+│   ├── hooks/              # Custom React hooks
+│   ├── lib/                # Utility functions and configurations
+│   └── types/              # TypeScript type definitions
+├── .env.example            # Environment variables template
+├── .gitignore             # Git ignore rules
+├── package.json           # Dependencies and scripts
+└── README.md              # This file
 ```
 
-2. Install dependencies:
-```bash
-npm install
-```
+## Key Components
 
-3. Set up environment variables:
-```bash
-cp .env.example .env
-```
+### 🗓 **Calendar System**
+- Monthly view with proper day alignment
+- Performance events displayed as badges
+- Navigation between months
+- Responsive grid layout
 
-Update the `.env` file with your database URL and other configuration:
-```env
-DATABASE_URL="postgresql://username:password@localhost:5432/performance_calendar?schema=public"
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-key-here"
-```
+### 📝 **Form System**
+- Anonymous performance submission
+- Form validation with error handling
+- Modal-based user experience
+- Contact information collection
 
-4. Set up the database:
-```bash
-npx prisma migrate dev
-npx prisma generate
-```
+### 👥 **User Management**
+- User registration and authentication
+- Admin role assignment
+- Profile management
+- Submission tracking
 
-5. Seed the database with an admin user:
-```bash
-npm run db:seed
-```
-
-6. Start the development server:
-```bash
-npm run dev
-```
-
-The application will be available at `http://localhost:3000`.
-
-## Default Admin Account
-
-After running the seed script, you can log in with:
-- Email: `admin@example.com`
-- Password: `admin123`
-
-## Usage
-
-### For Regular Users
-
-1. **Sign Up**: Create an account at `/auth/signup`
-2. **Sign In**: Log in at `/auth/signin`
-3. **Submit Performance**: Go to `/dashboard` to submit a new performance
-4. **View Calendar**: Visit `/calendar` to see all approved performances
-
-### For Admins
-
-1. **Sign In**: Use the admin credentials above
-2. **Review Submissions**: Go to `/admin` to review pending performances
-3. **Approve/Reject**: Review each submission and approve or reject with comments
-4. **Manage Users**: Access user management features (if implemented)
+### 🔍 **Admin Features**
+- Performance review dashboard
+- Approve/reject submissions
+- Add review comments
+- User management capabilities
 
 ## API Endpoints
 
+### Authentication
 - `POST /api/auth/register` - User registration
-- `GET/POST /api/auth/[...nextauth]` - Authentication
-- `GET/POST /api/performances` - Performance CRUD operations
-- `POST /api/admin/reviews` - Admin review submissions
-- `GET /api/admin/users` - User management (admin only)
+- `POST /api/auth/[...nextauth]` - NextAuth.js endpoints
+
+### Performances
+- `GET /api/performances` - Get performances (with optional filtering)
+- `POST /api/performances` - Submit new performance
+
+### Admin
+- `POST /api/admin/reviews` - Submit performance review
+- `GET /api/admin/users` - Get user list (admin only)
 
 ## Database Schema
 
-The application uses the following main models:
-- **User**: User accounts with roles (USER/ADMIN)
-- **Performance**: Performance submissions with status tracking
-- **Review**: Admin reviews of performances
+### Users
+- User authentication and profile information
+- Role-based access (USER/ADMIN)
 
-## Mobile Support
+### Performances
+- Performance event details
+- Status tracking (PENDING/APPROVED/REJECTED)
+- Optional user association for anonymous submissions
 
-The application is fully responsive and includes:
-- Mobile-optimized navigation
-- Touch-friendly calendar interface
-- Responsive forms and layouts
-- Mobile-specific UI adjustments
+### Reviews
+- Admin review history
+- Comments and status changes
+- Reviewer tracking
+
+## Development
+
+### Available Scripts
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run db:seed` - Seed database with initial data
+
+### Database Operations
+- `npx prisma studio` - Open Prisma Studio (database GUI)
+- `npx prisma migrate dev` - Create and apply migrations
+- `npx prisma generate` - Generate Prisma client
+- `npx prisma db push` - Push schema changes to database
+
+## Deployment
+
+### Environment Setup
+1. Set up PostgreSQL database
+2. Configure environment variables
+3. Run database migrations
+4. Seed initial admin user
+
+### Build and Deploy
+1. `npm run build`
+2. `npm run start`
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test thoroughly
+4. Add tests if applicable
 5. Submit a pull request
 
 ## License
 
 This project is licensed under the MIT License.
+
+## Support
+
+For questions or issues, please create an issue in the repository or contact the development team.
