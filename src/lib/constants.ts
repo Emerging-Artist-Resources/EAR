@@ -14,17 +14,27 @@ export const REVIEW_STATUS = {
   REJECTED: "REJECTED",
 } as const
 
+export const NOTIFICATION_TYPE = {
+  INFO: "INFO",
+  WARNING: "WARNING",
+  SUCCESS: "SUCCESS",
+  ERROR: "ERROR",
+} as const
+
 export const ROUTES = {
   HOME: "/",
   CALENDAR: "/calendar",
   DASHBOARD: "/dashboard",
   ADMIN: "/admin",
+  NOTIFICATIONS: "/notifications",
+  ADMIN_NOTIFICATIONS: "/admin/notifications",
   SIGN_IN: "/auth/signin",
   SIGN_UP: "/auth/signup",
 } as const
 
 export const API_ENDPOINTS = {
   PERFORMANCES: "/api/performances",
+  NOTIFICATIONS: "/api/notifications",
   ADMIN_REVIEWS: "/api/admin/reviews",
   ADMIN_USERS: "/api/admin/users",
   AUTH_REGISTER: "/api/auth/register",
@@ -38,6 +48,21 @@ export function getStatusColor(status: string) {
     case PERFORMANCE_STATUS.APPROVED:
       return "success"
     case PERFORMANCE_STATUS.REJECTED:
+      return "error"
+    default:
+      return "default"
+  }
+}
+
+export function getNotificationTypeColor(type: string) {
+  switch (type) {
+    case NOTIFICATION_TYPE.INFO:
+      return "info"
+    case NOTIFICATION_TYPE.WARNING:
+      return "warning"
+    case NOTIFICATION_TYPE.SUCCESS:
+      return "success"
+    case NOTIFICATION_TYPE.ERROR:
       return "error"
     default:
       return "default"

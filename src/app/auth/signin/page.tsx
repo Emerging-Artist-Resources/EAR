@@ -99,7 +99,12 @@ export default function SignIn() {
 
           <div className="text-center">
             <Link href="/auth/signup" className="text-indigo-600 hover:text-indigo-500">
-              Don't have an account? Sign up
+              Don&apos;t have an account? Sign up
+            </Link>
+          </div>
+          <div className="text-center">
+            <Link href="/calendar" className="text-gray-600 underline hover:text-gray-500">
+              Continue as guest
             </Link>
           </div>
         </form>

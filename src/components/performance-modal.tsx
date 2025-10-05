@@ -86,7 +86,7 @@ export default function PerformanceModal({ isOpen, onClose, onSuccess }: Perform
             className="w-full"
           />
           {errors.title && (
-            <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+            <p className="mt-1 text-sm error-600">{errors.title.message}</p>
           )}
         </div>
 
@@ -101,7 +101,7 @@ export default function PerformanceModal({ isOpen, onClose, onSuccess }: Perform
             className="w-full"
           />
           {errors.description && (
-            <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
+            <p className="mt-1 text-sm error-600">{errors.description.message}</p>
           )}
         </div>
 
@@ -116,7 +116,7 @@ export default function PerformanceModal({ isOpen, onClose, onSuccess }: Perform
               error={!!errors.date}
             />
             {errors.date && (
-              <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>
+              <p className="mt-1 text-sm error-600">{errors.date.message}</p>
             )}
           </div>
 
@@ -130,7 +130,7 @@ export default function PerformanceModal({ isOpen, onClose, onSuccess }: Perform
               error={!!errors.time}
             />
             {errors.time && (
-              <p className="mt-1 text-sm text-red-600">{errors.time.message}</p>
+              <p className="mt-1 text-sm error-600">{errors.time.message}</p>
             )}
           </div>
         </div>
@@ -145,7 +145,7 @@ export default function PerformanceModal({ isOpen, onClose, onSuccess }: Perform
             error={!!errors.location}
           />
           {errors.location && (
-            <p className="mt-1 text-sm text-red-600">{errors.location.message}</p>
+            <p className="mt-1 text-sm error-600">{errors.location.message}</p>
           )}
         </div>
 
@@ -159,7 +159,7 @@ export default function PerformanceModal({ isOpen, onClose, onSuccess }: Perform
             error={!!errors.performer}
           />
           {errors.performer && (
-            <p className="mt-1 text-sm text-red-600">{errors.performer.message}</p>
+            <p className="mt-1 text-sm error-600">{errors.performer.message}</p>
           )}
         </div>
 
@@ -175,7 +175,7 @@ export default function PerformanceModal({ isOpen, onClose, onSuccess }: Perform
               error={!!errors.contactEmail}
             />
             {errors.contactEmail && (
-              <p className="mt-1 text-sm text-red-600">{errors.contactEmail.message}</p>
+              <p className="mt-1 text-sm error-600">{errors.contactEmail.message}</p>
             )}
           </div>
 
@@ -190,7 +190,7 @@ export default function PerformanceModal({ isOpen, onClose, onSuccess }: Perform
               error={!!errors.contactPhone}
             />
             {errors.contactPhone && (
-              <p className="mt-1 text-sm text-red-600">{errors.contactPhone.message}</p>
+              <p className="mt-1 text-sm error-600">{errors.contactPhone.message}</p>
             )}
           </div>
         </div>

@@ -2,11 +2,12 @@
 
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDateTime } from "@/lib/constants"
+import { Header } from "@/components/layout/header"
 
 interface Performance {
   id: string
@@ -37,18 +38,7 @@ export default function UserProfile() {
   const [performances, setPerformances] = useState<Performance[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (status === "loading") return
-    
-    if (!session) {
-      router.push("/auth/signin")
-      return
-    }
-
-    fetchUserPerformances()
-  }, [session, status, router])
-
-  const fetchUserPerformances = async () => {
+  const fetchUserPerformances = useCallback(async () => {
     try {
       const response = await fetch(`/api/performances?userId=${session?.user?.id}`)
       if (response.ok) {
@@ -60,7 +50,18 @@ export default function UserProfile() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [session?.user?.id])
+
+  useEffect(() => {
+    if (status === "loading") return
+    
+    if (!session) {
+      router.push("/auth/signin")
+      return
+    }
+
+    fetchUserPerformances()
+  }, [session, status, router, fetchUserPerformances])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -102,43 +103,13 @@ export default function UserProfile() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">
-                My Profile
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/calendar"
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                View Calendar
-              </Link>
-              {session.user.role === "ADMIN" && (
-                <Link
-                  href="/admin"
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Admin Dashboard
-                </Link>
-              )}
-              <span className="text-gray-700">Welcome, {session.user.name}</span>
-              <button
-                onClick={() => router.push("/api/auth/signout")}
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Header />
 
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">My Profile</h2>
+          </div>
           {/* Profile Header */}
           <div className="mb-8">
             <div className="bg-white shadow rounded-lg p-6">
@@ -262,7 +233,7 @@ export default function UserProfile() {
                                   <span>by {review.reviewer.name} on {new Date(review.reviewedAt).toLocaleDateString()}</span>
                                 </div>
                                 {review.comments && (
-                                  <p className="mt-1 italic">"{review.comments}"</p>
+                                  <p className="mt-1 italic">&ldquo;{review.comments}&rdquo;</p>
                                 )}
                               </div>
                             ))}

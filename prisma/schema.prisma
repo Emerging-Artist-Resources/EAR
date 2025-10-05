@@ -26,6 +26,7 @@ model User {
   
   performances Performance[]
   reviews      Review[]
+  notifications Notification[]
   
   accounts Account[]
   sessions Session[]
@@ -111,6 +112,21 @@ model Review {
   @@map("reviews")
 }
 
+model Notification {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   @db.Text
+  type        NotificationType @default(INFO)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  @@map("notifications")
+}
+
 enum Role {
   USER
   ADMIN
@@ -125,4 +141,11 @@ enum PerformanceStatus {
 enum ReviewStatus {
   APPROVED
   REJECTED
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  SUCCESS
+  ERROR
 }

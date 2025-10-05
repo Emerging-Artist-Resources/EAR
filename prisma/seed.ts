@@ -14,7 +14,7 @@ async function main() {
       name: 'Admin User',
       password: hashedPassword,
       role: 'ADMIN',
-    },
+    } as any,
   })
 
   console.log('Admin user created:', admin)

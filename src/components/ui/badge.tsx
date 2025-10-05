@@ -2,7 +2,7 @@ import React from "react"
 import { cn } from "@/lib/utils"
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "success" | "warning" | "error" | "primary"
+  variant?: "default" | "success" | "warning" | "error" | "primary" | "info"
   size?: "sm" | "md"
   children: React.ReactNode
 }
@@ -13,6 +13,7 @@ const badgeVariants = {
   warning: "bg-yellow-100 text-yellow-800",
   error: "bg-red-100 text-red-800",
   primary: "bg-indigo-100 text-indigo-800",
+  info: "bg-blue-100 text-blue-800",
 }
 
 const badgeSizes = {

@@ -3,7 +3,6 @@
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import PerformanceForm from "@/components/performance-form"
 import Link from "next/link"
 import { formatDateTime } from "@/lib/constants"
 
@@ -106,55 +105,54 @@ export default function Dashboard() {
 
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                Submit New Performance
-              </h2>
-              <PerformanceForm />
-            </div>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Your Submitted Performances
+            </h2>
+            <p className="text-gray-600">
+              To submit a new performance, please visit the{" "}
+              <Link href="/calendar" className="text-indigo-600 hover:text-indigo-900">
+                Calendar page
+              </Link>{" "}
+              and use the submission form.
+            </p>
+          </div>
 
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                Your Submissions
-              </h2>
-              <div className="bg-white shadow rounded-lg">
-                {performances.length === 0 ? (
-                  <div className="p-6 text-center text-gray-500">
-                    No performances submitted yet.
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-200">
-                    {performances.map((performance) => (
-                      <div key={performance.id} className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <h3 className="text-lg font-medium text-gray-900">
-                              {performance.title}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {performance.performer} • {formatDateTime(performance.date, performance.time)}
-                            </p>
-                            {performance.description && (
-                              <p className="text-sm text-gray-500 mt-1">
-                                {performance.description}
-                              </p>
-                            )}
-                          </div>
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                              performance.status
-                            )}`}
-                          >
-                            {performance.status}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+          <div className="bg-white shadow rounded-lg">
+            {performances.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                No performances submitted yet.
               </div>
-            </div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {performances.map((performance) => (
+                  <div key={performance.id} className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {performance.title}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {performance.performer} • {formatDateTime(performance.date, performance.time)}
+                        </p>
+                        {performance.description && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            {performance.description}
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                          performance.status
+                        )}`}
+                      >
+                        {performance.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

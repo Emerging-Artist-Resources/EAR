@@ -14,8 +14,12 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
   const { data: session } = useSession()
 
   const navigation = [
-    { name: "Calendar", href: "/calendar" },
-    ...(userRole === "ADMIN" ? [{ name: "Admin", href: "/admin" }] : []),
+    { name: "View Calendar", href: "/calendar" },
+    { name: "Updates", href: "/notifications" },
+    ...(userRole === "ADMIN" ? [
+      { name: "Admin", href: "/admin" },
+      { name: "Manage Notifications", href: "/admin/notifications" }
+    ] : []),
   ]
 
   return (
@@ -67,31 +71,31 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
                 Submit Performance
               </button>
             )}
-            {session ? (
-              <>
-                {session.user.role !== "ADMIN" && (
-                  <Link
-                    href="/profile"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    My Profile
-                  </Link>
-                )}
-                <div className="border-t border-gray-200 pt-3 mt-3">
-                  <p className="px-3 py-2 text-sm text-gray-500">
-                    Welcome, {session.user.name}
-                  </p>
-                  <button
-                    onClick={() => {
-                      window.location.href = "/api/auth/signout"
-                      setIsOpen(false)
-                    }}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-                  >
-                    Sign Out
-                  </button>
-                </div>
+                        {session ? (
+                          <>
+                            <div className="border-t border-gray-200 pt-3 mt-3">
+                              <p className="px-3 py-2 text-sm text-gray-500">
+                                Welcome, {session.user.name}
+                              </p>
+                              {session.user.role !== "ADMIN" && (
+                                <Link
+                                  href="/profile"
+                                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                                  onClick={() => setIsOpen(false)}
+                                >
+                                  View Profile
+                                </Link>
+                              )}
+                              <button
+                                onClick={() => {
+                                  window.location.href = "/api/auth/signout"
+                                  setIsOpen(false)
+                                }}
+                                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                              >
+                                Sign Out
+                              </button>
+                            </div>
               </>
             ) : (
               <Link

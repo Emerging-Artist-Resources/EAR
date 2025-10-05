@@ -66,10 +66,9 @@ export default function CalendarView() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header 
-        title="Performance Calendar"
-        showSubmitButton={false}
-      />
+                  <Header 
+                    showSubmitButton={false}
+                  />
 
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className={`px-4 py-6 sm:px-0 transition-opacity duration-200 ${isModalOpen ? 'opacity-50' : ''}`}>

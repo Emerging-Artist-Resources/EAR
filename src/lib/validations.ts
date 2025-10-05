@@ -11,4 +11,12 @@ export const performanceSchema = z.object({
   contactPhone: z.string().optional(),
 })
 
+export const notificationSchema = z.object({
+  title: z.string().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
+  content: z.string().min(1, "Content is required"),
+  type: z.enum(["INFO", "WARNING", "SUCCESS", "ERROR"]).default("INFO"),
+  isActive: z.boolean().default(true),
+})
+
 export type PerformanceFormData = z.infer<typeof performanceSchema>
+export type NotificationFormData = z.infer<typeof notificationSchema>

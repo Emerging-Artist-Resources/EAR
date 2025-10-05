@@ -15,13 +15,29 @@ export async function POST(request: NextRequest) {
     const dateStr = validatedData.date
     const localDate = new Date(dateStr + 'T00:00:00') // Force local timezone interpretation
     
+    const data: {
+      title: string
+      performer: string
+      description?: string
+      time?: string
+      location?: string
+      contactEmail?: string
+      contactPhone?: string
+      date: Date
+      status: "PENDING" | "APPROVED" | "REJECTED"
+      userId?: string
+    } = {
+      ...validatedData,
+      date: localDate,
+      status: "PENDING"
+    }
+    
+    if (session?.user?.id) {
+      data.userId = session.user.id
+    }
+    
     const performance = await prisma.performance.create({
-      data: {
-        ...validatedData,
-        date: localDate,
-        userId: session?.user?.id || null, // Explicitly set to null for anonymous
-        status: "PENDING"
-      }
+      data: data as any
     })
 
     return NextResponse.json(performance, { status: 201 })
@@ -48,10 +64,10 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status")
     const userId = searchParams.get("userId")
 
-    const where: any = {}
+    const where: { status?: "PENDING" | "APPROVED" | "REJECTED"; userId?: string } = {}
     
     if (status) {
-      where.status = status
+      where.status = status as "PENDING" | "APPROVED" | "REJECTED"
     }
     
     if (userId) {
