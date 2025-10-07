@@ -10,22 +10,34 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = performanceSchema.parse(body)
 
-    // Fix timezone issue
+    // Use date string to avoid timezone issues and match Postgres DATE
     const dateStr = validatedData.date
-    const localDate = new Date(dateStr + 'T00:00:00')
-    
-    // Insert into Supabase 'events' (provisional columns until schema refactor)
-    const insertPayload = {
+
+    const details = {
+      submitter_name: validatedData.submitterName,
+      submitter_pronouns: validatedData.submitterPronouns,
+      contact_email: validatedData.contactEmail,
+      company: validatedData.company || null,
+      company_website: validatedData.companyWebsite || null,
+      ticket_price: validatedData.ticketPrice,
+      short_description: validatedData.shortDescription,
+      credits: validatedData.credits,
+      social_handles: validatedData.socialHandles,
+      notes: validatedData.notes || null,
+      referral_sources: validatedData.referralSources || [],
+      referral_other: validatedData.referralOther || null,
+      join_email_list: validatedData.joinEmailList ?? null,
+      agree_comp_tickets: validatedData.agreeCompTickets,
+    }
+
+    const insertPayload: Record<string, unknown> = {
+      event_type: 'PERFORMANCE',
       title: validatedData.title,
-      performer: validatedData.performer,
-      description: validatedData.description ?? null,
-      time: validatedData.time ?? null,
-      location: validatedData.location ?? null,
-      contact_email: validatedData.contactEmail ?? null,
-      contact_phone: validatedData.contactPhone ?? null,
-      date: localDate,
+      date: dateStr,
+      show_time: validatedData.showTime,
       status: 'PENDING',
       created_by: user?.id ?? null,
+      details,
     }
 
     const { data: created, error } = await supabase
@@ -37,6 +49,16 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Supabase insert error:', error)
       return NextResponse.json({ error: 'Failed to create event' }, { status: 500 })
+    }
+
+    // Insert up to 5 photos if provided
+    if (validatedData.photoUrls?.length) {
+      const photoRows = validatedData.photoUrls.slice(0, 5).map((url, idx) => ({
+        event_id: created.id,
+        url,
+        position: idx,
+      }))
+      await supabase.from('event_photos').insert(photoRows)
     }
 
     return NextResponse.json(created, { status: 201 })

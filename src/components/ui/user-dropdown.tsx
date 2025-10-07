@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Button } from "./button"
+import { getSupabaseClient } from "@/lib/supabase/client"
 
 interface UserDropdownProps {
   userName: string
@@ -26,8 +26,10 @@ export function UserDropdown({ userName, userRole, isMobile = false }: UserDropd
     }
   }, [])
 
-  const handleSignOut = () => {
-    window.location.href = "/api/auth/signout"
+  const supabase = getSupabaseClient()
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    window.location.href = "/auth/signin"
   }
 
   return (

@@ -45,12 +45,13 @@ export default function CalendarView() {
   }
 
   const getPerformancesForDate = (date: Date) => {
-    return performances.filter(performance => {
-      const performanceDate = new Date(performance.date)
-      // Use date string comparison to avoid timezone issues
-      const performanceDateStr = performanceDate.toDateString()
-      const targetDateStr = date.toDateString()
-      return performanceDateStr === targetDateStr
+    const targetIso = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+      .toISOString()
+      .slice(0, 10)
+    return performances.filter((performance) => {
+      const src = performance.date as unknown as string
+      const eventIso = (typeof src === 'string' ? src : new Date(src).toISOString()).slice(0, 10)
+      return eventIso === targetIso
     })
   }
 

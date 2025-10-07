@@ -40,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [userName, setUserName] = useState<string | null>(null)
   const [userRole, setUserRole] = useState<string | undefined>(undefined)
   const [isAuthed, setIsAuthed] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -50,6 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
       setIsAuthed(!!u)
       setUserName(extractUserName(u))
       setUserRole(extractUserRole(u))
+      setIsLoaded(true)
     })()
     return () => { isMounted = false }
   }, [supabase])
@@ -70,7 +72,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Link href="/notifications">
               <Button variant="ghost">Updates</Button>
             </Link>
-            {isAuthed ? (
+            {isLoaded && isAuthed ? (
               <>
                 {showSubmitButton && onSubmitPerformance && (
                   <Button onClick={onSubmitPerformance}>
@@ -92,11 +94,11 @@ export const Header: React.FC<HeaderProps> = ({
                   userRole={userRole}
                 />
               </>
-            ) : (
+            ) : isLoaded ? (
               <Link href="/auth/signin">
                 <Button variant="ghost">Sign In</Button>
               </Link>
-            )}
+            ) : null}
           </div>
           <MobileNav 
             userRole={userRole} 

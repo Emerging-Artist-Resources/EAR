@@ -13,6 +13,7 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
   const [isOpen, setIsOpen] = useState(false)
   const [isAuthed, setIsAuthed] = useState(false)
   const [name, setName] = useState<string | null>(null)
+  const [isLoaded, setIsLoaded] = useState(false)
   const supabase = getSupabaseClient()
 
   useEffect(() => {
@@ -24,6 +25,7 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
       setIsAuthed(!!u)
       const display = (u?.user_metadata?.name as unknown) ?? u?.email ?? null
       setName(typeof display === 'string' ? display : null)
+      setIsLoaded(true)
     })()
     return () => { mounted = false }
   }, [supabase])
@@ -102,9 +104,10 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
                                 </Link>
                               )}
                               <button
-                                onClick={() => {
-                                  window.location.href = "/api/auth/signout"
+                                onClick={async () => {
+                                  await supabase.auth.signOut()
                                   setIsOpen(false)
+                                  window.location.href = "/auth/signin"
                                 }}
                                 className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
                               >

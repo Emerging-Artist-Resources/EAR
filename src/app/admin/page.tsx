@@ -22,7 +22,7 @@ interface Performance {
     name: string | null
     email: string
   }
-  reviews: Array<{
+  reviews?: Array<{
     id: string
     status: string
     comments: string | null
@@ -98,9 +98,9 @@ export default function AdminDashboard() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          performanceId,
-          status: reviewStatus,
-          comments,
+          eventId: performanceId,
+          decision: reviewStatus,
+          notes: comments,
         }),
       })
 
@@ -251,7 +251,7 @@ function PerformanceReviewCard({
             </p>
           )}
           
-          {performance.reviews.length > 0 && (
+          {performance.reviews && performance.reviews.length > 0 && (
             <div className="mt-4">
               <h4 className="text-sm font-medium text-gray-700">Review History:</h4>
               {performance.reviews.map((review) => (
