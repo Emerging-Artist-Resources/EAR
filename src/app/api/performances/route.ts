@@ -1,46 +1,45 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
 import { performanceSchema } from "@/lib/validations"
+import { getSupabaseServerClient } from "@/lib/supabase/server"
 
+// src/app/api/performances/route.ts - FIXED VERSION
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const supabase = getSupabaseServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
     const body = await request.json()
     const validatedData = performanceSchema.parse(body)
 
-    // Allow anonymous submissions - userId can be null
-    // Fix timezone issue by creating date in local timezone
+    // Fix timezone issue
     const dateStr = validatedData.date
-    const localDate = new Date(dateStr + 'T00:00:00') // Force local timezone interpretation
+    const localDate = new Date(dateStr + 'T00:00:00')
     
-    const data: {
-      title: string
-      performer: string
-      description?: string
-      time?: string
-      location?: string
-      contactEmail?: string
-      contactPhone?: string
-      date: Date
-      status: "PENDING" | "APPROVED" | "REJECTED"
-      userId?: string
-    } = {
-      ...validatedData,
+    // Insert into Supabase 'events' (provisional columns until schema refactor)
+    const insertPayload = {
+      title: validatedData.title,
+      performer: validatedData.performer,
+      description: validatedData.description ?? null,
+      time: validatedData.time ?? null,
+      location: validatedData.location ?? null,
+      contact_email: validatedData.contactEmail ?? null,
+      contact_phone: validatedData.contactPhone ?? null,
       date: localDate,
-      status: "PENDING"
+      status: 'PENDING',
+      created_by: user?.id ?? null,
     }
-    
-    if (session?.user?.id) {
-      data.userId = session.user.id
-    }
-    
-    const performance = await prisma.performance.create({
-      data: data as any
-    })
 
-    return NextResponse.json(performance, { status: 201 })
+    const { data: created, error } = await supabase
+      .from('events')
+      .insert(insertPayload)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Supabase insert error:', error)
+      return NextResponse.json({ error: 'Failed to create event' }, { status: 500 })
+    }
+
+    return NextResponse.json(created, { status: 201 })
   } catch (error) {
     console.error("Performance creation error:", error)
     
@@ -60,45 +59,28 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = getSupabaseServerClient()
     const { searchParams } = new URL(request.url)
     const status = searchParams.get("status")
     const userId = searchParams.get("userId")
 
-    const where: { status?: "PENDING" | "APPROVED" | "REJECTED"; userId?: string } = {}
-    
-    if (status) {
-      where.status = status as "PENDING" | "APPROVED" | "REJECTED"
-    }
-    
-    if (userId) {
-      where.userId = userId
+    let query = supabase
+      .from('events')
+      .select('*')
+
+    if (status) query = query.eq('status', status)
+    if (userId) query = query.eq('created_by', userId)
+
+    query = query.order('date', { ascending: true })
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('Supabase fetch error:', error)
+      return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 })
     }
 
-    const performances = await prisma.performance.findMany({
-      where,
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true
-          }
-        },
-        reviews: {
-          include: {
-            reviewer: {
-              select: {
-                name: true
-              }
-            }
-          }
-        }
-      },
-      orderBy: {
-        date: "asc"
-      }
-    })
-
-    return NextResponse.json(performances)
+    return NextResponse.json(data)
   } catch (error) {
     console.error("Performance fetch error:", error)
     return NextResponse.json(

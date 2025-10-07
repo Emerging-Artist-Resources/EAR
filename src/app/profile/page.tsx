@@ -1,6 +1,6 @@
 "use client"
 
-import { useSession } from "next-auth/react"
+import { getSupabaseClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
@@ -33,14 +33,18 @@ interface Performance {
 }
 
 export default function UserProfile() {
-  const { data: session, status } = useSession()
+  const supabase = getSupabaseClient()
   const router = useRouter()
   const [performances, setPerformances] = useState<Performance[]>([])
   const [loading, setLoading] = useState(true)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [userName, setUserName] = useState<string | null>(null)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [userRole, setUserRole] = useState<string | undefined>(undefined)
 
   const fetchUserPerformances = useCallback(async () => {
     try {
-      const response = await fetch(`/api/performances?userId=${session?.user?.id}`)
+      const response = await fetch(`/api/performances?userId=${userId}`)
       if (response.ok) {
         const data = await response.json()
         setPerformances(data)
@@ -50,18 +54,27 @@ export default function UserProfile() {
     } finally {
       setLoading(false)
     }
-  }, [session?.user?.id])
+  }, [userId])
 
   useEffect(() => {
-    if (status === "loading") return
-    
-    if (!session) {
-      router.push("/auth/signin")
-      return
-    }
-
-    fetchUserPerformances()
-  }, [session, status, router, fetchUserPerformances])
+    let mounted = true
+    ;(async () => {
+      const { data } = await supabase.auth.getUser()
+      if (!mounted) return
+      const u = data.user as { id: string; email?: string; app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> } | null
+      if (!u?.id) {
+        router.push("/auth/signin")
+        return
+      }
+      setUserId(u.id)
+      setUserName((u.user_metadata?.name as unknown as string) ?? u.email ?? null)
+      setUserEmail(u.email ?? null)
+      const role = (u.app_metadata?.role as unknown) ?? (u.user_metadata?.role as unknown)
+      setUserRole(typeof role === 'string' ? role : undefined)
+      fetchUserPerformances()
+    })()
+    return () => { mounted = false }
+  }, [supabase, router, fetchUserPerformances])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -89,7 +102,7 @@ export default function UserProfile() {
     }
   }
 
-  if (status === "loading" || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>
@@ -97,7 +110,7 @@ export default function UserProfile() {
     )
   }
 
-  if (!session) {
+  if (!userId) {
     return null
   }
 
@@ -117,18 +130,18 @@ export default function UserProfile() {
                 <div className="flex-shrink-0">
                   <div className="h-16 w-16 rounded-full bg-indigo-100 flex items-center justify-center">
                     <span className="text-2xl font-bold text-indigo-600">
-                      {session.user.name?.charAt(0).toUpperCase()}
+                      {userName?.charAt(0).toUpperCase()}
                     </span>
                   </div>
                 </div>
                 <div className="ml-6">
                   <h2 className="text-2xl font-bold text-gray-900">
-                    {session.user.name}
+                    {userName}
                   </h2>
-                  <p className="text-gray-600">{session.user.email}</p>
+                  <p className="text-gray-600">{userEmail}</p>
                   <div className="mt-2">
-                    <Badge variant={session.user.role === "ADMIN" ? "primary" : "default"}>
-                      {session.user.role}
+                    <Badge variant={userRole === "ADMIN" ? "primary" : "default"}>
+                      {userRole}
                     </Badge>
                   </div>
                 </div>

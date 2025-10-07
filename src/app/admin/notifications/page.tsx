@@ -1,6 +1,5 @@
 "use client"
 
-import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Header } from "@/components/layout/header"
@@ -11,6 +10,7 @@ import { Modal } from "@/components/ui/modal"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { getNotificationTypeColor, formatDateTime } from "@/lib/constants"
+import { getSupabaseClient } from "@/lib/supabase/client"
 
 interface Notification {
   id: string
@@ -27,7 +27,6 @@ interface Notification {
 }
 
 export default function AdminNotificationsPage() {
-  const { data: session, status } = useSession()
   const router = useRouter()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
@@ -40,27 +39,41 @@ export default function AdminNotificationsPage() {
     isActive: true
   })
   const [submitting, setSubmitting] = useState(false)
+  const [authLoading, setAuthLoading] = useState(true)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const getRoleFromUser = (user: unknown): string | null => {
+    const u = user as { app_metadata?: { role?: string } } | null
+    return u?.app_metadata?.role ?? null
+  }
 
   useEffect(() => {
-    if (status === "loading") return
-    
-    if (!session) {
-      router.push("/auth/signin")
-      return
-    }
+    const supabase = getSupabaseClient()
+    supabase.auth.getUser().then(({ data }) => {
+      const user = data?.user || null
+      if (!user) {
+        router.push("/auth/signin")
+        return
+      }
+      const role = getRoleFromUser(user)
+      setUserRole(role)
+      if (role !== "ADMIN") {
+        router.push("/dashboard")
+        return
+      }
+      setAuthLoading(false)
+    })
+  }, [router])
 
-    if (session.user.role !== "ADMIN") {
-      router.push("/dashboard")
-      return
-    }
-
+  useEffect(() => {
+    if (authLoading) return
+    if (userRole !== "ADMIN") return
     fetchNotifications()
-  }, [session, status, router])
+  }, [authLoading, userRole])
 
   const fetchNotifications = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/notifications?admin=true')
+      const response = await fetch('/api/announcements?admin=true')
       if (response.ok) {
         const data = await response.json()
         setNotifications(data)
@@ -80,10 +93,10 @@ export default function AdminNotificationsPage() {
 
     try {
       const url = editingNotification 
-        ? `/api/notifications/${editingNotification.id}`
-        : '/api/notifications'
+        ? `/api/announcements/${editingNotification.id}`
+        : '/api/announcements'
       
-      const method = editingNotification ? 'PUT' : 'POST'
+      const method = editingNotification ? 'PATCH' : 'POST'
       
       const response = await fetch(url, {
         method,
@@ -113,7 +126,7 @@ export default function AdminNotificationsPage() {
     }
 
     try {
-      const response = await fetch(`/api/notifications/${id}`, {
+      const response = await fetch(`/api/announcements/${id}`, {
         method: 'DELETE',
       })
 
@@ -161,7 +174,7 @@ export default function AdminNotificationsPage() {
     setIsModalOpen(true)
   }
 
-  if (status === "loading" || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>
@@ -169,7 +182,7 @@ export default function AdminNotificationsPage() {
     )
   }
 
-  if (!session || session.user.role !== "ADMIN") {
+  if (userRole !== "ADMIN") {
     return null
   }
 

@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useSession } from "next-auth/react"
 import { Modal } from "@/components/ui/modal"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -11,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
 import { performanceSchema, type PerformanceFormData } from "@/lib/validations"
 import { usePerformances } from "@/hooks/use-performances"
+import { getSupabaseClient } from "@/lib/supabase/client"
 
 interface PerformanceModalProps {
   isOpen: boolean
@@ -21,8 +21,8 @@ interface PerformanceModalProps {
 export default function PerformanceModal({ isOpen, onClose, onSuccess }: PerformanceModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitMessage, setSubmitMessage] = useState("")
-  const { data: session } = useSession()
   const { submitPerformance } = usePerformances()
+  const supabase = getSupabaseClient()
 
   const {
     register,
@@ -40,9 +40,11 @@ export default function PerformanceModal({ isOpen, onClose, onSuccess }: Perform
     setSubmitMessage("")
 
     try {
+      const { data: userResult } = await supabase.auth.getUser()
+      const userId = userResult?.user?.id || null
       await submitPerformance({
         ...data,
-        userId: session?.user?.id || null, // Allow anonymous submissions
+        userId, // Allow anonymous submissions
       })
       
       setSubmitMessage("Performance submitted successfully! It will be reviewed by an admin and added to the calendar if approved.")
@@ -66,7 +68,9 @@ export default function PerformanceModal({ isOpen, onClose, onSuccess }: Perform
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Submit Performance">
-      {!session && (
+      {/* Anonymous submission notice shown when not signed in */}
+      {/* We avoid fetching user state here to keep modal simple; public can submit */}
+      {true && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
           <p className="text-sm text-blue-800">
             <strong>Anonymous Submission:</strong> You can submit without signing in. 

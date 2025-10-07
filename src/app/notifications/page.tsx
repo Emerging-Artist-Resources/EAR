@@ -1,6 +1,5 @@
 "use client"
 
-import { useSession } from "next-auth/react"
 import { useEffect, useState } from "react"
 import { Header } from "@/components/layout/header"
 import { Card } from "@/components/ui/card"
@@ -19,20 +18,17 @@ interface Notification {
 }
 
 export default function NotificationsPage() {
-  const { data: session, status } = useSession()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (status === "loading") return
-    
     fetchNotifications()
-  }, [status])
+  }, [])
 
   const fetchNotifications = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/notifications?active=true')
+      const response = await fetch('/api/announcements?active=true')
       if (response.ok) {
         const data = await response.json()
         setNotifications(data)
@@ -46,7 +42,7 @@ export default function NotificationsPage() {
     }
   }
 
-  if (status === "loading" || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>
@@ -126,7 +122,8 @@ export default function NotificationsPage() {
             </div>
           )}
 
-          {session?.user?.role === "ADMIN" && (
+          {/* Admin callout removed from public notifications page to keep it guest-friendly */}
+          {false && (
             <Card className="p-6 mt-8 bg-blue-50 border-blue-200">
               <div className="flex items-center gap-3">
                 <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

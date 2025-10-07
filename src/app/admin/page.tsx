@@ -1,11 +1,10 @@
 "use client"
 
-import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { PERFORMANCE_STATUS, getStatusColor, formatDateTime } from "@/lib/constants"
+import { useCallback, useEffect, useState } from "react"
+import { formatDateTime } from "@/lib/constants"
 import { Header } from "@/components/layout/header"
+import { getSupabaseClient } from "@/lib/supabase/client"
 
 interface Performance {
   id: string
@@ -35,30 +34,37 @@ interface Performance {
 }
 
 export default function AdminDashboard() {
-  const { data: session, status } = useSession()
   const router = useRouter()
   const [performances, setPerformances] = useState<Performance[]>([])
   const [allPerformances, setAllPerformances] = useState<Performance[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("PENDING")
+  const [authLoading, setAuthLoading] = useState(true)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const getRoleFromUser = (user: unknown): string | null => {
+    const u = user as { app_metadata?: { role?: string } } | null
+    return u?.app_metadata?.role ?? null
+  }
 
   useEffect(() => {
-    if (status === "loading") return
-    
-    if (!session) {
-      router.push("/auth/signin")
-      return
-    }
+    const supabase = getSupabaseClient()
+    supabase.auth.getUser().then(({ data }) => {
+      const user = data?.user || null
+      if (!user) {
+        router.push("/auth/signin")
+        return
+      }
+      const role = getRoleFromUser(user)
+      setUserRole(role)
+      if (role !== "ADMIN") {
+        router.push("/dashboard")
+        return
+      }
+      setAuthLoading(false)
+    })
+  }, [router])
 
-    if (session.user.role !== "ADMIN") {
-      router.push("/dashboard")
-      return
-    }
-
-    fetchPerformances()
-  }, [session, status, router, filter])
-
-  const fetchPerformances = async () => {
+  const fetchPerformances = useCallback(async () => {
     try {
       // Fetch all performances to get accurate counts
       const response = await fetch('/api/performances')
@@ -74,7 +80,15 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filter])
+
+  useEffect(() => {
+    if (authLoading) return
+    if (userRole !== "ADMIN") return
+    fetchPerformances()
+  }, [authLoading, userRole, fetchPerformances])
+
+  
 
   const handleReview = async (performanceId: string, reviewStatus: string, comments: string) => {
     try {
@@ -108,7 +122,7 @@ export default function AdminDashboard() {
     }
   }
 
-  if (status === "loading" || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>
@@ -116,7 +130,7 @@ export default function AdminDashboard() {
     )
   }
 
-  if (!session || session.user.role !== "ADMIN") {
+  if (userRole !== "ADMIN") {
     return null
   }
 

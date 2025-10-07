@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react"
-import { useSession } from "next-auth/react"
+import { getSupabaseClient } from "@/lib/supabase/client"
 
 export interface Performance {
   id: string
@@ -90,16 +90,24 @@ export function usePerformances(status?: string) {
 }
 
 export function useUserPerformances() {
-  const { data: session } = useSession()
   const [performances, setPerformances] = useState<Performance[]>([])
   const [loading, setLoading] = useState(true)
+  const [userId, setUserId] = useState<string | null>(null)
+
+  // Resolve user id once on mount
+  useState(() => {
+    const supabase = getSupabaseClient()
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data?.user?.id ?? null)
+    })
+  })
 
   const fetchUserPerformances = useCallback(async () => {
-    if (!session?.user?.id) return
+    if (!userId) return
 
     try {
       setLoading(true)
-      const response = await fetch(`/api/performances?userId=${session.user.id}`)
+      const response = await fetch(`/api/performances?userId=${userId}`)
       
       if (response.ok) {
         const data = await response.json()
@@ -110,7 +118,7 @@ export function useUserPerformances() {
     } finally {
       setLoading(false)
     }
-  }, [session?.user?.id])
+  }, [userId])
 
   return {
     performances,

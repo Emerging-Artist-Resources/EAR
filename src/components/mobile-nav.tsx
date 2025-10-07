@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useSession } from "next-auth/react"
+import { getSupabaseClient } from "@/lib/supabase/client"
 
 interface MobileNavProps {
   userRole?: string
@@ -11,7 +11,22 @@ interface MobileNavProps {
 
 export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const { data: session } = useSession()
+  const [isAuthed, setIsAuthed] = useState(false)
+  const [name, setName] = useState<string | null>(null)
+  const supabase = getSupabaseClient()
+
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      const { data } = await supabase.auth.getUser()
+      if (!mounted) return
+      const u = data.user as { email?: string; user_metadata?: Record<string, unknown> } | null
+      setIsAuthed(!!u)
+      const display = (u?.user_metadata?.name as unknown) ?? u?.email ?? null
+      setName(typeof display === 'string' ? display : null)
+    })()
+    return () => { mounted = false }
+  }, [supabase])
 
   const navigation = [
     { name: "View Calendar", href: "/calendar" },
@@ -60,7 +75,7 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
                 {item.name}
               </Link>
             ))}
-            {session && onSubmitPerformance && (
+            {isAuthed && onSubmitPerformance && (
               <button
                 onClick={() => {
                   onSubmitPerformance()
@@ -71,13 +86,13 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
                 Submit Performance
               </button>
             )}
-                        {session ? (
+                        {isAuthed ? (
                           <>
                             <div className="border-t border-gray-200 pt-3 mt-3">
                               <p className="px-3 py-2 text-sm text-gray-500">
-                                Welcome, {session.user.name}
+                                Welcome, {name}
                               </p>
-                              {session.user.role !== "ADMIN" && (
+                              {userRole !== "ADMIN" && (
                                 <Link
                                   href="/profile"
                                   className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"

@@ -1,6 +1,4 @@
 import React from "react"
-import Link from "next/link"
-import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 
 export interface CallToActionProps {
@@ -8,8 +6,6 @@ export interface CallToActionProps {
 }
 
 export const CallToAction: React.FC<CallToActionProps> = ({ onSubmitPerformance }) => {
-  const { data: session } = useSession()
-
   return (
     <div className="mb-6 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg p-6 border border-indigo-200">
       <div className="text-center">

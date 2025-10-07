@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns"
 import { Header } from "@/components/layout/header"
 import { CallToAction } from "@/components/layout/call-to-action"
@@ -13,7 +12,6 @@ import { PERFORMANCE_STATUS, getStatusColor, formatDateTime } from "@/lib/consta
 import type { Performance } from "@/hooks/use-performances"
 
 export default function CalendarView() {
-  const { data: session } = useSession()
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
