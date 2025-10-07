@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const active = searchParams.get("active")
     const admin = searchParams.get("admin")
 
-    const where: any = {}
+    const where: { isActive?: boolean } = {}
     
     if (active === "true") {
       where.isActive = true
