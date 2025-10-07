@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
 import { getAnnouncement, updateAnnouncement, deleteAnnouncement } from "@/features/announcements/server/service"
-import { notificationSchema } from "@/lib/validations"
+// validation handled inside service layer
 import { ZodError } from "zod"
-function getUserRole(user: unknown): 'ADMIN' | 'USER' | undefined {
-  if (!user || typeof user !== 'object') return undefined
-  const u = user as { app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> }
-  const fromApp = u.app_metadata?.role as unknown
-  const fromUser = u.user_metadata?.role as unknown
-  const val = (fromApp ?? fromUser)
-  return val === 'ADMIN' || val === 'USER' ? val : undefined
-}
+import { getUserRole } from '@/lib/authz'
 
 export async function GET(
   request: NextRequest,
@@ -19,8 +13,8 @@ export async function GET(
   try {
     const params = await context.params
     const data = await getAnnouncement(params.id)
-    if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    return NextResponse.json(data)
+    if (!data) return NextResponse.json({ error: { code: 'NOT_FOUND' } }, { status: 404 })
+    return NextResponse.json({ data })
   } catch (error) {
     console.error('Announcement fetch error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -32,33 +26,21 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await getSupabaseServerClient()
+    const supabase = createRouteHandlerClient({ cookies })
     const { data: { user } } = await supabase.auth.getUser()
     const params = await context.params
 
-    if (!user?.id) return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    if (!user?.id) return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
     const role = getUserRole(user)
-    if (role !== 'ADMIN') return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    if (role !== 'ADMIN') return NextResponse.json({ error: { code: 'FORBIDDEN' } }, { status: 403 })
 
     const body = await request.json()
-    const partial = notificationSchema.partial().parse(body)
-
-    const updatePayload: Record<string, unknown> = {}
-    if (partial.title !== undefined) updatePayload.title = partial.title
-    if (partial.content !== undefined) updatePayload.content = partial.content
-    if (partial.type !== undefined) updatePayload.type = partial.type
-    if (Object.prototype.hasOwnProperty.call(body, 'isActive')) {
-      const isActive = Boolean(body.isActive)
-      updatePayload.archived_at = isActive ? null : new Date()
-      if (isActive && !('published_at' in updatePayload)) updatePayload.published_at = new Date()
-    }
-
-    const data = await updateAnnouncement(params.id, updatePayload)
-    return NextResponse.json(data)
+    const data = await updateAnnouncement(params.id, body)
+    return NextResponse.json({ data })
   } catch (error: unknown) {
-    if (error instanceof ZodError) return NextResponse.json({ error: 'Invalid form data' }, { status: 400 })
+    if (error instanceof ZodError) return NextResponse.json({ error: { code: 'INVALID_INPUT' } }, { status: 400 })
     console.error('Announcement update error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
   }
 }
 
@@ -67,19 +49,19 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await getSupabaseServerClient()
+    const supabase = createRouteHandlerClient({ cookies })
     const { data: { user } } = await supabase.auth.getUser()
     const params = await context.params
 
-    if (!user?.id) return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    if (!user?.id) return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
     const role = getUserRole(user)
-    if (role !== 'ADMIN') return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    if (role !== 'ADMIN') return NextResponse.json({ error: { code: 'FORBIDDEN' } }, { status: 403 })
 
     await deleteAnnouncement(params.id)
-    return NextResponse.json({ message: 'Announcement deleted' })
+    return NextResponse.json({ data: { deleted: true } })
   } catch (error) {
     console.error('Announcement delete error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
   }
 }
 

@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { formatDateTime } from "@/lib/constants"
-import { Header } from "@/components/layout/header"
 import { getSupabaseClient } from "@/lib/supabase/client"
 
 interface Performance {
@@ -70,9 +69,10 @@ export default function AdminDashboard() {
       const response = await fetch('/api/performances')
       if (response.ok) {
         const data = await response.json()
-        setAllPerformances(data)
+        const items: Performance[] = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : []
+        setAllPerformances(items)
         // Filter for the current tab
-        const filteredData = data.filter((p: Performance) => p.status === filter)
+        const filteredData = items.filter((p: Performance) => p.status === filter)
         setPerformances(filteredData)
       }
     } catch (error) {
@@ -109,8 +109,9 @@ export default function AdminDashboard() {
         const allResponse = await fetch('/api/performances')
         if (allResponse.ok) {
           const allData = await allResponse.json()
-          setAllPerformances(allData)
-          const filteredData = allData.filter((p: Performance) => p.status === filter)
+          const items: Performance[] = Array.isArray(allData) ? allData : Array.isArray(allData?.data) ? allData.data : []
+          setAllPerformances(items)
+          const filteredData = items.filter((p: Performance) => p.status === filter)
           setPerformances(filteredData)
         }
       } else {
@@ -137,7 +138,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
 
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">

@@ -30,15 +30,16 @@ export async function createEventWithPhotos(input: CreateEventInput, photoUrls: 
   return created
 }
 
-export async function listEvents(params: { status?: string | null, userId?: string | null }) {
+export async function listEvents(params: { status?: string | null, userId?: string | null, limit?: number, cursor?: string | null }) {
   const supabase = await getSupabaseServerClient()
   let query = supabase.from('events').select('*')
   if (params.status) query = query.eq('status', params.status)
   if (params.userId) query = query.eq('created_by', params.userId)
-  query = query.order('date', { ascending: true })
+  query = query.order('date', { ascending: true }).order('show_time', { ascending: true })
+  const limit = params.limit && params.limit > 0 ? params.limit : 20
+  // simple pagination using range
+  query = query.range(0, Math.max(0, limit - 1))
   const { data, error } = await query
   if (error) throw error
-  return data
+  return { items: data, nextCursor: null }
 }
-
-

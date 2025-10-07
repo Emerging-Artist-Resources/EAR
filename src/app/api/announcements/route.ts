@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
 import { notificationSchema } from "@/lib/validations"
 import { listAnnouncements, createAnnouncement } from "@/features/announcements/server/service"
 import { ZodError } from "zod"
-function getUserRole(user: unknown): 'ADMIN' | 'USER' | undefined {
-  if (!user || typeof user !== 'object') return undefined
-  const u = user as { app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> }
-  const fromApp = u.app_metadata?.role as unknown
-  const fromUser = u.user_metadata?.role as unknown
-  const val = (fromApp ?? fromUser)
-  return val === 'ADMIN' || val === 'USER' ? val : undefined
-}
+import { getUserRole } from "@/lib/authz"
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,49 +12,40 @@ export async function GET(request: NextRequest) {
     const active = searchParams.get("active")
 
     const data = await listAnnouncements({ active: active === 'true' })
-    return NextResponse.json(data)
+    return NextResponse.json({ data })
   } catch (error) {
     console.error('Announcements fetch error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient()
+    const supabase = createRouteHandlerClient({ cookies })
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user?.id) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
     }
     const role = getUserRole(user)
     if (role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+      return NextResponse.json({ error: { code: 'FORBIDDEN' } }, { status: 403 })
     }
 
     const body = await request.json()
     const validated = notificationSchema.parse(body)
-
-    const insertPayload = {
+    const data = await createAnnouncement({
       title: validated.title,
       content: validated.content,
       type: validated.type,
-      author_user_id: user.id,
-      // published_at/archived_at managed separately
-    }
-
-    const data = await createAnnouncement({
-      title: insertPayload.title,
-      content: insertPayload.content,
-      type: insertPayload.type,
-      authorUserId: insertPayload.author_user_id,
+      authorUserId: user.id,
     })
-    return NextResponse.json(data, { status: 201 })
+    return NextResponse.json({ data }, { status: 201 })
   } catch (error: unknown) {
     if (error instanceof ZodError) {
-      return NextResponse.json({ error: 'Invalid form data' }, { status: 400 })
+      return NextResponse.json({ error: { code: 'INVALID_INPUT' } }, { status: 400 })
     }
     console.error('Announcements create error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
   }
 }

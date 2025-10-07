@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useState, useCallback } from "react"
 import { formatDateTime } from "@/lib/constants"
-import { Header } from "@/components/layout/header"
 import { getSupabaseClient } from "@/lib/supabase/client"
 import Link from "next/link"
 
@@ -47,10 +46,11 @@ export default function Dashboard() {
   const fetchUserPerformances = useCallback(async () => {
     if (!userId) return
     try {
-      const response = await fetch("/api/performances?userId=" + userId)
+      const response = await fetch("/api/me/performances")
       if (response.ok) {
         const data = await response.json()
-        setPerformances(data)
+        const items: Performance[] = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : []
+        setPerformances(items)
       }
     } catch (error) {
       console.error("Error fetching performances:", error)
@@ -91,7 +91,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
 
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">

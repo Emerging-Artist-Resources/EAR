@@ -1,3 +1,4 @@
+"use client"
 import React from "react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -30,17 +31,23 @@ function extractUserName(user: unknown): string | null {
 export interface HeaderProps {
   showSubmitButton?: boolean
   onSubmitPerformance?: () => void
+  initialIsAuthed?: boolean
+  initialUserName?: string | null
+  initialUserRole?: string | undefined
 }
 
 export const Header: React.FC<HeaderProps> = ({
   showSubmitButton = false,
   onSubmitPerformance,
+  initialIsAuthed,
+  initialUserName,
+  initialUserRole,
 }) => {
   const supabase = getSupabaseClient()
-  const [userName, setUserName] = useState<string | null>(null)
-  const [userRole, setUserRole] = useState<string | undefined>(undefined)
-  const [isAuthed, setIsAuthed] = useState(false)
-  const [isLoaded, setIsLoaded] = useState(false)
+  const [userName, setUserName] = useState<string | null>(initialUserName ?? null)
+  const [userRole, setUserRole] = useState<string | undefined>(initialUserRole)
+  const [isAuthed, setIsAuthed] = useState(!!initialIsAuthed)
+  const [isLoaded, setIsLoaded] = useState(initialIsAuthed !== undefined)
 
   useEffect(() => {
     let isMounted = true

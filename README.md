@@ -1,3 +1,13 @@
+## Architecture overview
+
+Dependency direction is one-way:
+
+app (routes/pages) → features (domain services) → services (infra wrappers) → lib (helpers)
+
+- features: domain modules with `server/repository.ts` (DB I/O) and `server/service.ts` (business rules)
+- services: provider-agnostic integrations (storage, email, rate-limit)
+- lib: framework helpers (supabase clients), validations, constants, authz helpers
+
 # Performance Calendar Application
 
 A full-stack web application built with Next.js 15 that allows users to submit performance events for review and display on a shared calendar.

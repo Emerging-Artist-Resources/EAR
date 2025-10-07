@@ -49,7 +49,8 @@ export function usePerformances(status?: string) {
       }
       
       const data = await response.json()
-      setPerformances(data)
+      const items = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : []
+      setPerformances(items)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -57,7 +58,7 @@ export function usePerformances(status?: string) {
     }
   }, [status])
 
-  const submitPerformance = useCallback(async (data: any) => {
+  const submitPerformance = useCallback(async (data: Record<string, unknown>) => {
     try {
       const response = await fetch("/api/performances", {
         method: "POST",
@@ -74,7 +75,7 @@ export function usePerformances(status?: string) {
 
       const result = await response.json()
       await fetchPerformances() // Refresh the list
-      return result
+      return result?.data ?? result
     } catch (err) {
       throw err instanceof Error ? err : new Error("An error occurred")
     }
@@ -107,11 +108,11 @@ export function useUserPerformances() {
 
     try {
       setLoading(true)
-      const response = await fetch(`/api/performances?userId=${userId}`)
-      
+      const response = await fetch(`/api/me/performances`)
       if (response.ok) {
         const data = await response.json()
-        setPerformances(data)
+        const items = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : []
+        setPerformances(items)
       }
     } catch (error) {
       console.error("Error fetching user performances:", error)

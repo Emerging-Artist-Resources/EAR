@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Header } from "@/components/layout/header"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -76,7 +75,29 @@ export default function AdminNotificationsPage() {
       const response = await fetch('/api/announcements?admin=true')
       if (response.ok) {
         const data = await response.json()
-        setNotifications(data)
+        const raw = Array.isArray(data) ? data : data?.data ?? []
+        type DbAnnouncement = {
+          id: string
+          title: string
+          content: string
+          type?: string | null
+          archived_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          createdAt?: string | null
+          updatedAt?: string | null
+        }
+        const items: Notification[] = (raw as DbAnnouncement[]).map((a) => ({
+          id: a.id,
+          title: a.title,
+          content: a.content,
+          type: a.type ?? 'INFO',
+          isActive: a.archived_at ? false : true,
+          createdAt: a.created_at ?? a.createdAt ?? '',
+          updatedAt: a.updated_at ?? a.updatedAt ?? a.created_at ?? '',
+          author: { name: null, email: '' },
+        }))
+        setNotifications(items)
       } else {
         console.error("Failed to fetch notifications")
       }
@@ -188,7 +209,6 @@ export default function AdminNotificationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-              <Header />
 
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
@@ -231,15 +251,15 @@ export default function AdminNotificationsPage() {
                         </p>
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                           <span>
-                            Created by {notification.author.name} on {formatDateTime(notification.createdAt)}
+                            Created by {notification.author?.name ?? 'Admin'} on {formatDateTime(notification.createdAt || notification.updatedAt)}
                           </span>
                           {notification.updatedAt !== notification.createdAt && (
                             <span>
                               Updated {formatDateTime(notification.updatedAt)}
                             </span>
                           )}
-                        </div>
-                      </div>
+      </div>
+    </div>
                       <div className="flex gap-2 ml-4">
                         <Button
                           variant="ghost"

@@ -7,7 +7,6 @@ import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDateTime } from "@/lib/constants"
-import { Header } from "@/components/layout/header"
 
 interface Performance {
   id: string
@@ -116,7 +115,6 @@ export default function UserProfile() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
 
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
