@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { reviewEvent } from "@/features/reviews/server/service"
 
 function getUserRole(user: unknown): 'ADMIN' | 'USER' | undefined {
   if (!user || typeof user !== 'object') return undefined
@@ -29,49 +30,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid decision' }, { status: 400 })
     }
 
-    // Ensure event exists
-    const { data: existing, error: fetchErr } = await supabase
-      .from('events')
-      .select('id')
-      .eq('id', eventId)
-      .single()
-
-    if (fetchErr || !existing) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 })
-    }
-
-    // Create review record
-    const { data: review, error: reviewErr } = await supabase
-      .from('reviews')
-      .insert({
-        event_id: eventId,
-        decision,
-        notes: notes ?? null,
-        reviewer_user_id: user.id,
-      })
-      .select()
-      .single()
-
-    if (reviewErr) {
-      console.error('Supabase review insert error:', reviewErr)
-      return NextResponse.json({ error: 'Failed to create review' }, { status: 500 })
-    }
-
-    // Update event status and approver info
-    const { error: updateErr } = await supabase
-      .from('events')
-      .update({
-        status: decision === 'APPROVED' ? 'APPROVED' : 'REJECTED',
-        approved_by: user.id,
-        approved_at: new Date(),
-      })
-      .eq('id', eventId)
-
-    if (updateErr) {
-      console.error('Supabase event update error:', updateErr)
-      return NextResponse.json({ error: 'Review created, but failed to update event' }, { status: 500 })
-    }
-
+    const review = await reviewEvent({
+      eventId,
+      decision,
+      notes: notes ?? null,
+      reviewerUserId: user.id,
+    })
     return NextResponse.json(review, { status: 201 })
   } catch (error) {
     console.error("Review creation error:", error)

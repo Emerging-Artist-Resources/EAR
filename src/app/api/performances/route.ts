@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { performanceSchema } from "@/lib/validations"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { createPerformance, listPerformances } from "@/features/events/server/service"
 
 // src/app/api/performances/route.ts - FIXED VERSION
 export async function POST(request: NextRequest) {
   try {
-    const supabase = getSupabaseServerClient()
+    const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     const body = await request.json()
     const validatedData = performanceSchema.parse(body)
@@ -29,38 +30,14 @@ export async function POST(request: NextRequest) {
       join_email_list: validatedData.joinEmailList ?? null,
       agree_comp_tickets: validatedData.agreeCompTickets,
     }
-
-    const insertPayload: Record<string, unknown> = {
-      event_type: 'PERFORMANCE',
+    const created = await createPerformance({
       title: validatedData.title,
       date: dateStr,
-      show_time: validatedData.showTime,
-      status: 'PENDING',
-      created_by: user?.id ?? null,
+      showTime: validatedData.showTime,
+      createdBy: user?.id ?? null,
       details,
-    }
-
-    const { data: created, error } = await supabase
-      .from('events')
-      .insert(insertPayload)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Supabase insert error:', error)
-      return NextResponse.json({ error: 'Failed to create event' }, { status: 500 })
-    }
-
-    // Insert up to 5 photos if provided
-    if (validatedData.photoUrls?.length) {
-      const photoRows = validatedData.photoUrls.slice(0, 5).map((url, idx) => ({
-        event_id: created.id,
-        url,
-        position: idx,
-      }))
-      await supabase.from('event_photos').insert(photoRows)
-    }
-
+      photoUrls: validatedData.photoUrls ?? [],
+    })
     return NextResponse.json(created, { status: 201 })
   } catch (error) {
     console.error("Performance creation error:", error)
@@ -81,27 +58,11 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = getSupabaseServerClient()
     const { searchParams } = new URL(request.url)
     const status = searchParams.get("status")
     const userId = searchParams.get("userId")
 
-    let query = supabase
-      .from('events')
-      .select('*')
-
-    if (status) query = query.eq('status', status)
-    if (userId) query = query.eq('created_by', userId)
-
-    query = query.order('date', { ascending: true })
-
-    const { data, error } = await query
-
-    if (error) {
-      console.error('Supabase fetch error:', error)
-      return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 })
-    }
-
+    const data = await listPerformances({ status, userId })
     return NextResponse.json(data)
   } catch (error) {
     console.error("Performance fetch error:", error)

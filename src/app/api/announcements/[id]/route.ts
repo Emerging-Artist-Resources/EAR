@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { getAnnouncement, updateAnnouncement, deleteAnnouncement } from "@/features/announcements/server/service"
 import { notificationSchema } from "@/lib/validations"
 import { ZodError } from "zod"
 function getUserRole(user: unknown): 'ADMIN' | 'USER' | undefined {
@@ -17,16 +18,7 @@ export async function GET(
 ) {
   try {
     const params = await context.params
-    const supabase = getSupabaseServerClient()
-    const { data, error } = await supabase
-      .from('announcements')
-      .select('*')
-      .eq('id', params.id)
-      .single()
-    if (error) {
-      console.error('Supabase announcement fetch error:', error)
-      return NextResponse.json({ error: 'Failed to fetch announcement' }, { status: 500 })
-    }
+    const data = await getAnnouncement(params.id)
     if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json(data)
   } catch (error) {
@@ -40,7 +32,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = getSupabaseServerClient()
+    const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     const params = await context.params
 
@@ -61,17 +53,7 @@ export async function PATCH(
       if (isActive && !('published_at' in updatePayload)) updatePayload.published_at = new Date()
     }
 
-    const { data, error } = await supabase
-      .from('announcements')
-      .update(updatePayload)
-      .eq('id', params.id)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Supabase announcement update error:', error)
-      return NextResponse.json({ error: 'Failed to update announcement' }, { status: 500 })
-    }
+    const data = await updateAnnouncement(params.id, updatePayload)
     return NextResponse.json(data)
   } catch (error: unknown) {
     if (error instanceof ZodError) return NextResponse.json({ error: 'Invalid form data' }, { status: 400 })
@@ -85,7 +67,7 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = getSupabaseServerClient()
+    const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     const params = await context.params
 
@@ -93,15 +75,7 @@ export async function DELETE(
     const role = getUserRole(user)
     if (role !== 'ADMIN') return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
 
-    const { error } = await supabase
-      .from('announcements')
-      .delete()
-      .eq('id', params.id)
-
-    if (error) {
-      console.error('Supabase announcement delete error:', error)
-      return NextResponse.json({ error: 'Failed to delete announcement' }, { status: 500 })
-    }
+    await deleteAnnouncement(params.id)
     return NextResponse.json({ message: 'Announcement deleted' })
   } catch (error) {
     console.error('Announcement delete error:', error)
