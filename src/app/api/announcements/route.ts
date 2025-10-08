@@ -6,12 +6,9 @@ import { listAnnouncements, createAnnouncement } from "@/features/announcements/
 import { ZodError } from "zod"
 import { getUserRole } from "@/lib/authz"
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const active = searchParams.get("active")
-
-    const data = await listAnnouncements({ active: active === 'true' })
+    const data = await listAnnouncements()
     return NextResponse.json({ data })
   } catch (error) {
     console.error('Announcements fetch error:', error)

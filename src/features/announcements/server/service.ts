@@ -4,11 +4,18 @@ import {
   createAnnouncementRepo,
   updateAnnouncementRepo,
   deleteAnnouncementRepo,
+  listAnnouncementsRepoAdmin,
 } from "./repository"
 import { notificationSchema } from "@/lib/validations"
 
-export async function listAnnouncements(params: { active?: boolean | null }) {
-  return listAnnouncementsRepo(params)
+export async function listAnnouncements() {
+  const data = await listAnnouncementsRepo()
+  return data
+}
+
+export async function listAnnouncementsAdmin() {
+  const data = await listAnnouncementsRepoAdmin()
+  return data
 }
 
 export async function getAnnouncement(id: string) {

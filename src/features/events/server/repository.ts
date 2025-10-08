@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { getSupabaseServerClientAnon } from "@/lib/supabase/serverAnon"
 
 type CreateEventInput = {
   title: string

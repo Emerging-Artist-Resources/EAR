@@ -1,14 +1,27 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { getSupabaseServerClientAnon } from "@/lib/supabase/serverAnon"
 
-export async function listAnnouncementsRepo(params: { active?: boolean | null }) {
+// PUBLIC
+export async function listAnnouncementsRepo(limit = 20) {
+  // For public (active=true) queries, use anon client to avoid cookie-bound auth issues
+    const anonClient = getSupabaseServerClientAnon()
+    const { data, error } = await anonClient
+      .from('announcements')
+      .select('id,title,content,published_at, type')
+      .is('archived_at', null)
+      .not('published_at', 'is', null)
+      .limit(limit)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data
+}
+
+export async function listAnnouncementsRepoAdmin() {
   const supabase = await getSupabaseServerClient()
-  let query = supabase.from('announcements').select('*')
-  if (params.active) {
-    // Active = published and not archived
-    query = query.is('archived_at', null).not('published_at', 'is', null)
-  }
-  query = query.order('created_at', { ascending: false })
-  const { data, error } = await query
+  const { data, error } = await supabase
+    .from('announcements')
+    .select('id,title,content,published_at,archived_at,author_user_id,type,created_at')
+    .order('created_at', { ascending: false })
   if (error) throw error
   return data
 }

@@ -4,11 +4,9 @@ import { useState, useEffect } from "react"
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns"
 import { CallToAction } from "@/components/layout/call-to-action"
 import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import PerformanceModal from "@/components/performance-modal"
 import { usePerformances } from "@/hooks/use-performances"
 import { PERFORMANCE_STATUS, getStatusColor, formatDateTime } from "@/lib/constants"
-import type { Performance } from "@/hooks/use-performances"
 
 export default function CalendarView() {
   const [currentMonth, setCurrentMonth] = useState(new Date())

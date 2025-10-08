@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card"
-export const dynamic = "force-dynamic"
 import { Badge } from "@/components/ui/badge"
+export const revalidate = 60
+import { listAnnouncements } from "@/features/announcements/server/service"
 
 type Announcement = {
   id: string
@@ -25,19 +26,13 @@ function typeVariant(type?: string) {
 }
 
 async function getAnnouncements(): Promise<Announcement[]> {
-  try {
-    const res = await fetch('/api/announcements', { cache: 'no-store' })
-    if (!res.ok) return []
-    const json = await res.json()
-    const rows: Announcement[] = Array.isArray(json) ? (json as Announcement[]) : (json?.data ?? [])
-    return rows.filter((a) => (!!(a as any).published_at) && !(a as any).archived_at)
-  } catch {
-    return []
-  }
+  const data = await listAnnouncements()
+  return (data as Announcement[]) ?? []
 }
 
 export default async function AnnouncementsPage() {
   const announcements = await getAnnouncements()
+  
 
   return (
     <div className="min-h-screen bg-gray-50">

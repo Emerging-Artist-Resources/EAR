@@ -207,6 +207,7 @@ export default function AdminNotificationsPage() {
     return null
   }
 
+  console.log('notifications', notifications)
   return (
     <div className="min-h-screen bg-gray-50">
 

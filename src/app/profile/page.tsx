@@ -43,17 +43,25 @@ export default function UserProfile() {
 
   const fetchUserPerformances = useCallback(async () => {
     try {
-      const response = await fetch(`/api/performances?userId=${userId}`)
+      const response = await fetch(`/api/me/performances`)
       if (response.ok) {
-        const data = await response.json()
-        setPerformances(data)
+        const json = await response.json()
+        const items: Performance[] = Array.isArray(json)
+          ? json
+          : Array.isArray(json?.data)
+            ? json.data
+            : []
+        setPerformances(items)
+      } else {
+        setPerformances([])
       }
     } catch (error) {
       console.error("Error fetching user performances:", error)
+      setPerformances([])
     } finally {
       setLoading(false)
     }
-  }, [userId])
+  }, [])
 
   useEffect(() => {
     let mounted = true
