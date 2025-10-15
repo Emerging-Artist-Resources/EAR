@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Card } from "@/components/ui/card"
+import { FilterBar } from "@/components/calendar/FilterBar"
 import { Performance } from "@/hooks/use-performances"
 import {
   format,
@@ -27,6 +28,11 @@ export function Calendar({ performances }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [showFilters, setShowFilters] = useState<boolean>(false)
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>('ALL')
+  const [priceFilter, setPriceFilter] = useState<'ALL' | 'FREE' | 'PAID'>('ALL')
+  const [genresFilter, setGenresFilter] = useState<Set<string>>(new Set())
+  const [boroughsFilter, setBoroughsFilter] = useState<Set<string>>(new Set())
 
   const monthStart = startOfMonth(currentDate)
   const monthEnd = endOfMonth(currentDate)
@@ -46,11 +52,121 @@ export function Calendar({ performances }: CalendarProps) {
     }
   }
 
+  const filteredPerformances = useMemo(() => {
+    type Maybe<T> = T | null | undefined
+    type PerfLike = Performance | (Performance & { [key: string]: unknown })
+
+    const asRecord = (val: unknown): Record<string, unknown> | null => {
+      return val && typeof val === 'object' && !Array.isArray(val) ? (val as Record<string, unknown>) : null
+    }
+
+    const getFrom = (rec: Record<string, unknown> | null, key: string): unknown => {
+      return rec ? rec[key] : undefined
+    }
+
+    const getEventType = (p: PerfLike): string | undefined => {
+      const prec = asRecord(p)
+      const details = asRecord(getFrom(prec, 'details'))
+      const val = getFrom(prec, 'eventType') ?? getFrom(prec, 'event_type') ?? getFrom(details, 'eventType') ?? getFrom(details, 'event_type')
+      return typeof val === 'string' ? val : undefined
+    }
+
+    const getPrice = (p: PerfLike): Maybe<string | number> => {
+      const prec = asRecord(p)
+      const details = asRecord(getFrom(prec, 'details'))
+      const val = getFrom(prec, 'ticketPrice') ?? getFrom(details, 'ticketPrice') ?? getFrom(prec, 'price') ?? getFrom(details, 'price')
+      return typeof val === 'string' || typeof val === 'number' ? val : undefined
+    }
+
+    const getLocation = (p: PerfLike): string | undefined => {
+      const prec = asRecord(p)
+      const details = asRecord(getFrom(prec, 'details'))
+      const val = getFrom(prec, 'location') ?? getFrom(details, 'location')
+      return typeof val === 'string' ? val : undefined
+    }
+
+    const getGenres = (p: PerfLike): string[] | undefined => {
+      const prec = asRecord(p)
+      const details = asRecord(getFrom(prec, 'details'))
+      const raw = getFrom(prec, 'genres') ?? getFrom(prec, 'genre') ?? getFrom(details, 'genres') ?? getFrom(details, 'genre')
+      if (Array.isArray(raw)) return raw.filter(v => typeof v === 'string') as string[]
+      if (typeof raw === 'string') return [raw]
+      return undefined
+    }
+
+    const getOpportunitySubtype = (p: PerfLike): string | undefined => {
+      const prec = asRecord(p)
+      const details = asRecord(getFrom(prec, 'details'))
+      const val = getFrom(details, 'opportunityType') ?? getFrom(prec, 'opportunityType')
+      return typeof val === 'string' ? val : undefined
+    }
+
+    const isFree = (val: unknown): boolean => {
+      if (val == null) return false
+      const s = String(val).toLowerCase().trim()
+      if (s === 'free' || s === '$0' || s === '0') return true
+      const num = parseFloat(s.replace(/[^0-9.]/g, ''))
+      return !isNaN(num) && num === 0
+    }
+
+    const boroughFrom = (loc?: string): string | null => {
+      if (!loc) return null
+      const L = loc.toLowerCase()
+      if (L.includes('manhattan')) return 'Manhattan'
+      if (L.includes('brooklyn')) return 'Brooklyn'
+      if (L.includes('queens')) return 'Queens'
+      if (L.includes('bronx')) return 'Bronx'
+      if (L.includes('staten island')) return 'Staten Island'
+      return null
+    }
+
+    const matchGenre = (val: string[] | undefined): boolean => {
+      if (genresFilter.size === 0) return true
+      if (!val) return false
+      const lowerSet = new Set(val.map(v => String(v).toLowerCase()))
+      for (const g of genresFilter) {
+        if (lowerSet.has(g.toLowerCase())) return true
+      }
+      return false
+    }
+
+    return performances.filter((p: PerfLike) => {
+      const type = (getEventType(p) || '').toUpperCase()
+      if (eventTypeFilter !== 'ALL') {
+        if (eventTypeFilter === 'PERFORMANCE' || eventTypeFilter === 'CLASS') {
+          if (type !== eventTypeFilter) return false
+        } else {
+          const sub = getOpportunitySubtype(p)
+          if (String(sub || '').toUpperCase() !== eventTypeFilter) return false
+        }
+      }
+
+      if (priceFilter !== 'ALL') {
+        const priceVal = getPrice(p)
+        const free = isFree(priceVal)
+        if (priceFilter === 'FREE' && !free) return false
+        if (priceFilter === 'PAID' && free) return false
+      }
+
+      if (!matchGenre(getGenres(p))) return false
+
+      if (boroughsFilter.size > 0) {
+        const prec = asRecord(p)
+        const details = asRecord(getFrom(prec, 'details'))
+        const boroughRaw = getFrom(details, 'borough')
+        const borough = typeof boroughRaw === 'string' ? boroughRaw : boroughFrom(getLocation(p))
+        if (!borough || !boroughsFilter.has(String(borough))) return false
+      }
+
+      return true
+    })
+  }, [performances, eventTypeFilter, priceFilter, genresFilter, boroughsFilter])
+
   const getPerformancesForDate = (date: Date) => {
     const targetIso = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
       .toISOString()
       .slice(0, 10)
-    return performances.filter((performance) => {
+    return filteredPerformances.filter((performance) => {
       const src = performance.date as unknown as string
       const eventIso = (typeof src === 'string' ? src : new Date(src).toISOString()).slice(0, 10)
       return eventIso === targetIso
@@ -59,7 +175,7 @@ export function Calendar({ performances }: CalendarProps) {
 
   return (
     <Card>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
           {view === 'month' && format(currentDate, "MMMM yyyy")}
           {view === 'week' && `${format(startOfWeek(currentDate, { weekStartsOn: 0 }), "MMM d")} – ${format(endOfWeek(currentDate, { weekStartsOn: 0 }), "MMM d, yyyy")}`}
@@ -110,6 +226,19 @@ export function Calendar({ performances }: CalendarProps) {
           </div>
         </div>
       </div>
+
+      <FilterBar
+        show={showFilters}
+        onToggle={() => setShowFilters(!showFilters)}
+        eventType={eventTypeFilter}
+        onChangeEventType={setEventTypeFilter}
+        price={priceFilter}
+        onChangePrice={(v) => setPriceFilter(v)}
+        genres={genresFilter}
+        onChangeGenres={(next) => setGenresFilter(new Set(next))}
+        boroughs={boroughsFilter}
+        onChangeBoroughs={(next) => setBoroughsFilter(new Set(next))}
+      />
 
       {view === 'month' && (
         <div className="grid grid-cols-7 gap-px bg-gray-200">

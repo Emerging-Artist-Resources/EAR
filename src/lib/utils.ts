@@ -10,7 +10,7 @@ export const variants = {
     base: "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none",
     variants: {
       variant: {
-        primary: "bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500",
+        primary: "bg-yellow-600 text-white hover:bg-indigo-700 focus:ring-indigo-500",
         secondary: "bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500",
         outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-indigo-500",
         ghost: "text-gray-700 hover:bg-gray-100 focus:ring-gray-500",
@@ -41,7 +41,7 @@ export const variants = {
     },
   },
   modal: {
-    overlay: "fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-4 z-[9999]",
+    overlay: "fixed inset-0 bg-white/10 backdrop-blur-lg flex items-center justify-center p-4 z-[9999]",
     content: "bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl relative",
   },
 } as const
