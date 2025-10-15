@@ -1,20 +1,67 @@
+"use client"
 import React from "react"
 import Link from "next/link"
-import { useSession } from "next-auth/react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { UserDropdown } from "@/components/ui/user-dropdown"
 import MobileNav from "@/components/mobile-nav"
+import { getSupabaseClient } from "@/lib/supabase/client"
+
+type MinimalUser = {
+  email?: string
+  app_metadata?: Record<string, unknown>
+  user_metadata?: Record<string, unknown>
+}
+
+function extractUserRole(user: unknown): string | undefined {
+  if (!user || typeof user !== 'object') return undefined
+  const u = user as MinimalUser
+  const role = (u.app_metadata?.role ?? u.user_metadata?.role)
+  return typeof role === 'string' ? role : undefined
+}
+
+function extractUserName(user: unknown): string | null {
+  if (!user || typeof user !== 'object') return null
+  const u = user as MinimalUser
+  const name = u.user_metadata?.name
+  if (typeof name === 'string') return name
+  return typeof u.email === 'string' ? u.email : null
+}
 
 export interface HeaderProps {
   showSubmitButton?: boolean
   onSubmitPerformance?: () => void
+  initialIsAuthed?: boolean
+  initialUserName?: string | null
+  initialUserRole?: string | undefined
 }
 
 export const Header: React.FC<HeaderProps> = ({
   showSubmitButton = false,
   onSubmitPerformance,
+  initialIsAuthed,
+  initialUserName,
+  initialUserRole,
 }) => {
-  const { data: session } = useSession()
+  const supabase = getSupabaseClient()
+  const [userName, setUserName] = useState<string | null>(initialUserName ?? null)
+  const [userRole, setUserRole] = useState<string | undefined>(initialUserRole)
+  const [isAuthed, setIsAuthed] = useState(!!initialIsAuthed)
+  const [isLoaded, setIsLoaded] = useState(initialIsAuthed !== undefined)
+
+  useEffect(() => {
+    let isMounted = true
+    ;(async () => {
+      const { data } = await supabase.auth.getUser()
+      if (!isMounted) return
+      const u = data.user
+      setIsAuthed(!!u)
+      setUserName(extractUserName(u))
+      setUserRole(extractUserRole(u))
+      setIsLoaded(true)
+    })()
+    return () => { isMounted = false }
+  }, [supabase])
 
   return (
     <nav className="bg-white shadow">
@@ -32,14 +79,14 @@ export const Header: React.FC<HeaderProps> = ({
             <Link href="/notifications">
               <Button variant="ghost">Updates</Button>
             </Link>
-            {session ? (
+            {isLoaded && isAuthed ? (
               <>
                 {showSubmitButton && onSubmitPerformance && (
                   <Button onClick={onSubmitPerformance}>
                     Submit Performance
                   </Button>
                 )}
-                {session.user.role === "ADMIN" && (
+                {userRole === "ADMIN" && (
                   <>
                     <Link href="/admin">
                       <Button variant="ghost">Admin Dashboard</Button>
@@ -50,18 +97,18 @@ export const Header: React.FC<HeaderProps> = ({
                   </>
                 )}
                 <UserDropdown 
-                  userName={session.user.name || "User"} 
-                  userRole={session.user.role}
+                  userName={userName || "User"} 
+                  userRole={userRole}
                 />
               </>
-            ) : (
+            ) : isLoaded ? (
               <Link href="/auth/signin">
                 <Button variant="ghost">Sign In</Button>
               </Link>
-            )}
+            ) : null}
           </div>
           <MobileNav 
-            userRole={session?.user?.role} 
+            userRole={userRole} 
             onSubmitPerformance={onSubmitPerformance}
           />
         </div>

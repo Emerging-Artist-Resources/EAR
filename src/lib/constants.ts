@@ -34,7 +34,7 @@ export const ROUTES = {
 
 export const API_ENDPOINTS = {
   PERFORMANCES: "/api/performances",
-  NOTIFICATIONS: "/api/notifications",
+  NOTIFICATIONS: "/api/announcements",
   ADMIN_REVIEWS: "/api/admin/reviews",
   ADMIN_USERS: "/api/admin/users",
   AUTH_REGISTER: "/api/auth/register",

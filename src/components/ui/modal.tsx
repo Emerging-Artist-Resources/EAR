@@ -10,6 +10,7 @@ export interface ModalProps {
   children: React.ReactNode
   size?: "sm" | "md" | "lg" | "xl"
   showCloseButton?: boolean
+  closeOnOverlay?: boolean
 }
 
 const sizeClasses = {
@@ -26,11 +27,12 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   size = "md",
   showCloseButton = true,
+  closeOnOverlay = true,
 }) => {
   if (!isOpen) return null
 
   const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    if (closeOnOverlay && e.target === e.currentTarget) {
       onClose()
     }
   }

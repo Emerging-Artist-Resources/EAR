@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { signIn, getSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { getSupabaseClient } from "@/lib/supabase/client"
 
 export default function SignIn() {
   const [email, setEmail] = useState("")
@@ -18,22 +18,14 @@ export default function SignIn() {
     setError("")
 
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      })
-
-      if (result?.error) {
+      const supabase = getSupabaseClient()
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
         setError("Invalid credentials")
-      } else {
-        const session = await getSession()
-        if (session?.user?.role === "ADMIN") {
-          router.push("/admin")
-        } else {
-          router.push("/calendar")
-        }
+        return
       }
+      const role = (data.user as { app_metadata?: { role?: string } } | null)?.app_metadata?.role
+      router.push(role === "ADMIN" ? "/admin" : "/calendar")
     } catch (error) {
       setError("Something went wrong")
     } finally {
