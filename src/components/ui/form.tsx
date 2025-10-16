@@ -1,83 +1,86 @@
-import React from "react"
-import { useForm, UseFormReturn, FieldValues, Path, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { cn } from "@/lib/utils"
+// import * as React from "react"
+// import {
+//   useForm,
+//   UseFormReturn,
+//   FieldValues,
+//   Path,
+//   DefaultValues,
+// } from "react-hook-form"
+// import { zodResolver } from "@hookform/resolvers/zod"
+// import { z } from "zod"
+// import { cn } from "@/lib/utils"
 
-export interface FormProps<T extends FieldValues> extends Omit<React.FormHTMLAttributes<HTMLFormElement>, "onSubmit"> {
-  schema: z.ZodSchema<T>
-  onSubmit: (data: T) => void | Promise<void>
-  defaultValues?: Partial<T>
-  children: (form: UseFormReturn<T>) => React.ReactNode
-}
+// export interface FormProps<T extends FieldValues>
+//   extends Omit<React.FormHTMLAttributes<HTMLFormElement>, "onSubmit" | "children"> {
+//   /** Zod schema describing the form data */
+//   schema: z.ZodType<T>
+//   /** onSubmit receives validated data */
+//   onSubmit: (data: T) => void | Promise<void>
+//   /** RHF prefers DefaultValues<T> */
+//   defaultValues?: DefaultValues<T>
+//   /** Render-prop: you get the form methods */
+//   children: (form: UseFormReturn<T>) => React.ReactNode
+// }
 
-export function Form<T extends FieldValues>({
-  schema,
-  onSubmit,
-  defaultValues,
-  children,
-  className,
-  ...props
-}: FormProps<T>) {
-  const form = useForm<T>({
-    resolver: zodResolver(schema),
-    defaultValues,
-  })
+// export function Form<T extends FieldValues>({
+//   schema,
+//   onSubmit,
+//   defaultValues,
+//   children,
+//   className,
+//   ...props
+// }: FormProps<T>) {
+//   const form = useForm<T>({
+//     resolver: zodResolver(schema),
+//     defaultValues,
+//   })
 
-  const handleSubmit = form.handleSubmit(async (data) => {
-    try {
-      await onSubmit(data)
-    } catch (error) {
-      console.error("Form submission error:", error)
-    }
-  })
+//   const handleSubmit = form.handleSubmit(async (data) => {
+//     try {
+//       await onSubmit(data)
+//     } catch (error) {
+//       console.error("Form submission error:", error)
+//     }
+//   })
 
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className={cn("space-y-6", className)}
-      {...props}
-    >
-      {children(form)}
-    </form>
-  )
-}
+//   return (
+//     <form onSubmit={handleSubmit} className={cn("space-y-6", className)} {...props}>
+//       {children(form)}
+//     </form>
+//   )
+// }
 
-export interface FormFieldProps<T extends FieldValues> {
-  form: UseFormReturn<T>
-  name: Path<T>
-  label?: string
-  helperText?: string
-  children: React.ReactNode
-}
+// export interface FormFieldProps<T extends FieldValues> {
+//   form: UseFormReturn<T>
+//   name: Path<T>
+//   label?: string
+//   helperText?: string
+//   children: React.ReactNode
+// }
 
-export function FormField<T extends FieldValues>({
-  form,
-  name,
-  label,
-  helperText,
-  children,
-}: FormFieldProps<T>) {
-  const {
-    formState: { errors },
-  } = form
+// export function FormField<T extends FieldValues>({
+//   form,
+//   name,
+//   label,
+//   helperText,
+//   children,
+// }: FormFieldProps<T>) {
+//   // Use getFieldState for correct typing with Path<T>
+//   const { error } = form.getFieldState(name, form.formState)
 
-  const error = errors[name]?.message as string | undefined
-
-  return (
-    <div className="space-y-1">
-      {label && (
-        <label className="block text-sm font-medium text-gray-700">
-          {label}
-        </label>
-      )}
-      {children}
-      {error && (
-        <p className="text-sm text-error-600">{error}</p>
-      )}
-      {!error && helperText && (
-        <p className="text-sm text-gray-500">{helperText}</p>
-      )}
-    </div>
-  )
-}
+//   return (
+//     <div className="space-y-1">
+//       {label && (
+//         <label className="block text-sm font-medium text-gray-700">
+//           {label}
+//         </label>
+//       )}
+//       {children}
+//       {error ? (
+//         <p className="text-sm text-error-600">{String(error.message ?? "")}</p>
+//       ) : (
+//         helperText && <p className="text-sm text-gray-500">{helperText}</p>
+//       )}
+//     </div>
+//   )
+// }
