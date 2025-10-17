@@ -150,7 +150,7 @@ export default function AdminDashboard() {
                 onClick={() => setFilter("PENDING")}
                 className={`px-4 py-2 rounded-md text-sm font-medium ${
                   filter === "PENDING"
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-primary text-white"
                     : "bg-white text-gray-700 hover:bg-gray-50"
                 }`}
               >
@@ -160,7 +160,7 @@ export default function AdminDashboard() {
                 onClick={() => setFilter("APPROVED")}
                 className={`px-4 py-2 rounded-md text-sm font-medium ${
                   filter === "APPROVED"
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-primary text-white"
                     : "bg-white text-gray-700 hover:bg-gray-50"
                 }`}
               >
@@ -170,7 +170,7 @@ export default function AdminDashboard() {
                 onClick={() => setFilter("REJECTED")}
                 className={`px-4 py-2 rounded-md text-sm font-medium ${
                   filter === "REJECTED"
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-primary text-white"
                     : "bg-white text-gray-700 hover:bg-gray-50"
                 }`}
               >
@@ -295,7 +295,7 @@ function PerformanceReviewCard({
             <textarea
               id={`comments-${performance.id}`}
               rows={3}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm"
               placeholder="Add any comments about this performance..."
               value={comments}
               onChange={(e) => setComments(e.target.value)}

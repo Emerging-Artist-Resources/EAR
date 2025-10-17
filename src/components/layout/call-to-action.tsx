@@ -7,7 +7,7 @@ export interface CallToActionProps {
 
 export const CallToAction: React.FC<CallToActionProps> = ({ onSubmitPerformance }) => {
   return (
-    <div className="mb-6 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg p-6 border border-indigo-200">
+  <div className="mb-6 bg-gradient-to-r from-[var(--secondary-50)] to-[var(--secondary-100)] rounded-lg p-6 border border-primary/20">
       <div className="text-center">
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
           Have an upcoming performance or event?

@@ -134,8 +134,8 @@ export default function UserProfile() {
             <div className="bg-white shadow rounded-lg p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="h-16 w-16 rounded-full bg-indigo-100 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-indigo-600">
+                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-2xl font-bold text-primary">
                       {userName?.charAt(0).toUpperCase()}
                     </span>
                   </div>
@@ -194,7 +194,7 @@ export default function UserProfile() {
                 <div className="text-center text-gray-500">
                   <p className="text-lg mb-2">No performances submitted yet</p>
                   <p className="text-sm">
-                    <Link href="/calendar" className="text-indigo-600 hover:text-indigo-500">
+                    <Link href="/calendar" className="text-primary hover:opacity-80">
                       Submit your first performance
                     </Link>
                   </p>

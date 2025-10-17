@@ -3,12 +3,12 @@
 import { useState } from "react"
 import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
 import type { Resolver } from "react-hook-form"
-import { performanceSchema, type PerformanceFormData } from "@/lib/validations"
+import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
 import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
 import { getSupabaseClient } from "@/lib/supabase/client"
 import { usePerformances } from "@/hooks/use-performances"
-import { EventTypeSelector, type EventType, type OpportunitySubtype } from "./EventTypeSelector"
+import { EventTypeSelector, type EventType } from "./EventTypeSelector"
 import { BasicInfoStep } from "./steps/BasicInfoStep"
 import { PerformanceDetailsStep } from "./steps/PerformanceDetailsStep"
 import { ClassWorkshopStep } from "./steps/ClassWorkshopStep"
@@ -23,7 +23,6 @@ interface EventWizardProps {
 export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [eventType, setEventType] = useState<EventType | null>(null)
-  const [opportunitySubtype, setOpportunitySubtype] = useState<OpportunitySubtype>(null)
   const [submitMessage, setSubmitMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hasSubmittedBefore, setHasSubmittedBefore] = useState<null | boolean>(null)
@@ -32,10 +31,12 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
   const supabase = getSupabaseClient()
   const { submitPerformance } = usePerformances()
 
-  const resolver = zodResolver(performanceSchema) as unknown as Resolver<PerformanceFormData>
-  const form = useForm<PerformanceFormData>({
+  const resolver = zodResolver(eventFormSchema) as unknown as Resolver<EventFormData>
+  const form = useForm<EventFormData>({
     resolver,
-    defaultValues: { referralSources: [], joinEmailList: false, agreeCompTickets: false, photoUrls: [""] },
+    defaultValues: { referralSources: [], joinEmailList: false, submittedBefore: undefined, agreeCompTickets: false, photoUrls: [""], address: "" } as Partial<EventFormData>,
+    mode: 'onChange',
+    reValidateMode: 'onChange',
   })
 
   const showToast = (message: string) => {
@@ -109,7 +110,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           <div className="w-full">
             <div className="h-2 bg-gray-200 rounded">
               <div
-                className="h-2 bg-orange-200 rounded transition-all"
+                className="h-2 bg-primary-400 rounded transition-all"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -118,26 +119,28 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       })()}
       {/* Step indicators */}
       <div className="flex items-center gap-2 text-sm">
-        <span className={`px-2 py-1 rounded ${step === 1 ? 'bg-orange-100 text-gray-700' : 'bg-gray-100 text-gray-700'}`}>Basic Info</span>
+        <span className={`px-2 py-1 rounded ${step === 1 ? 'bg-primary-100 text-gray-700' : 'bg-gray-100 text-gray-700'}`}>Basic Info</span>
         <span className="text-gray-400">/</span>
-        <span className={`px-2 py-1 rounded ${step === 2 ? 'bg-orange-100 text-gray-700' : 'bg-gray-100 text-gray-700'}`}>Event Details</span>
+        <span className={`px-2 py-1 rounded ${step === 2 ? 'bg-primary-100 text-gray-700' : 'bg-gray-100 text-gray-700'}`}>Event Details</span>
         <span className="text-gray-400">/</span>
-        <span className={`px-2 py-1 rounded ${step === 3 ? 'bg-orange-100 text-gray-700' : 'bg-gray-100 text-gray-700'}`}>Wrap-up</span>
+        <span className={`px-2 py-1 rounded ${step === 3 ? 'bg-primary-100 text-gray-700' : 'bg-gray-100 text-gray-700'}`}>Wrap-up</span>
       </div>
       {step === 1 && (
-        <EventTypeSelector
-          eventType={eventType}
-          onChangeType={setEventType}
-          opportunitySubtype={opportunitySubtype}
-          onChangeSubtype={setOpportunitySubtype}
-        />
+        <EventTypeSelector eventType={eventType} onChangeType={setEventType} />
       )}
 
       {step === 1 && <BasicInfoStep form={form} />}
       {step === 2 && (
-        eventType === 'PERFORMANCE' ? <PerformanceDetailsStep form={form} />
-          : eventType === 'CLASS' ? <ClassWorkshopStep />
-          : <OpportunityStep subtype={opportunitySubtype} />
+        eventType === 'PERFORMANCE' ? (
+          <PerformanceDetailsStep form={form} />
+        ) : eventType === 'CLASS' ? (
+          <ClassWorkshopStep form={form} />
+        ) : (
+          <OpportunityStep
+            form={form}
+            subtype={eventType === 'FUNDING' ? 'FUNDING' : eventType === 'AUDITION' ? 'AUDITION' : 'CREATIVE'}
+          />
+        )
       )}
       {step === 3 && (
         <WrapUpStep form={form} hasSubmittedBefore={hasSubmittedBefore} setHasSubmittedBefore={setHasSubmittedBefore} />

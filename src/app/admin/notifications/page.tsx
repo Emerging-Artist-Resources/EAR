@@ -326,7 +326,7 @@ export default function AdminNotificationsPage() {
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="INFO">Info</option>
                 <option value="WARNING">Warning</option>
@@ -341,7 +341,7 @@ export default function AdminNotificationsPage() {
                 id="isActive"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
               />
               <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
                 Active (visible to users)

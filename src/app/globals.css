@@ -2,16 +2,22 @@
 
 :root {
   /* Colors */
-  --primary-50: #eef2ff;
-  --primary-100: #e0e7ff;
-  --primary-200: #c7d2fe;
-  --primary-300: #a5b4fc;
-  --primary-400: #818cf8;
-  --primary-500: #6366f1;
-  --primary-600: #4f46e5;
-  --primary-700: #4338ca;
-  --primary-800: #3730a3;
-  --primary-900: #312e81;
+  /* Primary: Warm Taupe */
+  --primary-50: #f7ebe6; /* very light taupe */
+  --primary-100: #f2dfd6;
+  --primary-200: #e7c7b8;
+  --primary-300: #dba08a;
+  --primary-400: #c9775c;
+  --primary-500: #bf6646; /* provided */
+  --primary-600: #a8573c;
+  --primary-700: #8b4833;
+  --primary-800: #6f3a2a;
+  --primary-900: #5b3023;
+
+  /* Secondary: Ivory */
+  --secondary-50: #f2ece4; /* provided */
+  --secondary-100: #efe6dc;
+  --secondary-200: #e7dccf;
 
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
@@ -79,6 +85,7 @@
 }
 
 body {
+  /* Default app background: light gray to reduce contrast on load */
   background: var(--gray-50);
   color: var(--gray-900);
   font-family: var(--font-sans), system-ui, sans-serif;
@@ -96,6 +103,19 @@ body {
 
 .border-primary {
   border-color: var(--primary-600);
+}
+
+/* Secondary utility helpers */
+.text-secondary {
+  color: var(--secondary-200);
+}
+
+.bg-secondary {
+  background-color: var(--secondary-50);
+}
+
+.border-secondary {
+  border-color: var(--secondary-100);
 }
 
 .shadow-custom {

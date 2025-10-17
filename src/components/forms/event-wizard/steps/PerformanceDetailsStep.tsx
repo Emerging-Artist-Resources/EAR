@@ -1,46 +1,100 @@
 "use client"
 
-import { UseFormReturn } from "react-hook-form"
+import { UseFormReturn, useFieldArray, type FieldErrors } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { PerformanceFormData } from "@/lib/validations"
+import { EventFormData } from "@/lib/validations/events"
 
 interface PerformanceDetailsStepProps {
-  form: UseFormReturn<PerformanceFormData>
+  form: UseFormReturn<EventFormData>
 }
 
 export function PerformanceDetailsStep({ form }: PerformanceDetailsStepProps) {
-  const { register, formState: { errors } } = form
+  const { register, formState: { errors }, control, getValues, setError } = form
+  const e = errors as FieldErrors<EventFormData>
+  const { fields, append, remove } = useFieldArray<EventFormData>({ control, name: 'extraOccurrences' as unknown as never })
+
+  const handleAddExtra = () => {
+    const date = getValues('date' as keyof EventFormData) as unknown as string | undefined
+    const time = getValues('showTime' as keyof EventFormData) as unknown as string | undefined
+    if (!date || !time) {
+      if (!date) setError('date' as never, { type: 'required', message: 'Date is required' })
+      if (!time) setError('showTime' as never, { type: 'required', message: 'Time is required' })
+      return
+    }
+    if (fields.length > 0) {
+      const last = getValues(`extraOccurrences.${fields.length - 1}` as never) as { date?: string; time?: string }
+      if (!last?.date || !last?.time) {
+        if (!last?.date) setError(`extraOccurrences.${fields.length - 1}.date` as never, { type: 'required', message: 'Date is required' })
+        if (!last?.time) setError(`extraOccurrences.${fields.length - 1}.time` as never, { type: 'required', message: 'Time is required' })
+        return
+      }
+    }
+    append({ date: '', time: '' } as never)
+  }
   return (
     <>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Show Name *</label>
-        <Input {...register('title')} placeholder="Show title" error={!!errors.title} />
+        <Input {...register('title' as never)} placeholder="Show title" error={Boolean(e.title)} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Primary date/time */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Show Date *</label>
-          <Input {...register('date')} type="date" error={!!errors.date} />
+          <Input {...register('date' as never)} type="date" error={Boolean(e.date)} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Show Time *</label>
-          <Input {...register('showTime')} type="time" error={!!errors.showTime} />
+          <Input {...register('showTime' as never)} type="time" error={Boolean(e.showTime)} />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Ticket Price *</label>
-          <Input {...register('ticketPrice')} placeholder="$" error={!!errors.ticketPrice} />
-        </div>
+      </div>
+
+      {/* Add button aligned just under primary date/time */}
+      <div className="mt-2">
+        <button
+          type="button"
+          onClick={handleAddExtra}
+          className="text-sm px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
+        >
+          Add another date/time
+        </button>
+      </div>
+
+      {/* Additional dates/times list */}
+      <div className="mt-2 space-y-2">
+        {fields.map((field, idx) => (
+          <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Date *</label>
+              <Input {...register(`extraOccurrences.${idx}.date` as unknown as never)} type="date" error={Boolean((e as unknown as { extraOccurrences?: Array<{ date?: unknown }> })?.extraOccurrences?.[idx]?.date)} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Time *</label>
+              <Input {...register(`extraOccurrences.${idx}.time` as unknown as never)} type="time" error={Boolean((e as unknown as { extraOccurrences?: Array<{ time?: unknown }> })?.extraOccurrences?.[idx]?.time)} />
+            </div>
+            <div>
+              <button type="button" onClick={() => remove(idx)} className="text-sm px-2 py-2 rounded border border-gray-300 hover:bg-gray-50 w-full">Remove</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Ticket price now on its own row after dates/times */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Ticket Price *</label>
+        <Input {...register('ticketPrice' as never)} placeholder="$" error={Boolean(e.ticketPrice)} />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Ticket Link *</label>
-        <Input {...register('ticketLink')} placeholder="https://tickets.example.com" error={!!errors.ticketLink} />
+        <Input {...register('ticketLink' as never)} placeholder="https://tickets.example.com" error={Boolean(e.ticketLink)} />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Short Description (max 100 words) *</label>
-        <Textarea {...register('shortDescription')} rows={4} placeholder="Describe your event" error={!!errors.shortDescription} />
+        <Textarea {...register('shortDescription' as never)} rows={4} placeholder="Describe your event" error={Boolean(e.shortDescription)} />
       </div>
     </>
   )
