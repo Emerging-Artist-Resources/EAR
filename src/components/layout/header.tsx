@@ -76,8 +76,8 @@ export const Header: React.FC<HeaderProps> = ({
             <Link href="/calendar">
               <Button variant="ghost">View Calendar</Button>
             </Link>
-            <Link href="/notifications">
-              <Button variant="ghost">Updates</Button>
+            <Link href="/announcement">
+              <Button variant="ghost">Announcements</Button>
             </Link>
             {isLoaded && isAuthed ? (
               <>

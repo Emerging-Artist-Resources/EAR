@@ -21,9 +21,25 @@ export function FilterBar({ show, onToggle, eventType, onChangeEventType, price,
   }
   return (
     <div className="mb-6">
-      <button className="text-sm text-gray-700 underline" onClick={onToggle} type="button">
-        {show ? 'Hide filters' : 'Show filters'}
-      </button>
+      <div className="flex items-center gap-4">
+        <button className="text-sm text-gray-700 underline" onClick={onToggle} type="button">
+          {show ? 'Hide filters' : 'Show filters'}
+        </button>
+        {show && (
+          <button
+            type="button"
+            onClick={() => {
+              onChangeEventType('ALL')
+              onChangePrice('ALL')
+              onChangeGenres(new Set())
+              onChangeBoroughs(new Set())
+            }}
+            className="text-sm px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
       {show && (
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>

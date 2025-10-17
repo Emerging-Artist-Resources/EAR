@@ -100,7 +100,7 @@ export default function Dashboard() {
             </h2>
             <p className="text-gray-600">
               To submit a new performance, please visit the{" "}
-              <Link href="/calendar" className="text-indigo-600 hover:text-indigo-900">
+              <Link href="/calendar" className="text-primary hover:opacity-80">
                 Calendar page
               </Link>{" "}
               and use the submission form.

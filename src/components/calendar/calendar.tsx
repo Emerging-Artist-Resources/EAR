@@ -260,11 +260,11 @@ export function Calendar({ performances }: CalendarProps) {
                 key={day.toISOString()}
                 className={`bg-white p-1 sm:p-2 min-h-[80px] sm:min-h-[120px] cursor-pointer hover:bg-gray-50 ${
                   !isCurrentMonth ? 'text-gray-300' : ''
-                } ${isToday ? 'bg-blue-50' : ''}`}
+                } ${isToday ? 'bg-secondary' : ''}`}
                 onClick={() => setSelectedDate(day)}
               >
                 <div className={`text-xs sm:text-sm font-medium ${
-                  isToday ? 'text-blue-600' : isCurrentMonth ? 'text-gray-900' : 'text-gray-300'
+                  isToday ? 'text-primary' : isCurrentMonth ? 'text-gray-900' : 'text-gray-300'
                 }`}>
                   {format(day, 'd')}
                 </div>
@@ -272,7 +272,7 @@ export function Calendar({ performances }: CalendarProps) {
                   {dayPerformances.slice(0, 2).map((performance) => (
                     <div
                       key={performance.id}
-                      className="text-xs bg-indigo-100 text-indigo-800 px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate"
+                      className="text-xs bg-primary/10 text-primary px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate"
                       title={performance.title}
                     >
                       <span className="hidden sm:inline">{performance.title}</span>
@@ -309,14 +309,14 @@ export function Calendar({ performances }: CalendarProps) {
                 const dayPerformances = getPerformancesForDate(day)
                 const isToday = isSameDay(day, new Date())
                 return (
-                  <div key={day.toISOString()} className={`bg-white p-2 min-h-[100px] sm:min-h-[140px] ${isToday ? 'bg-blue-50' : ''}`}>
-                    <div className={`text-xs sm:text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>{format(day, 'EEE d')}</div>
+                  <div key={day.toISOString()} className={`bg-white p-2 min-h-[100px] sm:min-h-[140px] ${isToday ? 'bg-secondary' : ''}`}>
+                    <div className={`text-xs sm:text-sm font-medium ${isToday ? 'text-primary' : 'text-gray-900'}`}>{format(day, 'EEE d')}</div>
                     <div className="mt-1 space-y-1">
                       {dayPerformances.length === 0 ? (
                         <div className="text-xs text-gray-400">No events</div>
                       ) : (
                         dayPerformances.map((performance) => (
-                          <div key={performance.id} className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded truncate" title={performance.title}>
+                          <div key={performance.id} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded truncate" title={performance.title}>
                             {performance.title}
                           </div>
                         ))

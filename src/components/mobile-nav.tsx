@@ -32,7 +32,7 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
 
   const navigation = [
     { name: "View Calendar", href: "/calendar" },
-    { name: "Updates", href: "/notifications" },
+    { name: "Announcements", href: "/announcement" },
     ...(userRole === "ADMIN" ? [
       { name: "Admin", href: "/admin" },
       { name: "Manage Notifications", href: "/admin/notifications" }
@@ -43,7 +43,7 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
     <div className="lg:hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+        className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
       >
         <span className="sr-only">Open main menu</span>
         <svg
@@ -83,7 +83,7 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
                   onSubmitPerformance()
                   setIsOpen(false)
                 }}
-                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
+                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-primary hover:text-gray-900 hover:bg-primary/10"
               >
                 Submit Performance
               </button>

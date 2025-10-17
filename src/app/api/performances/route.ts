@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { performanceSchema } from "@/lib/validations/events"
+import { eventFormSchema } from "@/lib/validations/events"
 import { cookies } from "next/headers"
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
 import { createPerformance, listPerformances } from "@/features/events/server/service"
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const supabase = createRouteHandlerClient({ cookies })
     const { data: { user } } = await supabase.auth.getUser()
     const body = await request.json()
-    const validatedData = performanceSchema.parse(body)
+    const validatedData = eventFormSchema.parse(body)
 
     // Basic rate limit for anonymous submissions
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'

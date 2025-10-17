@@ -2,12 +2,12 @@
 
 import { UseFormReturn } from "react-hook-form"
 import { Input } from "@/components/ui/input"
-import { PerformanceFormData } from "@/lib/validations"
+import { EventFormData } from "@/lib/validations/events"
 
 type ReferralOption = "INSTAGRAM" | "WORD_OF_MOUTH" | "GOOGLE" | "OTHER"
 
 interface WrapUpStepProps {
-  form: UseFormReturn<PerformanceFormData>
+  form: UseFormReturn<EventFormData>
   hasSubmittedBefore: null | boolean
   setHasSubmittedBefore: (val: null | boolean) => void
 }

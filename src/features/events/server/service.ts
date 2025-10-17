@@ -1,17 +1,17 @@
 import { createEventWithPhotos, listEvents } from "./repository"
-import { performanceSchema, type PerformanceFormData } from "@/lib/validations/events"
+import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
 
-export async function createPerformance(formData: PerformanceFormData, createdBy: string | null) {
-  const parsed = performanceSchema.parse(formData)
-  const dateStr = parsed.date
+export async function createPerformance(formData: EventFormData, createdBy: string | null) {
+  const parsed = eventFormSchema.parse(formData)
+  const dateStr = parsed.date ?? ""
   const details = {
     submitter_name: parsed.submitterName,
     submitter_pronouns: parsed.submitterPronouns,
     contact_email: parsed.contactEmail,
     company: parsed.company || null,
     company_website: parsed.companyWebsite || null,
-    ticket_price: parsed.ticketPrice,
-    short_description: parsed.shortDescription,
+    ticket_price: parsed.ticketPrice ?? "",
+    short_description: parsed.shortDescription ?? "",
     credits: parsed.credits,
     social_handles: parsed.socialHandles,
     notes: parsed.notes || null,
@@ -22,9 +22,9 @@ export async function createPerformance(formData: PerformanceFormData, createdBy
   }
 
   return await createEventWithPhotos({
-    title: parsed.title,
+    title: parsed.title ?? "",
     date: dateStr,
-    show_time: parsed.showTime,
+    show_time: parsed.showTime ?? "",
     status: 'PENDING',
     created_by: createdBy,
     event_type: 'PERFORMANCE',
