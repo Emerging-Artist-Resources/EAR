@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { FilterBar } from "@/components/calendar/FilterBar"
-import { Performance } from "@/hooks/use-performances"
+import type { CalendarItem } from "@/hooks/use-calendar"
 import {
   format,
   startOfMonth,
@@ -20,11 +20,9 @@ import {
   addDays,
 } from "date-fns"
 
-interface CalendarProps {
-  performances: Performance[]
-}
+interface CalendarProps { items: CalendarItem[] }
 
-export function Calendar({ performances }: CalendarProps) {
+export function Calendar({ items }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -52,9 +50,9 @@ export function Calendar({ performances }: CalendarProps) {
     }
   }
 
-  const filteredPerformances = useMemo(() => {
+  const filteredItems = useMemo(() => {
     type Maybe<T> = T | null | undefined
-    type PerfLike = Performance | (Performance & { [key: string]: unknown })
+    type PerfLike = CalendarItem | (CalendarItem & { [key: string]: unknown })
 
     const asRecord = (val: unknown): Record<string, unknown> | null => {
       return val && typeof val === 'object' && !Array.isArray(val) ? (val as Record<string, unknown>) : null
@@ -130,7 +128,7 @@ export function Calendar({ performances }: CalendarProps) {
       return false
     }
 
-    return performances.filter((p: PerfLike) => {
+    return items.filter((p: PerfLike) => {
       const type = (getEventType(p) || '').toUpperCase()
       if (eventTypeFilter !== 'ALL') {
         if (eventTypeFilter === 'PERFORMANCE' || eventTypeFilter === 'CLASS') {
@@ -160,15 +158,14 @@ export function Calendar({ performances }: CalendarProps) {
 
       return true
     })
-  }, [performances, eventTypeFilter, priceFilter, genresFilter, boroughsFilter])
+  }, [items, eventTypeFilter, priceFilter, genresFilter, boroughsFilter])
 
   const getPerformancesForDate = (date: Date) => {
     const targetIso = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
       .toISOString()
       .slice(0, 10)
-    return filteredPerformances.filter((performance) => {
-      const src = performance.date as unknown as string
-      const eventIso = (typeof src === 'string' ? src : new Date(src).toISOString()).slice(0, 10)
+    return filteredItems.filter((item) => {
+      const eventIso = String(item.start).slice(0, 10)
       return eventIso === targetIso
     })
   }
@@ -271,12 +268,12 @@ export function Calendar({ performances }: CalendarProps) {
                 <div className="mt-1 space-y-1">
                   {dayPerformances.slice(0, 2).map((performance) => (
                     <div
-                      key={performance.id}
+                      key={performance.occurrenceId}
                       className="text-xs bg-primary/10 text-primary px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate"
-                      title={performance.title}
+                      title={performance.title || ''}
                     >
                       <span className="hidden sm:inline">{performance.title}</span>
-                      <span className="sm:hidden">{performance.title.substring(0, 8)}...</span>
+                      <span className="sm:hidden">{(performance.title || '').substring(0, 8)}...</span>
                     </div>
                   ))}
                   {dayPerformances.length > 2 && (
@@ -316,7 +313,7 @@ export function Calendar({ performances }: CalendarProps) {
                         <div className="text-xs text-gray-400">No events</div>
                       ) : (
                         dayPerformances.map((performance) => (
-                          <div key={performance.id} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded truncate" title={performance.title}>
+                          <div key={performance.occurrenceId} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded truncate" title={performance.title || ''}>
                             {performance.title}
                           </div>
                         ))
@@ -341,17 +338,8 @@ export function Calendar({ performances }: CalendarProps) {
             return (
               <div className="space-y-3">
                 {dayPerformances.map((performance) => (
-                  <Card key={performance.id} padding="sm">
+                  <Card key={performance.occurrenceId} padding="sm">
                     <h4 className="text-base sm:text-lg font-medium text-gray-900">{performance.title}</h4>
-                    {performance.time && (
-                      <p className="text-sm text-gray-600"><strong>Time:</strong> {performance.time}</p>
-                    )}
-                    {performance.location && (
-                      <p className="text-sm text-gray-600"><strong>Location:</strong> {performance.location}</p>
-                    )}
-                    {performance.description && (
-                      <p className="text-sm text-gray-600 mt-1">{performance.description}</p>
-                    )}
                   </Card>
                 ))}
               </div>
@@ -365,38 +353,15 @@ export function Calendar({ performances }: CalendarProps) {
           <h3 className="text-lg font-medium text-gray-900 mb-4">
             Performances on {format(selectedDate, "MMMM d, yyyy")}
           </h3>
-          {getPerformancesForDate(selectedDate).length === 0 ? (
+                  {getPerformancesForDate(selectedDate).length === 0 ? (
             <p className="text-gray-500">No performances scheduled for this date.</p>
           ) : (
             <div className="space-y-4">
               {getPerformancesForDate(selectedDate).map((performance) => (
-                <Card key={performance.id} padding="sm">
+                <Card key={performance.occurrenceId} padding="sm">
                   <h4 className="text-lg font-medium text-gray-900">
                     {performance.title}
                   </h4>
-                  <p className="text-sm text-gray-600 mt-1">
-                    <strong>Performer:</strong> {performance.performer}
-                  </p>
-                  {performance.time && (
-                    <p className="text-sm text-gray-600">
-                      <strong>Time:</strong> {performance.time}
-                    </p>
-                  )}
-                  {performance.location && (
-                    <p className="text-sm text-gray-600">
-                      <strong>Location:</strong> {performance.location}
-                    </p>
-                  )}
-                  {performance.description && (
-                    <p className="text-sm text-gray-600 mt-2">
-                      <strong>Description:</strong> {performance.description}
-                    </p>
-                  )}
-                  {(performance.contactEmail || performance.contactPhone) && (
-                    <p className="text-sm text-gray-500 mt-2">
-                      <strong>Contact:</strong> {performance.contactEmail} {performance.contactPhone}
-                    </p>
-                  )}
                 </Card>
               ))}
             </div>

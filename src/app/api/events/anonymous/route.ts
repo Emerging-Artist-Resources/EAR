@@ -28,19 +28,30 @@ const photoSchema = z.object({
   sort_order: z.number().int().optional(),
 })
 
-const payloadSchema = z.object({
-  type: z.enum(["performance","audition","creative","class","funding"]),
+const performanceDetailsSchema = z.object({
+  show_name: z.string().min(1),
+  short_description: z.string().min(1),
+  credit_info: z.string().min(1),
+  ticket_price_cents: z.number().int().nonnegative(),
+  ticket_link: z.string().min(1),
+  agree_comp_tickets: z.boolean(),
+})
+
+const performancePayloadSchema = z.object({
+  type: z.literal("performance"),
   base: baseSchema,
-  details: z.record(z.string(), z.string()),
+  details: performanceDetailsSchema,
   occurrences: z.array(occurrenceSchema).min(1),
   photos: z.array(photoSchema).optional(),
-  // turnstileToken: z.string().min(10) // if you add captcha
 })
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const input = payloadSchema.parse(body)
+    if (body?.type !== 'performance') {
+      return NextResponse.json({ error: { code: 'UNSUPPORTED_TYPE' } }, { status: 400 })
+    }
+    const input = performancePayloadSchema.parse(body)
 
     // Optional: captcha
     // const ok = await verifyTurnstile(input.turnstileToken)

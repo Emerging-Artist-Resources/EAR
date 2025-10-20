@@ -160,6 +160,7 @@ export async function listCalendarItemsRepo(params: {
       title,
       start: row.starts_at_utc as string,
       tz: row.tz as string,
+      borough: (e as { borough?: string | null }).borough ?? null,
     }
   })
 }

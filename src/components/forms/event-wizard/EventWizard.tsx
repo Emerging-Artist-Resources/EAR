@@ -6,8 +6,6 @@ import type { Resolver } from "react-hook-form"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
 import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
-import { getSupabaseClient } from "@/lib/supabase/client"
-import { usePerformances } from "@/hooks/use-performances"
 import { EventTypeSelector, type EventType } from "./EventTypeSelector"
 import { BasicInfoStep } from "./steps/BasicInfoStep"
 import { PerformanceDetailsStep } from "./steps/PerformanceDetailsStep"
@@ -28,8 +26,6 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
   const [hasSubmittedBefore, setHasSubmittedBefore] = useState<null | boolean>(null)
   const [toast, setToast] = useState<string | null>(null)
 
-  const supabase = getSupabaseClient()
-  const { submitPerformance } = usePerformances()
 
   const resolver = zodResolver(eventFormSchema) as unknown as Resolver<EventFormData>
   const form = useForm<EventFormData>({
@@ -80,9 +76,52 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
     try {
       setIsSubmitting(true)
       setSubmitMessage("")
-      const { data: userResult } = await supabase.auth.getUser()
-      const userId = userResult?.user?.id || null
-      const created = await submitPerformance({ ...data, userId })
+      // Map to anonymous create payload
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York'
+      const type = (eventType || 'PERFORMANCE').toLowerCase() as 'performance'|'audition'|'creative'|'class'|'funding'
+      if (type !== 'performance') {
+        setSubmitMessage('Only Performance submissions are supported right now')
+        return
+      }
+      const primaryDate = data.date ?? ''
+      const primaryTime = data.showTime ?? '00:00'
+      const occurrences = [
+        { starts_at_utc: new Date(`${primaryDate}T${primaryTime}:00Z`).toISOString(), tz },
+        ...((data.extraOccurrences ?? []).map(o => ({ starts_at_utc: new Date(`${o.date}T${o.time}:00Z`).toISOString(), tz })))
+      ]
+      const payload = {
+        type,
+        base: {
+          contact_name: data.submitterName,
+          contact_email: data.contactEmail,
+          org_name: data.company || null,
+          org_website: data.companyWebsite || null,
+          address: data.address || null,
+          social_handles: { raw: data.socialHandles },
+          notes: data.notes || null,
+          borough: null,
+        },
+        details: {
+          show_name: data.title ?? '',
+          short_description: data.shortDescription ?? '',
+          credit_info: data.credits ?? '',
+          ticket_price_cents: Number(String(data.ticketPrice ?? '0').replace(/[^0-9]/g, '')) || 0,
+          ticket_link: data.ticketLink ?? '',
+          agree_comp_tickets: Boolean(data.agreeCompTickets),
+        } as Record<string, unknown>,
+        occurrences,
+        photos: (data.photoUrls ?? []).slice(0,5).map((p, idx) => ({ path: p, credit: data.credits ?? null, sort_order: idx })),
+      }
+      const res = await fetch('/api/events/anonymous', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        throw new Error(j?.error?.code || 'Failed to submit')
+      }
+      const created = await res.json()
       setSubmitMessage("Submitted successfully! Pending review.")
       form.reset()
       setTimeout(() => { onSuccess(); onClose() }, 1200)
@@ -156,8 +195,8 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           {step > 1 && <Button type="button" variant="outline" onClick={goBack}>Back</Button>}
           {step < 3 && <Button type="button" variant="primary" onClick={goNext}>Next</Button>}
           {step === 3 && (
-            <Button type="button" variant="primary" onClick={handleSubmit} disabled={isSubmitting || eventType !== 'PERFORMANCE'}>
-              {eventType !== 'PERFORMANCE' ? 'Submit (coming soon)' : isSubmitting ? 'Submitting...' : 'Submit'}
+            <Button type="button" variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting...' : 'Submit'}
             </Button>
           )}
         </div>
