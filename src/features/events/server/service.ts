@@ -1,4 +1,4 @@
-import { createEventWithDetails, listEvents, listCalendarItemsRepo, getEventPublicRepo, listMyEventsRepo, getEventForOwnerRepo } from "./repository"
+import { createEventWithDetails, listEvents, listCalendarItemsRepo, getEventPublicRepo, listMyEventsRepo, getEventForOwnerRepo, listAdminEventsRepo, getAdminEventDetailRepo } from "./repository"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
 
 export async function createPerformance(formData: EventFormData, createdBy: string | null) {
@@ -63,6 +63,14 @@ export async function listMyEvents() {
 
 export async function getEventForOwner(eventId: string) {
   return await getEventForOwnerRepo(eventId)
+}
+
+export async function listAdminEvents(status: 'pending'|'approved'|'rejected', limit = 50) {
+  return await listAdminEventsRepo({ status, limit })
+}
+
+export async function getAdminEventDetail(eventId: string) {
+  return await getAdminEventDetailRepo(eventId)
 }
 
 export type ListOptions = { status?: string | null, userId?: string | null, limit?: number, cursor?: string | null }

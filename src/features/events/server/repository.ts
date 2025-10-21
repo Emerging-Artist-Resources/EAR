@@ -416,3 +416,66 @@ export async function rejectEventRepo(eventId: string, reviewerId: string, admin
     .eq("id", eventId)
   if (error) throw error
 }
+
+/* ------------------------------------------------------------------ */
+/* ADMIN list/detail (service client; API enforces role)               */
+/* ------------------------------------------------------------------ */
+export async function listAdminEventsRepo(params: { status: 'pending'|'approved'|'rejected'; limit: number }) {
+  const svc = getSupabaseServiceClient()
+  const { data, error } = await svc
+    .from('events')
+    .select(`
+      id, type, status, submitted_at,
+      performance_details (show_name),
+      audition_details (audition_name),
+      opportunity_details (opportunity_name),
+      class_details (class_name),
+      funding_details (title)
+    `)
+    .eq('status', params.status)
+    .order('submitted_at', { ascending: false })
+    .limit(params.limit)
+  if (error) throw error
+  type Row = {
+    id: string
+    type: 'performance'|'audition'|'creative'|'class'|'funding'
+    status: 'pending'|'approved'|'rejected'
+    submitted_at: string
+    performance_details?: { show_name?: string } | null
+    audition_details?: { audition_name?: string } | null
+    opportunity_details?: { opportunity_name?: string } | null
+    class_details?: { class_name?: string } | null
+    funding_details?: { title?: string } | null
+  }
+  return (data ?? []).map((e) => {
+    const row = e as Row
+    const title =
+      row.type === 'performance' ? row.performance_details?.show_name :
+      row.type === 'audition'    ? row.audition_details?.audition_name :
+      row.type === 'creative'    ? row.opportunity_details?.opportunity_name :
+      row.type === 'class'       ? row.class_details?.class_name :
+      row.funding_details?.title ?? 'Untitled'
+    return { id: row.id, type: row.type, status: row.status, submitted_at: row.submitted_at, title: title ?? null }
+  })
+}
+
+export async function getAdminEventDetailRepo(eventId: string) {
+  const svc = getSupabaseServiceClient()
+  const { data, error } = await svc
+    .from('events')
+    .select(`
+      id, type, status, submitted_at,
+      contact_name, pronouns, contact_email, org_name, org_website, address, social_handles, notes, borough, meta,
+      performance_details (*),
+      audition_details (*),
+      opportunity_details (*),
+      class_details (*),
+      funding_details (*),
+      event_occurrences (*),
+      event_photos (*)
+    `)
+    .eq('id', eventId)
+    .single()
+  if (error) throw error
+  return data
+}

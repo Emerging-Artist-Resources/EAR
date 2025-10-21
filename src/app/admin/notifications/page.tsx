@@ -215,10 +215,10 @@ export default function AdminNotificationsPage() {
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
-              Manage Notifications
+              Manage Announcements
             </h2>
             <Button onClick={handleCreateNew}>
-              Create New Notification
+              Create New Announcement
             </Button>
           </div>
 

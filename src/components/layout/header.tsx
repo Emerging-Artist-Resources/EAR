@@ -92,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
                       <Button variant="ghost">Admin Dashboard</Button>
                     </Link>
                     <Link href="/admin/notifications">
-                      <Button variant="ghost">Manage Notifications</Button>
+                      <Button variant="ghost">Manage Announcements</Button>
                     </Link>
                   </>
                 )}
