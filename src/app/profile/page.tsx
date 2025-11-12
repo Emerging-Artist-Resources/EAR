@@ -7,6 +7,7 @@ import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDateTime } from "@/lib/constants"
+import { H2, H3, Text } from "@/components/ui/typography"
 
 interface Performance {
   id: string
@@ -112,7 +113,7 @@ export default function UserProfile() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <Text className="text-lg">Loading...</Text>
       </div>
     )
   }
@@ -127,7 +128,7 @@ export default function UserProfile() {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">My Profile</h2>
+            <H2>My Profile</H2>
           </div>
           {/* Profile Header */}
           <div className="mb-8">
@@ -141,10 +142,8 @@ export default function UserProfile() {
                   </div>
                 </div>
                 <div className="ml-6">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {userName}
-                  </h2>
-                  <p className="text-gray-600">{userEmail}</p>
+                  <H2 className="text-gray-900">{userName}</H2>
+                  <Text className="text-gray-600">{userEmail}</Text>
                   <div className="mt-2">
                     <Badge variant={userRole === "ADMIN" ? "primary" : "default"}>
                       {userRole}
@@ -157,14 +156,14 @@ export default function UserProfile() {
 
           {/* Performance Statistics */}
           <div className="mb-8">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Performance Statistics</h3>
+            <H3 className="mb-4">Performance Statistics</H3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="p-6">
                 <div className="text-center">
                   <div className="text-3xl font-bold text-yellow-600">
                     {performances.filter(p => p.status === "PENDING").length}
                   </div>
-                  <div className="text-sm text-gray-600">Under Review</div>
+                  <Text className="text-sm text-gray-600">Under Review</Text>
                 </div>
               </Card>
               <Card className="p-6">
@@ -172,7 +171,7 @@ export default function UserProfile() {
                   <div className="text-3xl font-bold text-green-600">
                     {performances.filter(p => p.status === "APPROVED").length}
                   </div>
-                  <div className="text-sm text-gray-600">Approved</div>
+                  <Text className="text-sm text-gray-600">Approved</Text>
                 </div>
               </Card>
               <Card className="p-6">
@@ -180,7 +179,7 @@ export default function UserProfile() {
                   <div className="text-3xl font-bold text-red-600">
                     {performances.filter(p => p.status === "REJECTED").length}
                   </div>
-                  <div className="text-sm text-gray-600">Rejected</div>
+                  <Text className="text-sm text-gray-600">Rejected</Text>
                 </div>
               </Card>
             </div>
@@ -188,16 +187,14 @@ export default function UserProfile() {
 
           {/* Submitted Performances */}
           <div className="mb-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">My Submitted Performances</h3>
+            <H3 className="mb-4">My Submitted Performances</H3>
             {performances.length === 0 ? (
               <Card className="p-6">
                 <div className="text-center text-gray-500">
-                  <p className="text-lg mb-2">No performances submitted yet</p>
-                  <p className="text-sm">
-                    <Link href="/calendar" className="text-primary hover:opacity-80">
-                      Submit your first performance
-                    </Link>
-                  </p>
+                  <Text className="text-lg mb-2">No performances submitted yet</Text>
+                  <Text className="text-sm">
+                    <Link href="/calendar" className="text-primary hover:opacity-80">Submit your first performance</Link>
+                  </Text>
                 </div>
               </Card>
             ) : (
@@ -207,52 +204,40 @@ export default function UserProfile() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
-                          <h4 className="text-lg font-medium text-gray-900">
-                            {performance.title}
-                          </h4>
+                          <H3 className="text-gray-900">{performance.title}</H3>
                           <Badge variant={getStatusColor(performance.status)}>
                             {getStatusText(performance.status)}
                           </Badge>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                          <div>
-                            <strong>Performer:</strong> {performance.performer}
-                          </div>
-                          <div>
-                            <strong>Date:</strong> {formatDateTime(performance.date, performance.time)}
-                          </div>
-                          {performance.location && (
-                            <div>
-                              <strong>Location:</strong> {performance.location}
-                            </div>
-                          )}
-                          <div>
-                            <strong>Submitted:</strong> {new Date(performance.createdAt).toLocaleDateString()}
-                          </div>
+                          <Text><strong>Performer:</strong> {performance.performer}</Text>
+                          <Text><strong>Date:</strong> {formatDateTime(performance.date, performance.time)}</Text>
+                          {performance.location && <Text><strong>Location:</strong> {performance.location}</Text>}
+                          <Text><strong>Submitted:</strong> {new Date(performance.createdAt).toLocaleDateString()}</Text>
                         </div>
 
                         {performance.description && (
                           <div className="mt-3">
-                            <strong className="text-sm text-gray-700">Description:</strong>
-                            <p className="text-sm text-gray-600 mt-1">{performance.description}</p>
+                            <Text className="text-sm text-gray-700"><strong>Description:</strong></Text>
+                            <Text className="text-sm text-gray-600 mt-1">{performance.description}</Text>
                           </div>
                         )}
 
                         {/* Review Comments */}
                         {performance.reviews.length > 0 && (
                           <div className="mt-4 p-3 bg-gray-50 rounded-md">
-                            <h5 className="text-sm font-medium text-gray-700 mb-2">Admin Review:</h5>
+                            <Text className="text-sm font-medium text-gray-700 mb-2">Admin Review:</Text>
                             {performance.reviews.map((review) => (
                               <div key={review.id} className="text-sm text-gray-600">
                                 <div className="flex items-center space-x-2 mb-1">
                                   <Badge variant={review.status === "APPROVED" ? "success" : "error"}>
                                     {review.status}
                                   </Badge>
-                                  <span>by {review.reviewer.name} on {new Date(review.reviewedAt).toLocaleDateString()}</span>
+                                  <Text>by {review.reviewer.name} on {new Date(review.reviewedAt).toLocaleDateString()}</Text>
                                 </div>
                                 {review.comments && (
-                                  <p className="mt-1 italic">&ldquo;{review.comments}&rdquo;</p>
+                                  <Text className="mt-1 italic">&ldquo;{review.comments}&rdquo;</Text>
                                 )}
                               </div>
                             ))}

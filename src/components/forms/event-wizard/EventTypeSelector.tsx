@@ -1,5 +1,7 @@
 "use client"
 
+import { Select } from "@/components/ui/select"
+
 export type EventType = 'PERFORMANCE' | 'AUDITION' | 'CREATIVE' | 'CLASS' | 'FUNDING'
 
 interface EventTypeSelectorProps {
@@ -17,8 +19,8 @@ export function EventTypeSelector({ eventType, onChangeType }: EventTypeSelector
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">What type of event is this? <span className="text-red-500">*</span></label>
-      <select
-        className="w-full sm:w-auto border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+      <Select
+        className="w-full sm:w-auto"
         value={value}
         onChange={handleChange}
       >
@@ -28,7 +30,7 @@ export function EventTypeSelector({ eventType, onChangeType }: EventTypeSelector
         <option value="CREATIVE">Creative Opportunity</option>
         <option value="CLASS">Class/Workshop</option>
         <option value="FUNDING">Funding Opportunity</option>
-      </select>
+      </Select>
     </div>
   )
 }

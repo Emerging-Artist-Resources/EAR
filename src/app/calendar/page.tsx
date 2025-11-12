@@ -5,6 +5,7 @@ import { CallToAction } from "@/components/layout/call-to-action"
 import PerformanceModal from "@/components/performance-modal"
 import { useCalendar } from "@/hooks/use-calendar"
 import { Calendar } from "@/components/calendar/calendar"
+import { Text } from "@/components/ui/typography"
 
 export default function CalendarView() {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -21,7 +22,7 @@ export default function CalendarView() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">Loading calendar...</div>
+        <Text className="text-lg">Loading calendar...</Text>
       </div>
     )
   }

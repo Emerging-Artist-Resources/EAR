@@ -2,6 +2,8 @@
 
 import { AdminEventItem } from "./types"
 import { AdminEventCard } from "./AdminEventCard"
+import { Card } from "@/components/ui/card"
+import { Text } from "@/components/ui/typography"
 
 export function AdminEventList({
   items,
@@ -12,9 +14,9 @@ export function AdminEventList({
 }) {
   if (!items.length) {
     return (
-      <div className="p-8 text-center text-[var(--gray-600)] bg-white rounded-lg shadow-custom">
-        No events found for the selected filter.
-      </div>
+      <Card className="p-8 text-center">
+        <Text className="text-[var(--gray-600)]">No events found for the selected filter.</Text>
+      </Card>
     )
   }
 
