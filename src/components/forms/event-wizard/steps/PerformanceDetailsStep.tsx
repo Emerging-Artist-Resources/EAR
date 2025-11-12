@@ -84,7 +84,18 @@ export function PerformanceDetailsStep({ form }: PerformanceDetailsStepProps) {
       {/* Ticket price now on its own row after dates/times */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Ticket Price *</label>
-        <Input {...register('ticketPrice' as never)} placeholder="$" error={Boolean(e.ticketPrice)} />
+        <div className="relative">
+          <span className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+          <Input
+            {...register('ticketPrice' as never)}
+            type="number"
+            step="0.01"
+            inputMode="decimal"
+            placeholder="20.00"
+            error={Boolean(e.ticketPrice)}
+            className="pl-7"
+          />
+        </div>
       </div>
 
       <div>

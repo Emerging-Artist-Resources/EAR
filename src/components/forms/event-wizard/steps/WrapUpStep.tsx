@@ -76,5 +76,3 @@ export function WrapUpStep({ form, hasSubmittedBefore, setHasSubmittedBefore }: 
     </>
   )
 }
-
-

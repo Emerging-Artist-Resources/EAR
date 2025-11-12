@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
     const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     const role = getUserRole(user)
+    console.log("role", role)
     if (!user?.id || (role !== 'ADMIN' && role !== 'REVIEWER')) {
       return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
     }

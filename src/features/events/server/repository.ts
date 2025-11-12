@@ -238,6 +238,7 @@ export async function createEventOwnedRepo(input: {
   type: EventType
   base: {
     contact_name: string
+    pronouns?: string | null
     contact_email: string
     org_name?: string | null
     org_website?: string | null
@@ -245,6 +246,7 @@ export async function createEventOwnedRepo(input: {
     social_handles?: Record<string, unknown>
     notes?: string | null
     borough?: string | null
+    meta?: Record<string, unknown>
   }
   details: Record<string, unknown>           // matches the chosen detail table
   occurrences: Array<{ starts_at_utc: string; ends_at_utc?: string | null; tz: string }>
@@ -262,6 +264,7 @@ export async function createEventOwnedRepo(input: {
       status: "pending",
       created_by: user.id,
       contact_name: input.base.contact_name,
+      pronouns: input.base.pronouns ?? null,
       contact_email: input.base.contact_email,
       org_name: input.base.org_name ?? null,
       org_website: input.base.org_website ?? null,
@@ -269,6 +272,7 @@ export async function createEventOwnedRepo(input: {
       social_handles: input.base.social_handles ?? {},
       notes: input.base.notes ?? null,
       borough: input.base.borough ?? null,
+      meta: input.base.meta ?? {},
     })
     .select("id")
     .single()
@@ -312,6 +316,7 @@ export async function createEventAnonymousRepo(serviceSupabase: ReturnType<typeo
   type: EventType
   base: {
     contact_name: string
+    pronouns?: string | null
     contact_email: string
     org_name?: string | null
     org_website?: string | null
@@ -319,6 +324,7 @@ export async function createEventAnonymousRepo(serviceSupabase: ReturnType<typeo
     social_handles?: Record<string, unknown>
     notes?: string | null
     borough?: string | null
+    meta?: Record<string, unknown>
   }
   details: Record<string, unknown>
   occurrences: Array<{ starts_at_utc: string; ends_at_utc?: string | null; tz: string }>
@@ -332,6 +338,7 @@ export async function createEventAnonymousRepo(serviceSupabase: ReturnType<typeo
       status: "pending",
       created_by: null,
       contact_name: input.base.contact_name,
+      pronouns: input.base.pronouns ?? null,
       contact_email: input.base.contact_email,
       org_name: input.base.org_name ?? null,
       org_website: input.base.org_website ?? null,
@@ -339,6 +346,7 @@ export async function createEventAnonymousRepo(serviceSupabase: ReturnType<typeo
       social_handles: input.base.social_handles ?? {},
       notes: input.base.notes ?? null,
       borough: input.base.borough ?? null,
+      meta: input.base.meta ?? {},
     })
     .select("id")
     .single()

@@ -61,6 +61,31 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           showToast('Please complete required fields on this step')
           return
         }
+      } else if (eventType === 'AUDITION') {
+        const ok = await form.trigger(['auditionName','aboutProject','eligibility','compensation','auditionDate','auditionTime','auditionLink'])
+        if (!ok) {
+          showToast('Please complete required fields on this step')
+          return
+        }
+      } else if (eventType === 'CREATIVE') {
+        const ok = await form.trigger(['opportunityName','briefDescription','creativeEligibility','whatsOffered','stipendAmount','requirements','deadline','applyLink'])
+        if (!ok) {
+          showToast('Please complete required fields on this step')
+          return
+        }
+      } else if (eventType === 'CLASS') {
+        const ok = await form.trigger(['className','classDates','classTimes','classPrices','classLink','classDescription','classCreditInfo'])
+        if (!ok) {
+          showToast('Please complete required fields on this step')
+          return
+        }
+        console.log('[next] CLASS validated, moving to step 3')
+      } else if (eventType === 'FUNDING') {
+        const ok = await form.trigger(['fundingLink'])
+        if (!ok) {
+          showToast('Please complete required fields on this step')
+          return
+        }
       }
       setStep(3)
       return
@@ -79,39 +104,129 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       // Map to anonymous create payload
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York'
       const type = (eventType || 'PERFORMANCE').toLowerCase() as 'performance'|'audition'|'creative'|'class'|'funding'
-      if (type !== 'performance') {
-        setSubmitMessage('Only Performance submissions are supported right now')
-        return
+      console.log('[submit] start type', type)
+      const meta: Record<string, unknown> = {}
+      if (Array.isArray(data.referralSources) && data.referralSources.length) meta.referral_sources = data.referralSources
+      if (data.referralOther) meta.referral_other = data.referralOther
+      if (typeof data.joinEmailList === 'boolean') meta.join_email_list = data.joinEmailList
+      if (hasSubmittedBefore !== null) meta.submitted_before = hasSubmittedBefore
+
+      const base = {
+        contact_name: data.submitterName,
+        pronouns: data.submitterPronouns || null,
+        contact_email: data.contactEmail,
+        org_name: data.company || null,
+        org_website: data.companyWebsite || null,
+        address: data.address || null,
+        social_handles: { raw: data.socialHandles },
+        notes: data.notes || null,
+        borough: null as string | null,
+        meta: Object.keys(meta).length ? meta : undefined,
       }
-      const primaryDate = data.date ?? ''
-      const primaryTime = data.showTime ?? '00:00'
-      const occurrences = [
-        { starts_at_utc: new Date(`${primaryDate}T${primaryTime}:00Z`).toISOString(), tz },
-        ...((data.extraOccurrences ?? []).map(o => ({ starts_at_utc: new Date(`${o.date}T${o.time}:00Z`).toISOString(), tz })))
-      ]
-      const payload = {
-        type,
-        base: {
-          contact_name: data.submitterName,
-          contact_email: data.contactEmail,
-          org_name: data.company || null,
-          org_website: data.companyWebsite || null,
-          address: data.address || null,
-          social_handles: { raw: data.socialHandles },
-          notes: data.notes || null,
-          borough: null,
-        },
-        details: {
-          show_name: data.title ?? '',
-          short_description: data.shortDescription ?? '',
-          credit_info: data.credits ?? '',
-          ticket_price_cents: Number(String(data.ticketPrice ?? '0').replace(/[^0-9]/g, '')) || 0,
-          ticket_link: data.ticketLink ?? '',
-          agree_comp_tickets: Boolean(data.agreeCompTickets),
-        } as Record<string, unknown>,
-        occurrences,
-        photos: (data.photoUrls ?? []).slice(0,5).map((p, idx) => ({ path: p, credit: data.credits ?? null, sort_order: idx })),
+
+      let payload: Record<string, unknown> = { type, base }
+
+      if (type === 'performance') {
+        const primaryDate = data.date ?? ''
+        const primaryTime = data.showTime ?? '00:00'
+        const occurrences = [
+          { starts_at_utc: new Date(`${primaryDate}T${primaryTime}:00Z`).toISOString(), tz },
+          ...((data.extraOccurrences ?? []).map(o => ({ starts_at_utc: new Date(`${o.date}T${o.time}:00Z`).toISOString(), tz })))
+        ]
+        payload = {
+          ...payload,
+          details: {
+            show_name: data.title ?? '',
+            short_description: data.shortDescription ?? '',
+            credit_info: data.credits ?? '',
+            ticket_price_cents: Number(String(data.ticketPrice ?? '0').replace(/[^0-9]/g, '')) || 0,
+            ticket_link: data.ticketLink ?? '',
+            agree_comp_tickets: Boolean(data.agreeCompTickets),
+          },
+          occurrences,
+        }
+        console.log('[submit][performance] occurrences', occurrences)
+      } else if (type === 'audition') {
+        const primaryDate = data.auditionDate ?? ''
+        const primaryTime = data.auditionTime ?? '00:00'
+        const occurrences = primaryDate ? [ { starts_at_utc: new Date(`${primaryDate}T${primaryTime}:00Z`).toISOString(), tz } ] : []
+        payload = {
+          ...payload,
+          details: {
+            audition_name: data.auditionName ?? '',
+            about_project: data.aboutProject ?? '',
+            eligibility: data.eligibility ?? '',
+            compensation: data.compensation ?? '',
+            audition_link: data.auditionLink ?? '',
+          },
+          occurrences,
+        }
+        console.log('[submit][audition] occurrences', occurrences)
+      } else if (type === 'creative') {
+        const deadlineIso = data.deadline ? new Date(data.deadline).toISOString() : new Date().toISOString()
+        payload = {
+          ...payload,
+          details: {
+            opportunity_name: data.opportunityName ?? '',
+            brief_description: data.briefDescription ?? '',
+            eligibility: data.creativeEligibility ?? '',
+            whats_offered: data.whatsOffered ?? '',
+            stipend_amount: data.stipendAmount ?? '',
+            requirements: data.requirements ?? '',
+            deadline: deadlineIso,
+            apply_link: data.applyLink ?? '',
+          },
+          occurrences: [],
+        }
+        console.log('[submit][creative] deadline', deadlineIso)
+      } else if (type === 'class') {
+        const primaryDateRaw = (data.classDates ?? '').trim()
+        const primaryTime = (data.classTimes ?? '00:00').trim()
+        const tokens = primaryDateRaw
+          ? primaryDateRaw.split(',').map(s => s.trim()).filter(Boolean)
+          : []
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+        const primaryList = tokens
+          .filter(tok => dateRegex.test(tok))
+          .map(tok => ({ starts_at_utc: new Date(`${tok}T${primaryTime}:00Z`).toISOString(), tz }))
+        const extraOcc = (data.classExtraOccurrences ?? [])
+          .filter(o => o?.date && o?.time)
+          .map(o => ({ starts_at_utc: new Date(`${o.date}T${o.time}:00Z`).toISOString(), tz }))
+        const occurrences = [...primaryList, ...extraOcc]
+        if (occurrences.length === 0) {
+          console.log('[submit][class] no occurrences', { primaryDateRaw, primaryTime, tokens, primaryListLen: primaryList.length, extraOccLen: extraOcc.length })
+          setSubmitMessage('Please provide at least one valid class date/time')
+          setIsSubmitting(false)
+          return
+        }
+        const pricesArray = (data.classPrices ? String(data.classPrices).split(';').map(s => s.trim()).filter(Boolean) : []) as string[]
+        payload = {
+          ...payload,
+          details: {
+            festival_name: data.festivalName || null,
+            festival_link: data.festivalLink || null,
+            class_name: data.className ?? '',
+            description: data.classDescription ?? '',
+            prices: pricesArray,
+            rrule: data.classRecurrence || null,
+          },
+          occurrences,
+        }
+        console.log('[submit][class] occurrences', occurrences)
+      } else if (type === 'funding') {
+        payload = {
+          ...payload,
+          details: {
+            funding_link: data.fundingLink ?? '',
+            title: data.fundingTitle || '',
+            summary: data.fundingSummary || '',
+          },
+          occurrences: [],
+        }
+        console.log('[submit][funding] link', data.fundingLink)
       }
+      console.log('[submit] type', type)
+      console.log('[submit] payload', payload)
       const res = await fetch('/api/events/anonymous', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -119,7 +234,9 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       })
       if (!res.ok) {
         const j = await res.json().catch(() => ({}))
-        throw new Error(j?.error?.code || 'Failed to submit')
+        console.error('[submit] failed', j)
+        const msg = j?.error?.issues ? 'Invalid input' : (j?.error?.code || 'Failed to submit')
+        throw new Error(msg)
       }
       const created = await res.json()
       setSubmitMessage("Submitted successfully! Pending review.")
@@ -131,6 +248,10 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
     } finally {
       setIsSubmitting(false)
     }
+  }, (errors) => {
+    console.error('[submit] invalid form', errors)
+    setSubmitMessage('Invalid input')
+    setIsSubmitting(false)
   })
 
   return (
@@ -195,7 +316,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           {step > 1 && <Button type="button" variant="outline" onClick={goBack}>Back</Button>}
           {step < 3 && <Button type="button" variant="primary" onClick={goNext}>Next</Button>}
           {step === 3 && (
-            <Button type="button" variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
+            <Button type="button" variant="primary" onClick={() => { console.log('[submit] clicked'); handleSubmit() }} disabled={isSubmitting}>
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </Button>
           )}

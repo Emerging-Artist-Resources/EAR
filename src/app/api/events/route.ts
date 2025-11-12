@@ -1,8 +1,24 @@
-// src/app/api/events/route.ts
 import { NextRequest, NextResponse } from "next/server"
+import { listCalendarItems } from "@/features/events/server/service"
 import { z, ZodError } from "zod"
 import { createEventOwnedRepo } from "@/features/events/server/repository"
 
+export async function GET(req: NextRequest) {
+  try {
+    const url = new URL(req.url)
+    const from = url.searchParams.get('from') ?? new Date().toISOString()
+    const to = url.searchParams.get('to') ?? new Date(Date.now() + 1000*60*60*24*30).toISOString()
+    const types = (url.searchParams.get('types') ?? '').split(',').filter(Boolean) as Array<'performance'|'audition'|'creative'|'class'|'funding'>
+    const borough = url.searchParams.get('borough')
+    const data = await listCalendarItems({ fromISO: from, toISO: to, types, borough: borough ?? null })
+    return NextResponse.json({ data }, { headers: { 'Cache-Control': 's-maxage=60' } })
+  } catch (err) {
+    console.error('Events list error:', err)
+    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
+  }
+}
+
+// src/app/api/events/route.ts
 const baseSchema = z.object({
   contact_name: z.string().min(1),
   contact_email: z.string().email(),
