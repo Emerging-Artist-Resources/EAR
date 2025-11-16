@@ -44,7 +44,7 @@ export default function SignIn() {
           <H2 className="mt-6 text-center">Sign in to your account</H2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="rounded-md shadow-sm flex flex-col gap-3 ">
             <div>
               <label htmlFor="email" className="sr-only">
                 Email address

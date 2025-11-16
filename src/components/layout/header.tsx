@@ -73,10 +73,13 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="hidden lg:flex items-center space-x-4">
             <Link href="/calendar">
-              <Button variant="ghost">View Calendar</Button>
+              <Button variant="ghost">Calendar</Button>
             </Link>
             <Link href="/announcement">
               <Button variant="ghost">Announcements</Button>
+            </Link>
+            <Link href="/profile">
+              <Button variant="ghost">Profile</Button>
             </Link>
             {isLoaded && isAuthed ? (
               <>

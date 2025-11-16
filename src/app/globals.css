@@ -36,10 +36,18 @@
   --gray-900: #111827;
 
   --success-50: #f0fdf4;
+  --success-100: #dcfce7;
+  --success-200: #bbf7d0;
+  --success-300: #86efac;
+  --success-400: #4ade80;
   --success-500: #22c55e;
   --success-600: #16a34a;
 
   --error-50: #fef2f2;
+  --error-100: #fee2e2;
+  --error-200: #fecaca;
+  --error-300: #fca5a5;
+  --error-400: #f87171;
   --error-500: #ef4444;
   --error-600: #dc2626;
 

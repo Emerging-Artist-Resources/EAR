@@ -98,9 +98,12 @@ export function Calendar({ items }: CalendarProps) {
     })
   }
 
+  // Need to call the API to get the upcoming deadlines -- rn upcoming deadlines might be upcoming events
+  // Need to update old api calls 
+
   return (
     <>
-      <Card className="mb-4 p-4">
+      <Card className="mb-4 p-4 shadow-md">
         <div className="flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="inline-flex rounded-md gap-1 border-none shadow-none" role="group">
@@ -131,7 +134,7 @@ export function Calendar({ items }: CalendarProps) {
 
       <div className="grid lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3">
-          <Card className="p-2 sm:p-3">
+          <Card className="p-2 sm:p-3 shadow-md">
             {view === 'month' && (
               <div className="grid grid-cols-7 gap-px bg-gray-200">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
@@ -251,8 +254,9 @@ export function Calendar({ items }: CalendarProps) {
         </div>
 
         <div className="lg:col-span-1">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-primary mb-4">Upcoming Events</h3>
+          <Card className="p-6 shadow-md">
+            <h3 className="text-lg font-semibold text-primary mb-4">Upcoming Deadlines</h3>
+            
             <div className="space-y-3">
               {items
                 .filter(it => {
