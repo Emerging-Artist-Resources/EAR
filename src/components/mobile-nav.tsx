@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { getSupabaseClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
+import { VscAccount } from "react-icons/vsc"
 
 interface MobileNavProps {
   userRole?: string
@@ -32,7 +33,7 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
   }, [supabase])
 
   const navigation = [
-    { name: "View Calendar", href: "/calendar" },
+    { name: "Calendar", href: "/calendar" },
     { name: "Announcements", href: "/announcement" },
     ...(userRole === "ADMIN" ? [
       { name: "Admin", href: "/admin" },
@@ -93,33 +94,35 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
                 Submit Performance
               </Button>
             )}
-                        {isAuthed ? (
-                          <>
-                            <div className="border-t border-gray-200 pt-3 mt-3">
-                              <p className="px-3 py-2 text-sm text-gray-500">
-                                Welcome, {name}
-                              </p>
-                              {userRole !== "ADMIN" && (
-                                <Link
-                                  href="/profile"
-                                  className="block"
-                                  onClick={() => setIsOpen(false)}
-                                >
-                                  <Button variant="ghost" className="w-full justify-start text-base">View Profile</Button>
-                                </Link>
-                              )}
-                              <Button
-                                onClick={async () => {
-                                  await supabase.auth.signOut()
-                                  setIsOpen(false)
-                                  window.location.href = "/auth/signin"
-                                }}
-                                variant="outline"
-                                className="w-full justify-start text-base"
-                              >
-                                Sign Out
-                              </Button>
-                            </div>
+              {isAuthed ? (
+                <>
+                  <div className="border-t border-gray-200 pt-3 mt-3">
+                    <p className="px-3 py-2 text-sm text-gray-500">
+                      Welcome, {name}
+                    </p>
+                  
+                    <button
+                      onClick={() => {
+                        window.location.href = "/profile"
+                        setIsOpen(false)
+                      }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <VscAccount className="w-5 h-5" />
+                    </button>
+                    
+                    <Button
+                      onClick={async () => {
+                        await supabase.auth.signOut()
+                        setIsOpen(false)
+                        window.location.href = "/auth/signin"
+                      }}
+                      variant="outline"
+                      className="w-full justify-start text-base"
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
               </>
             ) : (
               <Link

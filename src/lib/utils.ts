@@ -40,6 +40,11 @@ export const variants = {
         md: "p-6",
         lg: "p-8",
       },
+      border: {
+        solid: "border border-gray-200",
+        dashed: "border-3 border-dashed border-primary",
+        dotted: "border-3 border-dotted border-primary",
+      },
     },
   },
   modal: {

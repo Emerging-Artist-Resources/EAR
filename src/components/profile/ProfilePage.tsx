@@ -4,27 +4,39 @@ import { useState } from "react";
 import { ProfileLayout } from "./ProfileLayout";
 import { ProfileTabs } from "./ProfileTabs";
 import { SavedEventsTab } from "./saved-events/SavedEventsTab";
-import { Text } from "@/components/ui/typography";
+import { ActivityTab } from "./activity/ActivityTab";
+import { MyInfoTab } from "./info/MyInfoTab";
+import { ProfileSettings } from "./settings/ProfileSettings";
 
 type ProfileTabKey = "saved" | "activity" | "info";
 
 export const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("saved");
+  const [showSettings, setShowSettings] = useState(false);
 
   return (
-    <ProfileLayout>
-      <ProfileTabs activeTab={activeTab} onChange={setActiveTab} />
+    <ProfileLayout onOpenSettings={() => setShowSettings(true)}>
+      {!showSettings && <ProfileTabs activeTab={activeTab} onChange={setActiveTab} />}
 
-      {activeTab === "saved" && <SavedEventsTab />}
-      {activeTab === "activity" && (
+      {showSettings ? (
         <div className="mt-6">
-          <Text className="text-sm text-gray-600">My Activity tab coming soon.</Text>
+          <ProfileSettings />
+          <div className="mt-4">
+            <button
+              type="button"
+              className="text-primary underline text-sm" 
+              onClick={() => setShowSettings(false)}
+            >
+              ← Back to profile
+            </button>
+          </div>
         </div>
-      )}
-      {activeTab === "info" && (
-        <div className="mt-6">
-          <Text className="text-sm text-gray-600">My Info tab coming soon.</Text>
-        </div>
+      ) : (
+        <>
+          {activeTab === "saved" && <SavedEventsTab />}
+          {activeTab === "activity" && <ActivityTab />}
+          {activeTab === "info" && <MyInfoTab />}
+        </>
       )}
     </ProfileLayout>
   );

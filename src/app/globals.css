@@ -23,6 +23,8 @@
   --accent-50: #eef2ff;
   --accent-500: #6366f1;
   --accent-600: #4f46e5;
+  --accent-700: #4338ca;
+  --accent-800: #3730a3;
 
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
@@ -50,6 +52,8 @@
   --error-400: #f87171;
   --error-500: #ef4444;
   --error-600: #dc2626;
+  --error-700: #b91c1c;
+  --error-800: #991b1b;
 
   --warning-50: #fffbeb;
   --warning-500: #f59e0b;
@@ -97,6 +101,28 @@
   --color-primary-700: var(--primary-700);
   --color-primary-800: var(--primary-800);
   --color-primary-900: var(--primary-900);
+  /* Map semantic tokens so Tailwind classes like text-error-600 work */
+  --color-error-50: var(--error-50);
+  --color-error-500: var(--error-500);
+  --color-error-600: var(--error-600);
+  --color-error-700: var(--error-700);
+  --color-error-800: var(--error-800);
+
+  --color-success-50: var(--success-50);
+  --color-success-500: var(--success-500);
+  --color-success-600: var(--success-600);
+  --color-success-700: var(--success-700);
+  --color-success-800: var(--success-800);
+
+  --color-warning-50: var(--warning-50);
+  --color-warning-500: var(--warning-500);
+  --color-warning-600: var(--warning-600);
+
+  --color-accent-50: var(--accent-50);
+  --color-accent-500: var(--accent-500);
+  --color-accent-600: var(--accent-600);
+  --color-accent-700: var(--accent-700);
+  --color-accent-800: var(--accent-800);
   
   --font-sans: var(--brand-font-sans);
   --font-mono: var(--brand-font-mono);

@@ -4,16 +4,18 @@ import { variants } from "@/lib/utils"
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   padding?: keyof typeof variants.card.variants.padding
+  border?: keyof typeof variants.card.variants.border
   children: React.ReactNode
 }
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, padding = "md", children, ...props }, ref) => {
+  ({ className, padding = "md", border = "solid", children, ...props }, ref) => {
     return (
       <div
         className={cn(
           variants.card.base,
           variants.card.variants.padding[padding],
+          variants.card.variants.border[border],
           className
         )}
         ref={ref}

@@ -6,7 +6,7 @@ import { SavedEvent } from "@/features/profile/server/types";
 import { getSavedEvents } from "@/features/profile/server/service";
 import { SavedEventsFilters } from "./SavedEventsFilters";
 import { SavedEventsGrid } from "./SavedEventsGrid";
-import { H2, Text } from "@/components/ui/typography";
+import { H3, Text } from "@/components/ui/typography";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -34,7 +34,7 @@ export const SavedEventsTab = () => {
     <section className="mt-6">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <H2 className="text-lg">Saved Events</H2>
+          <H3>Saved Events</H3>
           <Text className="text-sm text-gray-600">Events you bookmarked for later</Text>
         </div>
         <Link href="/calendar">
@@ -42,7 +42,7 @@ export const SavedEventsTab = () => {
         </Link>
       </div>
 
-      <Card className="p-4">
+      <Card className="p-4" padding="md" border="dashed">
         <SavedEventsFilters value={filter} onChange={setFilter} />
         <SavedEventsGrid events={events} isLoading={isLoading} />
       </Card>

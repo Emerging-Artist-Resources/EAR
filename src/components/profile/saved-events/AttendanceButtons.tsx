@@ -7,30 +7,33 @@ type AttendanceStatus = "attended" | "missed" | null;
 interface AttendanceButtonsProps {
   value: AttendanceStatus;
   onChange: (status: AttendanceStatus) => void;
+  mode?: "attend" | "submit";
 }
 
-export const AttendanceButtons = ({ value, onChange }: AttendanceButtonsProps) => {
+export const AttendanceButtons = ({ value, onChange, mode = "attend" }: AttendanceButtonsProps) => {
+  const yesLabel = mode === "submit" ? "Yes, I submitted" : "Yes, I attended";
+  const noLabel = mode === "submit" ? "No, did not submit" : "Couldn’t make it";
   return (
     <div className="flex gap-2">
       <Button
         type="button"
         size="sm"
         className="flex-1"
-        variant={value === "attended" ? "primary" : "outline"}
+        variant="primary"
         onClick={() => onChange(value === "attended" ? null : "attended")}
         aria-pressed={value === "attended"}
       >
-        Yes, I attended
+        {yesLabel}
       </Button>
       <Button
         type="button"
         size="sm"
         className="flex-1"
-        variant={value === "missed" ? "primary" : "outline"}
+        variant="secondary"
         onClick={() => onChange(value === "missed" ? null : "missed")}
         aria-pressed={value === "missed"}
       >
-        Couldn’t make it
+        {noLabel}
       </Button>
     </div>
   );

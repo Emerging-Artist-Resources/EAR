@@ -78,9 +78,6 @@ export const Header: React.FC<HeaderProps> = ({
             <Link href="/announcement">
               <Button variant="ghost">Announcements</Button>
             </Link>
-            <Link href="/profile">
-              <Button variant="ghost">Profile</Button>
-            </Link>
             {isLoaded && isAuthed ? (
               <>
                 {showSubmitButton && onSubmitPerformance && (
@@ -100,13 +97,13 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
                 <UserDropdown 
                   userName={userName || "User"} 
-                  userRole={userRole}
                 />
               </>
             ) : isLoaded ? (
               <Link href="/auth/signin">
                 <Button variant="ghost">Sign In</Button>
               </Link>
+              
             ) : null}
           </div>
           <MobileNav 

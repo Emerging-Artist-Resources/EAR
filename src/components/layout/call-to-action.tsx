@@ -1,6 +1,6 @@
 import React from "react"
 import { Button } from "@/components/ui/button"
-import { H1, H2 } from "@/components/ui/typography"
+import { H1 } from "@/components/ui/typography"
 
 export interface CallToActionProps {
   onSubmitPerformance?: () => void
