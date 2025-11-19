@@ -6,7 +6,7 @@ import type { Resolver } from "react-hook-form"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
 import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
-import { EventTypeSelector, type EventType } from "./EventTypeSelector"
+import { type EventType } from "./EventTypeSelector"
 import { BasicInfoStep } from "./steps/BasicInfoStep"
 import { PerformanceDetailsStep } from "./steps/PerformanceDetailsStep"
 import { ClassWorkshopStep } from "./steps/ClassWorkshopStep"
@@ -42,15 +42,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
 
   const goNext = async () => {
     if (step === 1) {
-      if (!eventType) {
-        showToast('Please select an event type to continue')
-        return
-      }
-      const ok = await form.trigger(['submitterName','submitterPronouns','contactEmail','company','companyWebsite','socialHandles','photoUrls','credits'])
-      if (!ok) {
-        showToast('Please complete required fields on this step')
-        return
-      }
+      if (!eventType) { showToast('Please select an event type to continue'); return }
       setStep(2)
       return
     }
@@ -285,11 +277,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
         <span className="text-gray-400">/</span>
         <span className={`px-2 py-1 rounded ${step === 3 ? 'bg-primary-100 text-gray-700' : 'bg-gray-100 text-gray-700'}`}>Wrap-up</span>
       </div>
-      {step === 1 && (
-        <EventTypeSelector eventType={eventType} onChangeType={setEventType} />
-      )}
-
-      {step === 1 && <BasicInfoStep form={form} />}
+      {step === 1 && <BasicInfoStep form={form} eventType={eventType} onChangeType={setEventType} />}
       {step === 2 && (
         eventType === 'PERFORMANCE' ? (
           <PerformanceDetailsStep form={form} />

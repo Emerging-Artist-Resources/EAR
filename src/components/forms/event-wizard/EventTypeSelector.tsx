@@ -18,13 +18,11 @@ export function EventTypeSelector({ eventType, onChangeType }: EventTypeSelector
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">What type of event is this? <span className="text-red-500">*</span></label>
       <Select
-        className="w-full sm:w-auto"
         value={value}
         onChange={handleChange}
       >
-        <option value="" disabled>Select event type</option>
+        <option value="" disabled>Select listing type</option>
         <option value="PERFORMANCE">Performance</option>
         <option value="AUDITION">Audition</option>
         <option value="CREATIVE">Creative Opportunity</option>
