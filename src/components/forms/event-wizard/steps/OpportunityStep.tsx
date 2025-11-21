@@ -114,5 +114,3 @@ export function OpportunityStep({ subtype, form }: OpportunityStepProps) {
     </div>
   )
 }
-
-

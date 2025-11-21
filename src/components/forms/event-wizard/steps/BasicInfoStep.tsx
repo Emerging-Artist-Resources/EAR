@@ -4,7 +4,7 @@ import { UseFormReturn } from "react-hook-form"
 import { EventFormData } from "@/lib/validations/events"
 import { Section } from "../../blocks/Section"
 import { EventTypeSelector, type EventType } from "../EventTypeSelector"
-import { H2, H3, H4, Text } from "@/components/ui/typography"
+import { H3, H4, Text } from "@/components/ui/typography"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 interface BasicInfoStepProps {

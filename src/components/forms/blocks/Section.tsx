@@ -20,5 +20,3 @@ export const Section: React.FC<SectionProps> = ({ title, description, className,
     </section>
   )
 }
-
-

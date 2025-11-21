@@ -9,6 +9,8 @@ interface LocationFieldProps<T extends Record<string, unknown>> {
   label?: string
   instructionsLabel?: string
   required?: boolean
+  showAsterisk?: boolean
+  errorMode?: "touched" | "always"
 }
 
 // NOTE: This is a plain input implementation. Later we can replace the address input
@@ -20,25 +22,28 @@ export function LocationField<T extends Record<string, unknown>>({
   label = "Location",
   instructionsLabel = "Additional Instructions",
   required,
+  showAsterisk = true,
+  errorMode = "touched",
 }: LocationFieldProps<T>) {
-  const { register, formState: { errors } } = form
-  const e = errors as unknown as Record<string, any>
+  const { register } = form
+  const addrState = form.getFieldState(addressName as unknown as never)
+  const instrState = instructionsName ? form.getFieldState(instructionsName as unknown as never) : undefined
+  const showAddrError = Boolean(addrState.error) && (errorMode === "always" || addrState.isTouched || form.formState.isSubmitted || form.formState.submitCount > 0)
+  const showInstrError = Boolean(instrState?.error) && (errorMode === "always" || instrState?.isTouched || form.formState.isSubmitted || form.formState.submitCount > 0)
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label} {required && <span className="text-error-600">*</span>}
+          {label} {required && showAsterisk && <span className="text-error-600">*</span>}
         </label>
-        <Input {...register(addressName as any)} placeholder="e.g., Studio 5, on 4th Floor" error={Boolean(e?.[addressName])} />
+        <Input {...register(addressName as unknown as never)} placeholder="e.g., Studio 5, on 4th Floor" error={showAddrError} />
       </div>
       {instructionsName && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">{instructionsLabel}</label>
-          <Input {...register(instructionsName as any)} placeholder="Details to help attendees find the location" error={Boolean(e?.[instructionsName])} />
+          <Input {...register(instructionsName as unknown as never)} placeholder="Details to help attendees find the location" error={showInstrError} />
         </div>
       )}
-    </div>
+    </div>  
   )
 }
-
-

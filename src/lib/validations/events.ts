@@ -19,23 +19,28 @@ const baseSchema = z.object({
   submittedBefore: z.boolean().optional(),
 })
 
+// Helpers for nested date/time entries (performance extras)
+const extraTimeSchema = z.object({
+  time: z.string().min(1, "Time is required"),
+})
+
+const extraDateSchema = z.object({
+  date: z.string().min(1, "Date is required"),
+  times: z.array(extraTimeSchema).min(1, "At least one time is required"),
+})
+
 // Performance-only fields (optional in schema; enforced per-step in UI)
 const performanceFields = z.object({
   title: z.string().optional(),
+  // simple variant date/time (optional; extras are required)
   date: z.string().optional(),
   showTime: z.string().optional(),
   ticketPrice: z.string().optional(),
   ticketLink: z.string().url("Invalid URL").optional(),
   shortDescription: z.string().max(1000, "Description must be 1000 characters or less").optional(),
   agreeCompTickets: z.boolean().optional(),
-  extraOccurrences: z
-    .array(
-      z.object({
-        date: z.string().min(1, "Date is required"),
-        time: z.string().min(1, "Time is required"),
-      })
-    )
-    .optional(),
+  // required nested structure: [{ date, times: [{ time }, ...] }, ...]
+  extraOccurrences: z.array(extraDateSchema).min(1, "Add at least one date & time"),
 })
 
 // Audition-only

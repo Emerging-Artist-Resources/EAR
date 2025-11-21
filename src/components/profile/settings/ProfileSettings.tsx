@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import { Card } from "@/components/ui/card"
-import { H2, H3, Text } from "@/components/ui/typography"
+import { H3, Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 

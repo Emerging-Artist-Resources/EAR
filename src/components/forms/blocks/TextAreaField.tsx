@@ -9,6 +9,8 @@ interface TextAreaFieldProps<T extends Record<string, unknown>> {
   placeholder?: string
   rows?: number
   required?: boolean
+  showAsterisk?: boolean
+  errorMode?: "touched" | "always"
   className?: string
 }
 
@@ -19,20 +21,23 @@ export function TextAreaField<T extends Record<string, unknown>>({
   placeholder,
   rows = 4,
   required,
+  showAsterisk = true,
+  //errorMode = "touched",
   className,
 }: TextAreaFieldProps<T>) {
-  const { register, formState: { errors } } = form
-  const err = (errors as unknown as Record<string, unknown>)[name]
+  const { register } = form
+  //const state = form.getFieldState(name as unknown as never)
+  //const showError = Boolean(state.error) && (errorMode === "always" || state.isTouched || form.formState.isSubmitted || form.formState.submitCount > 0)
   return (
     <div className={className}>
       <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-error-600">*</span>}
+        {label} {required && showAsterisk && <span className="text-error-600">*</span>}
       </label>
       <Textarea
-        {...register(name as any)}
+        {...register(name as unknown as never)}
         rows={rows}
         placeholder={placeholder}
-        error={Boolean(err)}
+        //error={showError}
       />
     </div>
   )

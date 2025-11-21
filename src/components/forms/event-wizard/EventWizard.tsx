@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
 import { type EventType } from "./EventTypeSelector"
 import { BasicInfoStep } from "./steps/BasicInfoStep"
+import { BasicInfo } from "@/components/signup/BasicInfo"
 import { PerformanceDetailsStep } from "./steps/PerformanceDetailsStep"
 import { ClassWorkshopStep } from "./steps/ClassWorkshopStep"
 import { OpportunityStep } from "./steps/OpportunityStep"
@@ -30,7 +31,16 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
   const resolver = zodResolver(eventFormSchema) as unknown as Resolver<EventFormData>
   const form = useForm<EventFormData>({
     resolver,
-    defaultValues: { referralSources: [], joinEmailList: false, submittedBefore: undefined, agreeCompTickets: false, photoUrls: [""], address: "" } as Partial<EventFormData>,
+    defaultValues: {
+      referralSources: [],
+      joinEmailList: false,
+      submittedBefore: undefined,
+      agreeCompTickets: false,
+      photoUrls: [""],
+      address: "",
+      // Seed one date card with one time for performance extras
+      extraOccurrences: [{ date: "", times: [{ time: "" }] }],
+    } as Partial<EventFormData>,
     mode: 'onChange',
     reValidateMode: 'onChange',
   })
@@ -48,9 +58,20 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
     }
     if (step === 2) {
       if (eventType === 'PERFORMANCE') {
-        const ok = await form.trigger(['title','date','showTime','ticketPrice','ticketLink','shortDescription'])
+        // Validate only performance step fields + nested extras
+        const ok = await form.trigger(
+          ['title', 'shortDescription', 'credits', 'ticketPrice', 'extraOccurrences'],
+          { shouldFocus: true }
+        )
         if (!ok) {
           showToast('Please complete required fields on this step')
+          return
+        }
+        // Ensure at least one date+time exists
+        const extras = (form.getValues().extraOccurrences ?? []) as Array<{ date?: string; times?: Array<{ time?: string }> }>
+        const hasOne = Array.isArray(extras) && extras.some(d => d?.date && Array.isArray(d?.times) && d.times.some(t => t?.time))
+        if (!hasOne) {
+          showToast('Please add at least one date & time')
           return
         }
       } else if (eventType === 'AUDITION') {
@@ -119,12 +140,26 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       let payload: Record<string, unknown> = { type, base }
 
       if (type === 'performance') {
-        const primaryDate = data.date ?? ''
-        const primaryTime = data.showTime ?? '00:00'
-        const occurrences = [
-          { starts_at_utc: new Date(`${primaryDate}T${primaryTime}:00Z`).toISOString(), tz },
-          ...((data.extraOccurrences ?? []).map(o => ({ starts_at_utc: new Date(`${o.date}T${o.time}:00Z`).toISOString(), tz })))
-        ]
+        const occurrences: Array<{ starts_at_utc: string; tz: string }> = []
+        // Accept simple fields if they exist
+        const primaryDate = data.date
+        const primaryTime = data.showTime
+        if (primaryDate && primaryTime) {
+          occurrences.push({ starts_at_utc: new Date(`${primaryDate}T${primaryTime}:00Z`).toISOString(), tz })
+        }
+        // Flatten nested extras: [{ date, times: [{ time }] }]
+        for (const d of (data.extraOccurrences ?? [])) {
+          if (!d?.date || !Array.isArray(d?.times)) continue
+          for (const t of d.times) {
+            if (!t?.time) continue
+            occurrences.push({ starts_at_utc: new Date(`${d.date}T${t.time}:00Z`).toISOString(), tz })
+          }
+        }
+        if (occurrences.length === 0) {
+          setSubmitMessage('Please add at least one date & time')
+          setIsSubmitting(false)
+          return
+        }
         payload = {
           ...payload,
           details: {
@@ -313,5 +348,3 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
     </div>
   )
 }
-
-
