@@ -14,12 +14,12 @@ interface WrapUpStepProps {
 
 export function WrapUpStep({ form, hasSubmittedBefore, setHasSubmittedBefore }: WrapUpStepProps) {
   const { register, watch, setValue } = form
-  const selected = (watch("referralSources") || []) as ReferralOption[]
+  const selected = (watch("referralSources" as unknown as keyof EventFormData) || []) as ReferralOption[]
   const toggle = (opt: ReferralOption, checked: boolean) => {
     const current = new Set<ReferralOption>(selected)
     if (checked) current.add(opt)
     else current.delete(opt)
-    setValue("referralSources", Array.from(current))
+    setValue("referralSources" as unknown as keyof EventFormData, Array.from(current))
   }
   return (
     <>
@@ -45,22 +45,12 @@ export function WrapUpStep({ form, hasSubmittedBefore, setHasSubmittedBefore }: 
         </div>
         {selected.includes("OTHER") && (
           <div className="mt-2">
-            <Input {...register("referralOther")} placeholder="Please specify" />
+            <Input {...register("referralOther" as unknown as keyof EventFormData)} placeholder="Please specify" />
           </div>
         )}
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Join our email list?</label>
-        <div className="flex items-center gap-4 text-sm text-gray-700">
-          <label className="inline-flex items-center gap-2">
-            <input type="radio" value="yes" checked={watch("joinEmailList") === true} onChange={() => setValue("joinEmailList", true)} /> Yes
-          </label>
-          <label className="inline-flex items-center gap-2">
-            <input type="radio" value="no" checked={watch("joinEmailList") === false} onChange={() => setValue("joinEmailList", false)} /> No
-          </label>
-        </div>
-      </div>
+     
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Have you submitted to EAR before?</label>

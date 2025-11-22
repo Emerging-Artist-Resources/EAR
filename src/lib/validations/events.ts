@@ -12,11 +12,6 @@ const baseSchema = z.object({
   notes: z.string().optional(),
   photoUrls: z.array(z.string().url("Invalid URL")).min(1, "At least one photo URL is required").max(5, "Maximum 5 photo URLs"),
   credits: z.string().min(1, "Image description / credit is required"),
-  referralSources: z.array(z.enum(["INSTAGRAM", "WORD_OF_MOUTH", "GOOGLE", "OTHER"]))
-    .optional(),
-  referralOther: z.string().optional(),
-  joinEmailList: z.boolean().optional(),
-  submittedBefore: z.boolean().optional(),
 })
 
 // Helpers for nested date/time entries (performance extras)

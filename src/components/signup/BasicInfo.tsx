@@ -5,11 +5,11 @@ import { Section } from "@/components/forms/blocks/Section"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { EventFormData } from "@/lib/validations/events"
 import { LocationField } from "../forms/blocks/LocationField"
-interface BasicInfoProps {
+interface SignUpBasicInfoProps {
     form: UseFormReturn<EventFormData>
 }
 
-export function BasicInfo({ form }: BasicInfoProps) {
+export function SignUpBasicInfo({ form }: SignUpBasicInfoProps) {
     return (
         <Section title="Basic Info">
             <TextField form={form} name={"name"} label="Name" required/>

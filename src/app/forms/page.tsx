@@ -1,16 +1,33 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import PerformanceModal from "@/components/performance-modal"
 import { Card } from "@/components/ui/card"
 import { H2, Text } from "@/components/ui/typography"
+import { getSupabaseClient } from "@/lib/supabase/client"
 
 export default function SubmitListingPage() {
   const router = useRouter()
   const search = useSearchParams()
   const returnTo = search.get("returnTo")
   const [open, setOpen] = useState(true)
+  const [checkingAuth, setCheckingAuth] = useState(true)
+
+  useEffect(() => {
+    // TODO: Need to fix this to ensure non authenticated user don't submit listings
+    const supabase = getSupabaseClient()
+    supabase.auth.getUser().then(({ data }) => {
+      const user = data?.user || null
+      console.log(user)
+      if (!user) {
+        const dest = `/auth/signin?returnTo=${encodeURIComponent(returnTo || "/forms")}`
+        router.push(dest)
+      } else {
+        setCheckingAuth(false)
+      }
+    })
+  }, [router, returnTo])
 
   const handleClose = useCallback(() => {
     setOpen(false)
@@ -40,7 +57,9 @@ export default function SubmitListingPage() {
           <Text className="text-sm text-gray-600">Use the form to submit your event or opportunity.</Text>
         </Card>
       </div>
-      <PerformanceModal isOpen={open} onClose={handleClose} onSuccess={handleSuccess} />
+      {!checkingAuth && (
+        <PerformanceModal isOpen={open} onClose={handleClose} onSuccess={handleSuccess} />
+      )}
     </div>
   )
 }

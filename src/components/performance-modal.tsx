@@ -1,7 +1,7 @@
 "use client"
 
 import { Modal } from "@/components/ui/modal"
-import { EventWizard } from "@/components/forms/event-wizard/EventWizard"
+import { EventWizard } from "@/components/event-forms/event-wizard/EventWizard"
 
 interface PerformanceModalProps {
   isOpen: boolean

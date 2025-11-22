@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
 import { type EventType } from "./EventTypeSelector"
 import { BasicInfoStep } from "./steps/BasicInfoStep"
-import { BasicInfo } from "@/components/signup/BasicInfo"
 import { PerformanceDetailsStep } from "./steps/PerformanceDetailsStep"
 import { ClassWorkshopStep } from "./steps/ClassWorkshopStep"
 import { OpportunityStep } from "./steps/OpportunityStep"
-import { WrapUpStep } from "./steps/WrapUpStep"
+import { PageNumbers } from "@/components/forms/blocks/PageNumbers"
+import { Card } from "@/components/ui/card"
 
 interface EventWizardProps {
   onSuccess: () => void
@@ -20,11 +20,10 @@ interface EventWizardProps {
 }
 
 export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
-  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [step, setStep] = useState<1 | 2>(1)
   const [eventType, setEventType] = useState<EventType | null>(null)
   const [submitMessage, setSubmitMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [hasSubmittedBefore, setHasSubmittedBefore] = useState<null | boolean>(null)
   const [toast, setToast] = useState<string | null>(null)
 
 
@@ -32,9 +31,6 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
   const form = useForm<EventFormData>({
     resolver,
     defaultValues: {
-      referralSources: [],
-      joinEmailList: false,
-      submittedBefore: undefined,
       agreeCompTickets: false,
       photoUrls: [""],
       address: "",
@@ -100,14 +96,14 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           return
         }
       }
-      setStep(3)
+      // In 2-step flow, Step 2 is submit step; do nothing here
       return
     }
   }
 
   const goBack = () => {
     if (step === 1) return
-    setStep(((step - 1) as 1 | 2 | 3))
+    setStep(((step - 1) as 1 | 2))
   }
 
   const handleSubmit = form.handleSubmit(async (data) => {
@@ -118,12 +114,6 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York'
       const type = (eventType || 'PERFORMANCE').toLowerCase() as 'performance'|'audition'|'creative'|'class'|'funding'
       console.log('[submit] start type', type)
-      const meta: Record<string, unknown> = {}
-      if (Array.isArray(data.referralSources) && data.referralSources.length) meta.referral_sources = data.referralSources
-      if (data.referralOther) meta.referral_other = data.referralOther
-      if (typeof data.joinEmailList === 'boolean') meta.join_email_list = data.joinEmailList
-      if (hasSubmittedBefore !== null) meta.submitted_before = hasSubmittedBefore
-
       const base = {
         contact_name: data.submitterName,
         pronouns: data.submitterPronouns || null,
@@ -134,7 +124,6 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
         social_handles: { raw: data.socialHandles },
         notes: data.notes || null,
         borough: null as string | null,
-        meta: Object.keys(meta).length ? meta : undefined,
       }
 
       let payload: Record<string, unknown> = { type, base }
@@ -291,8 +280,8 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
         </div>
       )}
       {/* Progress */}
-      {(() => {
-        const progressPct = step === 1 ? 33 : step === 2 ? 67 : 100
+      {/* {(() => {
+        const progressPct = step === 1 ? 50 : 100
         return (
           <div className="w-full">
             <div className="h-2 bg-gray-200 rounded">
@@ -303,14 +292,10 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
             </div>
           </div>
         )
-      })()}
+      })()} */}
       {/* Step indicators */}
-      <div className="flex items-center gap-2 text-sm">
-        <span className={`px-2 py-1 rounded ${step === 1 ? 'bg-primary-100 text-gray-700' : 'bg-gray-100 text-gray-700'}`}>Basic Info</span>
-        <span className="text-gray-400">/</span>
-        <span className={`px-2 py-1 rounded ${step === 2 ? 'bg-primary-100 text-gray-700' : 'bg-gray-100 text-gray-700'}`}>Event Details</span>
-        <span className="text-gray-400">/</span>
-        <span className={`px-2 py-1 rounded ${step === 3 ? 'bg-primary-100 text-gray-700' : 'bg-gray-100 text-gray-700'}`}>Wrap-up</span>
+      <div className="flex justify-center gap-2 text-sm">
+        <PageNumbers current={step} total={2} />
       </div>
       {step === 1 && <BasicInfoStep form={form} eventType={eventType} onChangeType={setEventType} />}
       {step === 2 && (
@@ -325,9 +310,6 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           />
         )
       )}
-      {step === 3 && (
-        <WrapUpStep form={form} hasSubmittedBefore={hasSubmittedBefore} setHasSubmittedBefore={setHasSubmittedBefore} />
-      )}
 
       {submitMessage && (
         <Alert variant={submitMessage.includes('success') ? 'success' : 'error'}>{submitMessage}</Alert>
@@ -337,9 +319,9 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
         <div className="flex gap-2">
           {step > 1 && <Button type="button" variant="outline" onClick={goBack}>Back</Button>}
-          {step < 3 && <Button type="button" variant="primary" onClick={goNext}>Next</Button>}
-          {step === 3 && (
-            <Button type="button" variant="primary" onClick={() => { console.log('[submit] clicked'); handleSubmit() }} disabled={isSubmitting}>
+          {step === 1 && <Button type="button" variant="primary" onClick={goNext}>Next</Button>}
+          {step === 2 && (
+            <Button type="button" variant="primary" onClick={() => { handleSubmit() }} disabled={isSubmitting}>
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </Button>
           )}
