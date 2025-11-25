@@ -19,6 +19,8 @@ export default function AdminDashboardPage() {
     pending: 0, approved: 0, rejected: 0
   })
   const [loading, setLoading] = useState(true)
+  const [dateFrom, setDateFrom] = useState<string | undefined>(undefined)
+  const [dateTo, setDateTo] = useState<string | undefined>(undefined)
 
   // role check
   useEffect(() => {
@@ -51,14 +53,23 @@ export default function AdminDashboardPage() {
       )
 
       setCounts({ pending: p.length, approved: a.length, rejected: r.length })
-      const current = filter === "PENDING" ? p : filter === "APPROVED" ? a : r
+      let current = filter === "PENDING" ? p : filter === "APPROVED" ? a : r
+      // date range filter on submitted_at
+      if (dateFrom || dateTo) {
+        const fromTime = dateFrom ? new Date(dateFrom).getTime() : -Infinity
+        const toTime = dateTo ? new Date(dateTo).getTime() + 24 * 60 * 60 * 1000 - 1 : Infinity
+        current = current.filter((it) => {
+          const t = new Date(it.submitted_at).getTime()
+          return t >= fromTime && t <= toTime
+        })
+      }
       setItems(current)
     } catch (e) {
       console.error("Admin fetch error:", e)
     } finally {
       setLoading(false)
     }
-  }, [filter])
+  }, [filter, dateFrom, dateTo])
 
   useEffect(() => {
     if (authLoading || userRole !== "ADMIN") return
@@ -83,7 +94,17 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-[var(--gray-50)]">
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <AdminHeader filter={filter} counts={counts} onChange={setFilter} />
+        <AdminHeader
+          filter={filter}
+          counts={counts}
+          onChange={setFilter}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onChangeDate={({ from, to }) => {
+            setDateFrom(from)
+            setDateTo(to)
+          }}
+        />
         {loading
           ? <div className="p-8 text-center text-[var(--gray-600)]">Loading…</div>
           : <AdminEventList items={items} onReview={onReview} />

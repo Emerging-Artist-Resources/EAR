@@ -22,15 +22,15 @@ export function BasicInfoStep({ eventType, onChangeType }: BasicInfoStepProps) {
         </CardHeader>
         <CardContent>
           <Text>
-            We offer a diverse range of listings tailored to meet the needs of creative professionals and enthusiasts. Our platform provides five main types of listings:
+          Our community calendar is designed to support emerging artists and creative professionals by offering a variety of listing options.
           </Text>
-          <div className="mt-2 space-y-2 text-sm text-gray-700">
-            <p><strong>1. Performance:</strong> Discover performance opportunities that span across genres and disciplines. Share shows and connect audiences with your work.</p>
-            <p><strong>2. Audition:</strong> Stay informed about upcoming auditions and casting calls across theater, film, television, and more.</p>
-            <p><strong>3. Creative Opportunities:</strong> Collaborations, residencies, open calls—find opportunities that encourage artistic expression and partnership.</p>
-            <p><strong>4. Class/Workshop:</strong> Promote educational offerings ranging from weekly classes to one-time workshops and intensives.</p>
-            <p><strong>5. Funding:</strong> Help the community find grants, scholarships, and other financial support opportunities.</p>
-          </div>  
+          <ol className="mt-4 space-y-2 text-sm text-gray-700 pl-4">
+            <li><strong>1. Performances:</strong> Promote your shows, premiers, immersive experiences, and any movement-centered events.</li>
+            <li><strong>2. Auditions:</strong> Spread the word about upcoming auditions and performance opportunities.</li>
+            <li><strong>3. Classes/Workshops:</strong> List your classes, workshops, intensives, and other training opportunities.            </li>
+            <li><strong>4. Creative Opportunities:</strong> Share choreographic opportunities, residencies, open calls, or any creative offering that doesn’t neatly fit into another category.</li>
+          </ol>  
+          <Text className="mt-4">Each listing is crafted to give artists and audience members the essential details they need at glance. Whether you’re looking to perform, train, create, or secure support for your next project, our calendar helps you connect with the opportunities that move your practice forward.</Text>
         </CardContent>
       </Card>
 

@@ -10,6 +10,9 @@ import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
 import { LocationField } from "@/components/forms/blocks/LocationField"
 import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
+import { SelectBlock } from "@/components/forms/blocks/Select"
+import { useEffect } from "react"
+
 
 interface PerformanceDetailsStepProps {
   form: UseFormReturn<EventFormData>
@@ -18,10 +21,53 @@ interface PerformanceDetailsStepProps {
 export function PerformanceDetailsStep({ form }: PerformanceDetailsStepProps) {
   // consume form for fields via blocks
   // const e = errors as FieldErrors<EventFormData>
+  const perfType = form.watch("type") as string | undefined
+  const isFestival = perfType === "FESTIVAL"
+  
+  const isSplitBill = perfType === "SPLIT_BILL"
+  const isOther = perfType === "OTHER"
+
+  useEffect(() => {
+    if (!isFestival) {
+      form.setValue("festival_name", "")
+      form.setValue("festival_link", "")
+      form.clearErrors(["festival_name", "festival_link"] as unknown as never)
+    }
+    if (!isSplitBill) {
+      form.setValue("title", "")
+      form.clearErrors(["title"] as unknown as never)
+    }
+   
+  }, [isFestival, isSplitBill, form])
   return (
     <>
+      <Section title="Performance Association">
+        <SelectBlock form={form} name={"type"} label="Is your performance part of a festival or split bill?" required options={[
+          { label: "No", value: "NO" }, 
+          { label: "Festival", value: "FESTIVAL" }, 
+          { label: "Split Bill", value: "SPLIT_BILL" }, 
+        ]} allowOther={true} otherLabel="Other" otherName="otherType" otherValue="OTHER" />
+
+        {isFestival && (
+          <>
+            <TextField form={form} name={"festival_name"} label="Name of Festival" required placeholder="Festival Name"/>
+            <TextField form={form} name={"festival_link"} label="Link to Festival" type="url" required placeholder="https://festival.example.com"/>
+          </>
+        )}
+
+        {isSplitBill && (
+          <>
+            <TextField form={form} name={"split_bill_name"} label="Name of Split Bill" required placeholder="Split Bill Name"/>
+            <TextField form={form} name={"split_bill_link"} label="Link to Split Bill" type="url" required placeholder="https://splitbill.example.com"/>
+          </>
+        )}
+
+      
+        </Section>
+
       <Section title="Performance Details">
-        <TextField form={form} name={"title"} label="Show Name" required placeholder="Show title"/>
+
+        <TextField form={form} name={"title"} label="Performance Title" required placeholder="Performance Title"/>
 
         <DateTimeList form={form}  title="Performance Dates and Times" primaryDateName={"date"} primaryTimeName={"showTime"} extrasName={"extraOccurrences"} variant="extras" required/>
 

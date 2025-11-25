@@ -12,7 +12,6 @@ import { PerformanceDetailsStep } from "./steps/PerformanceDetailsStep"
 import { ClassWorkshopStep } from "./steps/ClassWorkshopStep"
 import { OpportunityStep } from "./steps/OpportunityStep"
 import { PageNumbers } from "@/components/forms/blocks/PageNumbers"
-import { Card } from "@/components/ui/card"
 
 interface EventWizardProps {
   onSuccess: () => void
@@ -39,6 +38,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
     } as Partial<EventFormData>,
     mode: 'onChange',
     reValidateMode: 'onChange',
+    shouldUnregister: true,
   })
 
   const showToast = (message: string) => {
@@ -316,13 +316,32 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       )}
 
       <div className="flex items-center justify-between">
-        <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
         <div className="flex gap-2">
-          {step > 1 && <Button type="button" variant="outline" onClick={goBack}>Back</Button>}
-          {step === 1 && <Button type="button" variant="primary" onClick={goNext}>Next</Button>}
+          {step > 1 && (
+            <Button type="button" variant="outline" onClick={goBack}>
+              Back
+            </Button>
+          )}
+          {/* If you want Cancel on the left as well, uncomment:
+          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+          */}
+        </div>
+        <div className="flex gap-2">
+          {step === 1 && (
+            <Button type="button" variant="primary" onClick={goNext}>
+              Next
+            </Button>
+          )}
           {step === 2 && (
-            <Button type="button" variant="primary" onClick={() => { handleSubmit() }} disabled={isSubmitting}>
-              {isSubmitting ? 'Submitting...' : 'Submit'}
+            <Button
+              type="button"
+              variant="primary"
+              onClick={() => {
+                handleSubmit()
+              }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
           )}
         </div>

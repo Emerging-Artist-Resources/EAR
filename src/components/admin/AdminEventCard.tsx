@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { AdminEventDetail, AdminEventItem, STATUS_BADGE, TYPE_BADGE } from "./types"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -23,13 +23,17 @@ function Row({ label, value }: { label: string; value?: React.ReactNode }) {
 export function AdminEventCard({
   item,
   onReview,
+  autoExpand = false,
+  initialDetail,
 }: {
   item: AdminEventItem
   onReview: (id: string, status: "APPROVED" | "REJECTED", comments: string) => Promise<void>
+  autoExpand?: boolean
+  initialDetail?: AdminEventDetail | null
 }) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(autoExpand)
   const [loadingDetail, setLoadingDetail] = useState(false)
-  const [detail, setDetail] = useState<AdminEventDetail | null>(null)
+  const [detail, setDetail] = useState<AdminEventDetail | null>(initialDetail ?? null)
   const [comments, setComments] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
@@ -40,7 +44,7 @@ export function AdminEventCard({
 
   const loadDetails = async () => {
     if (detail) {
-      setExpanded(!expanded)
+      if (!autoExpand) setExpanded(!expanded)
       return
     }
     setLoadingDetail(true)
@@ -51,6 +55,16 @@ export function AdminEventCard({
     setDetail(json?.data ?? null)
     setExpanded(true)
   }
+
+  // Auto expand and prefetch details on mount if requested
+  useEffect(() => {
+    if (autoExpand && initialDetail && !expanded) {
+      setExpanded(true)
+    } else if (autoExpand && !detail && !loadingDetail) {
+      loadDetails().catch(() => void 0)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoExpand, item.id, initialDetail])
 
   const approve = async () => {
     setSubmitting(true)
@@ -91,9 +105,11 @@ export function AdminEventCard({
           </div>
           <h3 className="mt-2 text-lg font-semibold text-[var(--gray-900)]">{computedTitle}</h3>
           <p className="text-sm text-[var(--gray-600)]">Submitted: {submittedAt}</p>
-          <Button variant="ghost" size="sm" onClick={loadDetails} className="mt-2 px-1">
-            {expanded ? "Hide details" : (loadingDetail ? "Loading…" : "View details")}
-          </Button>
+          {!autoExpand && (
+            <Button variant="ghost" size="sm" onClick={loadDetails} className="mt-2 px-1">
+              {expanded ? "Hide details" : (loadingDetail ? "Loading…" : "View details")}
+            </Button>
+          )}
         </div>
       </div>
 

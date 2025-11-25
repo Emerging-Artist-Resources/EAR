@@ -30,6 +30,13 @@ const performanceFields = z.object({
   // simple variant date/time (optional; extras are required)
   date: z.string().optional(),
   showTime: z.string().optional(),
+  // subtype and festival details
+  type: z.enum(["NO", "FESTIVAL", "SPLIT_BILL", "OTHER"]).optional(),
+  otherType: z.string().optional(),
+  festival_name: z.string().optional(),
+  festival_link: z.string().url("Invalid URL").optional(),
+  split_bill_name: z.string().optional(),
+  split_bill_link: z.string().url("Invalid URL").optional(),
   ticketPrice: z.string().optional(),
   ticketLink: z.string().url("Invalid URL").optional(),
   shortDescription: z.string().max(1000, "Description must be 1000 characters or less").optional(),

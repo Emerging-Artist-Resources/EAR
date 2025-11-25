@@ -36,7 +36,7 @@ export function LocationField<T extends Record<string, unknown>>({
         <label className="block text-sm font-medium text-gray-700 mb-1">
           {label} {required && showAsterisk && <span className="text-error-600">*</span>}
         </label>
-        <Input {...register(addressName as unknown as never)} placeholder="e.g., Studio 5, on 4th Floor" error={showAddrError} />
+        <Input {...register(addressName as unknown as never)} placeholder="Enter address" error={showAddrError} />
       </div>
       {instructionsName && (
         <div>

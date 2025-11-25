@@ -16,9 +16,7 @@ export function PageNumbers({
   connector = true,
   size = "md",
 }: PageNumbersProps) {
-  const sizeClass =
-    size === "lg" ? "h-10 w-10 text-base" : size === "sm" ? "h-7 w-7 text-xs" : "h-8 w-8 text-sm";
-
+ 
   const items = Array.from({ length: Math.max(0, total) }, (_, i) => i + 1);
 
   return (

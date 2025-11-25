@@ -51,12 +51,6 @@ export default function SubmitListingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto py-8 px-4">
-        <Card className="p-6">
-          <H2 className="mb-1">Submit a Listing</H2>
-          <Text className="text-sm text-gray-600">Use the form to submit your event or opportunity.</Text>
-        </Card>
-      </div>
       {!checkingAuth && (
         <PerformanceModal isOpen={open} onClose={handleClose} onSuccess={handleSuccess} />
       )}

@@ -5,10 +5,6 @@ import { useForm, FormProvider } from "react-hook-form"
 import { usePathname } from "next/navigation"
 import { H2 } from "@/components/ui/typography"
 import { Card, CardContent } from "@/components/ui/card"
-import { TfiLayoutLineSolid } from "react-icons/tfi";
-import { PiNumberCircleOneFill } from "react-icons/pi";
-import { PiNumberCircleTwoFill } from "react-icons/pi";
-import { PiNumberCircleThreeFill } from "react-icons/pi";
 import { PageNumbers } from "@/components/forms/blocks/PageNumbers"
 
 
@@ -45,30 +41,18 @@ export default function SignUpLayout({ children }: LayoutProps) {
     return 1
   }, [pathname])
 
-  const progressPct = step === 1 ? 33 : step === 2 ? 66 : 100
-
   return (
     <FormProvider {...methods}>
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full h-30 rounded-xl max-w-2xl space-y-6 py-4 bg-primary-100">
-          <div>
-            <H2 className="text-center">Create your account</H2>
-            <div className="mt-4">
-              
-              {/* <div className="h-2 w-full rounded bg-gray-200">
-                <div
-                  className="h-2 rounded bg-primary-400 transition-all"
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div> */}
-            </div>
-          </div>
+        <div className="mx-auto w-full max-w-2xl">
           <Card>
+            <div className="relative -mx-6 -mt-6 mb-4 px-6 py-4 rounded-t-md bg-primary">
+              <H2 className="text-center text-white">Create an EAR Account</H2>
+            </div>
             <CardContent>
-              <div className=" flex items-center justify-center pb-5 text-sm">
+              <div className="flex items-center justify-center pb-5 text-sm">
                 <PageNumbers current={step} total={3} />
               </div>
-
               {children}
             </CardContent>
           </Card>
