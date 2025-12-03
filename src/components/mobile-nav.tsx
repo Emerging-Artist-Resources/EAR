@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { getSupabaseClient } from "@/lib/supabase/client"
+import { Button } from "@/components/ui/button"
+import { VscAccount } from "react-icons/vsc"
 
 interface MobileNavProps {
   userRole?: string
@@ -31,7 +33,7 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
   }, [supabase])
 
   const navigation = [
-    { name: "View Calendar", href: "/calendar" },
+    { name: "Calendar", href: "/calendar" },
     { name: "Announcements", href: "/announcement" },
     ...(userRole === "ADMIN" ? [
       { name: "Admin", href: "/admin" },
@@ -41,9 +43,12 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
 
   return (
     <div className="lg:hidden">
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+        className="text-gray-400 hover:text-gray-600"
+        aria-label="Toggle menu"
       >
         <span className="sr-only">Open main menu</span>
         <svg
@@ -62,7 +67,7 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
-      </button>
+      </Button>
 
       {isOpen && (
         <div className="absolute top-16 left-0 right-0 bg-white shadow-lg z-50">
@@ -71,57 +76,61 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
               <Link
                 key={item.name}
                 href={item.href}
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                className="block"
                 onClick={() => setIsOpen(false)}
               >
-                {item.name}
+                <Button variant="ghost" className="w-full justify-start text-base">{item.name}</Button>
               </Link>
             ))}
             {isAuthed && onSubmitPerformance && (
-              <button
+              <Button
                 onClick={() => {
                   onSubmitPerformance()
                   setIsOpen(false)
                 }}
-                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-primary hover:text-gray-900 hover:bg-primary/10"
+                variant="primary"
+                className="w-full justify-start"
               >
                 Submit Performance
-              </button>
+              </Button>
             )}
-                        {isAuthed ? (
-                          <>
-                            <div className="border-t border-gray-200 pt-3 mt-3">
-                              <p className="px-3 py-2 text-sm text-gray-500">
-                                Welcome, {name}
-                              </p>
-                              {userRole !== "ADMIN" && (
-                                <Link
-                                  href="/profile"
-                                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-                                  onClick={() => setIsOpen(false)}
-                                >
-                                  View Profile
-                                </Link>
-                              )}
-                              <button
-                                onClick={async () => {
-                                  await supabase.auth.signOut()
-                                  setIsOpen(false)
-                                  window.location.href = "/auth/signin"
-                                }}
-                                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-                              >
-                                Sign Out
-                              </button>
-                            </div>
+              {isAuthed ? (
+                <>
+                  <div className="border-t border-gray-200 pt-3 mt-3">
+                    <p className="px-3 py-2 text-sm text-gray-500">
+                      Welcome, {name}
+                    </p>
+                  
+                    <button
+                      onClick={() => {
+                        window.location.href = "/profile"
+                        setIsOpen(false)
+                      }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <VscAccount className="w-5 h-5" />
+                    </button>
+                    
+                    <Button
+                      onClick={async () => {
+                        await supabase.auth.signOut()
+                        setIsOpen(false)
+                        window.location.href = "/auth/signin"
+                      }}
+                      variant="outline"
+                      className="w-full justify-start text-base"
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
               </>
             ) : (
               <Link
                 href="/auth/signin"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                className="block"
                 onClick={() => setIsOpen(false)}
               >
-                Sign In
+                <Button variant="outline" className="w-full justify-start text-base">Sign In</Button>
               </Link>
             )}
           </div>

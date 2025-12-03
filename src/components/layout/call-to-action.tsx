@@ -1,25 +1,26 @@
 import React from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { H1 } from "@/components/ui/typography"
 
 export interface CallToActionProps {
   onSubmitPerformance?: () => void
+  submitHref?: string
 }
 
-export const CallToAction: React.FC<CallToActionProps> = ({ onSubmitPerformance }) => {
+export const CallToAction: React.FC<CallToActionProps> = ({ onSubmitPerformance, submitHref }) => {
   return (
-  <div className="mb-6 bg-gradient-to-r from-[var(--secondary-50)] to-[var(--secondary-100)] rounded-lg p-6 border border-primary/20">
-      <div className="text-center">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Have an upcoming performance or event?
-        </h2>
-        <p className="text-gray-600 mb-4">
-          Submit your performance details and we&apos;ll add it to the calendar after review.
-        </p>
+    <div className="flex items-center justify-between gap-4 md:flex-row flex-col mb-4">
+      <H1 className="text-primary">Artist Calendar</H1>
+      {submitHref ? (
+        <Link href={submitHref}>
+          <Button>Submit Listing</Button>
+        </Link>
+      ) : (
         <Button onClick={onSubmitPerformance}>
-          Submit Performance
+          Submit Listing
         </Button>
-        
-      </div>
+      )}
     </div>
-  )
-}
+  );
+};

@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge"
 import { Modal } from "@/components/ui/modal"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Select } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { H2, H3, Text } from "@/components/ui/typography"
 import { getNotificationTypeColor, formatDateTime } from "@/lib/constants"
 import { getSupabaseClient } from "@/lib/supabase/client"
 
@@ -198,7 +201,7 @@ export default function AdminNotificationsPage() {
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <Text className="text-lg">Loading...</Text>
       </div>
     )
   }
@@ -214,11 +217,9 @@ export default function AdminNotificationsPage() {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Manage Notifications
-            </h2>
+            <H2>Manage Announcements</H2>
             <Button onClick={handleCreateNew}>
-              Create New Notification
+              Create New Announcement
             </Button>
           </div>
 
@@ -237,9 +238,7 @@ export default function AdminNotificationsPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-medium text-gray-900">
-                            {notification.title}
-                          </h3>
+                          <H3 className="text-gray-900">{notification.title}</H3>
                           <Badge variant={getNotificationTypeColor(notification.type)}>
                             {notification.type}
                           </Badge>
@@ -247,17 +246,11 @@ export default function AdminNotificationsPage() {
                             <Badge variant="default">Inactive</Badge>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">
-                          {notification.content}
-                        </p>
+                        <Text className="text-sm text-gray-600 mb-2">{notification.content}</Text>
                         <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span>
-                            Created by {notification.author?.name ?? 'Admin'} on {formatDateTime(notification.createdAt || notification.updatedAt)}
-                          </span>
+                          <Text>Created by {notification.author?.name ?? 'Admin'} on {formatDateTime(notification.createdAt || notification.updatedAt)}</Text>
                           {notification.updatedAt !== notification.createdAt && (
-                            <span>
-                              Updated {formatDateTime(notification.updatedAt)}
-                            </span>
+                            <Text>Updated {formatDateTime(notification.updatedAt)}</Text>
                           )}
       </div>
     </div>
@@ -323,25 +316,23 @@ export default function AdminNotificationsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Type
               </label>
-              <select
+              <Select
                 value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                onChange={(e) => setFormData({ ...formData, type: (e.target as HTMLSelectElement).value })}
+                className="w-full"
               >
                 <option value="INFO">Info</option>
                 <option value="WARNING">Warning</option>
                 <option value="SUCCESS">Success</option>
                 <option value="ERROR">Error</option>
-              </select>
+              </Select>
             </div>
 
             <div className="flex items-center">
-              <input
-                type="checkbox"
+              <Checkbox
                 id="isActive"
                 checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                onChange={(e) => setFormData({ ...formData, isActive: (e.target as HTMLInputElement).checked })}
               />
               <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
                 Active (visible to users)

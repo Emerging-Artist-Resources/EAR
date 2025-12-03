@@ -15,6 +15,9 @@ export const variants = {
         outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-primary",
         ghost: "text-gray-700 hover:bg-gray-100 focus:ring-gray-500",
         destructive: "bg-red-500 text-white hover:bg-red-600 focus:ring-red-500",
+        simple: "text-gray-900 hover:text-gray-700 hover:bg-transparent",
+        link: "bg-transparent text-primary underline hover:text-primary-700 hover:bg-transparent focus:bg-transparent active:bg-transparent border-0 ring-0 ring-offset-0 focus:ring-0 focus:ring-offset-0 outline-none focus:outline-none rounded-none p-0 h-auto w-auto shadow-none focus:shadow-none",
+        favorite: "bg-transparent text-yellow-500 hover:text-yellow-600 hover:bg-transparent border-0 rounded-none focus:ring-0 focus:ring-offset-0 p-0 h-auto w-auto",
       },
       size: {
         sm: "h-8 px-3 text-xs",
@@ -37,6 +40,11 @@ export const variants = {
         sm: "p-4",
         md: "p-6",
         lg: "p-8",
+      },
+      border: {
+        solid: "border border-gray-200",
+        dashed: "border-3 border-dashed border-primary",
+        dotted: "border-3 border-dotted border-primary",
       },
     },
   },

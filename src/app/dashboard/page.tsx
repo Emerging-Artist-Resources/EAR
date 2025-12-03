@@ -5,6 +5,9 @@ import { useEffect, useState, useCallback } from "react"
 import { formatDateTime } from "@/lib/constants"
 import { getSupabaseClient } from "@/lib/supabase/client"
 import Link from "next/link"
+import { H2, Text } from "@/components/ui/typography"
+import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 interface Performance {
   id: string
@@ -67,7 +70,7 @@ export default function Dashboard() {
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <Text className="text-lg">Loading...</Text>
       </div>
     )
   }
@@ -95,54 +98,48 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Your Submitted Performances
-            </h2>
-            <p className="text-gray-600">
+            <H2 className="mb-2">Your Submitted Performances</H2>
+            <Text>
               To submit a new performance, please visit the{" "}
-              <Link href="/calendar" className="text-primary hover:opacity-80">
-                Calendar page
-              </Link>{" "}
+              <Link href="/calendar" className="text-primary hover:opacity-80">Calendar page</Link>{" "}
               and use the submission form.
-            </p>
+            </Text>
           </div>
 
-          <div className="bg-white shadow rounded-lg">
+          <Card className="">
             {performances.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">
-                No performances submitted yet.
-              </div>
+              <div className="p-6 text-center text-gray-500">No performances submitted yet.</div>
             ) : (
               <div className="divide-y divide-gray-200">
                 {performances.map((performance) => (
                   <div key={performance.id} className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <h3 className="text-lg font-medium text-gray-900">
+                        <Text className="text-lg font-medium text-gray-900">
                           {performance.title}
-                        </h3>
-                        <p className="text-sm text-gray-600">
+                        </Text>
+                        <Text className="text-sm text-gray-600">
                           {performance.performer} • {formatDateTime(performance.date, performance.time)}
-                        </p>
+                        </Text>
                         {performance.description && (
-                          <p className="text-sm text-gray-500 mt-1">
+                          <Text className="text-sm text-gray-500 mt-1">
                             {performance.description}
-                          </p>
+                          </Text>
                         )}
                       </div>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                          performance.status
-                        )}`}
-                      >
+                      <Badge variant={
+                        performance.status === "APPROVED" ? "success" :
+                        performance.status === "REJECTED" ? "error" :
+                        "warning"
+                      } size="sm">
                         {performance.status}
-                      </span>
+                      </Badge>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
+          </Card>
         </div>
       </div>
     </div>

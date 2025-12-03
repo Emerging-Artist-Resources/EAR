@@ -1,7 +1,7 @@
 "use client"
 
 import { Modal } from "@/components/ui/modal"
-import { EventWizard } from "@/components/forms/event-wizard/EventWizard"
+import { EventWizard } from "@/components/event-forms/event-wizard/EventWizard"
 
 interface PerformanceModalProps {
   isOpen: boolean
@@ -15,7 +15,7 @@ export default function PerformanceModal({ isOpen, onClose, onSuccess }: Perform
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Submit an Event" closeOnOverlay={false}>
+    <Modal isOpen={isOpen} onClose={handleClose} title="Submit a Listing" closeOnOverlay={false}>
       {/* Wizard is now a separate component */}
       <EventWizard onSuccess={onSuccess} onClose={handleClose} />
     </Modal>

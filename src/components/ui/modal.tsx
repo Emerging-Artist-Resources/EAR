@@ -2,6 +2,7 @@ import React from "react"
 import { cn } from "@/lib/utils"
 import { variants } from "@/lib/utils"
 import { Button } from "./button"
+import { H2 } from "./typography"
 
 export interface ModalProps {
   isOpen: boolean
@@ -11,6 +12,7 @@ export interface ModalProps {
   size?: "sm" | "md" | "lg" | "xl"
   showCloseButton?: boolean
   closeOnOverlay?: boolean
+  headerClassName?: string
 }
 
 const sizeClasses = {
@@ -28,6 +30,7 @@ export const Modal: React.FC<ModalProps> = ({
   size = "md",
   showCloseButton = true,
   closeOnOverlay = true,
+  headerClassName,
 }) => {
   if (!isOpen) return null
 
@@ -48,14 +51,22 @@ export const Modal: React.FC<ModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+          {/* Header strip with customizable background */}
+          <div
+            className={cn(
+              "relative -mx-6 -mt-6 mb-6 px-6 py-4 flex items-center justify-center rounded-t-md",
+              // default header styling if none provided
+              headerClassName ?? "bg-primary text-white"
+            )}
+          >
+            <H2 className="text-center text-white">{title}</H2>
             {showCloseButton && (
               <Button
-                variant="ghost"
+                aria-label="Close"
+                variant="simple"
                 size="icon"
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600"
+                className="absolute right-4 top-1/2 -translate-y-1/2"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

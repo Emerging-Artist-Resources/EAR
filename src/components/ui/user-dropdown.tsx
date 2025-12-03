@@ -2,16 +2,18 @@
 
 import { useState, useRef, useEffect } from "react"
 import { getSupabaseClient } from "@/lib/supabase/client"
+import { VscAccount } from "react-icons/vsc";
+import { useRouter } from "next/navigation"
 
 interface UserDropdownProps {
   userName: string
-  userRole?: string
   isMobile?: boolean
 }
 
-export function UserDropdown({ userName, userRole, isMobile = false }: UserDropdownProps) {
+export function UserDropdown({ userName, isMobile = false }: UserDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -29,7 +31,7 @@ export function UserDropdown({ userName, userRole, isMobile = false }: UserDropd
   const supabase = getSupabaseClient()
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    window.location.href = "/auth/signin"
+    router.push("/auth/signin")
   }
 
   return (
@@ -52,18 +54,17 @@ export function UserDropdown({ userName, userRole, isMobile = false }: UserDropd
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
-          {userRole !== "ADMIN" && (
-            <button
-              onClick={() => {
-                window.location.href = "/profile"
-                setIsOpen(false)
-              }}
+        <div className="absolute right-0 mt-2 w-fit bg-white justify-center rounded-md shadow-lg py-1 z-50 border border-gray-200">
+          <button
+            onClick={() => {
+              router.push("/profile")
+              setIsOpen(false)
+            }}
               className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
-              View Profile
-            </button>
-          )}
+              <VscAccount className="w-5 h-5" />
+          </button>
+         
           <button
             onClick={() => {
               handleSignOut()

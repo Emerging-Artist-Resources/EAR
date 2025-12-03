@@ -1,4 +1,4 @@
-import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { getSupabaseServiceClient } from "@/lib/supabase/service"
 
 export async function insertReviewRepo(input: {
   eventId: string
@@ -6,7 +6,7 @@ export async function insertReviewRepo(input: {
   notes: string | null
   reviewerUserId: string
 }) {
-  const supabase = await getSupabaseServerClient()
+  const supabase = getSupabaseServiceClient()
   const { data, error } = await supabase
     .from('reviews')
     .insert({
@@ -22,20 +22,21 @@ export async function insertReviewRepo(input: {
 }
 
 export async function updateEventStatusRepo(eventId: string, decision: 'APPROVED' | 'REJECTED', approverUserId: string) {
-  const supabase = await getSupabaseServerClient()
+  const supabase = getSupabaseServiceClient()
+  const status = decision === 'APPROVED' ? 'approved' : 'rejected'
   const { error } = await supabase
     .from('events')
     .update({
-      status: decision,
-      approved_by: approverUserId,
-      approved_at: new Date(),
+      status,
+      reviewed_at: new Date().toISOString(),
+      reviewer_id: approverUserId,
     })
     .eq('id', eventId)
   if (error) throw error
 }
 
 export async function ensureEventExistsRepo(eventId: string) {
-  const supabase = await getSupabaseServerClient()
+  const supabase = getSupabaseServiceClient()
   const { data, error } = await supabase.from('events').select('id').eq('id', eventId).single()
   if (error || !data) throw new Error('Event not found')
 }
