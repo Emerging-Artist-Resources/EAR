@@ -1,0 +1,3 @@
+# Ignore OLD directories
+src/app/api/[OLD]*
+src/app/admin/[OLD]*
