@@ -7,12 +7,12 @@ export default function Home() {
   const router = useRouter()
 
   useEffect(() => {
-    router.push("/calendar")
+    router.push("/announcement")
   }, [router])
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="text-lg">Redirecting to calendar...</div>
+      <div className="text-lg">Redirecting to home page...</div>
     </div>
   )
 }

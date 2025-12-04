@@ -10,7 +10,7 @@ export default function SignUpWrapUpPage() {
   const form = useFormContext()
 
   const handleSubmit = form.handleSubmit(async (data) => {
-    // TODO: Wire to Supabase auth sign-up if desired
+    // TODO: Wire to Supabase auth sign-up 
     console.log("[signup] final submit", data)
     router.push("/auth/signin?message=Check your email to verify your account")
   })
