@@ -29,7 +29,7 @@ export default function SignIn() {
         return
       }
       const role = (data.user as { app_metadata?: { role?: string } } | null)?.app_metadata?.role
-      router.push(role === "ADMIN" ? "/admin" : "/calendar")
+      router.push(role === "ADMIN" ? "/admin" : "/announcement")
     } catch (error) {
       setError("Something went wrong")
     } finally {
@@ -92,7 +92,7 @@ export default function SignIn() {
           </div>
           <div className="text-center">
             <Text>
-              <Link href="/calendar" className="text-gray-600 underline hover:text-gray-500">Continue as guest</Link>
+              <Link href="/announcement" className="text-gray-600 underline hover:text-gray-500">Continue as guest</Link>
             </Text>
           </div>
         </form>
