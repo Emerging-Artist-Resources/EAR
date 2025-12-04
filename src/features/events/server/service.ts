@@ -10,11 +10,13 @@ export async function createPerformance(formData: EventFormData, createdBy: stri
     ends_at_utc: null,
     tz,
   },
-  ...(parsed.extraOccurrences ?? []).map(o => ({
-    starts_at_utc: new Date(`${o.date}T${o.time}:00Z`).toISOString(),
-    ends_at_utc: null,
-    tz,
-  }))]
+  ...(parsed.extraOccurrences ?? []).flatMap(o => 
+    o.times.map(t => ({
+      starts_at_utc: new Date(`${o.date}T${t.time}:00Z`).toISOString(),
+      ends_at_utc: null,
+      tz,
+    }))
+  )]
 
   const input = {
     type: 'performance' as const,
@@ -28,10 +30,10 @@ export async function createPerformance(formData: EventFormData, createdBy: stri
     notes: parsed.notes || null,
     created_by: createdBy,
     meta: {
-      referral_sources: parsed.referralSources || [],
-      referral_other: parsed.referralOther || null,
-      join_email_list: parsed.joinEmailList ?? null,
-      submitted_before: parsed.submittedBefore ?? null,
+      referral_sources: ('referralSources' in parsed && parsed.referralSources) ? parsed.referralSources : [],
+      referral_other: ('referralOther' in parsed && parsed.referralOther) ? parsed.referralOther : null,
+      join_email_list: ('joinEmailList' in parsed && parsed.joinEmailList !== undefined) ? parsed.joinEmailList : null,
+      submitted_before: ('submittedBefore' in parsed && parsed.submittedBefore) ? parsed.submittedBefore : null,
     },
     borough: null,
     performance: {

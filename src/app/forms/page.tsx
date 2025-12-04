@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import PerformanceModal from "@/components/performance-modal"
 import { Card } from "@/components/ui/card"
 import { H2, Text } from "@/components/ui/typography"
 import { getSupabaseClient } from "@/lib/supabase/client"
 
-export default function SubmitListingPage() {
+function SubmitListingContent() {
   const router = useRouter()
   const search = useSearchParams()
   const returnTo = search.get("returnTo")
@@ -55,6 +55,14 @@ export default function SubmitListingPage() {
         <PerformanceModal isOpen={open} onClose={handleClose} onSuccess={handleSuccess} />
       )}
     </div>
+  )
+}
+
+export default function SubmitListingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><Text>Loading...</Text></div>}>
+      <SubmitListingContent />
+    </Suspense>
   )
 }
 
