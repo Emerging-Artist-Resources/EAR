@@ -37,7 +37,8 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
     { name: "Announcements", href: "/announcement" },
     ...(userRole === "ADMIN" ? [
       { name: "Admin", href: "/admin" },
-      { name: "Manage Notifications", href: "/admin/notifications" }
+      { name: "Manage Notifications", href: "/admin/notifications" },
+      { name: "Review Profiles", href: "/admin/profiles" }
     ] : []),
   ]
 

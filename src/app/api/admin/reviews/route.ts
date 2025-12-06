@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { cookies } from "next/headers"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getUserRole } from "@/lib/authz"
 import { reviewEvent } from "@/features/reviews/server/service"
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     const role = getUserRole(user)
     if (!user?.id || role !== 'ADMIN') {

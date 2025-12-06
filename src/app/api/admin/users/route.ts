@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { listUsers, updateUserRole } from "@/features/users/server/service"
 import { getUserRole } from "@/lib/authz"
-import { cookies } from "next/headers"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { getSupabaseServerClient } from "@/lib/supabase/server"
 
 export async function GET() {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user?.id || getUserRole(user) !== 'ADMIN') {
       return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
@@ -25,8 +23,7 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user?.id || getUserRole(user) !== 'ADMIN') {
       return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
