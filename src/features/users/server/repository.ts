@@ -1,5 +1,6 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { createClient } from "@supabase/supabase-js"
+import { getServiceEnv } from "@/lib/env"
 
 export async function listProfilesRepo() {
   const supabase = await getSupabaseServerClient()
@@ -20,10 +21,8 @@ export async function upsertProfileRoleRepo(userId: string, role: 'USER' | 'ADMI
 }
 
 export async function updateAuthUserRoleRepo(userId: string, role: 'USER' | 'ADMIN') {
-  const url = process.env.SUPABASE_URL as string
-  const service = process.env.SERVICE_ROLE_KEY as string
-  if (!url || !service) throw new Error('Server auth not configured')
-  const sr = createClient(url, service)
+  const { SUPABASE_URL, SERVICE_ROLE_KEY } = getServiceEnv()
+  const sr = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
   const { error } = await sr.auth.admin.updateUserById(userId, { app_metadata: { role } })
   if (error) throw error
 }

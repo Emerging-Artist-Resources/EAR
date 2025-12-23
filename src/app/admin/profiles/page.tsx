@@ -1,20 +1,16 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { getSupabaseClient } from "@/lib/supabase/client"
-import { AdminProfileHeader } from "@/components/admin/AdminProfileHeader"
-import { AdminProfileList } from "@/components/admin/AdminProfileList"
-import { AdminProfileItem, ProfileStatus } from "@/components/admin/profile-types"
-import { Card } from "@/components/ui/card"
-import { Text } from "@/components/ui/typography"
+import { useCallback, useEffect, useState, useMemo } from "react"
+import { AdminLayout } from "@/components/admin/shared/AdminLayout"
+import { AdminProfileHeader } from "@/components/admin/profiles/AdminProfileHeader"
+import { AdminProfileList } from "@/components/admin/profiles/AdminProfileList"
+import { AdminLoadingState } from "@/components/admin/shared/AdminLoadingState"
+import { AdminProfileItem, ProfileType, needsReview } from "@/components/admin/profiles/profile-types"
+import { ProfileFilter } from "@/components/admin/profiles/AdminProfileHeader"
 
 export default function AdminProfilesPage() {
-  const router = useRouter()
-  const [authLoading, setAuthLoading] = useState(true)
-  const [userRole, setUserRole] = useState<string | null>(null)
-
-  const [filter, setFilter] = useState<ProfileStatus | "all">("all")
+  const [filter, setFilter] = useState<ProfileFilter>("all")
+  const [profileTypeFilter, setProfileTypeFilter] = useState<ProfileType | "all">("all")
   const [items, setItems] = useState<AdminProfileItem[]>([])
   const [counts, setCounts] = useState<Record<"emerging" | "established", number>>({
     emerging: 0,
@@ -22,23 +18,9 @@ export default function AdminProfilesPage() {
   })
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const supabase = getSupabaseClient()
-    supabase.auth.getUser().then(({ data }) => {
-      const user = data?.user
-      if (!user) {
-        router.push("/auth/signin")
-        return
-      }
-      const role = (user.app_metadata as { role: string } | undefined)?.role ?? null
-      setUserRole(role)
-      if (role !== "ADMIN") {
-        router.push("/dashboard")
-        return
-      }
-      setAuthLoading(false)
-    })
-  }, [router])
+  const newCount = useMemo(() => {
+    return items.filter((p) => needsReview(p)).length
+  }, [items])
 
   const fetchProfiles = useCallback(async () => {
     setLoading(true)
@@ -56,21 +38,57 @@ export default function AdminProfilesPage() {
           name: "John Doe",
           email: "john@example.com",
           status: "emerging",
-          createdAt: new Date().toISOString(),
+          profileType: "individual",
+          createdAt: new Date().toISOString(), // New user (within 72h)
         },
         {
           id: "2",
           name: "Jane Smith",
           email: "jane@example.com",
           status: "established",
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
+          profileType: "company",
+          createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+          reviewedAt: new Date(Date.now() - 86400000).toISOString(), // Already reviewed
         },
         {
           id: "3",
           name: "Bob Johnson",
           email: "bob@example.com",
           status: "emerging",
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
+          profileType: "individual",
+          createdAt: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago - new user
+        },
+        {
+          id: "4",
+          name: "Alice Williams",
+          email: "alice@example.com",
+          status: "established",
+          profileType: "festival",
+          createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+        },
+        {
+          id: "5",
+          name: "Creative Arts Collective",
+          email: "info@creativearts.org",
+          status: "emerging",
+          profileType: "company",
+          createdAt: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago - new user
+        },
+        {
+          id: "6",
+          name: "Summer Music Festival",
+          email: "contact@summerfest.com",
+          status: "established",
+          profileType: "festival",
+          createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+        },
+        {
+          id: "7",
+          name: "Misc Organization",
+          email: "contact@misc.org",
+          status: "emerging",
+          profileType: "other",
+          createdAt: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago - new user
         },
       ]
 
@@ -80,8 +98,17 @@ export default function AdminProfilesPage() {
       setCounts({ emerging: emergingCount, established: establishedCount })
 
       let filtered = mockProfiles
-      if (filter !== "all") {
-        filtered = mockProfiles.filter((p) => p.status === filter)
+      
+      // Filter by status or needs review
+      if (filter === "needsReview") {
+        filtered = filtered.filter((p) => needsReview(p))
+      } else if (filter !== "all") {
+        filtered = filtered.filter((p) => p.status === filter)
+      }
+      
+      // Filter by profile type
+      if (profileTypeFilter !== "all") {
+        filtered = filtered.filter((p) => p.profileType === profileTypeFilter)
       }
 
       setItems(filtered)
@@ -90,12 +117,11 @@ export default function AdminProfilesPage() {
     } finally {
       setLoading(false)
     }
-  }, [filter])
+  }, [filter, profileTypeFilter])
 
   useEffect(() => {
-    if (authLoading || userRole !== "ADMIN") return
     fetchProfiles()
-  }, [authLoading, userRole, fetchProfiles])
+  }, [fetchProfiles])
 
   const onUpdate = useCallback(async (id: string, status: "emerging" | "established") => {
     try {
@@ -128,26 +154,50 @@ export default function AdminProfilesPage() {
     }
   }, [items])
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen grid place-items-center text-lg">Loading…</div>
-    )
-  }
-  if (userRole !== "ADMIN") return null
+  const onMarkReviewed = useCallback(async (id: string) => {
+    try {
+      // TODO: Replace with actual API call when backend is ready
+      // const res = await fetch("/api/admin/profiles", {
+      //   method: "PATCH",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ userId: id, reviewedAt: new Date().toISOString() }),
+      // })
+      // if (!res.ok) {
+      //   throw new Error("Failed to mark as reviewed")
+      // }
+
+      // Mock update for now
+      setItems((prev) =>
+        prev.map((p) =>
+          p.id === id ? { ...p, reviewedAt: new Date().toISOString() } : p
+        )
+      )
+    } catch (error) {
+      console.error("Failed to mark as reviewed:", error)
+      throw error
+    }
+  }, [])
 
   return (
-    <div className="min-h-screen bg-[var(--gray-50)]">
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <AdminProfileHeader filter={filter} counts={counts} onChange={setFilter} />
-        {loading ? (
-          <Card className="p-8 text-center">
-            <Text className="text-[var(--gray-600)]">Loading…</Text>
-          </Card>
-        ) : (
-          <AdminProfileList items={items} onUpdate={onUpdate} />
-        )}
-      </div>
-    </div>
+    <AdminLayout>
+      <AdminProfileHeader
+        filter={filter}
+        profileTypeFilter={profileTypeFilter}
+        counts={counts}
+        newCount={newCount}
+        onChange={setFilter}
+        onProfileTypeChange={setProfileTypeFilter}
+      />
+      {loading ? (
+        <AdminLoadingState />
+      ) : (
+        <AdminProfileList
+          items={items}
+          onUpdate={onUpdate}
+          onMarkReviewed={onMarkReviewed}
+        />
+      )}
+    </AdminLayout>
   )
 }
 

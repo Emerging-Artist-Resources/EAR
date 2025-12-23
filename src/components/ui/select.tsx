@@ -1,6 +1,5 @@
 import React from "react"
 import { cn } from "@/lib/utils"
-import { variants } from "@/lib/utils"
 
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   error?: boolean
@@ -12,9 +11,14 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       <div className="relative">
         <select
           className={cn(
-            variants.input.base,
+            // basically shadcn Input base styles
+            "flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background",
+            "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            // select-specific
             "appearance-none pr-8",
-            error && variants.input.variants.error,
+            // error state
+            error ? "border-destructive focus-visible:ring-destructive" : "border-input",
             className
           )}
           ref={ref}
@@ -22,7 +26,8 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         >
           {children}
         </select>
-        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">
+
+        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path d="M6 9l6 6 6-6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -33,5 +38,3 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 )
 
 Select.displayName = "Select"
-
-

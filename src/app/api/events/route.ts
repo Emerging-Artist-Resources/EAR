@@ -1,29 +1,42 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { listCalendarItems } from "@/features/events/server/service"
-import { z, ZodError } from "zod"
+import { z } from "zod"
 import { createEventOwnedRepo } from "@/features/events/server/repository"
+import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamArray } from "@/lib/api-utils"
+
+const eventTypeSchema = z.enum(["performance", "audition", "creative", "class", "funding"])
 
 export async function GET(req: NextRequest) {
   try {
-    const url = new URL(req.url)
-    const from = url.searchParams.get('from') ?? new Date().toISOString()
-    const to = url.searchParams.get('to') ?? new Date(Date.now() + 1000*60*60*24*30).toISOString()
-    const types = (url.searchParams.get('types') ?? '').split(',').filter(Boolean) as Array<'performance'|'audition'|'creative'|'class'|'funding'>
-    const borough = url.searchParams.get('borough')
-    const data = await listCalendarItems({ fromISO: from, toISO: to, types, borough: borough ?? null })
-    return NextResponse.json({ data }, { headers: { 'Cache-Control': 's-maxage=60' } })
-  } catch (err) {
-    console.error('Events list error:', err)
-    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
+    const from = getQueryParam(req, "from") ?? new Date().toISOString()
+    const to = getQueryParam(req, "to") ?? new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString()
+    const typesParam = getQueryParamArray(req, "types")
+    const types = typesParam
+      .map((t) => {
+        const result = eventTypeSchema.safeParse(t)
+        return result.success ? result.data : null
+      })
+      .filter((t): t is "performance" | "audition" | "creative" | "class" | "funding" => t !== null)
+    const borough = getQueryParam(req, "borough")
+
+    const data = await listCalendarItems({
+      fromISO: from,
+      toISO: to,
+      types: types.length > 0 ? types : undefined,
+      borough: borough ?? null,
+    })
+
+    return createSuccessResponse(data, 200)
+  } catch (error) {
+    return handleApiError(error)
   }
 }
 
-// src/app/api/events/route.ts
 const baseSchema = z.object({
-  contact_name: z.string().min(1),
-  contact_email: z.string().email(),
+  contact_name: z.string().min(1, "Contact name is required"),
+  contact_email: z.string().email("Invalid email address"),
   org_name: z.string().optional().nullable(),
-  org_website: z.string().url().optional().nullable(),
+  org_website: z.string().url("Invalid URL").optional().nullable(),
   address: z.string().optional().nullable(),
   social_handles: z.record(z.string(), z.string()).optional(),
   notes: z.string().optional().nullable(),
@@ -31,39 +44,34 @@ const baseSchema = z.object({
 })
 
 const occurrenceSchema = z.object({
-  starts_at_utc: z.string().datetime(),     // ISO
-  ends_at_utc: z.string().datetime().optional().nullable(),
-  tz: z.string().min(1),
+  starts_at_utc: z.string().datetime("Invalid datetime format"),
+  ends_at_utc: z.string().datetime("Invalid datetime format").optional().nullable(),
+  tz: z.string().min(1, "Timezone is required"),
 })
 
 const photoSchema = z.object({
-  path: z.string().min(1),
+  path: z.string().min(1, "Photo path is required"),
   credit: z.string().optional().nullable(),
   sort_order: z.number().int().optional(),
 })
 
 const payloadSchema = z.object({
-  type: z.enum(["performance","audition","creative","class","funding"]),
+  type: z.enum(["performance", "audition", "creative", "class", "funding"], {
+    errorMap: () => ({ message: "Invalid event type" }),
+  }),
   base: baseSchema,
-  details: z.record(z.string(), z.string()), // validate per type in your feature service if you prefer
-  occurrences: z.array(occurrenceSchema).min(1),
+  details: z.record(z.string(), z.unknown()),
+  occurrences: z.array(occurrenceSchema).min(1, "At least one occurrence is required"),
   photos: z.array(photoSchema).optional(),
 })
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const input = payloadSchema.parse(body)
+    const input = validateRequestBody(body, payloadSchema)
     const created = await createEventOwnedRepo(input)
-    return NextResponse.json(created, { status: 201 })
-  } catch (err: unknown) {
-    if (err instanceof Error && err.name === "ZodError") {
-      return NextResponse.json({ error: "Invalid form data", issues: (err as unknown as ZodError).issues }, { status: 400 })
-    }
-    if (err instanceof Error && err.message === "Unauthorized") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    console.error("Create owned event error:", err instanceof Error ? err.message : String(err))
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return createSuccessResponse(created, 201)
+  } catch (error) {
+    return handleApiError(error)
   }
 }

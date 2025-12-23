@@ -32,15 +32,19 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
     return () => { mounted = false }
   }, [supabase])
 
-  const navigation = [
+  const publicNavigation = [
     { name: "Calendar", href: "/calendar" },
     { name: "Announcements", href: "/announcement" },
-    ...(userRole === "ADMIN" ? [
-      { name: "Admin", href: "/admin" },
-      { name: "Manage Notifications", href: "/admin/notifications" },
-      { name: "Review Profiles", href: "/admin/profiles" }
-    ] : []),
   ]
+
+  const adminNavigation = userRole === "ADMIN" ? [
+    { name: "Analytics", href: "/admin/analytics" },
+    { name: "Review Listings", href: "/admin" },
+    { name: "Manage Notifications", href: "/admin/notifications" },
+    { name: "Review Profiles", href: "/admin/profiles" }
+  ] : []
+
+  const navigation = [...publicNavigation, ...adminNavigation]
 
   return (
     <div className="lg:hidden">
@@ -73,7 +77,8 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
       {isOpen && (
         <div className="absolute top-16 left-0 right-0 bg-white shadow-lg z-50">
           <div className="px-2 pt-2 pb-3 space-y-1">
-            {navigation.map((item) => (
+            {/* Public Navigation */}
+            {publicNavigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
@@ -83,13 +88,33 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
                 <Button variant="ghost" className="w-full justify-start text-base">{item.name}</Button>
               </Link>
             ))}
+            
+            {/* Admin Navigation - visually separated */}
+            {adminNavigation.length > 0 && (
+              <>
+                <div className="border-t border-gray-200 my-2" />
+                <div className="px-2 py-1">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin</p>
+                </div>
+                {adminNavigation.map((item) => (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className="block"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Button variant="ghost" className="w-full justify-start text-base">{item.name}</Button>
+                  </Link>
+                ))}
+              </>
+            )}
             {isAuthed && onSubmitPerformance && (
               <Button
                 onClick={() => {
                   onSubmitPerformance()
                   setIsOpen(false)
                 }}
-                variant="primary"
+                variant="default"
                 className="w-full justify-start"
               >
                 Submit Performance

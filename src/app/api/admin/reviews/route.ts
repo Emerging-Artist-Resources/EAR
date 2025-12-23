@@ -1,32 +1,33 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { getUserRole } from "@/lib/authz"
+import { NextRequest } from "next/server"
 import { reviewEvent } from "@/features/reviews/server/service"
+import { requireRole } from "@/lib/auth-helpers"
+import { handleApiError, createSuccessResponse, validateRequestBody, ErrorCodes, createErrorResponse } from "@/lib/api-utils"
+import { z } from "zod"
+
+const reviewSchema = z.object({
+  eventId: z.string().min(1, "Event ID is required"),
+  decision: z.enum(["APPROVED", "REJECTED"], {
+    errorMap: () => ({ message: "Decision must be APPROVED or REJECTED" }),
+  }),
+  notes: z.string().optional().nullable(),
+})
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    const role = getUserRole(user)
-    if (!user?.id || role !== 'ADMIN') {
-      return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
-    }
+    const auth = await requireRole("ADMIN")
 
-    const { eventId, decision, notes } = await request.json()
-
-    if (!eventId || !decision) return NextResponse.json({ error: { code: 'INVALID_INPUT' } }, { status: 400 })
-
-    if (!['APPROVED','REJECTED'].includes(decision)) return NextResponse.json({ error: { code: 'INVALID_INPUT' } }, { status: 400 })
+    const body = await request.json()
+    const { eventId, decision, notes } = validateRequestBody(body, reviewSchema)
 
     const review = await reviewEvent({
       eventId,
       decision,
       notes: notes ?? null,
-      reviewerUserId: user.id,
+      reviewerUserId: auth.user.id,
     })
-    return NextResponse.json({ data: review }, { status: 201 })
+
+    return createSuccessResponse(review, 201)
   } catch (error) {
-    console.error("Review creation error:", error)
-    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
+    return handleApiError(error)
   }
 }

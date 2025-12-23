@@ -1,8 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
+import { getClientEnv } from '@/lib/env'
 
 export function getSupabaseServerClientAnon() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY } = getClientEnv()
   // No cookies/session attached → cache-friendly, RLS-enforced
-  return createClient(url, anon, { auth: { persistSession: false } })
+  return createClient(NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    auth: { persistSession: false },
+  })
 }

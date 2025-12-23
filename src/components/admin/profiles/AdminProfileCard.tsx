@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { AdminProfileItem } from "./profile-types"
+import { AdminProfileItem, needsReview } from "./profile-types"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Modal } from "@/components/ui/modal"
@@ -10,9 +10,11 @@ import { Text } from "@/components/ui/typography"
 export function AdminProfileCard({
   profile,
   onUpdate,
+  onMarkReviewed,
 }: {
   profile: AdminProfileItem
   onUpdate: (id: string, status: "emerging" | "established") => Promise<void>
+  onMarkReviewed?: (id: string) => Promise<void>
 }) {
   const [open, setOpen] = useState(false)
   const [updating, setUpdating] = useState(false)
@@ -66,6 +68,12 @@ export function AdminProfileCard({
                 <Text className="text-sm text-[var(--gray-600)]">Email:</Text>
                 <Text className="text-sm font-medium">{profile.email || "—"}</Text>
               </div>
+              {profile.profileType && (
+                <div className="flex items-center gap-2">
+                  <Text className="text-sm text-[var(--gray-600)]">Profile Type:</Text>
+                  <Text className="text-sm font-medium capitalize">{profile.profileType}</Text>
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Text className="text-sm text-[var(--gray-600)]">Current Status:</Text>
                 <Badge
@@ -75,6 +83,19 @@ export function AdminProfileCard({
                   {profile.status}
                 </Badge>
               </div>
+              {profile.reviewedAt && (
+                <div className="flex items-center gap-2">
+                  <Text className="text-sm text-[var(--gray-600)]">Reviewed:</Text>
+                  <Text className="text-sm font-medium">
+                    {new Date(profile.reviewedAt).toLocaleString()}
+                  </Text>
+                </div>
+              )}
+              {needsReview(profile) && (
+                <div className="flex items-center gap-2">
+                  <Badge variant="warning" size="sm">Needs Review (New User)</Badge>
+                </div>
+              )}
             </div>
           </div>
 
@@ -114,6 +135,24 @@ export function AdminProfileCard({
             >
               {updating ? "Updating…" : "Update Status"}
             </Button>
+            {onMarkReviewed && needsReview(profile) && (
+              <Button
+                onClick={async () => {
+                  try {
+                    await onMarkReviewed(profile.id)
+                    setOpen(false)
+                  } catch (error) {
+                    console.error("Failed to mark as reviewed:", error)
+                    alert("Failed to mark as reviewed")
+                  }
+                }}
+                variant="outline"
+                disabled={updating}
+                className="text-[var(--success-600)] border-[var(--success-300)] hover:bg-[var(--success-50)]"
+              >
+                ✓ Mark as Reviewed
+              </Button>
+            )}
             <Button
               onClick={() => setOpen(false)}
               variant="outline"

@@ -28,7 +28,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   return (
     <Button
       type="button"
-      variant="favorite"
+      variant="ghost"
       className={cn("p-0 h-auto w-auto rounded-none", className)}
       aria-pressed={active}
       aria-label={active ? "Remove from favorites" : "Add to favorites"}

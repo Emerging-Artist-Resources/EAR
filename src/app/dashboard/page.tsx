@@ -49,12 +49,9 @@ export default function Dashboard() {
   const fetchUserPerformances = useCallback(async () => {
     if (!userId) return
     try {
-      const response = await fetch("/api/me/performances")
-      if (response.ok) {
-        const data = await response.json()
-        const items: Performance[] = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : []
-        setPerformances(items)
-      }
+      const { apiGet } = await import("@/lib/fetch-utils")
+      const data = await apiGet<Performance[]>("/api/me/performances")
+      setPerformances(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error("Error fetching performances:", error)
     } finally {

@@ -4,35 +4,22 @@ import { useState, useEffect, useCallback } from "react"
 import { CallToAction } from "@/components/layout/call-to-action"
 import PerformanceModal from "@/components/performance-modal"
 import { useCalendar } from "@/hooks/use-calendar"
+import { useAuth } from "@/hooks/use-auth"
 import { Calendar } from "@/components/calendar/calendar"
 import { Text } from "@/components/ui/typography"
 import { Modal } from "@/components/ui/modal"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { getSupabaseClient } from "@/lib/supabase/client"
 
 export default function CalendarView() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [authPromptOpen, setAuthPromptOpen] = useState(false)
-  const [isAuthed, setIsAuthed] = useState(false)
+  const { isAuthed } = useAuth()
   const { items, loading, fetchCalendar } = useCalendar()
 
   useEffect(() => {
     fetchCalendar({ limit: 500 })
   }, [fetchCalendar])
-
-  useEffect(() => {
-    const supabase = getSupabaseClient()
-    supabase.auth.getUser().then(({ data }) => {
-      setIsAuthed(Boolean(data?.user))
-    })
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthed(Boolean(session?.user))
-    })
-    return () => {
-      sub.subscription.unsubscribe()
-    }
-  }, [])
 
   const handleModalSuccess = () => {
     fetchCalendar({ limit: 500 })
