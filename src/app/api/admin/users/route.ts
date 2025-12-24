@@ -1,51 +1,34 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { listUsers, updateUserRole } from "@/features/users/server/service"
-import { getUserRole } from "@/lib/authz"
-import { cookies } from "next/headers"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { requireRole } from "@/lib/auth-helpers"
+import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api-utils"
+import { z } from "zod"
+
+const updateUserRoleSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  role: z.enum(["USER", "ADMIN"]),
+})
 
 export async function GET() {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user?.id || getUserRole(user) !== 'ADMIN') {
-      return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
-    }
+    await requireRole("ADMIN")
     const users = await listUsers()
-    return NextResponse.json({ data: users })
+    return createSuccessResponse(users)
   } catch (error) {
-    console.error("Users fetch error:", error)
-    return NextResponse.json(
-      { error: { code: 'INTERNAL' } },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user?.id || getUserRole(user) !== 'ADMIN') {
-      return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
-    }
+    await requireRole("ADMIN")
 
-    const { userId, role } = await request.json()
-
-    if (!userId || !role) {
-      return NextResponse.json({ error: { code: 'INVALID_INPUT' } }, { status: 400 })
-    }
-
-    if (!["USER", "ADMIN"].includes(role)) {
-      return NextResponse.json({ error: { code: 'INVALID_INPUT' } }, { status: 400 })
-    }
+    const body = await request.json()
+    const { userId, role } = validateRequestBody(body, updateUserRoleSchema)
 
     const updated = await updateUserRole(userId, role)
-    return NextResponse.json({ data: updated })
+    return createSuccessResponse(updated)
   } catch (error) {
-    console.error("User update error:", error)
-    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
+    return handleApiError(error)
   }
 }

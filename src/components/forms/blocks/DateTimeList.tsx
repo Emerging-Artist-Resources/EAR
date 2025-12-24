@@ -1,101 +1,155 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react"
-import { useFieldArray, UseFormReturn, FieldValues } from "react-hook-form"
+"use client"
+
+import { useEffect, useMemo, useState, useCallback } from "react"
+import { UseFormReturn, FieldValues, useFieldArray, useWatch } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Text } from "@/components/ui/typography"
+
+function getTodayDateString(): string {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, "0")
+  const day = String(today.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+type TimeItem = { time: string }
+type DateItem = { date: string; times: TimeItem[] }
 
 interface DateTimeListProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>
-  // used only for variant="simple"
-  primaryDateName?: string
-  primaryTimeName?: string
 
-  // for variant="extras": array of { date: string; times: { time: string }[] }
-  extrasName?: string
+  /** Field array name: array of { date, times: [{ time }] } */
+  name: string
 
   title?: string
-  variant?: "simple" | "extras"
+  note?: string
   required?: boolean
   showAsterisk?: boolean
+
+  /** If false, time fields are hidden and optional (date-only mode) */
+  showTime?: boolean
+
+  /** Controls error display behavior */
   errorMode?: "touched" | "always"
+
+  /** Start with one blank row if empty */
+  startWithOne?: boolean
+
+  /** Caps for single-occurrence mode */
+  maxDates?: number
+  maxTimesPerDate?: number
 }
 
-// -------- DateCard for extras variant --------
+function shouldShowFieldError(
+  form: UseFormReturn<any>,
+  fieldName: string,
+  errorMode: "touched" | "always",
+) {
+  const state = form.getFieldState(fieldName as any)
+  if (!state?.error) return false
+  if (errorMode === "always") return true
+  return (
+    state.isTouched ||
+    form.formState.isSubmitted ||
+    form.formState.submitCount > 0
+  )
+}
+
+function getErrorMessage(form: UseFormReturn<any>, fieldName: string) {
+  const state = form.getFieldState(fieldName as any)
+  return state?.error?.message as string | undefined
+}
 
 interface DateCardProps<T extends FieldValues> {
   form: UseFormReturn<T>
-  extrasName: string
+  name: string
   index: number
   removeDate: (index: number) => void
+  showTime: boolean
+  errorMode: "touched" | "always"
+  disableRemove?: boolean
+  isFirst: boolean
+  onFirstDateTimesChange?: () => void
+  maxTimesPerDate?: number
 }
 
 function DateCard<T extends FieldValues>({
   form,
-  extrasName,
+  name,
   index,
   removeDate,
+  showTime,
+  errorMode,
+  disableRemove,
+  isFirst,
+  onFirstDateTimesChange,
+  maxTimesPerDate,
 }: DateCardProps<T>) {
-  const {
-    register,
-    control,
-    getValues,
-    setError,
-    formState: { errors },
-  } = form
+  const { control, register, getValues, setError } = form
 
-  const {
-    fields: timeFields,
-    append: appendTime,
-    remove: removeTime,
-  } = useFieldArray({
+  const timesArray = useFieldArray({
     control,
-    name: `${extrasName}.${index}.times` as any,
+    name: `${name}.${index}.times` as any,
   })
 
-  const dateState = form.getFieldState(`${extrasName}.${index}.date` as any)
-  const dateError = dateState.error
-  const showDateErr = Boolean(dateError) && (dateState.isTouched || form.formState.isSubmitted || form.formState.submitCount > 0)
+  const times = timesArray.fields
+  const dateFieldName = `${name}.${index}.date`
 
-  // For times, we still read error messages from formState.errors, but show only after touched/submit
-  const timesErrors =
-    (((errors as any)?.[extrasName]?.[index]?.times as unknown) as Array<{ time?: { message?: string } }>) ?? []
+  const showDateErr = shouldShowFieldError(form, dateFieldName, errorMode)
+  const dateErrMsg = showDateErr ? getErrorMessage(form, dateFieldName) : undefined
+
+  const canAddTime = showTime && (!maxTimesPerDate || times.length < maxTimesPerDate)
 
   const handleAddTime = () => {
-    const date = getValues(`${extrasName}.${index}.date` as any) as
-      | string
-      | undefined
-    const lastTime =
-      (getValues(
-        `${extrasName}.${index}.times.${timeFields.length - 1}.time` as any,
-      ) as string | undefined) ?? ""
+    if (!showTime) return
+    if (maxTimesPerDate && times.length >= maxTimesPerDate) return
 
+    const date = getValues(dateFieldName as any) as string | undefined
     if (!date) {
-      setError(`${extrasName}.${index}.date` as any, {
+      setError(dateFieldName as any, { type: "required", message: "Date is required" })
+      return
+    }
+
+    const lastIdx = times.length - 1
+    const lastTime =
+      times.length > 0
+        ? ((getValues(`${name}.${index}.times.${lastIdx}.time` as any) as string | undefined) ?? "")
+        : ""
+
+    if (times.length > 0 && !lastTime) {
+      setError(`${name}.${index}.times.${lastIdx}.time` as any, {
         type: "required",
-        message: "Date is required",
+        message: "Time is required",
       })
       return
     }
 
-    if (!lastTime) {
-      setError(
-        `${extrasName}.${index}.times.${timeFields.length - 1}.time` as any,
-        {
-          type: "required",
-          message: "Time is required",
-        },
-      )
-      return
-    }
-
-    appendTime({ time: "" } as any)
+    timesArray.append({ time: "" } as any)
+    if (isFirst) onFirstDateTimesChange?.()
   }
+
+  const handleRemoveTime = (timeIndex: number) => {
+    timesArray.remove(timeIndex)
+    if (isFirst) onFirstDateTimesChange?.()
+  }
+
+  // Ensure at least one time row exists when showTime is on
+  useEffect(() => {
+    if (!showTime) return
+    if (times.length > 0) return
+    timesArray.append({ time: "" } as any)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showTime, index])
 
   return (
     <Card className="space-y-3 rounded-2xl border border-primary-200 bg-primary-50/40 p-4">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-medium">Date {index + 1}</h4>
-        {index > 0 && (
+        {!disableRemove && (
           <button
             type="button"
             onClick={() => removeDate(index)}
@@ -108,178 +162,195 @@ function DateCard<T extends FieldValues>({
 
       {/* Date */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">
-          Date *
-        </label>
+        <label className="mb-1 block text-sm font-medium text-gray-700">Date *</label>
         <Input
           type="date"
-          {...register(`${extrasName}.${index}.date` as any)}
+          min={getTodayDateString()}
           error={showDateErr}
+          {...register(dateFieldName as any)}
         />
-        {showDateErr && dateError?.message && (
-          <p className="mt-1 text-xs text-red-600">{dateError?.message}</p>
-        )}
+        {dateErrMsg && <p className="mt-1 text-xs text-red-600">{dateErrMsg}</p>}
       </div>
 
       {/* Times */}
-      <div className="space-y-2">
-        {timeFields.map((timeField, timeIndex) => {
-          const timeState = form.getFieldState(`${extrasName}.${index}.times.${timeIndex}.time` as any)
-          const timeError = timesErrors?.[timeIndex]?.time
-          const showTimeErr = Boolean(timeError) && (timeState.isTouched || form.formState.isSubmitted || form.formState.submitCount > 0)
-          return (
-            <div
-              key={timeField.id}
-              className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3"
-            >
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Time *
-                </label>
-                <Input
-                  type="time"
-                  {...register(
-                    `${extrasName}.${index}.times.${timeIndex}.time` as any,
-                  )}
-                  error={showTimeErr}
-                />
-                {showTimeErr && timeError?.message && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {timeError.message}
-                  </p>
+      {showTime && (
+        <div className="space-y-2">
+          {times.map((timeField, timeIndex) => {
+            const timeFieldName = `${name}.${index}.times.${timeIndex}.time`
+            const showTimeErr = shouldShowFieldError(form, timeFieldName, errorMode)
+            const timeErrMsg = showTimeErr ? getErrorMessage(form, timeFieldName) : undefined
+
+            // Only allow removing non-first rows; also keep at least one row
+            const canRemove = timeIndex > 0
+
+            return (
+              <div key={timeField.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    {timeIndex === 0 ? "Time *" : "Additional time *"}
+                  </label>
+                  <Input
+                    type="time"
+                    error={showTimeErr}
+                    {...register(timeFieldName as any, {
+                      onChange: () => {
+                        if (isFirst) onFirstDateTimesChange?.()
+                      },
+                    })}
+                  />
+                  {timeErrMsg && <p className="mt-1 text-xs text-red-600">{timeErrMsg}</p>}
+                </div>
+
+                {canRemove ? (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTime(timeIndex)}
+                    className="w-full rounded border border-gray-300 px-2 py-2 text-xs hover:bg-gray-50"
+                  >
+                    Remove
+                  </button>
+                ) : (
+                  <div />
                 )}
               </div>
-              {timeIndex > 0 && (
-                <button
-                  type="button"
-                  onClick={() => removeTime(timeIndex)}
-                  className="w-full rounded border border-gray-300 px-2 py-2 text-xs hover:bg-gray-50"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          )
-        })}
+            )
+          })}
 
-        <button
-          type="button"
-          onClick={handleAddTime}
-          className="rounded border border-gray-300 px-2 py-1 text-sm hover:bg-gray-50"
-        >
-          + Add another time
-        </button>
-      </div>
+          {canAddTime && (
+            <button
+              type="button"
+              onClick={handleAddTime}
+              className="rounded border border-gray-300 px-2 py-1 text-sm hover:bg-gray-50"
+            >
+              + Add another time
+            </button>
+          )}
+        </div>
+      )}
     </Card>
   )
 }
 
-// -------- Main component --------
-
 export function DateTimeList<T extends Record<string, unknown>>({
   form,
-  primaryDateName,
-  primaryTimeName,
-  extrasName,
+  name,
   title,
-  variant = "simple",
+  note,
   required = false,
   showAsterisk = true,
+  showTime = true,
   errorMode = "touched",
+  startWithOne = true,
+  maxDates,
+  maxTimesPerDate,
 }: DateTimeListProps<T>) {
-  const { control, register, getValues, setError } = form
-  // Prepare a stable fieldArray hook to satisfy hooks rules; it’s only used for `extras` variant.
-  const fieldArray = useFieldArray({
+  const { control, getValues, setError, setValue } = form
+
+  const datesArray = useFieldArray({
     control,
-    name: (extrasName ?? "__unused") as any,
+    name: name as any,
   })
 
-  // SIMPLE: just one date + time
-  if (variant === "simple") {
-    const dateState = primaryDateName ? form.getFieldState(primaryDateName as any) : undefined
-    const timeState = primaryTimeName ? form.getFieldState(primaryTimeName as any) : undefined
-    const showDateErr = Boolean(dateState?.error) && (errorMode === "always" || dateState?.isTouched || form.formState.isSubmitted || form.formState.submitCount > 0)
-    const showTimeErr = Boolean(timeState?.error) && (errorMode === "always" || timeState?.isTouched || form.formState.isSubmitted || form.formState.submitCount > 0)
+  const dateFields = datesArray.fields
 
-    return (
-      <div className="space-y-2">
-        {title && (
-          <label className="block text-sm font-medium text-gray-700">
-            {title} {required && showAsterisk && <span className="text-error-600">*</span>}
-          </label>
-        )}
-        <Card className="space-y-3 rounded-2xl border border-primary-200 bg-primary-50/40 p-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Date *
-            </label>
-            <Input
-              {...register(primaryDateName as any)}
-              type="date"
-              error={showDateErr}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Time *
-            </label>
-            <Input
-              {...register(primaryTimeName as any)}
-              type="time"
-              error={showTimeErr}
-            />
-          </div>
-        </Card>
-      </div>
-    )
-  }
+  const [syncTimes, setSyncTimes] = useState(false)
 
-  // EXTRAS: card per date, each with N times
-  if (!extrasName) {
-    console.warn("DateTimeList extras variant requires extrasName")
-    return null
-  }
+  const canAddDate = !maxDates || dateFields.length < maxDates
 
-  const dateFields = fieldArray.fields
-  const appendDate = fieldArray.append
-  const removeDate = fieldArray.remove
+  const applyFirstTimesToAll = useCallback(() => {
+    if (!showTime || !syncTimes) return
+    if (dateFields.length < 2) return
+
+    const first = (getValues(`${name}.0.times` as any) as TimeItem[] | undefined) ?? []
+    const timesToSync = first.map((t) => t?.time).filter(Boolean) as string[]
+    if (timesToSync.length === 0) return
+
+    for (let i = 1; i < dateFields.length; i++) {
+      const current = (getValues(`${name}.${i}.times` as any) as TimeItem[] | undefined) ?? []
+      const currentList = current.map((t) => t?.time).filter(Boolean)
+
+      if (currentList.join("|") !== timesToSync.join("|")) {
+        const capped = maxTimesPerDate ? timesToSync.slice(0, maxTimesPerDate) : timesToSync
+        setValue(
+          `${name}.${i}.times` as any,
+          capped.map((time) => ({ time })) as any,
+          { shouldDirty: true },
+        )
+      }
+    }
+  }, [dateFields.length, getValues, maxTimesPerDate, name, setValue, showTime, syncTimes])
+
+  const firstTimes = useWatch({
+    control,
+    name: showTime && syncTimes && dateFields.length > 0 ? (`${name}.0.times` as any) : undefined,
+  }) as TimeItem[] | undefined
+
+  // Initialize with one row if empty
+  useEffect(() => {
+    if (!startWithOne) return
+    if (dateFields.length > 0) return
+
+    const initial: DateItem = {
+      date: "",
+      times: showTime ? [{ time: "" }] : [],
+    }
+    datesArray.append(initial as any)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // When first date times change and sync is on -> apply to all
+  useEffect(() => {
+    if (!firstTimes) return
+    applyFirstTimesToAll()
+  }, [firstTimes, applyFirstTimesToAll])
 
   const handleAddDate = () => {
+    if (maxDates && dateFields.length >= maxDates) return
+
     const lastIndex = dateFields.length - 1
 
     if (lastIndex >= 0) {
-      const lastDate = getValues(
-        `${extrasName}.${lastIndex}.date` as any,
-      ) as string | undefined
-      const lastTimes =
-        (getValues(`${extrasName}.${lastIndex}.times` as any) as
-          | { time: string }[]
-          | undefined) ?? []
-      const lastTime = lastTimes[lastTimes.length - 1]?.time ?? ""
-
+      const lastDate = (getValues(`${name}.${lastIndex}.date` as any) as string | undefined) ?? ""
       if (!lastDate) {
-        setError(`${extrasName}.${lastIndex}.date` as any, {
+        setError(`${name}.${lastIndex}.date` as any, {
           type: "required",
           message: "Date is required",
         })
         return
       }
 
-      if (!lastTime) {
-        setError(
-          `${extrasName}.${lastIndex}.times.${lastTimes.length - 1}.time` as any,
-          {
+      if (showTime) {
+        const lastTimes = (getValues(`${name}.${lastIndex}.times` as any) as TimeItem[] | undefined) ?? []
+        const lastTime = lastTimes[lastTimes.length - 1]?.time ?? ""
+        if (!lastTime) {
+          setError(`${name}.${lastIndex}.times.${Math.max(0, lastTimes.length - 1)}.time` as any, {
             type: "required",
             message: "Time is required",
-          },
-        )
-        return
+          })
+          return
+        }
       }
     }
 
-    // start new date card with one empty time
-    appendDate({ date: "", times: [{ time: "" }] } as any)
+    datesArray.append({ date: "", times: showTime ? [{ time: "" }] : [] } as any)
+
+    if (syncTimes) {
+      requestAnimationFrame(() => applyFirstTimesToAll())
+    }
   }
+
+  const headerNote = useMemo(() => {
+    if (note) return note
+    if (!showTime) return "Add one or more dates."
+    if (maxDates === 1 && maxTimesPerDate === 1) return "Add the date and time."
+    return "Add one or more times per date, and add multiple dates as needed."
+  }, [note, showTime, maxDates, maxTimesPerDate])
+
+  const showSyncToggle =
+    showTime &&
+    dateFields.length > 1 &&
+    (!maxDates || maxDates > 1) &&
+    (!maxTimesPerDate || maxTimesPerDate > 0)
 
   return (
     <div className="space-y-3">
@@ -288,10 +359,29 @@ export function DateTimeList<T extends Record<string, unknown>>({
           <label className="block text-sm font-medium text-gray-700">
             {title} {required && showAsterisk && <span className="text-error-600">*</span>}
           </label>
-          <p className="text-sm text-gray-600">
-            You can add multiple times for each date and add multiple dates for
-            your show.
-          </p>
+          <p className="mt-1 text-sm text-gray-600">{headerNote}</p>
+        </div>
+      )}
+
+      {showSyncToggle && (
+        <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 p-3">
+          <Checkbox
+            id={`${name}-sync-times`}
+            checked={syncTimes}
+            onChange={(e) => {
+              const checked = (e.target as any).checked
+              setSyncTimes(checked)
+              if (checked) requestAnimationFrame(() => applyFirstTimesToAll())
+            }}
+          />
+          <label htmlFor={`${name}-sync-times`} className="cursor-pointer text-sm font-medium text-gray-700">
+            Same times for all dates
+          </label>
+          {syncTimes && (
+            <Text className="ml-2 text-xs text-gray-500">
+              Times from the first date will be applied to all dates
+            </Text>
+          )}
         </div>
       )}
 
@@ -299,23 +389,31 @@ export function DateTimeList<T extends Record<string, unknown>>({
         {dateFields.map((field, index) => (
           <DateCard
             key={field.id}
-            form={form}
-            extrasName={extrasName}
+            form={form as any}
+            name={name}
             index={index}
-            removeDate={removeDate}
+            removeDate={datesArray.remove}
+            showTime={showTime}
+            errorMode={errorMode}
+            disableRemove={index === 0 || (maxDates === 1)}
+            isFirst={index === 0}
+            maxTimesPerDate={maxTimesPerDate}
+            onFirstDateTimesChange={() => {
+              if (syncTimes) applyFirstTimesToAll()
+            }}
           />
         ))}
       </div>
 
-      <div>
+      {canAddDate && (
         <button
           type="button"
           onClick={handleAddDate}
           className="mt-1 rounded border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
         >
-          + Add another Date
+          + Add another date
         </button>
-      </div>
+      )}
     </div>
   )
 }

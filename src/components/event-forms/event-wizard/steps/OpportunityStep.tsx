@@ -1,116 +1,117 @@
 "use client"
 
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { UseFormReturn, type FieldErrors } from "react-hook-form"
+import { UseFormReturn, Path } from "react-hook-form"
 import { EventFormData } from "@/lib/validations/events"
-
-type OpportunitySubtype = 'FUNDING' | 'AUDITION' | 'CREATIVE'
+import { Section } from "@/components/forms/blocks/Section"
+import { TextField } from "@/components/forms/blocks/TextField"
+import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
+import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
+import { LocationField } from "@/components/forms/blocks/LocationField"
+import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
+import { Text } from "@/components/ui/typography"
+import { useEffect } from "react"
+import { SelectBlock } from "@/components/forms/blocks/Select"
 
 interface OpportunityStepProps {
-  subtype: OpportunitySubtype
   form: UseFormReturn<EventFormData>
 }
 
-export function OpportunityStep({ subtype, form }: OpportunityStepProps) {
-  const { register, formState: { errors } } = form
-  const e = errors as FieldErrors<EventFormData>
+export function OpportunityStep({ form }: OpportunityStepProps) {
+  // consume form for fields via blocks
+  // const e = errors as FieldErrors<EventFormData>
+  const opportunityFee = form.watch("opportunityFee") as string | undefined
+  const isOpportunityFee = opportunityFee === "FEE"
+  useEffect(() => {
+    if (!isOpportunityFee) {
+      form.setValue("opportunityFeeAmount", "")
+      form.setValue("opportunityArtistType" as Path<EventFormData>, undefined as unknown as never)
+      form.clearErrors(["opportunityFeeAmount", "opportunityArtistType"] as unknown as never)
+    }
+  }, [isOpportunityFee, form])
+
   return (
-    <div className="space-y-4">
-      {subtype === 'AUDITION' && (
-        <>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Audition Name *</label>
-            <Input {...register('auditionName' as keyof EventFormData)} placeholder="Audition title" error={Boolean(e.auditionName)} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">About the Company/Project *</label>
-            <Textarea {...register('aboutProject' as keyof EventFormData)} rows={4} placeholder="Mission, choreographer, style" error={Boolean(e.aboutProject)} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Who You’re Looking For *</label>
-            <Textarea {...register('eligibility' as keyof EventFormData)} rows={3} placeholder="Eligibility, age, style" error={Boolean(e.eligibility)} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Compensation *</label>
-            <Input {...register('compensation' as keyof EventFormData)} placeholder="e.g., stipend, hourly, unpaid" error={Boolean(e.compensation)} />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Audition Date *</label>
-              <Input {...register('auditionDate' as keyof EventFormData)} type="date" error={Boolean(e.auditionDate)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Audition Time *</label>
-              <Input {...register('auditionTime' as keyof EventFormData)} type="time" error={Boolean(e.auditionTime)} />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Link to Sign Up *</label>
-            <Input {...register('auditionLink' as keyof EventFormData)} placeholder="https://" error={Boolean(e.auditionLink)} />
-          </div>
-        </>
-      )}
+    <>
+      <Section title="Creative Opportunity Details">
+        <TextField form={form} name={"opportunityName"} label="Opportunity Name" required placeholder="Opportunity Name"/>
+        <TextAreaField form={form} name={"opportunityDescription"} label="Opportunity Description" required placeholder="About the Opportunity"/>
+        <TextAreaField form={form} name={"eligibility"} label="Eligibility" required placeholder="Eligibility, age, style, experience, etc."/>
+        <TextAreaField form={form} name={"opportunityOffers"} label="What is offered to selected artists?" required placeholder="What does this opportunity offer?"/>       
+        <TextAreaField form={form} name={"opportunityRequirements"} label="Application Requirements" required placeholder="What is required to apply?"/>       
+        <TextField form={form} name={"opportunityCompensation"} label="Compensation" required placeholder="$ or description"/>
+        <TextField form={form} name={"opportunityLink"} label="Opportunity Submission Instructions" required placeholder="submission link or instructions"/>
+        <SelectBlock form={form} options={[{ label: "Yes", value: "FEE" }, { label: "No", value: "NO_FEE" }]} name={"opportunityFee"} label="Is there an application fee?" required />
+        {isOpportunityFee && (
+          <>
+            <TextField form={form} name={"opportunityFeeAmount"} label="Application Fee Amount" required placeholder="$ or description"/>
+            </>
+          )}            
+      </Section>
 
-      {subtype === 'CREATIVE' && (
-        <>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Opportunity Name *</label>
-            <Input {...register('opportunityName' as keyof EventFormData)} placeholder="Title" error={Boolean(e.opportunityName)} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Brief Description (max 200 words) *</label>
-            <Textarea {...register('briefDescription' as keyof EventFormData)} rows={4} placeholder="Description" error={Boolean(e.briefDescription)} />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Who Can Apply / Eligibility *</label>
-              <Textarea {...register('creativeEligibility' as keyof EventFormData)} rows={3} placeholder="Eligibility" error={Boolean(e.creativeEligibility)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">What’s Offered *</label>
-              <Textarea {...register('whatsOffered' as keyof EventFormData)} rows={3} placeholder="What selected artists receive" error={Boolean(e.whatsOffered)} />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Compensation / Stipend Amount *</label>
-              <Input {...register('stipendAmount' as keyof EventFormData)} placeholder="$ or description" error={Boolean(e.stipendAmount)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Application Requirements *</label>
-              <Textarea {...register('requirements' as keyof EventFormData)} rows={3} placeholder="Files, statements, etc." error={Boolean(e.requirements)} />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Deadline *</label>
-              <Input {...register('deadline' as keyof EventFormData)} type="datetime-local" error={Boolean(e.deadline)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Link to Apply *</label>
-              <Input {...register('applyLink' as keyof EventFormData)} placeholder="https://" error={Boolean(e.applyLink)} />
-            </div>
-          </div>
-        </>
-      )}
+      <Section title="Key Dates">
+      <TextField form={form} name={"opportunityDates"} label="Opportunity Dates" required placeholder="Opportunity Dates"/>
+      <DateTimeList form={form as unknown as UseFormReturn<Record<string, unknown>>} name={"opportunityDeadlineOccurrences"} title="Deadline" maxDates={1} maxTimesPerDate={1} required/>
+      </Section>
 
-      {subtype === 'FUNDING' && (
+      <Section title="Location">
+        {/* TODO: Do we want location for opportunities? */}
+        <LocationField form={form} addressName={"address"} venueName={"venueName"} placeIdName={"placeId"} latName={"lat"} lngName={"lng"} />
+      </Section>
+
+      <Section title="Media Uploads">
+        <PhotoUploader form={form} name={"promoFiles"} label="Promotional Images" description="Upload up to 5 images" />
+        <TextAreaField form={form} name={"credits"} label="Image Description / Photo Credit" placeholder="Describe the images and provide photo credit" rows={3}/>
+      </Section>
+
+      <Section title="Credits & Socials">
+        <TextAreaField form={form} name={"credits"} label="Credits" required placeholder="Who should we list as creator(s), performer(s), or presenting organization?"/>
+        <TextField form={form} name={"socialHandles"} label="Social Handles" required placeholder="@username"/>
+      </Section>
+
+      <Section title="Additional Information">
+        <TextAreaField form={form} name={"notes"} label="Anything else you'd like us to know?" placeholder="Additional information" rows={4} />
+      </Section>
+
+      {isOpportunityFee && (
         <>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Funding Link *</label>
-            <Input {...register('fundingLink' as keyof EventFormData)} placeholder="https://" error={Boolean(e.fundingLink)} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-            <Input {...register('fundingTitle' as keyof EventFormData)} placeholder="Optional title" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Summary</label>
-            <Textarea {...register('fundingSummary' as keyof EventFormData)} rows={3} placeholder="Brief summary" />
-          </div>
+          <Section title="Listing Fee">
+            <SelectBlock
+              form={form}
+              name={"opportunityArtistType" as Path<EventFormData>}
+              label="Are you an established or emerging artist?"
+              required
+              options={[
+                { label: "Established artist", value: "ESTABLISHED" },
+                { label: "Emerging artist", value: "EMERGING" },
+              ]}
+            />
+
+            {(() => {
+              const artistType = form.watch("opportunityArtistType" as Path<EventFormData>) as "ESTABLISHED" | "EMERGING" | undefined
+              if (artistType === "ESTABLISHED") {
+                return (
+                  <div className="mt-4 p-4 bg-primary-50 border border-primary-200 rounded-md">
+                    <Text className="text-sm font-medium text-gray-900">Listing Fee: $50</Text>
+                    <Text className="text-xs text-gray-600 mt-1">
+                      As an established artist, your listing fee is $50. Payment will be processed after submission.
+                    </Text>
+                  </div>
+                )
+              }
+              if (artistType === "EMERGING") {
+                return (
+                  <div className="mt-4 p-4 bg-primary-50 border border-primary-200 rounded-md">
+                    <Text className="text-sm font-medium text-gray-900">Listing Fee: $35</Text>
+                    <Text className="text-xs text-gray-600 mt-1">
+                      As an emerging artist, your listing fee is $35. Payment will be processed after submission.
+                    </Text>
+                  </div>
+                )
+              }
+              return null
+            })()}
+          </Section>
         </>
       )}
-    </div>
+    </>
   )
 }

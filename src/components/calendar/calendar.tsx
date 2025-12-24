@@ -107,9 +107,9 @@ export function Calendar({ items }: CalendarProps) {
         <div className="flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="inline-flex rounded-md gap-1 border-none shadow-none" role="group">
-              <Button onClick={() => setView('month')} variant={view === 'month' ? 'primary' : 'outline'} size="md" className="rounded-l-md">Month</Button>
-              <Button onClick={() => setView('week')} variant={view === 'week' ? 'primary' : 'outline'} size="md" className="rounded-l-md">Week</Button>
-              <Button onClick={() => setView('day')} variant={view === 'day' ? 'primary' : 'outline'} size="md" className="rounded-l-md">Day</Button>
+              <Button onClick={() => setView('month')} variant={view === 'month' ? 'primary' : 'outline'} size="default" className="rounded-l-md">Month</Button>
+              <Button onClick={() => setView('week')} variant={view === 'week' ? 'primary' : 'outline'} size="default" className="rounded-l-md">Week</Button>
+              <Button onClick={() => setView('day')} variant={view === 'day' ? 'primary' : 'outline'} size="default" className="rounded-l-md">Day</Button>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" onClick={() => navigate('prev')} aria-label="Previous">

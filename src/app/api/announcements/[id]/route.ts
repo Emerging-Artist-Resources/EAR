@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { cookies } from "next/headers"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getAnnouncement, updateAnnouncement, deleteAnnouncement } from "@/features/announcements/server/service"
 // validation handled inside service layer
 import { ZodError } from "zod"
 import { getUserRole } from '@/lib/authz'
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -26,8 +25,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     const params = await context.params
 
@@ -46,12 +44,11 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     const params = await context.params
 

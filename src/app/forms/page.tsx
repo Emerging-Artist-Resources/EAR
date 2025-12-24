@@ -3,8 +3,7 @@
 import { useEffect, useState, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import PerformanceModal from "@/components/performance-modal"
-import { Card } from "@/components/ui/card"
-import { H2, Text } from "@/components/ui/typography"
+import { Text } from "@/components/ui/typography"
 import { getSupabaseClient } from "@/lib/supabase/client"
 
 function SubmitListingContent() {

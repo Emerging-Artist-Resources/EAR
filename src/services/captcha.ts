@@ -1,6 +1,16 @@
+import { getServerEnv, getOptionalEnv } from "@/lib/env"
+
 export const captchaService = {
   async verifyTurnstile(token: string | undefined, secret?: string) {
-    const resolvedSecret = secret ?? process.env.TURNSTILE_SECRET_KEY
+    // Try to get from server env first, then fallback to optional
+    const serverEnv = (() => {
+      try {
+        return getServerEnv()
+      } catch {
+        return null
+      }
+    })()
+    const resolvedSecret = secret ?? serverEnv?.TURNSTILE_SECRET_KEY ?? getOptionalEnv('TURNSTILE_SECRET_KEY')
     if (!resolvedSecret || !token) {
       // Allow in local/dev when not configured
       return { success: true }

@@ -27,7 +27,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [authLoading, setAuthLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
-  const [userName, setUserName] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = getSupabaseClient()
@@ -38,10 +37,6 @@ export default function Dashboard() {
         return
       }
       setUserId(user.id)
-      const name = (user as { user_metadata?: { name?: string; full_name?: string } })?.user_metadata?.name
-        || (user as { user_metadata?: { name?: string; full_name?: string } })?.user_metadata?.full_name
-        || user.email
-      setUserName(name || null)
       setAuthLoading(false)
     })
   }, [router])
@@ -49,12 +44,9 @@ export default function Dashboard() {
   const fetchUserPerformances = useCallback(async () => {
     if (!userId) return
     try {
-      const response = await fetch("/api/me/performances")
-      if (response.ok) {
-        const data = await response.json()
-        const items: Performance[] = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : []
-        setPerformances(items)
-      }
+      const { apiGet } = await import("@/lib/fetch-utils")
+      const data = await apiGet<Performance[]>("/api/me/performances")
+      setPerformances(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error("Error fetching performances:", error)
     } finally {
@@ -77,19 +69,6 @@ export default function Dashboard() {
 
   if (!userId) {
     return null
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return "bg-yellow-100 text-yellow-800"
-      case "APPROVED":
-        return "bg-green-100 text-green-800"
-      case "REJECTED":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
   }
 
   return (

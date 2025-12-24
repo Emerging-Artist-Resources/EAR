@@ -1,4 +1,3 @@
-import React from "react"
 import { Controller, UseFormReturn } from "react-hook-form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card } from "@/components/ui/card"
@@ -13,7 +12,8 @@ interface SelectBlockProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>
   name: string
   label?: string
-  description?: string
+  note?: string
+  description?: string // Keep for backward compatibility
   options: Option[]
   multiple?: boolean
   allowOther?: boolean
@@ -30,6 +30,7 @@ export function SelectBlock<T extends Record<string, unknown>>({
   form,
   name,
   label,
+  note,
   description,
   options,
   multiple = false,
@@ -67,12 +68,14 @@ export function SelectBlock<T extends Record<string, unknown>>({
   return (
     <div className={className}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label} {required && showAsterisk && <span className="text-error-600">*</span>}
-        </label>
-      )}
-      {description && (
-        <p className="text-sm mb-2 text-gray-500">{description}</p>
+        <div className="mb-1">
+          <label className="block text-sm font-medium text-gray-700">
+            {label} {required && showAsterisk && <span className="text-error-600">*</span>}
+          </label>
+          {(note || description) && (
+            <p className="mt-1 text-sm text-gray-500">{note || description}</p>
+          )}
+        </div>
       )}    
         <Controller
           control={form.control}

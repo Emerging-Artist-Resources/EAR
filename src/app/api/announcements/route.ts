@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { cookies } from "next/headers"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { notificationSchema } from "@/lib/validations"
 import { listAnnouncements, createAnnouncement } from "@/features/announcements/server/service"
 import { ZodError } from "zod"
@@ -18,8 +17,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user?.id) {

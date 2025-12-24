@@ -4,8 +4,8 @@ import { SavedEvent, ProfileSavedEventsFilter } from "./types";
 // For now it's just a stub.
 
 export async function fetchSavedEventsFromDb(
-  userId: string,
-  filter: ProfileSavedEventsFilter
+  _userId: string,
+  _filter: ProfileSavedEventsFilter
 ): Promise<SavedEvent[]> {
   // TODO: replace mock data with real DB calls.
 

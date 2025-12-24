@@ -1,9 +1,19 @@
 import { useState, useCallback } from "react"
+import { apiPost } from "@/lib/fetch-utils"
 
 export interface ReviewData {
-  performanceId: string
-  status: "APPROVED" | "REJECTED"
-  comments?: string
+  eventId: string
+  decision: "APPROVED" | "REJECTED"
+  notes?: string | null
+}
+
+export interface ReviewResponse {
+  id: string
+  eventId: string
+  decision: "APPROVED" | "REJECTED"
+  notes: string | null
+  reviewerUserId: string
+  reviewedAt: string
 }
 
 export function useAdminReviews() {
@@ -15,20 +25,7 @@ export function useAdminReviews() {
       setLoading(true)
       setError(null)
 
-      const response = await fetch("/api/admin/reviews", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(reviewData),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to submit review")
-      }
-
-      const result = await response.json()
+      const result = await apiPost<ReviewResponse>("/api/admin/reviews", reviewData)
       return result
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred"

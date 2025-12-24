@@ -1,24 +1,43 @@
-import React from "react"
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
-import { variants } from "@/lib/utils"
 
-export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  padding?: keyof typeof variants.card.variants.padding
-  border?: keyof typeof variants.card.variants.border
+const cardVariants = cva(
+  // base: shadcn-ish card styling using tokens
+  "rounded-lg border bg-card text-card-foreground shadow-sm",
+  {
+    variants: {
+      padding: {
+        none: "p-0",
+        sm: "p-3",
+        md: "p-4",
+        lg: "p-6",
+      },
+      border: {
+        solid: "border-border",
+        none: "border-transparent",
+        dashed: "border-dashed border-border",
+      },
+    },
+    defaultVariants: {
+      padding: "md",
+      border: "solid",
+    },
+  }
+)
+
+export interface CardProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof cardVariants> {
   children: React.ReactNode
 }
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, padding = "md", border = "solid", children, ...props }, ref) => {
+  ({ className, padding, border, children, ...props }, ref) => {
     return (
       <div
-        className={cn(
-          variants.card.base,
-          variants.card.variants.padding[padding],
-          variants.card.variants.border[border],
-          className
-        )}
         ref={ref}
+        className={cn(cardVariants({ padding, border }), className)}
         {...props}
       >
         {children}
@@ -26,9 +45,9 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     )
   }
 )
-
 Card.displayName = "Card"
 
+// These are already basically shadcn—keeping as-is:
 export interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
 }
@@ -37,8 +56,8 @@ export const CardHeader = React.forwardRef<HTMLDivElement, CardHeaderProps>(
   ({ className, children, ...props }, ref) => {
     return (
       <div
-        className={cn("flex flex-col space-y-1.5 pb-4", className)}
         ref={ref}
+        className={cn("flex flex-col space-y-1.5 pb-4", className)}
         {...props}
       >
         {children}
@@ -46,7 +65,6 @@ export const CardHeader = React.forwardRef<HTMLDivElement, CardHeaderProps>(
     )
   }
 )
-
 CardHeader.displayName = "CardHeader"
 
 export interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
@@ -57,8 +75,8 @@ export const CardTitle = React.forwardRef<HTMLHeadingElement, CardTitleProps>(
   ({ className, children, ...props }, ref) => {
     return (
       <h3
-        className={cn("text-lg font-semibold leading-none tracking-tight", className)}
         ref={ref}
+        className={cn("text-lg font-semibold leading-none tracking-tight", className)}
         {...props}
       >
         {children}
@@ -66,7 +84,6 @@ export const CardTitle = React.forwardRef<HTMLHeadingElement, CardTitleProps>(
     )
   }
 )
-
 CardTitle.displayName = "CardTitle"
 
 export interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -76,15 +93,10 @@ export interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {
 export const CardContent = React.forwardRef<HTMLDivElement, CardContentProps>(
   ({ className, children, ...props }, ref) => {
     return (
-      <div
-        className={cn("pt-0", className)}
-        ref={ref}
-        {...props}
-      >
+      <div ref={ref} className={cn("pt-0", className)} {...props}>
         {children}
       </div>
     )
   }
 )
-
 CardContent.displayName = "CardContent"

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import HeaderGate from "@/components/layout/header-gate"
 import FooterGate from "@/components/layout/footer-gate"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,9 +30,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <HeaderGate />
-        {children}
-        <FooterGate />
+        <ErrorBoundary>
+          <HeaderGate />
+          {children}
+          <FooterGate />
+        </ErrorBoundary>
       </body>
     </html>
   );

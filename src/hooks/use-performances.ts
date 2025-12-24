@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { getSupabaseClient } from "@/lib/supabase/client"
+import { apiGet, apiPost } from "@/lib/fetch-utils"
 
 export interface Performance {
   id: string
@@ -42,15 +43,8 @@ export function usePerformances(status?: string) {
         ? `/api/performances?status=${status}`
         : "/api/performances"
       
-      const response = await fetch(url)
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch performances")
-      }
-      
-      const data = await response.json()
-      const items = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : []
-      setPerformances(items)
+      const data = await apiGet<Performance[]>(url)
+      setPerformances(Array.isArray(data) ? data : [])
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -60,22 +54,9 @@ export function usePerformances(status?: string) {
 
   const submitPerformance = useCallback(async (data: Record<string, unknown>) => {
     try {
-      const response = await fetch("/api/performances", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to submit performance")
-      }
-
-      const result = await response.json()
+      const result = await apiPost<Performance>("/api/performances", data)
       await fetchPerformances() // Refresh the list
-      return result?.data ?? result
+      return result
     } catch (err) {
       throw err instanceof Error ? err : new Error("An error occurred")
     }
@@ -96,24 +77,20 @@ export function useUserPerformances() {
   const [userId, setUserId] = useState<string | null>(null)
 
   // Resolve user id once on mount
-  useState(() => {
+  useEffect(() => {
     const supabase = getSupabaseClient()
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data?.user?.id ?? null)
     })
-  })
+  }, [])
 
   const fetchUserPerformances = useCallback(async () => {
     if (!userId) return
 
     try {
       setLoading(true)
-      const response = await fetch(`/api/me/performances`)
-      if (response.ok) {
-        const data = await response.json()
-        const items = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : []
-        setPerformances(items)
-      }
+      const data = await apiGet<Performance[]>(`/api/me/performances`)
+      setPerformances(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error("Error fetching user performances:", error)
     } finally {

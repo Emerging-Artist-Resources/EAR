@@ -27,7 +27,6 @@ export function EventTypeSelector({ eventType, onChangeType }: EventTypeSelector
         <option value="AUDITION">Audition</option>
         <option value="CREATIVE">Creative Opportunity</option>
         <option value="CLASS">Class/Workshop</option>
-        <option value="FUNDING">Funding Opportunity</option>
       </Select>
     </div>
   )

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { H1, H2, H3, Text } from "@/components/ui/typography"
+import { H1, H3, Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { getSupabaseClient } from "@/lib/supabase/client"

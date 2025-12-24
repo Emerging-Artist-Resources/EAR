@@ -5,7 +5,7 @@ import { Footer } from "@/components/layout/footer"
 
 export default function FooterGate() {
   const pathname = usePathname()
-  if (!pathname) return null
+  if (!pathname || typeof pathname !== "string") return null
   if (pathname.startsWith("/auth")) return null
   return <Footer />
 }

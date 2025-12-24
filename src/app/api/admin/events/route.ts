@@ -1,27 +1,26 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { getUserRole } from "@/lib/authz"
+import { NextRequest } from "next/server"
 import { listAdminEvents } from "@/features/events/server/service"
+import { requireRole, hasRole } from "@/lib/auth-helpers"
+import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamNumber, ErrorCodes, createErrorResponse } from "@/lib/api-utils"
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    const role = getUserRole(user)
-    console.log("role", role)
-    if (!user?.id || (role !== 'ADMIN' && role !== 'REVIEWER')) {
-      return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
+    const auth = await requireRole("REVIEWER")
+    
+    if (!hasRole(auth.role, ["ADMIN", "REVIEWER"])) {
+      return createErrorResponse(ErrorCodes.FORBIDDEN, "Insufficient permissions", undefined, 403)
     }
 
-    const url = new URL(req.url)
-    const status = (url.searchParams.get('status') || 'pending').toLowerCase()
-    const limit = Math.min(Number(url.searchParams.get('limit') || '50'), 100)
+    const status = (getQueryParam(req, "status") || "pending").toLowerCase() as "pending" | "approved" | "rejected"
+    if (!["pending", "approved", "rejected"].includes(status)) {
+      return createErrorResponse(ErrorCodes.BAD_REQUEST, "Invalid status parameter", undefined, 400)
+    }
 
-    // Pull events in the requested status with minimal detail fields
-    const items = await listAdminEvents(status as 'pending'|'approved'|'rejected', limit)
-    return NextResponse.json({ data: items })
-  } catch (err) {
-    console.error('Admin events GET error:', err)
-    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
+    const limit = getQueryParamNumber(req, "limit", 50, 1, 100)
+
+    const items = await listAdminEvents(status, limit)
+    return createSuccessResponse(items)
+  } catch (error) {
+    return handleApiError(error)
   }
 }
