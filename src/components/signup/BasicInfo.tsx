@@ -12,11 +12,17 @@ interface SignUpBasicInfoProps {
 
 export function SignUpBasicInfo({ form }: SignUpBasicInfoProps) {
 
-    const type = form.watch("type") as string | undefined
+    const type = form.watch("type") as string | null
     const isIndividual = type === "INDIVIDUAL"
     const isCompany = type === "COMPANY"
     const isFestivalOrganization = type === "FESTIVAL_ORGANIZATION"
     const isOther = type === "OTHER"
+
+    useEffect(() => {
+        if (!type) {
+            form.setValue("type", "INDIVIDUAL" as never)
+        }
+    }, [type, form])
 
     useEffect(() => {
         if (isCompany) {
