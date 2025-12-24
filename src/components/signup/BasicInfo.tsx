@@ -4,7 +4,6 @@ import { UseFormReturn } from "react-hook-form"
 import { Section } from "@/components/forms/blocks/Section"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { EventFormData } from "@/lib/validations/events"
-import { LocationField } from "../forms/blocks/LocationField"
 import { Dropdown } from "../forms/blocks/Dropdown"
 import { useEffect } from "react"
 interface SignUpBasicInfoProps {

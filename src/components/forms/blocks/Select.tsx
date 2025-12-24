@@ -1,4 +1,3 @@
-import React from "react"
 import { Controller, UseFormReturn } from "react-hook-form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card } from "@/components/ui/card"

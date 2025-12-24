@@ -2,7 +2,7 @@ import { NextRequest } from "next/server"
 import { listCalendarItems } from "@/features/events/server/service"
 import { z } from "zod"
 import { createEventOwnedRepo } from "@/features/events/server/repository"
-import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamArray } from "@/lib/api-utils"
+import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamArray, validateRequestBody } from "@/lib/api-utils"
 
 const eventTypeSchema = z.enum(["performance", "audition", "creative", "class", "funding"])
 
@@ -56,9 +56,7 @@ const photoSchema = z.object({
 })
 
 const payloadSchema = z.object({
-  type: z.enum(["performance", "audition", "creative", "class", "funding"], {
-    errorMap: () => ({ message: "Invalid event type" }),
-  }),
+  type: z.enum(["performance", "audition", "creative", "class", "funding"]),
   base: baseSchema,
   details: z.record(z.string(), z.unknown()),
   occurrences: z.array(occurrenceSchema).min(1, "At least one occurrence is required"),

@@ -20,9 +20,9 @@ export async function createPerformance(formData: EventFormData, createdBy: stri
 
   const input = {
     type: 'performance' as const,
-    contact_name: parsed.submitterName,
+    contact_name: parsed.submitterName ?? '',
     pronouns: parsed.submitterPronouns,
-    contact_email: parsed.contactEmail,
+    contact_email: parsed.contactEmail ?? '',
     org_name: parsed.company || null,
     org_website: parsed.companyWebsite || null,
     address: parsed.address,

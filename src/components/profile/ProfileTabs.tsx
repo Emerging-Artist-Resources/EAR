@@ -23,7 +23,7 @@ export const ProfileTabs = ({ activeTab, onChange }: ProfileTabsProps) => {
           key={tab.key}
           type="button"
           variant={activeTab === tab.key ? "primary" : "outline"}
-          size="md"
+          size="default"
           className="flex-1"
           onClick={() => onChange(tab.key)}
         >

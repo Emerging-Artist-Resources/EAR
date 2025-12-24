@@ -16,7 +16,7 @@ export const SavedEventsFilters = ({ value, onChange }: SavedEventsFiltersProps)
         type="button"
         className="rounded-full"
         variant={value === "all" ? "primary" : "outline"}
-        size="md"
+        size="default"
         onClick={() => onChange("all")}
       >
         All Events
@@ -25,7 +25,7 @@ export const SavedEventsFilters = ({ value, onChange }: SavedEventsFiltersProps)
         type="button"
         className="rounded-full"
         variant={value === "upcoming" ? "primary" : "outline"}
-        size="md"
+        size="default"
         onClick={() => onChange("upcoming")}
       >
         Upcoming
@@ -34,7 +34,7 @@ export const SavedEventsFilters = ({ value, onChange }: SavedEventsFiltersProps)
         type="button"
         className="rounded-full"
         variant={value === "past" ? "primary" : "outline"}
-        size="md"
+        size="default"
         onClick={() => onChange("past")}
       >
         Past Events

@@ -15,7 +15,6 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
   const [isOpen, setIsOpen] = useState(false)
   const [isAuthed, setIsAuthed] = useState(false)
   const [name, setName] = useState<string | null>(null)
-  const [isLoaded, setIsLoaded] = useState(false)
   const supabase = getSupabaseClient()
 
   useEffect(() => {
@@ -27,7 +26,6 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
       setIsAuthed(!!u)
       const display = (u?.user_metadata?.name as unknown) ?? u?.email ?? null
       setName(typeof display === 'string' ? display : null)
-      setIsLoaded(true)
     })()
     return () => { mounted = false }
   }, [supabase])
@@ -43,8 +41,6 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
     { name: "Manage Notifications", href: "/admin/notifications" },
     { name: "Review Profiles", href: "/admin/profiles" }
   ] : []
-
-  const navigation = [...publicNavigation, ...adminNavigation]
 
   return (
     <div className="lg:hidden">

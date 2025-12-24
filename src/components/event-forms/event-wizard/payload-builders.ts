@@ -121,7 +121,7 @@ export function buildAuditionPayload(
 export function buildCreativePayload(
   data: EventFormData,
   userInfo: UserInfo,
-  tz: string
+  _tz: string
 ): EventPayload {
   const deadlineIso = data.deadline
     ? new Date(data.deadline).toISOString()
@@ -194,7 +194,7 @@ export function buildClassPayload(
 export function buildFundingPayload(
   data: EventFormData,
   userInfo: UserInfo,
-  tz: string
+  _tz: string
 ): EventPayload {
   return {
     type: "funding",

@@ -154,13 +154,16 @@ export function LocationField<T extends Record<string, unknown>>({
 
         el.addEventListener("gmp-placeselect", handler)
 
-        // cleanup
-        return () => el.removeEventListener("gmp-placeselect", handler)
+        // cleanup function returned for event listener removal
+        return () => {
+          el.removeEventListener("gmp-placeselect", handler)
+        }
       } catch (e: unknown) {
         console.error(e)
         setApiError(
           "Google Places failed to load. Most common: API restrictions blocking Maps JavaScript API."
         )
+        return undefined
       }
     }
 

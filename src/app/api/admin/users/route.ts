@@ -6,9 +6,7 @@ import { z } from "zod"
 
 const updateUserRoleSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
-  role: z.enum(["USER", "ADMIN"], {
-    errorMap: () => ({ message: "Role must be USER or ADMIN" }),
-  }),
+  role: z.enum(["USER", "ADMIN"]),
 })
 
 export async function GET() {

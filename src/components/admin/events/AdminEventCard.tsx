@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
-import { AdminEventDetail, AdminEventItem, STATUS_BADGE, TYPE_BADGE } from "./types"
+import { AdminEventDetail, AdminEventItem } from "./types"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -78,9 +78,6 @@ export function AdminEventCard({
     setSubmitting(false)
     setComments("")
   }
-
-  const typeBadge = TYPE_BADGE[item.type]
-  const statusBadge = STATUS_BADGE[item.status]
 
   // choose a title for display if item.title is missing
   const computedTitle =

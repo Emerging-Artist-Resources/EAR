@@ -1,14 +1,12 @@
 import { NextRequest } from "next/server"
 import { reviewEvent } from "@/features/reviews/server/service"
 import { requireRole } from "@/lib/auth-helpers"
-import { handleApiError, createSuccessResponse, validateRequestBody, ErrorCodes, createErrorResponse } from "@/lib/api-utils"
+import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api-utils"
 import { z } from "zod"
 
 const reviewSchema = z.object({
   eventId: z.string().min(1, "Event ID is required"),
-  decision: z.enum(["APPROVED", "REJECTED"], {
-    errorMap: () => ({ message: "Decision must be APPROVED or REJECTED" }),
-  }),
+  decision: z.enum(["APPROVED", "REJECTED"]),
   notes: z.string().optional().nullable(),
 })
 
