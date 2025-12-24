@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { getSupabaseClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 
 export function useAdminAuth() {
   const router = useRouter()
@@ -9,7 +9,6 @@ export function useAdminAuth() {
   const [isAuthorized, setIsAuthorized] = useState(false)
 
   useEffect(() => {
-    const supabase = getSupabaseClient()
     supabase.auth.getUser().then(({ data }) => {
       const user = data?.user
       if (!user) {

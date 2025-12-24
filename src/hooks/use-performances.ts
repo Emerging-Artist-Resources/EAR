@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react"
-import { getSupabaseClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 import { apiGet, apiPost } from "@/lib/fetch-utils"
 
 export interface Performance {
@@ -78,7 +78,6 @@ export function useUserPerformances() {
 
   // Resolve user id once on mount
   useEffect(() => {
-    const supabase = getSupabaseClient()
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data?.user?.id ?? null)
     })

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { getSupabaseClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 import { VscAccount } from "react-icons/vsc";
 import { useRouter } from "next/navigation"
 
@@ -28,7 +28,6 @@ export function UserDropdown({ userName, isMobile = false }: UserDropdownProps) 
     }
   }, [])
 
-  const supabase = getSupabaseClient()
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push("/auth/signin")

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import PerformanceModal from "@/components/performance-modal"
 import { Text } from "@/components/ui/typography"
-import { getSupabaseClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 
 function SubmitListingContent() {
   const router = useRouter()
@@ -15,7 +15,6 @@ function SubmitListingContent() {
 
   useEffect(() => {
     // TODO: Need to fix this to ensure non authenticated user don't submit listings
-    const supabase = getSupabaseClient()
     supabase.auth.getUser().then(({ data }) => {
       const user = data?.user || null
       console.log(user)
