@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { H1, H3, Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { getSupabaseClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 import PerformanceModal from "@/components/performance-modal"
 import { Modal } from "@/components/ui/modal"
 
@@ -52,7 +52,6 @@ export default function AnnouncementsPage() {
   const [isAuthed, setIsAuthed] = useState(false)
 
   useEffect(() => {
-    const supabase = getSupabaseClient()
     supabase.auth.getUser().then(({ data }) => {
       setIsAuthed(Boolean(data?.user))
     })

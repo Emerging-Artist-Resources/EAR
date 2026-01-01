@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { getSupabaseClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
 import { getUserRole } from "@/lib/authz"
 
@@ -25,7 +25,6 @@ export function useAuth() {
   })
 
   const updateAuthState = useCallback(async () => {
-    const supabase = getSupabaseClient()
     const { data, error } = await supabase.auth.getUser()
 
     if (error || !data.user) {
@@ -58,7 +57,6 @@ export function useAuth() {
 
   useEffect(() => {
     let isMounted = true
-    const supabase = getSupabaseClient()
 
     // Initial auth check
     updateAuthState()

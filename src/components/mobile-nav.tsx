@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { getSupabaseClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { VscAccount } from "react-icons/vsc"
 
@@ -15,7 +15,6 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
   const [isOpen, setIsOpen] = useState(false)
   const [isAuthed, setIsAuthed] = useState(false)
   const [name, setName] = useState<string | null>(null)
-  const supabase = getSupabaseClient()
 
   useEffect(() => {
     let mounted = true

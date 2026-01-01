@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useState, useCallback } from "react"
 import { formatDateTime } from "@/lib/constants"
-import { getSupabaseClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 import Link from "next/link"
 import { H2, Text } from "@/components/ui/typography"
 import { Card } from "@/components/ui/card"
@@ -29,7 +29,6 @@ export default function Dashboard() {
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    const supabase = getSupabaseClient()
     supabase.auth.getUser().then(({ data }) => {
       const user = data?.user || null
       if (!user) {

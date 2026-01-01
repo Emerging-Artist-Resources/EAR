@@ -12,7 +12,7 @@ import { Select } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { H2, H3, Text } from "@/components/ui/typography"
 import { getNotificationTypeColor, formatDateTime } from "@/lib/constants"
-import { getSupabaseClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 
 interface Notification {
   id: string
@@ -49,7 +49,6 @@ export default function AdminNotificationsPage() {
   }
 
   useEffect(() => {
-    const supabase = getSupabaseClient()
     supabase.auth.getUser().then(({ data }) => {
       const user = data?.user || null
       if (!user) {
