@@ -16,6 +16,7 @@ interface PieceDetailsProps {
   onRemove: () => void
   showOccurrences?: boolean
   occurrencesMode?: "SELECT_FROM_EVENT" | "SELECT_FROM_PARENT" | "CUSTOM_ONLY"
+  showInviteEmail?: boolean
 }
 
 export function PieceDetails({
@@ -25,6 +26,7 @@ export function PieceDetails({
   onRemove,
   showOccurrences = true,
   occurrencesMode = "SELECT_FROM_EVENT",
+  showInviteEmail = false,
 }: PieceDetailsProps) {
   const prefix = index === 0 ? "piece" : `pieces.${index}`
 
@@ -68,6 +70,7 @@ export function PieceDetails({
           required
         />
 
+        
         <TextField
           form={form}
           name={`${prefix}_company` as Path<EventFormData>}
@@ -96,7 +99,6 @@ export function PieceDetails({
           name={`${prefix}_social_handles` as Path<EventFormData>}
           label="Social handles"
           placeholder="@..."
-          required
         />
 
         <PhotoUploader

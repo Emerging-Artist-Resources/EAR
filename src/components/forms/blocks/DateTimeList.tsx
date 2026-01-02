@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useEffect, useMemo, useState, useCallback } from "react"
+import { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import { UseFormReturn, FieldValues, useFieldArray, useWatch } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -251,7 +251,147 @@ export function DateTimeList<T extends Record<string, unknown>>({
     name: name as any,
   })
 
+  const { replace } = datesArray
   const dateFields = datesArray.fields
+
+  // Watch form values to detect external changes (e.g., from setValue in parent)
+  const watchedFormValues = useWatch({
+    control,
+    name: name as any,
+  }) as DateItem[] | undefined
+
+  // Sync field array when form values change externally (e.g., when editing confirmed entries)
+  // This ensures all entries, including the first one, are properly populated
+  const prevFormValuesRef = useRef<string>("")
+  const isInitialMountRef = useRef(true)
+  const lastSyncLengthRef = useRef<number>(0)
+  
+  useEffect(() => {
+    // On mount, read from getValues() which includes defaults
+    // watchedFormValues might be undefined on initial mount
+    const formValuesFromGetValues = getValues(name as any) as DateItem[] | undefined
+    const currentFormValues = watchedFormValues ?? formValuesFromGetValues ?? []
+    
+    console.log(`[DateTimeList:${name}] Sync effect running`)
+    console.log(`[DateTimeList:${name}] watchedFormValues:`, JSON.stringify(watchedFormValues, null, 2))
+    console.log(`[DateTimeList:${name}] formValuesFromGetValues:`, JSON.stringify(formValuesFromGetValues, null, 2))
+    console.log(`[DateTimeList:${name}] currentFormValues:`, JSON.stringify(currentFormValues, null, 2))
+    console.log(`[DateTimeList:${name}] dateFields.length:`, dateFields.length)
+    console.log(`[DateTimeList:${name}] dateFields:`, dateFields.map((f, idx) => ({
+      id: f.id,
+      date: getValues(`${name}.${idx}.date` as any),
+      times: getValues(`${name}.${idx}.times` as any),
+    })))
+    
+    // Normalize form values to ensure consistent structure
+    const normalized = currentFormValues.map((d) => ({
+      date: d?.date ?? "",
+      times: showTime ? (d?.times && d.times.length > 0 ? d.times : [{ time: "" }]) : [],
+    }))
+
+    console.log(`[DateTimeList:${name}] normalized:`, JSON.stringify(normalized, null, 2))
+
+    // Create signature to detect changes
+    const signature = JSON.stringify(normalized)
+    console.log(`[DateTimeList:${name}] signature:`, signature.substring(0, 100))
+    console.log(`[DateTimeList:${name}] prevFormValuesRef.current:`, prevFormValuesRef.current.substring(0, 100))
+    console.log(`[DateTimeList:${name}] isInitialMountRef.current:`, isInitialMountRef.current)
+    
+    // On initial mount, if form has values, sync them immediately
+    if (isInitialMountRef.current) {
+      console.log(`[DateTimeList:${name}] Initial mount - syncing if needed`)
+      isInitialMountRef.current = false
+      if (normalized.length > 0) {
+        // Check if normalized has any complete entries (non-empty dates)
+        const hasCompleteEntries = normalized.some(d => d.date && d.date.trim() !== "")
+        if (hasCompleteEntries) {
+          console.log(`[DateTimeList:${name}] Initial mount with complete values - calling replace`)
+          prevFormValuesRef.current = signature
+          lastSyncLengthRef.current = normalized.length
+          replace(normalized as any)
+          
+          // Double-check after replace to ensure values persisted
+          setTimeout(() => {
+            const afterReplaceValues = getValues(name as any) as DateItem[] | undefined
+            console.log(`[DateTimeList:${name}] After replace, form.getValues:`, JSON.stringify(afterReplaceValues, null, 2))
+            if (!afterReplaceValues || afterReplaceValues.length === 0 || !afterReplaceValues[0]?.date) {
+              console.warn(`[DateTimeList:${name}] Values were cleared after replace! Re-applying...`)
+              replace(normalized as any)
+            }
+          }, 100)
+          return
+        } else {
+          console.log(`[DateTimeList:${name}] Initial mount with empty values - will initialize`)
+        }
+      }
+      if (startWithOne && dateFields.length === 0) {
+        console.log(`[DateTimeList:${name}] Initial mount empty - appending blank row`)
+        // Initialize with blank row if empty
+        const initial: DateItem = {
+          date: "",
+          times: showTime ? [{ time: "" }] : [],
+        }
+        datesArray.append(initial as any)
+      }
+      return
+    }
+    
+    // Skip if no change
+    if (signature === prevFormValuesRef.current) {
+      console.log(`[DateTimeList:${name}] No change detected - skipping sync`)
+      return
+    }
+    
+    // Check for length mismatch (definitely external setValue)
+    const lengthMismatch = dateFields.length !== normalized.length
+    console.log(`[DateTimeList:${name}] lengthMismatch:`, lengthMismatch, `(dateFields: ${dateFields.length}, normalized: ${normalized.length})`)
+    
+    // Check if form has complete entries (non-empty dates)
+    const formHasCompleteEntries = normalized.some(d => d.date && d.date.trim() !== "")
+    console.log(`[DateTimeList:${name}] formHasCompleteEntries:`, formHasCompleteEntries)
+    
+    // More aggressive sync: if form has complete entries and signature changed, sync
+    // unless field array length matches AND we can verify the first entry matches (user might be typing)
+    // This ensures external setValue always triggers sync, while user typing is preserved
+    const firstEntryFieldDate = dateFields.length > 0 ? (getValues(`${name}.0.date` as any) as string | undefined ?? "") : ""
+    const firstEntryFormDate = normalized.length > 0 ? (normalized[0]?.date ?? "") : ""
+    const firstEntryMatches = dateFields.length > 0 && normalized.length > 0 && firstEntryFieldDate === firstEntryFormDate
+    console.log(`[DateTimeList:${name}] firstEntryMatches:`, firstEntryMatches, `(field: "${firstEntryFieldDate}", form: "${firstEntryFormDate}")`)
+    
+    // Sync if:
+    // 1. Length changed (definitely external)
+    // 2. OR form has complete entries and first entry doesn't match (external setValue with different values)
+    // 3. OR form has complete entries and field array is empty (restoring after clear)
+    const shouldSync = lengthMismatch || 
+      (formHasCompleteEntries && !firstEntryMatches) ||
+      (formHasCompleteEntries && dateFields.length === 0)
+    
+    console.log(`[DateTimeList:${name}] shouldSync:`, shouldSync, `(lengthMismatch: ${lengthMismatch}, formHasCompleteEntries: ${formHasCompleteEntries}, !firstEntryMatches: ${!firstEntryMatches}, dateFields.length === 0: ${dateFields.length === 0})`)
+    
+    if (shouldSync) {
+      console.log(`[DateTimeList:${name}] SYNCING - calling replace with:`, JSON.stringify(normalized, null, 2))
+      prevFormValuesRef.current = signature
+      lastSyncLengthRef.current = normalized.length
+      replace(normalized as any)
+      
+      // Log after replace to see if it worked
+      setTimeout(() => {
+        const afterReplace = dateFields.map((f, idx) => ({
+          id: f.id,
+          date: getValues(`${name}.${idx}.date` as any),
+          times: getValues(`${name}.${idx}.times` as any),
+        }))
+        console.log(`[DateTimeList:${name}] After replace, dateFields:`, JSON.stringify(afterReplace, null, 2))
+      }, 0)
+    } else {
+      console.log(`[DateTimeList:${name}] NOT syncing - updating ref only`)
+      // Update ref to track current state, but don't replace (user is typing)
+      prevFormValuesRef.current = signature
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchedFormValues, name, showTime, startWithOne, replace, getValues])
+
+
 
   const [syncTimes, setSyncTimes] = useState(false)
 
@@ -284,19 +424,6 @@ export function DateTimeList<T extends Record<string, unknown>>({
     control,
     name: showTime && syncTimes && dateFields.length > 0 ? (`${name}.0.times` as any) : undefined,
   }) as TimeItem[] | undefined
-
-  // Initialize with one row if empty
-  useEffect(() => {
-    if (!startWithOne) return
-    if (dateFields.length > 0) return
-
-    const initial: DateItem = {
-      date: "",
-      times: showTime ? [{ time: "" }] : [],
-    }
-    datesArray.append(initial as any)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   // When first date times change and sync is on -> apply to all
   useEffect(() => {

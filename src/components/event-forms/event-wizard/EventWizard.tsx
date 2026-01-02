@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
 import { type EventType } from "./EventTypeSelector"
 import { BasicInfoStep } from "./steps/BasicInfoStep"
-import { PerformanceDetailsStep } from "./steps/PerformanceDetailsStep"
+import { PerformanceDetailsStep } from "./steps/performance/PerformanceDetailsStep"
+import { OrganizerMediaSocials } from "./steps/performance/OrganizerMediaSocials"
 import { ClassesWorkshopsStep } from "./steps/ClassWorkshopStep"
 import { OpportunityStep } from "./steps/OpportunityStep"
 import { AuditionStep } from "./steps/AuditionStep"
@@ -25,7 +26,7 @@ interface EventWizardProps {
 }
 
 export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
-  const [step, setStep] = useState<1 | 2>(1)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
   const [eventType, setEventType] = useState<EventType | null>(null)
   const [submitMessage, setSubmitMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -55,8 +56,11 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
     } as Partial<EventFormData>,
     mode: 'onChange',
     reValidateMode: 'onChange',
-    shouldUnregister: true,
+    shouldUnregister: false,
+    shouldFocusError: false, // prevents scroll-to-first-error / focus jumps
   })
+  console.log("extraOccurrences", form.getValues("extraOccurrences"))
+  console.log("eventDatesConfirmed", form.getValues("eventDatesConfirmed"))
 
   const goNext = useCallback(async () => {
     if (step === 1) {
@@ -67,20 +71,36 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       setStep(2)
       return
     }
-    if (step === 2 && eventType) {
-      const validation = await validateStep2(form, eventType)
-      if (!validation.isValid) {
-        showToast(validation.message || "Please complete required fields on this step", "error")
+    if (step === 2) {
+      if (!eventType) {
+        showToast("Please select an event type to continue", "warning")
         return
       }
-      // In 2-step flow, Step 2 is submit step; validation passed
-      return
+      if (eventType === 'PERFORMANCE') {
+        const validation = await validateStep2(form, eventType)
+        if (!validation.isValid) {
+          showToast(validation.message || "Please complete required fields on this step", "error")
+          return
+        }
+        setStep(3)
+        return
+      } else {
+        // For non-performance types, step 2 is the submit step
+        const validation = await validateStep2(form, eventType)
+        if (!validation.isValid) {
+          showToast(validation.message || "Please complete required fields on this step", "error")
+          return
+        }
+        // Validation passed, ready to submit
+        return
+      }
     }
+    // Step 3 (Performance Media & Socials) - validation passed, ready to submit
   }, [step, eventType, form, showToast])
 
   const goBack = useCallback(() => {
     if (step === 1) return
-    setStep(((step - 1) as 1 | 2))
+    setStep(((step - 1) as 1 | 2 | 3))
   }, [step])
 
   const handleSubmit = form.handleSubmit(
@@ -164,7 +184,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       })()} */}
       {/* Step indicators */}
       <div className="flex justify-center gap-2 text-sm">
-        <PageNumbers current={step} total={2} />
+        <PageNumbers current={step} total={eventType === 'PERFORMANCE' ? 3 : 2} />
       </div>
       {step === 1 && (
         <BasicInfoStep form={form} eventType={eventType} onChangeType={setEventType} />
@@ -181,6 +201,9 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
             form={form}
           />
         )
+      )}
+      {step === 3 && eventType === 'PERFORMANCE' && (
+        <OrganizerMediaSocials form={form} />
       )}
 
       {submitMessage && (
@@ -199,15 +222,14 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           */}
         </div>
         <div className="flex gap-2">
-          {step === 1 && (
+          {(step === 1 || (step === 2 && eventType === 'PERFORMANCE')) && (
             <Button type="button" onClick={goNext}>
               Next
             </Button>
           )}
-          {step === 2 && (
+          {(step === 2 && eventType !== 'PERFORMANCE') || (step === 3 && eventType === 'PERFORMANCE') ? (
             <Button
               type="button"
-   
               onClick={() => {
                 handleSubmit()
               }}
@@ -215,7 +237,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
             >
               {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
