@@ -106,7 +106,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
       ...currentFormValues,
       extraOccurrences: confirmedEntriesRef.current,
       eventDatesConfirmed: false,
-    } as any, {
+    } as EventFormData, {
       keepDirty: true,
       keepTouched: true,
       keepErrors: false,

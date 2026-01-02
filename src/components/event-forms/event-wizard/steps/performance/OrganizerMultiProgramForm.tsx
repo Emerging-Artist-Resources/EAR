@@ -64,7 +64,6 @@ export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventF
                 onRemove={() => remove(index)}
                 showOccurrences={true}
                 occurrencesMode="SELECT_FROM_EVENT"
-                showInviteEmail={true}
               />
             ))}
 
