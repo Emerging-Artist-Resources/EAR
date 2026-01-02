@@ -1,6 +1,6 @@
 "use client"
 
-import { UseFormReturn, useFieldArray, Path } from "react-hook-form"
+import { UseFormReturn, useFieldArray, Path, useWatch } from "react-hook-form"
 import { useEffect } from "react"
 
 import { EventFormData } from "@/lib/validations/events"
@@ -19,10 +19,12 @@ export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventF
     name: "pieces" as never,
   })
 
-  const addPieceChoice = form.watch("addPiece" as Path<EventFormData>) as string | boolean | undefined
+  const addPieceChoice = useWatch({
+    control: form.control,
+    name: "addPiece" as Path<EventFormData>,
+  }) as string | boolean | undefined
   const wantsToAddPiece = addPieceChoice === "true" || addPieceChoice === true
 
-  // Initialize with one piece when user chooses to add a piece
   useEffect(() => {
     if (wantsToAddPiece && fields.length === 0) {
       append({
@@ -31,7 +33,8 @@ export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventF
         creatorEmail: "",
       } as never)
     }
-  }, [wantsToAddPiece, fields.length, append])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantsToAddPiece, fields.length])
 
   return (
     <>

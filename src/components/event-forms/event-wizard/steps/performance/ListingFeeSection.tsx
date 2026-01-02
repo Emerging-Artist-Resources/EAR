@@ -1,6 +1,6 @@
 "use client"
 
-import { UseFormReturn, Path } from "react-hook-form"
+import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { useEffect } from "react"
 
 import { EventFormData } from "@/lib/validations/events"
@@ -10,12 +10,15 @@ import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { Text } from "@/components/ui/typography"
 
 export function ListingFeeSection({ form }: { form: UseFormReturn<EventFormData> }) {
-  const artistType = form.watch("artistType" as Path<EventFormData>) as "ESTABLISHED" | "EMERGING" | undefined
-  const listingFeeOption = form.watch("listingFeeOption" as Path<EventFormData>) as
-    | "PAY_FEE"
-    | "PROVIDE_TICKET"
-    | "EXPLAIN"
-    | undefined
+  const artistType = useWatch({
+    control: form.control,
+    name: "artistType" as Path<EventFormData>,
+  }) as "ESTABLISHED" | "EMERGING" | undefined
+
+  const listingFeeOption = useWatch({
+    control: form.control,
+    name: "listingFeeOption" as Path<EventFormData>,
+  }) as "PAY_FEE" | "PROVIDE_TICKET" | "EXPLAIN" | undefined
 
   useEffect(() => {
     if (artistType === "ESTABLISHED") {
@@ -24,7 +27,7 @@ export function ListingFeeSection({ form }: { form: UseFormReturn<EventFormData>
       form.setValue("complementaryTicketInfo" as Path<EventFormData>, "" as unknown as never)
       form.clearErrors(["listingFeeOption", "listingFeeExplanation", "complementaryTicketInfo"] as unknown as never)
     }
-  }, [artistType, form])
+  }, [artistType, form.setValue, form.clearErrors])
 
   useEffect(() => {
     if (listingFeeOption !== "PROVIDE_TICKET") {
@@ -35,7 +38,7 @@ export function ListingFeeSection({ form }: { form: UseFormReturn<EventFormData>
       form.setValue("listingFeeExplanation" as Path<EventFormData>, "" as unknown as never)
       form.clearErrors(["listingFeeExplanation"] as unknown as never)
     }
-  }, [listingFeeOption, form])
+  }, [listingFeeOption, form.setValue, form.clearErrors])
 
   return (
     <Section title="Listing Fee">

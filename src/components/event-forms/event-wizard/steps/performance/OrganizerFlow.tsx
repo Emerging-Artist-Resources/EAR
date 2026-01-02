@@ -1,6 +1,6 @@
 "use client"
 
-import { UseFormReturn, Path } from "react-hook-form"
+import { UseFormReturn, Path, useWatch } from "react-hook-form"
 
 import { EventFormData } from "@/lib/validations/events"
 import { OrganizerBasics } from "@/components/event-forms/event-wizard/steps/performance/OrganizerBasics"
@@ -10,7 +10,10 @@ import { OrganizerMultiProgramForm } from "@/components/event-forms/event-wizard
 type EventType = "SOLO" | "SPLIT_BILL" | "FESTIVAL"
 
 export function OrganizerFlow({ form }: { form: UseFormReturn<EventFormData> }) {
-  const eventType = form.watch("event_type" as Path<EventFormData>) as EventType | undefined
+  const eventType = useWatch({
+    control: form.control,
+    name: "event_type" as Path<EventFormData>,
+  }) as EventType | undefined
   const isMulti = eventType === "SPLIT_BILL" || eventType === "FESTIVAL"
 
   return (

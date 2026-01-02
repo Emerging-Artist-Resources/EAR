@@ -1,7 +1,7 @@
 "use client"
 
-import { UseFormReturn, Path } from "react-hook-form"
-import { useEffect, useState, useCallback } from "react"
+import { UseFormReturn, Path, useWatch } from "react-hook-form"
+import { useEffect, useReducer, useRef, useCallback } from "react"
 import { EventFormData } from "@/lib/validations/events"
 
 import { Section } from "@/components/forms/blocks/Section"
@@ -21,26 +21,78 @@ type CalendarItem = {
   tz: string
 }
 
+type SearchState = {
+  query: string
+  results: CalendarItem[]
+  isSearching: boolean
+  showResults: boolean
+  selectedEventTitle: string | null
+}
+
+type SearchAction =
+  | { type: "SET_QUERY"; payload: string }
+  | { type: "SET_RESULTS"; payload: CalendarItem[] }
+  | { type: "SET_SEARCHING"; payload: boolean }
+  | { type: "SET_SHOW_RESULTS"; payload: boolean }
+  | { type: "SET_SELECTED_TITLE"; payload: string | null }
+  | { type: "RESET" }
+
+function searchReducer(state: SearchState, action: SearchAction): SearchState {
+  switch (action.type) {
+    case "SET_QUERY":
+      return { ...state, query: action.payload }
+    case "SET_RESULTS":
+      return { ...state, results: action.payload }
+    case "SET_SEARCHING":
+      return { ...state, isSearching: action.payload }
+    case "SET_SHOW_RESULTS":
+      return { ...state, showResults: action.payload }
+    case "SET_SELECTED_TITLE":
+      return { ...state, selectedEventTitle: action.payload }
+    case "RESET":
+      return {
+        query: "",
+        results: [],
+        isSearching: false,
+        showResults: false,
+        selectedEventTitle: null,
+      }
+    default:
+      return state
+  }
+}
+
+const initialState: SearchState = {
+  query: "",
+  results: [],
+  isSearching: false,
+  showResults: false,
+  selectedEventTitle: null,
+}
+
 export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormData> }) {
-  const parentEventMode =
-    (form.watch("parentEventMode" as Path<EventFormData>) as "SELECT" | "MANUAL" | undefined) ?? "SELECT"
+  const parentEventMode = useWatch({
+    control: form.control,
+    name: "parentEventMode" as Path<EventFormData>,
+    defaultValue: "SELECT",
+  }) as "SELECT" | "MANUAL" | undefined
 
-  const parentEventId = form.watch("parentEventId" as Path<EventFormData>) as string | undefined
+  const parentEventId = useWatch({
+    control: form.control,
+    name: "parentEventId" as Path<EventFormData>,
+  }) as string | undefined
 
-  const [searchQuery, setSearchQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<CalendarItem[]>([])
-  const [isSearching, setIsSearching] = useState(false)
-  const [showResults, setShowResults] = useState(false)
-  const [selectedEventTitle, setSelectedEventTitle] = useState<string | null>(null)
+  const [searchState, dispatch] = useReducer(searchReducer, initialState)
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const searchEvents = useCallback(async (query: string) => {
     if (!query.trim()) {
-      setSearchResults([])
-      setShowResults(false)
+      dispatch({ type: "SET_RESULTS", payload: [] })
+      dispatch({ type: "SET_SHOW_RESULTS", payload: false })
       return
     }
 
-    setIsSearching(true)
+    dispatch({ type: "SET_SEARCHING", payload: true })
     try {
       const qs = new URLSearchParams({
         q: query,
@@ -48,53 +100,66 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
         limit: "20",
       })
       const data = await apiGet<CalendarItem[]>(`/api/calendar?${qs.toString()}`)
-      setSearchResults(Array.isArray(data) ? data : [])
-      setShowResults(true)
+      dispatch({ type: "SET_RESULTS", payload: Array.isArray(data) ? data : [] })
+      dispatch({ type: "SET_SHOW_RESULTS", payload: true })
     } catch (error) {
       console.error("Error searching events:", error)
-      setSearchResults([])
+      dispatch({ type: "SET_RESULTS", payload: [] })
     } finally {
-      setIsSearching(false)
+      dispatch({ type: "SET_SEARCHING", payload: false })
     }
   }, [])
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      searchEvents(searchQuery)
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      searchEvents(searchState.query)
     }, 300)
 
-    return () => clearTimeout(timeoutId)
-  }, [searchQuery, searchEvents])
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+  }, [searchState.query, searchEvents])
+
+  useEffect(() => {
+    if (parentEventMode === "SELECT" && parentEventId && searchState.query) {
+      dispatch({ type: "SET_SELECTED_TITLE", payload: null })
+      form.setValue("parentEventId" as Path<EventFormData>, "" as unknown as never)
+    }
+  }, [searchState.query, parentEventMode, parentEventId, form.setValue])
 
   const handleSelectEvent = (eventId: string, title: string | null) => {
     form.setValue("parentEventId" as Path<EventFormData>, eventId as unknown as never)
     form.setValue("parentEventMode" as Path<EventFormData>, "SELECT" as unknown as never)
-    setSelectedEventTitle(title)
-    setShowResults(false)
-    setSearchQuery("")
+    dispatch({ type: "SET_SELECTED_TITLE", payload: title })
+    dispatch({ type: "SET_SHOW_RESULTS", payload: false })
+    dispatch({ type: "SET_QUERY", payload: "" })
   }
 
   const handleCantLocate = () => {
     form.setValue("parentEventMode" as Path<EventFormData>, "MANUAL" as unknown as never)
     form.setValue("parentEventId" as Path<EventFormData>, "" as unknown as never)
-    setSelectedEventTitle(null)
-    setShowResults(false)
-    setSearchQuery("")
+    dispatch({ type: "RESET" })
   }
 
   useEffect(() => {
-    if (!showResults) return
+    if (!searchState.showResults) return
 
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement
       if (!target.closest('.event-search-container')) {
-        setShowResults(false)
+        dispatch({ type: "SET_SHOW_RESULTS", payload: false })
       }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showResults])
+  }, [searchState.showResults])
 
   return (
     <>
@@ -107,25 +172,19 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
             <div className="relative">
               <Input
                 type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value)
-                  if (parentEventMode === "SELECT" && parentEventId) {
-                    setSelectedEventTitle(null)
-                    form.setValue("parentEventId" as Path<EventFormData>, "" as unknown as never)
-                  }
-                }}
+                value={searchState.query}
+                onChange={(e) => dispatch({ type: "SET_QUERY", payload: e.target.value })}
                 placeholder="Type to search for events..."
-                onFocus={() => searchQuery && setShowResults(true)}
+                onFocus={() => searchState.query && dispatch({ type: "SET_SHOW_RESULTS", payload: true })}
               />
-              {isSearching && (
+              {searchState.isSearching && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
                   Searching...
                 </div>
               )}
-              {showResults && searchResults.length > 0 && (
+              {searchState.showResults && searchState.results.length > 0 && (
                 <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg max-h-60 overflow-auto">
-                  {searchResults.map((item) => (
+                  {searchState.results.map((item) => (
                     <button
                       key={item.eventId}
                       type="button"
@@ -140,7 +199,7 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
                   ))}
                 </div>
               )}
-              {showResults && searchQuery && !isSearching && searchResults.length === 0 && (
+              {searchState.showResults && searchState.query && !searchState.isSearching && searchState.results.length === 0 && (
                 <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-500 shadow-lg">
                   No events found. Try a different search term.
                 </div>
@@ -149,7 +208,7 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
             {parentEventId && parentEventMode === "SELECT" && (
               <div className="mt-2 rounded-md bg-gray-50 p-3">
                 <p className="text-sm font-medium text-gray-900">
-                  Selected: {selectedEventTitle || "Event"}
+                  Selected: {searchState.selectedEventTitle || "Event"}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">Event ID: {parentEventId}</p>
               </div>

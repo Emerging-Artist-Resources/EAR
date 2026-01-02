@@ -9,6 +9,15 @@ import { Button } from "@/components/ui/button"
 
 type DateTimeEntry = { date: string; times: Array<{ time: string }> }
 
+function isValidEntry(entry: DateTimeEntry | undefined): boolean {
+  if (!entry?.date || !entry.date.trim()) return false
+  return entry.times?.some(t => t?.time && t.time.trim() !== "") ?? false
+}
+
+function filterValidEntries(entries: DateTimeEntry[]): DateTimeEntry[] {
+  return entries.filter(isValidEntry)
+}
+
 export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormData> }) {
   // Use useWatch for better reactivity with nested form values
   const extras = (useWatch({
@@ -42,12 +51,9 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
   useEffect(() => {
     if (prevConfirmedRef.current === true && isConfirmed === false && confirmedEntriesRef.current.length > 0) {
       const currentExtras = (form.getValues("extraOccurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined) ?? []
-      const hasValidEntries = currentExtras.some(ex => {
-        if (!ex?.date || !ex.date.trim()) return false
-        return ex.times && ex.times.some(t => t?.time && t.time.trim() !== "")
-      })
+      const validCurrentEntries = filterValidEntries(currentExtras)
       // Restore values if form is empty or invalid - use setValue() to avoid scroll jump
-      if (!hasValidEntries || currentExtras.length !== confirmedEntriesRef.current.length) {
+      if (validCurrentEntries.length === 0 || currentExtras.length !== confirmedEntriesRef.current.length) {
         form.setValue("extraOccurrences" as Path<EventFormData>, confirmedEntriesRef.current as unknown as never, {
           shouldDirty: true,
           shouldTouch: false,
@@ -59,41 +65,26 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
       }
     }
     prevConfirmedRef.current = isConfirmed
-  }, [isConfirmed, form])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConfirmed])
   
-  // Check if there's at least one complete date+time entry
   const hasCompleteEntries = useMemo(() => {
-    return extras.some(ex => {
-      if (!ex?.date || !ex.date.trim()) return false
-      return ex.times && ex.times.some(t => t?.time && t.time.trim() !== "")
-    })
+    return extras.some(isValidEntry)
   }, [extras])
 
-  // Get confirmed entries for display - use stored ref if confirmed, otherwise use current form values
   const confirmedEntries = useMemo(() => {
     if (isConfirmed && confirmedEntriesRef.current.length > 0) {
       return confirmedEntriesRef.current
     }
-    return extras.filter(ex => {
-      if (!ex?.date || !ex.date.trim()) return false
-      return ex.times && ex.times.some(t => t?.time && t.time.trim() !== "")
-    })
+    return filterValidEntries(extras)
   }, [extras, isConfirmed])
 
   const handleConfirm = () => {
     if (hasCompleteEntries) {
-      // Store the current valid entries and update form with cleaned values
       const currentExtras = (form.getValues("extraOccurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined) ?? []
-      console.log("[OrganizerDatesTimes] handleConfirm - currentExtras:", JSON.stringify(currentExtras, null, 2))
-      
-      const valid = currentExtras.filter(ex => {
-        if (!ex?.date || !ex.date.trim()) return false
-        return ex.times && ex.times.some(t => t?.time && t.time.trim() !== "")
-      })
-      console.log("[OrganizerDatesTimes] handleConfirm - valid entries:", JSON.stringify(valid, null, 2))
+      const valid = filterValidEntries(currentExtras)
       
       confirmedEntriesRef.current = JSON.parse(JSON.stringify(valid))
-      // Update form with cleaned valid entries so PieceOccurrencesPicker can read them
       form.setValue("extraOccurrences" as Path<EventFormData>, valid as unknown as never, {
         shouldDirty: true,
         shouldTouch: true,
@@ -102,26 +93,14 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
       form.setValue("eventDatesConfirmed" as Path<EventFormData>, true as unknown as never, {
         shouldDirty: true,
       })
-      
-      // Verify the values were set
-      const afterSetValue = form.getValues("extraOccurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined
-      const afterSetConfirmed = form.getValues("eventDatesConfirmed" as Path<EventFormData>)
-      console.log("[OrganizerDatesTimes] handleConfirm - after reset/setValue, extraOccurrences:", JSON.stringify(afterSetValue, null, 2))
-      console.log("[OrganizerDatesTimes] handleConfirm - after reset/setValue, eventDatesConfirmed:", afterSetConfirmed)
     }
   }
 
   const handleEdit = () => {
     if (confirmedEntriesRef.current.length === 0) return
 
-    console.log("[OrganizerDatesTimes] handleEdit called")
-    console.log("[OrganizerDatesTimes] confirmedEntriesRef.current:", JSON.stringify(confirmedEntriesRef.current, null, 2))
-    
-    // Store current scroll position to restore after reset
     const scrollY = window.scrollY
     
-    // CRITICAL: Update form defaults BEFORE remount so useFieldArray reads correct values
-    // Use reset() with keepDirty to update defaults without losing form state
     const currentFormValues = form.getValues()
     form.reset({
       ...currentFormValues,
@@ -133,32 +112,22 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
       keepErrors: false,
     })
     
-    // Also set current value to ensure it's in sync
     form.setValue("extraOccurrences" as Path<EventFormData>, confirmedEntriesRef.current as unknown as never, {
       shouldDirty: true,
       shouldTouch: false,
       shouldValidate: false,
     })
     
-    // Verify the value was set
-    const afterSetValue = form.getValues("extraOccurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined
-    console.log("[OrganizerDatesTimes] After reset/setValue, form.getValues:", JSON.stringify(afterSetValue, null, 2))
-    
-    // Increment key to force remount - now defaults are updated so useFieldArray will read correct values
     editKeyRef.current += 1
     
-    // Change isConfirmed to trigger remount
     form.setValue("eventDatesConfirmed" as Path<EventFormData>, false as unknown as never, {
       shouldDirty: true,
     })
     
-    // Restore scroll position after reset completes
-    // Use requestAnimationFrame to ensure it happens after React re-renders
     requestAnimationFrame(() => {
       if (sectionRef.current) {
         sectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
       } else {
-        // Fallback: restore exact scroll position
         window.scrollTo(0, scrollY)
       }
     })
