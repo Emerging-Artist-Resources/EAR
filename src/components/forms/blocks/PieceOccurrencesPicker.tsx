@@ -13,6 +13,7 @@ interface PieceOccurrencesPickerProps {
   form: UseFormReturn<EventFormData>
   label: string
   mode: Mode
+  enableSampleData?: boolean
 }
 
 /**
@@ -25,7 +26,7 @@ interface PieceOccurrencesPickerProps {
  *
  * If you don’t have these yet, you can adapt to whatever your schema uses.
  */
-export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPickerProps) {
+export function PieceOccurrencesPicker({ form, label, mode, enableSampleData = true }: PieceOccurrencesPickerProps) {
   const [useCustomDateTime, setUseCustomDateTime] = useState(false)
   
   const extras = (useWatch({
@@ -39,9 +40,7 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
     name: "eventDatesConfirmed" as Path<EventFormData>,
   }) as boolean | undefined
 
-  // Sample data for testing - simulates a parent event with date/time items
-  // Set ENABLE_SAMPLE_DATA to false when done testing
-  const ENABLE_SAMPLE_DATA = true
+  const ENABLE_SAMPLE_DATA = enableSampleData
   const sampleExtras: Array<{ date: string; times: Array<{ time: string }> }> = [
     {
       date: "2024-12-15",
@@ -102,7 +101,10 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
   const hasSampleData = isUsingSampleData && sampleExtras.length > 0
   const canSelect = mode === "SELECT_FROM_PARENT" || mode === "SELECT_FROM_EVENT" || hasSampleData
   const hasParentOccurrences = canSelect && displayConfirmed && derivedOccurrences.length > 0
-  const shouldShowCustomDateTime = mode === "CUSTOM_ONLY" && !hasSampleData || useCustomDateTime
+  
+  const isSelectFromEvent = mode === "SELECT_FROM_EVENT"
+  const allowManualEntry = mode === "CUSTOM_ONLY" || (mode === "SELECT_FROM_PARENT" && useCustomDateTime)
+  const shouldShowCustomDateTime = allowManualEntry && (mode === "CUSTOM_ONLY" || !hasSampleData || useCustomDateTime)
   
   return (
     <Section title={label}>
@@ -116,23 +118,37 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
             multiple
             options={derivedOccurrences.map((o) => ({ label: o.label, value: o.key }))}
           />
-          <button
-            type="button"
-            onClick={() => setUseCustomDateTime(true)}
-            className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
-          >
-            Don't see your date/time?
-          </button>
+          {mode === "SELECT_FROM_PARENT" && (
+            <button
+              type="button"
+              onClick={() => setUseCustomDateTime(true)}
+              className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+            >
+              Don't see your date/time?
+            </button>
+          )}
         </>
       )}
 
-      {canSelect && !displayConfirmed && !useCustomDateTime && (
+      {isSelectFromEvent && !displayConfirmed && (
+        <p className="text-sm text-gray-500">
+          Please confirm schedule in the Date & Time section above.
+        </p>
+      )}
+
+      {isSelectFromEvent && displayConfirmed && derivedOccurrences.length === 0 && (
+        <p className="text-sm text-gray-500">
+          No dates & times available. Please add dates & times in the Date & Time section above and confirm them.
+        </p>
+      )}
+
+      {!isSelectFromEvent && canSelect && !displayConfirmed && !useCustomDateTime && (
         <p className="text-sm text-gray-500">
           Please confirm schedule in the Date & Time section.
         </p>
       )}
 
-      {canSelect && displayConfirmed && derivedOccurrences.length === 0 && !useCustomDateTime && (
+      {!isSelectFromEvent && canSelect && displayConfirmed && derivedOccurrences.length === 0 && !useCustomDateTime && (
         <p className="text-sm text-gray-500">
           No dates & times available. Please add dates & times in the Date & Time section and confirm them.
         </p>

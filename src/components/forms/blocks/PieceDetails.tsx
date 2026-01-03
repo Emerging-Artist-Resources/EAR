@@ -16,6 +16,7 @@ interface PieceDetailsProps {
   onRemove: () => void
   showOccurrences?: boolean
   occurrencesMode?: "SELECT_FROM_EVENT" | "SELECT_FROM_PARENT" | "CUSTOM_ONLY"
+  enableSampleData?: boolean
 }
 
 export function PieceDetails({
@@ -25,6 +26,7 @@ export function PieceDetails({
   onRemove,
   showOccurrences = true,
   occurrencesMode = "SELECT_FROM_EVENT",
+  enableSampleData = false,
 }: PieceDetailsProps) {
   const prefix = index === 0 ? "piece" : `pieces.${index}`
 
@@ -51,6 +53,7 @@ export function PieceDetails({
             form={form}
             label="Which event date(s)/time(s) is this piece in?"
             mode={occurrencesMode}
+            enableSampleData={enableSampleData}
           />
         )}
 
