@@ -9,7 +9,6 @@ import { Alert } from "@/components/ui/alert"
 import { type EventType } from "./EventTypeSelector"
 import { BasicInfoStep } from "./steps/BasicInfoStep"
 import { PerformanceDetailsStep } from "./steps/performance/PerformanceDetailsStep"
-import { OrganizerMediaSocials } from "./steps/performance/OrganizerMediaSocials"
 import { ClassesWorkshopsStep } from "./steps/ClassWorkshopStep"
 import { OpportunityStep } from "./steps/OpportunityStep"
 import { AuditionStep } from "./steps/AuditionStep"
@@ -59,8 +58,6 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
     shouldUnregister: false,
     shouldFocusError: false, // prevents scroll-to-first-error / focus jumps
   })
-  console.log("extraOccurrences", form.getValues("extraOccurrences"))
-  console.log("eventDatesConfirmed", form.getValues("eventDatesConfirmed"))
 
   const goNext = useCallback(async () => {
     if (step === 1) {
@@ -156,10 +153,26 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       }
     },
     (errors) => {
-      console.error("[submit] invalid form", errors)
       // Extract first error message for user feedback
-      const firstError = Object.values(errors)[0]
-      const errorMessage = firstError?.message || "Please check all required fields"
+      const errorEntries = Object.entries(errors)
+      let errorMessage = "Please check all required fields"
+      
+      if (errorEntries.length > 0) {
+        const firstErrorEntry = errorEntries[0]
+        const firstError = firstErrorEntry[1]
+        
+        if (firstError) {
+          if (typeof firstError === 'object' && 'message' in firstError) {
+            errorMessage = firstError.message as string
+          } else if (Array.isArray(firstError) && firstError.length > 0) {
+            const nestedError = firstError[0]
+            if (nestedError && typeof nestedError === 'object' && 'message' in nestedError) {
+              errorMessage = nestedError.message as string
+            }
+          }
+        }
+      }
+      
       setSubmitMessage(errorMessage)
       showToast(errorMessage, "error")
       setIsSubmitting(false)
@@ -202,9 +215,9 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           />
         )
       )}
-      {step === 3 && eventType === 'PERFORMANCE' && (
+      {/*{step === 3 && eventType === 'PERFORMANCE' && (
         <OrganizerMediaSocials form={form} />
-      )}
+      )} */}
 
       {submitMessage && (
         <Alert variant={submitMessage.includes('success') ? 'success' : 'error'}>{submitMessage}</Alert>
@@ -227,7 +240,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
               Next
             </Button>
           )}
-          {(step === 2 && eventType !== 'PERFORMANCE') || (step === 3 && eventType === 'PERFORMANCE') ? (
+          {((step === 2 && eventType !== 'PERFORMANCE') || (step === 3 && eventType === 'PERFORMANCE')) && (
             <Button
               type="button"
               onClick={() => {
@@ -237,7 +250,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
             >
               {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
-          ) : null}
+          )}
         </div>
       </div>
     </div>

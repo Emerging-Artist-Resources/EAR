@@ -33,11 +33,11 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
     <>
       <Section title="Creative Opportunity Details">
         <TextField form={form} name={"opportunityName"} label="Opportunity Name" required placeholder="Opportunity Name"/>
+        <TextField form={form} name={"presentingIndividualOrOrganization"} label="Presenting Individual or Organization" required placeholder="Presenting individual or organization"/>
         <TextAreaField form={form} name={"opportunityDescription"} label="Opportunity Description" required placeholder="About the Opportunity"/>
+        <TextAreaField form={form} name={"opportunityOffers"} label="What is offered to selected artists?" required placeholder="Include compensation, rehearsal/performance commitments, and any other relevant details."/>       
         <TextAreaField form={form} name={"eligibility"} label="Eligibility" required placeholder="Eligibility, age, style, experience, etc."/>
-        <TextAreaField form={form} name={"opportunityOffers"} label="What is offered to selected artists?" required placeholder="What does this opportunity offer?"/>       
         <TextAreaField form={form} name={"opportunityRequirements"} label="Application Requirements" required placeholder="What is required to apply?"/>       
-        <TextField form={form} name={"opportunityCompensation"} label="Compensation" required placeholder="$ or description"/>
         <TextField form={form} name={"opportunityLink"} label="Opportunity Submission Instructions" required placeholder="submission link or instructions"/>
         <SelectBlock form={form} options={[{ label: "Yes", value: "FEE" }, { label: "No", value: "NO_FEE" }]} name={"opportunityFee"} label="Is there an application fee?" required />
         {isOpportunityFee && (

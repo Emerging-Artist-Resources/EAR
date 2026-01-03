@@ -8,6 +8,7 @@ import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 
 import { OrganizerDatesTimes } from "@/components/event-forms/event-wizard/steps/performance/OrganizerDatesTimes"
 import { ListingFeeSection } from "./ListingFeeSection"
+import { OrganizerMediaSocials } from "./OrganizerMediaSocials"
 
 export function OrganizerSoloForm({ form }: { form: UseFormReturn<EventFormData> }) {
   return (
@@ -22,6 +23,7 @@ export function OrganizerSoloForm({ form }: { form: UseFormReturn<EventFormData>
       </Section>
 
       <OrganizerDatesTimes form={form} />
+      <OrganizerMediaSocials form={form} />
       <ListingFeeSection form={form} />
     </>
   )

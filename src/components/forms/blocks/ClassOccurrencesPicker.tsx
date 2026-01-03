@@ -1,0 +1,260 @@
+"use client"
+
+import { UseFormReturn, Path, useWatch } from "react-hook-form"
+import { useMemo, useState, useEffect } from "react"
+import { Section } from "@/components/forms/blocks/Section"
+import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
+import { SelectBlock } from "@/components/forms/blocks/Select"
+import { EventFormData } from "@/lib/validations/events"
+import { apiGet } from "@/lib/fetch-utils"
+
+interface ParentEventData {
+  event_occurrences?: Array<{ id: string; starts_at_utc: string; tz: string }>
+}
+
+interface ClassOccurrencesPickerProps {
+  form: UseFormReturn<EventFormData>
+  label: string
+}
+
+export function ClassOccurrencesPicker({ form, label }: ClassOccurrencesPickerProps) {
+  const [useManualEntry, setUseManualEntry] = useState(false)
+  const [parentDates, setParentDates] = useState<string[]>([])
+  const [loadingParent, setLoadingParent] = useState(false)
+  const [parentEventError, setParentEventError] = useState<string | null>(null)
+
+  const parentEventId = useWatch({
+    control: form.control,
+    name: "parentEventId" as Path<EventFormData>,
+  }) as string | undefined
+
+  const ENABLE_SAMPLE_DATA = false // set to true to use sample data for testing
+  const sampleParentDates: string[] = [
+    "2024-12-15",
+    "2024-12-16",
+    "2024-12-17",
+    "2024-12-18",
+    "2024-12-19",
+  ]
+
+  const selectedDates = useWatch({
+    control: form.control,
+    name: "selectedParentDates" as Path<EventFormData>,
+    defaultValue: [],
+  }) as string[] | undefined
+
+  const hasRealParentDates = useMemo(() => {
+    return parentDates.length > 0 && !loadingParent && !parentEventError
+  }, [parentDates, loadingParent, parentEventError])
+
+  const displayParentDates = useMemo(() => {
+    if (ENABLE_SAMPLE_DATA && !hasRealParentDates && !useManualEntry) {
+      return sampleParentDates
+    }
+    return parentDates
+  }, [ENABLE_SAMPLE_DATA, hasRealParentDates, useManualEntry, parentDates])
+
+  useEffect(() => {
+    if (useManualEntry) {
+      setParentDates([])
+      setParentEventError(null)
+      return
+    }
+
+    const parentId = parentEventId?.trim()
+    if (!parentId) {
+      if (ENABLE_SAMPLE_DATA) {
+        setParentDates([])
+        setParentEventError(null)
+        setLoadingParent(false)
+      } else {
+        setParentDates([])
+        setParentEventError(null)
+      }
+      return
+    }
+
+    const fetchParentEvent = async () => {
+      setLoadingParent(true)
+      setParentEventError(null)
+      try {
+        const data = await apiGet<ParentEventData>(`/api/events/${parentId}`)
+        if (data?.event_occurrences && data.event_occurrences.length > 0) {
+          const uniqueDates = Array.from(
+            new Set(
+              data.event_occurrences
+                .map((occ) => {
+                  try {
+                    const date = new Date(occ.starts_at_utc)
+                    return date.toISOString().split("T")[0]
+                  } catch {
+                    return null
+                  }
+                })
+                .filter((date): date is string => date !== null)
+            )
+          ).sort()
+
+          setParentDates(uniqueDates)
+        } else {
+          setParentDates([])
+          if (!ENABLE_SAMPLE_DATA) {
+            setParentEventError("Parent event has no dates")
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching parent event:", error)
+        setParentDates([])
+        if (!ENABLE_SAMPLE_DATA) {
+          setParentEventError("Could not load parent event dates")
+        }
+      } finally {
+        setLoadingParent(false)
+      }
+    }
+
+    fetchParentEvent()
+  }, [parentEventId, useManualEntry])
+
+  const dateOptions = useMemo(() => {
+    return displayParentDates.map((date) => ({
+      label: new Date(date + "T00:00:00").toLocaleDateString("en-US", {
+        weekday: "short",
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }),
+      value: date,
+    }))
+  }, [displayParentDates])
+
+  const hasParentDates = displayParentDates.length > 0 && !loadingParent && !parentEventError
+  const hasSelectedDates = selectedDates && selectedDates.length > 0
+  const shouldShowManualEntry = useManualEntry || !hasParentDates
+
+  useEffect(() => {
+    if (!hasSelectedDates || useManualEntry) return
+
+    const currentOccurrences = (form.getValues("classOccurrences" as Path<EventFormData>) ??
+      []) as Array<{
+      date: string
+      times: Array<{ time: string }>
+    }>
+
+    const existingDatesSet = new Set(currentOccurrences.map((occ) => occ.date))
+    const datesToAdd = selectedDates?.filter((date) => !existingDatesSet.has(date)) ?? []
+
+    if (datesToAdd.length > 0) {
+      const newOccurrences = [
+        ...currentOccurrences,
+        ...datesToAdd.map((date) => ({
+          date,
+          times: [{ time: "" }],
+        })),
+      ].sort((a, b) => a.date.localeCompare(b.date))
+
+      form.setValue("classOccurrences" as Path<EventFormData>, newOccurrences as never)
+    }
+  }, [selectedDates, form, useManualEntry, hasSelectedDates])
+
+  if (shouldShowManualEntry) {
+    return (
+      <Section title={label}>
+        {hasParentDates && useManualEntry && (
+          <button
+            type="button"
+            onClick={() => setUseManualEntry(false)}
+            className="mb-4 text-sm text-blue-600 hover:text-blue-800 underline"
+          >
+            ← Select dates from festival/workshop
+          </button>
+        )}
+        <DateTimeList
+          form={form as unknown as UseFormReturn<Record<string, unknown>>}
+          name={"classOccurrences"}
+          title="Class Dates & Times"
+          note="Add all known dates and start times."
+          required
+          maxTimesPerDate={1}
+          locationConfig={{
+            addressName: "address",
+            venueName: "venueName",
+            placeIdName: "placeId",
+            latName: "lat",
+            lngName: "lng",
+            instructionsName: "instructions",
+            label: "Location",
+            required: true,
+          }}
+        />
+      </Section>
+    )
+  }
+
+  return (
+    <Section title={label}>
+      {loadingParent && (
+        <p className="text-sm text-gray-500">Loading festival/workshop dates...</p>
+      )}
+
+      {parentEventError && (
+        <div className="mb-4">
+          <p className="text-sm text-red-600">{parentEventError}</p>
+          <button
+            type="button"
+            onClick={() => setUseManualEntry(true)}
+            className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+          >
+            Enter dates manually instead
+          </button>
+        </div>
+      )}
+
+      {hasParentDates && (
+        <>
+          <SelectBlock
+            form={form}
+            name={"selectedParentDates" as Path<EventFormData>}
+            label="Select dates from festival/workshop"
+            note="Choose the dates when your class will occur, then add times below."
+            required
+            multiple
+            options={dateOptions}
+          />
+
+          {hasSelectedDates && (
+            <div className="mt-4">
+              <DateTimeList
+                form={form as unknown as UseFormReturn<Record<string, unknown>>}
+                name={"classOccurrences"}
+                title="Add times for selected dates"
+                note="Add start time(s) for each selected date."
+                required
+                maxTimesPerDate={1}
+                locationConfig={{
+                  addressName: "address",
+                  venueName: "venueName",
+                  placeIdName: "placeId",
+                  latName: "lat",
+                  lngName: "lng",
+                  instructionsName: "instructions",
+                  label: "Location",
+                  required: true,
+                }}
+              />
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setUseManualEntry(true)}
+            className="mt-4 text-sm text-blue-600 hover:text-blue-800 underline"
+          >
+            Don't see your dates? Enter manually instead
+          </button>
+        </>
+      )}
+    </Section>
+  )
+}
+

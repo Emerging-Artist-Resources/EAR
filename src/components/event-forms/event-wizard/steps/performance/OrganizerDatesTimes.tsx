@@ -143,6 +143,16 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
           name={"extraOccurrences"}
           title="Event dates and times"
           required
+          locationConfig={{
+            addressName: "address",
+            venueName: "venueName",
+            placeIdName: "placeId",
+            latName: "lat",
+            lngName: "lng",
+            instructionsName: "instructions",
+            label: "Location",
+            required: true,
+          }}
         />
       ) : (
         // For SPLIT_BILL and FESTIVAL, show confirmation flow
@@ -155,6 +165,16 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
                 name={"extraOccurrences"}
                 title="Event dates and times"
                 required
+                locationConfig={{
+                  addressName: "address",
+                  venueName: "venueName",
+                  placeIdName: "placeId",
+                  latName: "lat",
+                  lngName: "lng",
+                  instructionsName: "instructions",
+                  label: "Location",
+                  required: true,
+                }}
               />
               <Button
                 type="button"

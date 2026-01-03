@@ -5,7 +5,6 @@ import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
-import { LocationField } from "@/components/forms/blocks/LocationField"
 import { Dropdown } from "@/components/forms/blocks/Dropdown"
 
 export function OrganizerBasics({ form }: { form: UseFormReturn<EventFormData> }) {
@@ -47,14 +46,6 @@ export function OrganizerBasics({ form }: { form: UseFormReturn<EventFormData> }
 
       <TextAreaField form={form} name={"event_description"} label="Short Performance Description" required rows={4} />
 
-      <LocationField
-        form={form}
-        addressName={"event_address"}
-        venueName={"event_venueName"}
-        placeIdName={"event_placeId"}
-        latName={"event_lat"}
-        lngName={"event_lng"}
-      />
     </Section>
   )
 }

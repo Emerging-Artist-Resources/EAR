@@ -266,6 +266,7 @@ const classFields = z
      */
     isPartOfFestivalOrWorkshop: z.enum(["YES", "NO"]).optional(),
     parentEventId: z.string().optional(),
+    selectedParentDates: z.array(z.string()).optional(),
 
     // Placeholder parent event (minimal)
     placeholderTitle: z.string().optional(),
