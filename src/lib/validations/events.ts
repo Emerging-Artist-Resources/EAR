@@ -62,6 +62,9 @@ const performanceFields = z
     // Branching
     type: z.enum(["ORGANIZER", "PIECE"]).optional(),
     otherType: z.string().optional(),
+    
+    // Event type for organizer submissions
+    event_type: z.enum(["SOLO", "SPLIT_BILL", "FESTIVAL"]).optional(),
 
     // Legacy festival / split-bill fields (keep for now)
     festival_name: z.string().optional(),
@@ -263,6 +266,7 @@ const classFields = z
      */
     isPartOfFestivalOrWorkshop: z.enum(["YES", "NO"]).optional(),
     parentEventId: z.string().optional(),
+    selectedParentDates: z.array(z.string()).optional(),
 
     // Placeholder parent event (minimal)
     placeholderTitle: z.string().optional(),
@@ -406,6 +410,7 @@ export const eventFormSchema = baseSchema
   .merge(creativeFields)
   .merge(classFields)
   .merge(fundingFields)
+  .passthrough()
 
 export type EventFormData = z.infer<typeof eventFormSchema>
 

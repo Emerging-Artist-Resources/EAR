@@ -68,6 +68,7 @@ export function PieceDetails({
           required
         />
 
+        
         <TextField
           form={form}
           name={`${prefix}_company` as Path<EventFormData>}
@@ -96,7 +97,6 @@ export function PieceDetails({
           name={`${prefix}_social_handles` as Path<EventFormData>}
           label="Social handles"
           placeholder="@..."
-          required
         />
 
         <PhotoUploader

@@ -1,23 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useEffect, useMemo, useState, useCallback } from "react"
-import { UseFormReturn, FieldValues, useFieldArray, useWatch } from "react-hook-form"
-import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
+import { useEffect, useMemo, useState, useCallback, useRef } from "react"
+import { UseFormReturn, useFieldArray, useWatch } from "react-hook-form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Text } from "@/components/ui/typography"
-
-function getTodayDateString(): string {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, "0")
-  const day = String(today.getDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
-}
-
-type TimeItem = { time: string }
-type DateItem = { date: string; times: TimeItem[] }
+import { LocationField } from "./LocationField"
+import { DateCard, createLocationFields, type DateItem, type TimeItem, type LocationConfigFull } from "./DateTime"
 
 interface DateTimeListProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>
@@ -42,194 +31,11 @@ interface DateTimeListProps<T extends Record<string, unknown>> {
   /** Caps for single-occurrence mode */
   maxDates?: number
   maxTimesPerDate?: number
+
+  /** Location field configuration */
+  locationConfig?: LocationConfigFull
 }
 
-function shouldShowFieldError(
-  form: UseFormReturn<any>,
-  fieldName: string,
-  errorMode: "touched" | "always",
-) {
-  const state = form.getFieldState(fieldName as any)
-  if (!state?.error) return false
-  if (errorMode === "always") return true
-  return (
-    state.isTouched ||
-    form.formState.isSubmitted ||
-    form.formState.submitCount > 0
-  )
-}
-
-function getErrorMessage(form: UseFormReturn<any>, fieldName: string) {
-  const state = form.getFieldState(fieldName as any)
-  return state?.error?.message as string | undefined
-}
-
-interface DateCardProps<T extends FieldValues> {
-  form: UseFormReturn<T>
-  name: string
-  index: number
-  removeDate: (index: number) => void
-  showTime: boolean
-  errorMode: "touched" | "always"
-  disableRemove?: boolean
-  isFirst: boolean
-  onFirstDateTimesChange?: () => void
-  maxTimesPerDate?: number
-}
-
-function DateCard<T extends FieldValues>({
-  form,
-  name,
-  index,
-  removeDate,
-  showTime,
-  errorMode,
-  disableRemove,
-  isFirst,
-  onFirstDateTimesChange,
-  maxTimesPerDate,
-}: DateCardProps<T>) {
-  const { control, register, getValues, setError } = form
-
-  const timesArray = useFieldArray({
-    control,
-    name: `${name}.${index}.times` as any,
-  })
-
-  const times = timesArray.fields
-  const dateFieldName = `${name}.${index}.date`
-
-  const showDateErr = shouldShowFieldError(form, dateFieldName, errorMode)
-  const dateErrMsg = showDateErr ? getErrorMessage(form, dateFieldName) : undefined
-
-  const canAddTime = showTime && (!maxTimesPerDate || times.length < maxTimesPerDate)
-
-  const handleAddTime = () => {
-    if (!showTime) return
-    if (maxTimesPerDate && times.length >= maxTimesPerDate) return
-
-    const date = getValues(dateFieldName as any) as string | undefined
-    if (!date) {
-      setError(dateFieldName as any, { type: "required", message: "Date is required" })
-      return
-    }
-
-    const lastIdx = times.length - 1
-    const lastTime =
-      times.length > 0
-        ? ((getValues(`${name}.${index}.times.${lastIdx}.time` as any) as string | undefined) ?? "")
-        : ""
-
-    if (times.length > 0 && !lastTime) {
-      setError(`${name}.${index}.times.${lastIdx}.time` as any, {
-        type: "required",
-        message: "Time is required",
-      })
-      return
-    }
-
-    timesArray.append({ time: "" } as any)
-    if (isFirst) onFirstDateTimesChange?.()
-  }
-
-  const handleRemoveTime = (timeIndex: number) => {
-    timesArray.remove(timeIndex)
-    if (isFirst) onFirstDateTimesChange?.()
-  }
-
-  // Ensure at least one time row exists when showTime is on
-  useEffect(() => {
-    if (!showTime) return
-    if (times.length > 0) return
-    timesArray.append({ time: "" } as any)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showTime, index])
-
-  return (
-    <Card className="space-y-3 rounded-2xl border border-primary-200 bg-primary-50/40 p-4">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium">Date {index + 1}</h4>
-        {!disableRemove && (
-          <button
-            type="button"
-            onClick={() => removeDate(index)}
-            className="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
-          >
-            Remove date
-          </button>
-        )}
-      </div>
-
-      {/* Date */}
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Date *</label>
-        <Input
-          type="date"
-          min={getTodayDateString()}
-          error={showDateErr}
-          {...register(dateFieldName as any)}
-        />
-        {dateErrMsg && <p className="mt-1 text-xs text-red-600">{dateErrMsg}</p>}
-      </div>
-
-      {/* Times */}
-      {showTime && (
-        <div className="space-y-2">
-          {times.map((timeField, timeIndex) => {
-            const timeFieldName = `${name}.${index}.times.${timeIndex}.time`
-            const showTimeErr = shouldShowFieldError(form, timeFieldName, errorMode)
-            const timeErrMsg = showTimeErr ? getErrorMessage(form, timeFieldName) : undefined
-
-            // Only allow removing non-first rows; also keep at least one row
-            const canRemove = timeIndex > 0
-
-            return (
-              <div key={timeField.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    {timeIndex === 0 ? "Time *" : "Additional time *"}
-                  </label>
-                  <Input
-                    type="time"
-                    error={showTimeErr}
-                    {...register(timeFieldName as any, {
-                      onChange: () => {
-                        if (isFirst) onFirstDateTimesChange?.()
-                      },
-                    })}
-                  />
-                  {timeErrMsg && <p className="mt-1 text-xs text-red-600">{timeErrMsg}</p>}
-                </div>
-
-                {canRemove ? (
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTime(timeIndex)}
-                    className="w-full rounded border border-gray-300 px-2 py-2 text-xs hover:bg-gray-50"
-                  >
-                    Remove
-                  </button>
-                ) : (
-                  <div />
-                )}
-              </div>
-            )
-          })}
-
-          {canAddTime && (
-            <button
-              type="button"
-              onClick={handleAddTime}
-              className="rounded border border-gray-300 px-2 py-1 text-sm hover:bg-gray-50"
-            >
-              + Add another time
-            </button>
-          )}
-        </div>
-      )}
-    </Card>
-  )
-}
 
 export function DateTimeList<T extends Record<string, unknown>>({
   form,
@@ -243,6 +49,7 @@ export function DateTimeList<T extends Record<string, unknown>>({
   startWithOne = true,
   maxDates,
   maxTimesPerDate,
+  locationConfig,
 }: DateTimeListProps<T>) {
   const { control, getValues, setError, setValue } = form
 
@@ -251,24 +58,152 @@ export function DateTimeList<T extends Record<string, unknown>>({
     name: name as any,
   })
 
+  const { replace, append, remove } = datesArray
   const dateFields = datesArray.fields
 
   const [syncTimes, setSyncTimes] = useState(false)
+  const [syncLocation, setSyncLocation] = useState(true)
+
+  // Watch form values to detect external changes (e.g., from setValue in parent)
+  const watchedFormValues = useWatch({
+    control,
+    name: name as any,
+  }) as DateItem[] | undefined
+
+  // Watch first date field to detect user typing vs external changes
+  const firstDateField = useWatch({
+    control,
+    name: dateFields.length > 0 ? (`${name}.0.date` as any) : undefined,
+  }) as string | undefined
+
+  // Sync field array when form values change externally (e.g., when editing confirmed entries)
+  const prevFormValuesRef = useRef<string>("")
+  const isInitialMountRef = useRef(true)
+  
+  // Memoize normalization of watched form values for performance
+  const normalizedWatchedValues = useMemo(() => {
+    if (!watchedFormValues) return undefined
+    return watchedFormValues.map((d) => {
+      const normalizedItem: DateItem = {
+        date: d?.date ?? "",
+        times: showTime ? (d?.times && d.times.length > 0 ? d.times : [{ time: "" }]) : [],
+        ...createLocationFields(locationConfig, d),
+      }
+      return normalizedItem
+    })
+  }, [watchedFormValues, showTime, locationConfig])
+  
+  useEffect(() => {
+    // On mount, read from getValues() which includes defaults
+    // watchedFormValues might be undefined on initial mount
+    const formValuesFromGetValues = getValues(name as any) as DateItem[] | undefined
+    const currentFormValues = watchedFormValues ?? formValuesFromGetValues ?? []
+    
+    // Use memoized normalized values if available, otherwise normalize current form values
+    const normalized = normalizedWatchedValues ?? currentFormValues.map((d) => {
+      const normalizedItem: DateItem = {
+        date: d?.date ?? "",
+        times: showTime ? (d?.times && d.times.length > 0 ? d.times : [{ time: "" }]) : [],
+        ...createLocationFields(locationConfig, d),
+      }
+      return normalizedItem
+    })
+
+    // Create signature to detect changes
+    const signature = JSON.stringify(normalized)
+    
+    // On initial mount, initialize field array from form values or add blank row
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false
+      if (normalized.length > 0) {
+        const hasCompleteEntries = normalized.some(d => d.date && d.date.trim() !== "")
+        if (hasCompleteEntries) {
+          prevFormValuesRef.current = signature
+          replace(normalized as any)
+          return
+        }
+      }
+      if (startWithOne && dateFields.length === 0) {
+        const initial: DateItem = {
+          date: "",
+          times: showTime ? [{ time: "" }] : [],
+          ...(locationConfig && !syncLocation ? createLocationFields(locationConfig, undefined, true) : {}),
+        }
+        append(initial as any)
+        // Set signature after append to prevent re-triggering on next effect run
+        prevFormValuesRef.current = JSON.stringify([initial])
+      } else {
+        prevFormValuesRef.current = signature
+      }
+      return
+    }
+    
+    // Skip if no change
+    if (signature === prevFormValuesRef.current) {
+      return
+    }
+    
+    // Sync if external changes detected
+    const lengthMismatch = dateFields.length !== normalized.length
+    const formHasCompleteEntries = normalized.some(d => d.date && d.date.trim() !== "")
+    const firstEntryFormDate = normalized[0]?.date ?? ""
+    
+    // Detect if user is typing (first entry matches current typed value)
+    // vs external setValue (first entry doesn't match or length changed)
+    const userTyping = dateFields.length > 0 && 
+                       normalized.length > 0 && 
+                       firstDateField === firstEntryFormDate &&
+                       !lengthMismatch
+    
+    // Sync if:
+    // 1. Length changed (definitely external)
+    // 2. OR form has complete entries and field array is empty (restoring)
+    // 3. OR form has complete entries and user is NOT typing (external change)
+    const shouldSync = lengthMismatch || 
+      (formHasCompleteEntries && dateFields.length === 0) ||
+      (formHasCompleteEntries && !userTyping)
+    
+    if (shouldSync) {
+      prevFormValuesRef.current = signature
+      replace(normalized as any)
+    } else {
+      // Update ref to track current state, but don't replace (user is typing)
+      prevFormValuesRef.current = signature
+    }
+  }, [normalizedWatchedValues, name, showTime, startWithOne, replace, append, getValues, locationConfig, syncLocation, firstDateField])
 
   const canAddDate = !maxDates || dateFields.length < maxDates
 
-  const applyFirstTimesToAll = useCallback(() => {
-    if (!showTime || !syncTimes) return
+  const firstTimes = useWatch({
+    control,
+    name: showTime && syncTimes && dateFields.length > 0 ? (`${name}.0.times` as any) : undefined,
+  }) as TimeItem[] | undefined
+
+  const applyFirstTimesToAll = useCallback((forceSync = false) => {
+    const shouldSync = forceSync || syncTimes
+    if (!showTime || !shouldSync) return
     if (dateFields.length < 2) return
 
-    const first = (getValues(`${name}.0.times` as any) as TimeItem[] | undefined) ?? []
-    const timesToSync = first.map((t) => t?.time).filter(Boolean) as string[]
+    // Read first date times from form
+    const firstTimes = getValues(`${name}.0.times` as any) as TimeItem[] | undefined
+    if (!Array.isArray(firstTimes) || firstTimes.length === 0) return
+    
+    // Extract non-empty time strings
+    const timesToSync = firstTimes
+      .map((item) => item?.time)
+      .filter((time): time is string => Boolean(time))
+    
     if (timesToSync.length === 0) return
 
+    // Apply to all other dates
     for (let i = 1; i < dateFields.length; i++) {
-      const current = (getValues(`${name}.${i}.times` as any) as TimeItem[] | undefined) ?? []
-      const currentList = current.map((t) => t?.time).filter(Boolean)
+      const currentTimes = getValues(`${name}.${i}.times` as any) as TimeItem[] | undefined
+      const current = Array.isArray(currentTimes) ? currentTimes : []
+      const currentList = current
+        .map((item) => item?.time)
+        .filter((time): time is string => Boolean(time))
 
+      // Only update if different
       if (currentList.join("|") !== timesToSync.join("|")) {
         const capped = maxTimesPerDate ? timesToSync.slice(0, maxTimesPerDate) : timesToSync
         setValue(
@@ -280,29 +215,12 @@ export function DateTimeList<T extends Record<string, unknown>>({
     }
   }, [dateFields.length, getValues, maxTimesPerDate, name, setValue, showTime, syncTimes])
 
-  const firstTimes = useWatch({
-    control,
-    name: showTime && syncTimes && dateFields.length > 0 ? (`${name}.0.times` as any) : undefined,
-  }) as TimeItem[] | undefined
-
-  // Initialize with one row if empty
-  useEffect(() => {
-    if (!startWithOne) return
-    if (dateFields.length > 0) return
-
-    const initial: DateItem = {
-      date: "",
-      times: showTime ? [{ time: "" }] : [],
-    }
-    datesArray.append(initial as any)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   // When first date times change and sync is on -> apply to all
   useEffect(() => {
-    if (!firstTimes) return
+    if (!syncTimes) return
+    if (!firstTimes || firstTimes.length === 0) return
     applyFirstTimesToAll()
-  }, [firstTimes, applyFirstTimesToAll])
+  }, [firstTimes, applyFirstTimesToAll, syncTimes])
 
   const handleAddDate = () => {
     if (maxDates && dateFields.length >= maxDates) return
@@ -332,7 +250,12 @@ export function DateTimeList<T extends Record<string, unknown>>({
       }
     }
 
-    datesArray.append({ date: "", times: showTime ? [{ time: "" }] : [] } as any)
+    const newDate: DateItem = {
+      date: "",
+      times: showTime ? [{ time: "" }] : [],
+      ...(locationConfig && !syncLocation ? createLocationFields(locationConfig, undefined, true) : {}),
+    }
+    append(newDate as any)
 
     if (syncTimes) {
       requestAnimationFrame(() => applyFirstTimesToAll())
@@ -363,6 +286,41 @@ export function DateTimeList<T extends Record<string, unknown>>({
         </div>
       )}
 
+      {locationConfig && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 p-3">
+            <Checkbox
+              id={`${name}-sync-location`}
+              checked={syncLocation}
+              onChange={(e) => {
+                const checked = (e.target as any).checked
+                setSyncLocation(checked)
+              }}
+            />
+            <label htmlFor={`${name}-sync-location`} className="cursor-pointer text-sm font-medium text-gray-700">
+              Same location for all dates
+            </label>
+          </div>
+          {syncLocation && (
+            <LocationField
+              form={form}
+              addressName={locationConfig.addressName}
+              venueName={locationConfig.venueName}
+              placeIdName={locationConfig.placeIdName}
+              latName={locationConfig.latName}
+              lngName={locationConfig.lngName}
+              instructionsName={locationConfig.instructionsName}
+              label={locationConfig.label}
+              note={locationConfig.note}
+              instructionsLabel={locationConfig.instructionsLabel}
+              instructionsPlaceholder={locationConfig.instructionsPlaceholder}
+              required={locationConfig.required}
+              errorMode={errorMode}
+            />
+          )}
+        </div>
+      )}
+
       {showSyncToggle && (
         <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 p-3">
           <Checkbox
@@ -371,7 +329,10 @@ export function DateTimeList<T extends Record<string, unknown>>({
             onChange={(e) => {
               const checked = (e.target as any).checked
               setSyncTimes(checked)
-              if (checked) requestAnimationFrame(() => applyFirstTimesToAll())
+              if (checked) {
+                // Force sync immediately when toggle is enabled
+                applyFirstTimesToAll(true)
+              }
             }}
           />
           <label htmlFor={`${name}-sync-times`} className="cursor-pointer text-sm font-medium text-gray-700">
@@ -392,7 +353,7 @@ export function DateTimeList<T extends Record<string, unknown>>({
             form={form as any}
             name={name}
             index={index}
-            removeDate={datesArray.remove}
+            removeDate={remove}
             showTime={showTime}
             errorMode={errorMode}
             disableRemove={index === 0 || (maxDates === 1)}
@@ -401,6 +362,8 @@ export function DateTimeList<T extends Record<string, unknown>>({
             onFirstDateTimesChange={() => {
               if (syncTimes) applyFirstTimesToAll()
             }}
+            locationConfig={locationConfig}
+            syncLocation={syncLocation}
           />
         ))}
       </div>

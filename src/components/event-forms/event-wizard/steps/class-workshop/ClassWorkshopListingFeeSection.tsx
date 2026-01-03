@@ -1,0 +1,155 @@
+"use client"
+
+import { UseFormReturn, Path, useWatch } from "react-hook-form"
+import { useEffect } from "react"
+import { EventFormData } from "@/lib/validations/events"
+import { Section } from "@/components/forms/blocks/Section"
+import { SelectBlock } from "@/components/forms/blocks/Select"
+import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
+import { Text } from "@/components/ui/typography"
+import { calculateClassFees, formatFeeBreakdown } from "./fee-utils"
+
+interface ClassWorkshopListingFeeSectionProps {
+  form: UseFormReturn<EventFormData>
+  isWorkshop: boolean
+  occurrenceCount: number
+}
+
+export function ClassWorkshopListingFeeSection({
+  form,
+  isWorkshop,
+  occurrenceCount,
+}: ClassWorkshopListingFeeSectionProps) {
+  const classArtistType = useWatch({
+    control: form.control,
+    name: "classArtistType" as Path<EventFormData>,
+  }) as "ESTABLISHED" | "EMERGING" | undefined
+
+  const classListingFeeOption = useWatch({
+    control: form.control,
+    name: "classListingFeeOption" as Path<EventFormData>,
+  }) as "PAY_FEE" | "PROVIDE_GUEST_SPOT" | "EXPLAIN" | undefined
+
+  const feeCalculation = calculateClassFees(isWorkshop, occurrenceCount, classArtistType)
+
+  useEffect(() => {
+    if (classArtistType === "ESTABLISHED") {
+      form.setValue("classListingFeeOption" as Path<EventFormData>, undefined as unknown as never)
+      form.setValue("classListingFeeExplanation" as Path<EventFormData>, "" as unknown as never)
+      form.setValue("guestSpotInfo" as Path<EventFormData>, "" as unknown as never)
+      form.clearErrors(["classListingFeeOption", "classListingFeeExplanation", "guestSpotInfo"] as unknown as never)
+    }
+  }, [classArtistType, form.setValue, form.clearErrors])
+
+  useEffect(() => {
+    if (classListingFeeOption !== "PROVIDE_GUEST_SPOT") {
+      form.setValue("guestSpotInfo" as Path<EventFormData>, "" as unknown as never)
+      form.clearErrors(["guestSpotInfo"] as unknown as never)
+    }
+    if (classListingFeeOption !== "EXPLAIN") {
+      form.setValue("classListingFeeExplanation" as Path<EventFormData>, "" as unknown as never)
+      form.clearErrors(["classListingFeeExplanation"] as unknown as never)
+    }
+  }, [classListingFeeOption, form.setValue, form.clearErrors])
+
+  return (
+    <Section title="Listing Fee">
+      <SelectBlock
+        form={form}
+        name={"classArtistType" as Path<EventFormData>}
+        label="Are you an established or emerging artist?"
+        required
+        options={[
+          { label: "Established artist", value: "ESTABLISHED" },
+          { label: "Emerging artist", value: "EMERGING" },
+        ]}
+      />
+
+      {classArtistType === "ESTABLISHED" && feeCalculation && (
+        <div className="mt-4 p-4 bg-primary-50 border border-primary-200 rounded-md">
+          <Text className="text-sm font-medium text-gray-900">
+            Listing Fee: ${feeCalculation.totalFee}
+            {feeCalculation.extraFees > 0 && (
+              <span className="text-xs font-normal text-gray-600 ml-2">
+                ($50 base + ${feeCalculation.extraFees} for {feeCalculation.occurrenceCount - 1} additional
+                date{feeCalculation.occurrenceCount - 1 !== 1 ? "s" : ""})
+              </span>
+            )}
+          </Text>
+          <Text className="text-xs text-gray-600 mt-1">
+            As an established artist, your base listing fee is $50.
+            {feeCalculation.extraFees > 0 && (
+              <>
+                {" "}Additional fees apply for multiple class dates ($10 per additional date).
+              </>
+            )}
+            {" "}Payment will be processed after submission.
+          </Text>
+        </div>
+      )}
+
+      {classArtistType === "EMERGING" && feeCalculation && (
+        <div className="mt-4 space-y-4">
+          <SelectBlock
+            form={form}
+            name={"classListingFeeOption" as Path<EventFormData>}
+            label="How would you like to handle the listing fee?"
+            required
+            options={[
+              {
+                label: `Pay listing fee ($${feeCalculation.totalFee}${formatFeeBreakdown(feeCalculation)})`,
+                value: "PAY_FEE",
+              },
+              { label: "Provide a guest spot", value: "PROVIDE_GUEST_SPOT" },
+              {
+                label: "Explain why I can't pay the fee or provide a guest spot",
+                value: "EXPLAIN",
+              },
+            ]}
+          />
+
+          {classListingFeeOption === "PROVIDE_GUEST_SPOT" && (
+            <TextAreaField
+              form={form}
+              name={"guestSpotInfo" as Path<EventFormData>}
+              label="Guest Spot Information"
+              required
+              placeholder="Please provide details about the guest spot (date, time, how to claim, etc.)"
+              rows={4}
+            />
+          )}
+
+          {classListingFeeOption === "EXPLAIN" && (
+            <TextAreaField
+              form={form}
+              name={"classListingFeeExplanation" as Path<EventFormData>}
+              label="Please explain your situation"
+              required
+              placeholder="Please explain why you cannot pay the listing fee or provide a guest spot"
+              rows={4}
+            />
+          )}
+
+          {classListingFeeOption === "PAY_FEE" && (
+            <div className="p-4 bg-primary-50 border border-primary-200 rounded-md">
+              <Text className="text-sm font-medium text-gray-900">
+                Listing Fee: ${feeCalculation.totalFee}
+                {feeCalculation.extraFees > 0 && (
+                  <span className="text-xs font-normal text-gray-600 ml-2">
+                    (${feeCalculation.baseFee} base + ${feeCalculation.extraFees} for{" "}
+                    {feeCalculation.occurrenceCount - 1} additional date
+                    {feeCalculation.occurrenceCount - 1 !== 1 ? "s" : ""})
+                  </span>
+                )}
+              </Text>
+              <Text className="text-xs text-gray-600 mt-1">
+                Payment will be processed after submission.
+              </Text>
+            </div>
+          )}
+        </div>
+      )}
+    </Section>
+  )
+}
+

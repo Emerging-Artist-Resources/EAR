@@ -18,7 +18,7 @@ export function BasicInfoStep({ eventType, onChangeType }: BasicInfoStepProps) {
     <>
       <Card>
         <CardHeader>
-          <H3>What type of listing are you creating?</H3>
+          <H3>Listing Options</H3>
         </CardHeader>
         <CardContent>
           <Text>
@@ -35,7 +35,7 @@ export function BasicInfoStep({ eventType, onChangeType }: BasicInfoStepProps) {
       </Card>
 
       <Section className="mt-4" >
-        <H4>Pick your listing type:</H4>
+        <H4>Select your listing:</H4>
         <EventTypeSelector eventType={eventType} onChangeType={onChangeType} />
       </Section>
     </>

@@ -32,7 +32,7 @@ export function LocationField<T extends Record<string, unknown>>({
   instructionsName,
   label = "Location",
   note,
-  instructionsLabel = "Additional Instructions",
+  instructionsLabel = "Location Instructions",
   instructionsPlaceholder = "Details to help attendees find the location",
   required,
   showAsterisk = true,
