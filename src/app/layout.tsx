@@ -4,6 +4,7 @@ import "./globals.css";
 import HeaderGate from "@/components/layout/header-gate"
 import FooterGate from "@/components/layout/footer-gate"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { AdminLayoutWrapper } from "@/components/admin/shared/AdminLayoutWrapper"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,9 @@ export default function RootLayout({
       >
         <ErrorBoundary>
           <HeaderGate />
-          {children}
+          <AdminLayoutWrapper>
+            {children}
+          </AdminLayoutWrapper>
           <FooterGate />
         </ErrorBoundary>
       </body>
