@@ -42,25 +42,6 @@ export const Header: React.FC<HeaderProps> = ({
                   </Button>
                 )}
                 
-                {/* Admin Navigation - visually separated */}
-                {userRole === "ADMIN" && (
-                  <>
-                    <div className="mx-2 h-6 w-px bg-[var(--gray-300)]" aria-hidden="true" />
-                    <Link href="/admin/analytics">
-                      <Button variant="ghost">Analytics</Button>
-                    </Link>
-                    <Link href="/admin">
-                      <Button variant="ghost">Review Listings</Button>
-                    </Link>
-                    <Link href="/admin/profiles">
-                      <Button variant="ghost">Review Profiles</Button>
-                    </Link>
-                    <Link href="/admin/notifications">
-                      <Button variant="ghost">Manage Announcements</Button>
-                    </Link>
-                  </>
-                )}
-                
                 <UserDropdown 
                   userName={userName || "User"} 
                 />

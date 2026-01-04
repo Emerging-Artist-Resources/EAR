@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,7 +11,8 @@ import { Select } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { H2, H3, Text } from "@/components/ui/typography"
 import { getNotificationTypeColor, formatDateTime } from "@/lib/constants"
-import { supabase } from "@/lib/supabase/client"
+import { AdminLayout } from "@/components/admin/shared/AdminLayout"
+import { AdminLoadingState } from "@/components/admin/shared/AdminLoadingState"
 
 interface Notification {
   id: string
@@ -29,7 +29,6 @@ interface Notification {
 }
 
 export default function AdminNotificationsPage() {
-  const router = useRouter()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -41,35 +40,10 @@ export default function AdminNotificationsPage() {
     isActive: true
   })
   const [submitting, setSubmitting] = useState(false)
-  const [authLoading, setAuthLoading] = useState(true)
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const getRoleFromUser = (user: unknown): string | null => {
-    const u = user as { app_metadata?: { role?: string } } | null
-    return u?.app_metadata?.role ?? null
-  }
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const user = data?.user || null
-      if (!user) {
-        router.push("/auth/signin")
-        return
-      }
-      const role = getRoleFromUser(user)
-      setUserRole(role)
-      if (role !== "ADMIN") {
-        router.push("/dashboard")
-        return
-      }
-      setAuthLoading(false)
-    })
-  }, [router])
-
-  useEffect(() => {
-    if (authLoading) return
-    if (userRole !== "ADMIN") return
     fetchNotifications()
-  }, [authLoading, userRole])
+  }, [])
 
   const fetchNotifications = async () => {
     try {
@@ -197,30 +171,22 @@ export default function AdminNotificationsPage() {
     setIsModalOpen(true)
   }
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Text className="text-lg">Loading...</Text>
-      </div>
+      <AdminLayout>
+        <AdminLoadingState />
+      </AdminLayout>
     )
   }
 
-  if (userRole !== "ADMIN") {
-    return null
-  }
-
-  console.log('notifications', notifications)
   return (
-    <div className="min-h-screen bg-gray-50">
-
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="flex justify-between items-center mb-6">
-            <H2>Manage Announcements</H2>
-            <Button onClick={handleCreateNew}>
-              Create New Announcement
-            </Button>
-          </div>
+    <AdminLayout>
+      <div className="flex justify-between items-center mb-6">
+        <H2>Manage Announcements</H2>
+        <Button onClick={handleCreateNew}>
+          Create New Announcement
+        </Button>
+      </div>
 
           <Card className="p-6">
             {notifications.length === 0 ? (
@@ -276,8 +242,6 @@ export default function AdminNotificationsPage() {
               </div>
             )}
           </Card>
-        </div>
-      </div>
 
       <Modal 
         isOpen={isModalOpen} 
@@ -358,6 +322,6 @@ export default function AdminNotificationsPage() {
           </form>
         </div>
       </Modal>
-    </div>
+    </AdminLayout>
   )
 }

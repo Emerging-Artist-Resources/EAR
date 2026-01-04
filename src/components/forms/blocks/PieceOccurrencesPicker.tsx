@@ -16,6 +16,30 @@ interface PieceOccurrencesPickerProps {
   enableSampleData?: boolean
 }
 
+// Move sample data outside component to avoid recreation on every render
+const SAMPLE_EXTRAS: Array<{ date: string; times: Array<{ time: string }> }> = [
+  {
+    date: "2024-12-15",
+    times: [
+      { time: "19:00" },
+      { time: "21:00" }
+    ]
+  },
+  {
+    date: "2024-12-16",
+    times: [
+      { time: "14:00" },
+      { time: "19:30" }
+    ]
+  },
+  {
+    date: "2024-12-17",
+    times: [
+      { time: "20:00" }
+    ]
+  }
+]
+
 /**
  * Expected fields (suggested):
  * - pieceOccurrenceMode: "FROM_PARENT" | "CUSTOM"
@@ -24,7 +48,7 @@ interface PieceOccurrencesPickerProps {
  * - pieceShowTime: string
  * - pieceExtraOccurrences: { date: string; time?: string }[]
  *
- * If you don’t have these yet, you can adapt to whatever your schema uses.
+ * If you don't have these yet, you can adapt to whatever your schema uses.
  */
 export function PieceOccurrencesPicker({ form, label, mode, enableSampleData = true }: PieceOccurrencesPickerProps) {
   const [useCustomDateTime, setUseCustomDateTime] = useState(false)
@@ -40,30 +64,6 @@ export function PieceOccurrencesPicker({ form, label, mode, enableSampleData = t
     name: "eventDatesConfirmed" as Path<EventFormData>,
   }) as boolean | undefined
 
-  const ENABLE_SAMPLE_DATA = enableSampleData
-  const sampleExtras: Array<{ date: string; times: Array<{ time: string }> }> = [
-    {
-      date: "2024-12-15",
-      times: [
-        { time: "19:00" },
-        { time: "21:00" }
-      ]
-    },
-    {
-      date: "2024-12-16",
-      times: [
-        { time: "14:00" },
-        { time: "19:30" }
-      ]
-    },
-    {
-      date: "2024-12-17",
-      times: [
-        { time: "20:00" }
-      ]
-    }
-  ]
-  
   const hasValidExtras = useMemo(() => {
     return extras.some(ex => {
       if (!ex?.date || !ex.date.trim()) return false
@@ -72,8 +72,14 @@ export function PieceOccurrencesPicker({ form, label, mode, enableSampleData = t
     })
   }, [extras])
 
-  const displayExtras = ENABLE_SAMPLE_DATA && !hasValidExtras ? sampleExtras : extras
-  const displayConfirmed = ENABLE_SAMPLE_DATA && !hasValidExtras ? true : (isConfirmed ?? false)
+  // Memoize display values to avoid recalculation on every render
+  const displayExtras = useMemo(() => {
+    return enableSampleData && !hasValidExtras ? SAMPLE_EXTRAS : extras
+  }, [enableSampleData, hasValidExtras, extras])
+
+  const displayConfirmed = useMemo(() => {
+    return enableSampleData && !hasValidExtras ? true : (isConfirmed ?? false)
+  }, [enableSampleData, hasValidExtras, isConfirmed])
 
   const derivedOccurrences = useMemo(() => {
     const list: { key: string; label: string }[] = []
@@ -97,18 +103,38 @@ export function PieceOccurrencesPicker({ form, label, mode, enableSampleData = t
     return list
   }, [displayExtras])
 
-  const isUsingSampleData = ENABLE_SAMPLE_DATA && !hasValidExtras
-  const hasSampleData = isUsingSampleData && sampleExtras.length > 0
-  const canSelect = mode === "SELECT_FROM_PARENT" || mode === "SELECT_FROM_EVENT" || hasSampleData
-  const hasParentOccurrences = canSelect && displayConfirmed && derivedOccurrences.length > 0
-  
-  const isSelectFromEvent = mode === "SELECT_FROM_EVENT"
-  const allowManualEntry = mode === "CUSTOM_ONLY" || (mode === "SELECT_FROM_PARENT" && useCustomDateTime)
-  const shouldShowCustomDateTime = allowManualEntry && (mode === "CUSTOM_ONLY" || !hasSampleData || useCustomDateTime)
-  
+  // Consolidate boolean flags into a single memoized object
+  const flags = useMemo(() => {
+    const isUsingSampleData = enableSampleData && !hasValidExtras
+    const hasSampleData = isUsingSampleData && SAMPLE_EXTRAS.length > 0
+    const isSelectFromEvent = mode === "SELECT_FROM_EVENT"
+    const isSelectFromParent = mode === "SELECT_FROM_PARENT"
+    const isCustomOnly = mode === "CUSTOM_ONLY"
+    
+    const canSelect = isSelectFromParent || isSelectFromEvent || hasSampleData
+    const hasParentOccurrences = canSelect && displayConfirmed && derivedOccurrences.length > 0
+    
+    const allowManualEntryForParent = isSelectFromParent && (useCustomDateTime || !hasParentOccurrences)
+    const allowManualEntry = isCustomOnly || allowManualEntryForParent
+    const shouldShowCustomDateTime = allowManualEntry && (isCustomOnly || !hasSampleData || useCustomDateTime || !hasParentOccurrences)
+
+    return {
+      isUsingSampleData,
+      hasSampleData,
+      isSelectFromEvent,
+      isSelectFromParent,
+      isCustomOnly,
+      canSelect,
+      hasParentOccurrences,
+      allowManualEntryForParent,
+      allowManualEntry,
+      shouldShowCustomDateTime,
+    }
+  }, [enableSampleData, hasValidExtras, mode, displayConfirmed, derivedOccurrences.length, useCustomDateTime])
+
   return (
     <Section title={label}>
-      {hasParentOccurrences && !useCustomDateTime && (
+      {flags.hasParentOccurrences && !useCustomDateTime && (
         <>
           <SelectBlock
             form={form}
@@ -118,7 +144,7 @@ export function PieceOccurrencesPicker({ form, label, mode, enableSampleData = t
             multiple
             options={derivedOccurrences.map((o) => ({ label: o.label, value: o.key }))}
           />
-          {mode === "SELECT_FROM_PARENT" && (
+          {flags.isSelectFromParent && (
             <button
               type="button"
               onClick={() => setUseCustomDateTime(true)}
@@ -130,33 +156,33 @@ export function PieceOccurrencesPicker({ form, label, mode, enableSampleData = t
         </>
       )}
 
-      {isSelectFromEvent && !displayConfirmed && (
+      {flags.isSelectFromEvent && !displayConfirmed && (
         <p className="text-sm text-gray-500">
           Please confirm schedule in the Date & Time section above.
         </p>
       )}
 
-      {isSelectFromEvent && displayConfirmed && derivedOccurrences.length === 0 && (
+      {flags.isSelectFromEvent && displayConfirmed && derivedOccurrences.length === 0 && (
         <p className="text-sm text-gray-500">
           No dates & times available. Please add dates & times in the Date & Time section above and confirm them.
         </p>
       )}
 
-      {!isSelectFromEvent && canSelect && !displayConfirmed && !useCustomDateTime && (
+      {flags.isSelectFromParent && !flags.shouldShowCustomDateTime && !displayConfirmed && (
         <p className="text-sm text-gray-500">
-          Please confirm schedule in the Date & Time section.
+          Please wait for the event schedule to load.
         </p>
       )}
 
-      {!isSelectFromEvent && canSelect && displayConfirmed && derivedOccurrences.length === 0 && !useCustomDateTime && (
+      {flags.isSelectFromParent && !flags.shouldShowCustomDateTime && displayConfirmed && derivedOccurrences.length === 0 && (
         <p className="text-sm text-gray-500">
-          No dates & times available. Please add dates & times in the Date & Time section and confirm them.
+          No dates & times available from the event schedule.
         </p>
       )}
 
-      {shouldShowCustomDateTime && (
+      {flags.shouldShowCustomDateTime && (
         <>
-          {hasParentOccurrences && useCustomDateTime && (
+          {flags.hasParentOccurrences && useCustomDateTime && flags.isSelectFromParent && (
             <button
               type="button"
               onClick={() => setUseCustomDateTime(false)}
