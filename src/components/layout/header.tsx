@@ -46,12 +46,11 @@ export const Header: React.FC<HeaderProps> = ({
                   userName={userName || "User"} 
                 />
               </>
-            ) : !isLoading ? (
+            ) : (
               <Link href="/auth/signin">
                 <Button variant="ghost">Sign In</Button>
               </Link>
-              
-            ) : null}
+            )}
           </div>
           <MobileNav 
             userRole={userRole} 

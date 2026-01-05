@@ -29,8 +29,13 @@ export function UserDropdown({ userName, isMobile = false }: UserDropdownProps) 
   }, [])
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push("/auth/signin")
+    setIsOpen(false)
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      console.error("Sign out error:", error)
+      return
+    }
+    window.location.href = "/auth/signin"
   }
 
   return (
@@ -65,10 +70,7 @@ export function UserDropdown({ userName, isMobile = false }: UserDropdownProps) 
           </button>
          
           <button
-            onClick={() => {
-              handleSignOut()
-              setIsOpen(false)
-            }}
+            onClick={handleSignOut}
             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
             Sign Out

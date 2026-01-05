@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
+import { getUserRole, getUserRoleFromProfile } from "@/lib/authz"
 
 export function useAdminAuth() {
   const router = useRouter()
@@ -9,21 +10,79 @@ export function useAdminAuth() {
   const [isAuthorized, setIsAuthorized] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const user = data?.user
-      if (!user) {
+    let isMounted = true
+
+    async function checkAuth(sessionUser?: { id: string }) {
+      try {
+        let user = sessionUser
+        if (!user) {
+          const { data, error } = await supabase.auth.getUser()
+          if (error || !data?.user) {
+            if (isMounted) {
+              setAuthLoading(false)
+              setIsAuthorized(false)
+              router.push("/auth/signin")
+            }
+            return
+          }
+          user = data.user
+        }
+
+        if (!isMounted) return
+
+        let role = getUserRole(user)
+        
+        if (!role) {
+          role = await getUserRoleFromProfile(supabase, user.id)
+        }
+
+        if (!isMounted) return
+
+        setUserRole(role || null)
+        
+        if (role !== "ADMIN") {
+          setAuthLoading(false)
+          setIsAuthorized(false)
+          router.push("/dashboard")
+          return
+        }
+
+        setIsAuthorized(true)
+        setAuthLoading(false)
+      } catch (err) {
+        console.error("Auth check error:", err)
+        if (isMounted) {
+          setAuthLoading(false)
+          setIsAuthorized(false)
+          router.push("/auth/signin")
+        }
+      }
+    }
+
+    // Initial auth check
+    checkAuth()
+
+    // Subscribe to auth state changes to handle sign-in/sign-out events
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return
+
+      if (session?.user) {
+        setAuthLoading(true)
+        await checkAuth(session.user)
+      } else {
+        setAuthLoading(false)
+        setIsAuthorized(false)
+        setUserRole(null)
         router.push("/auth/signin")
-        return
       }
-      const role = (user.app_metadata as { role: string } | undefined)?.role ?? null
-      setUserRole(role)
-      if (role !== "ADMIN") {
-        router.push("/dashboard")
-        return
-      }
-      setIsAuthorized(true)
-      setAuthLoading(false)
     })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [router])
 
   return { authLoading, userRole, isAuthorized }

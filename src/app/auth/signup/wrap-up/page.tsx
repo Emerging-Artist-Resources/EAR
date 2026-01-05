@@ -9,12 +9,6 @@ export default function SignUpWrapUpPage() {
   const router = useRouter()
   const form = useFormContext()
 
-  const handleSubmit = form.handleSubmit(async (data) => {
-    // TODO: Wire to Supabase auth sign-up 
-    console.log("[signup] final submit", data)
-    router.push("/auth/signin?message=Check your email to verify your account")
-  })
-
   return (
     <div className="space-y-6">
       <SignUpWrapUp form={form as unknown as never} />
@@ -22,8 +16,8 @@ export default function SignUpWrapUpPage() {
         <Button type="button" variant="outline" onClick={() => router.push("/auth/signup/eligibility")}>
           Back
         </Button>
-        <Button type="button" variant="primary" onClick={() => handleSubmit()}>
-          Create account
+        <Button type="button" variant="primary" onClick={() => router.push("/auth/signup/password")}>
+          Next
         </Button>
       </div>
     </div>

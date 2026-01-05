@@ -38,7 +38,15 @@ export function LocationField<T extends Record<string, unknown>>({
   showAsterisk = true,
   errorMode = "touched",
 }: LocationFieldProps<T>) {
-  const { register, setValue } = form
+  const { setValue, getValues, register } = form
+
+  // Register fields to ensure they're tracked by RHF and included in form submission
+  useEffect(() => {
+    register(addressName as unknown as never, { shouldUnregister: false })
+    if (placeIdName) {
+      register(placeIdName as unknown as never, { shouldUnregister: false })
+    }
+  }, [register, addressName, placeIdName])
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const elementRef = useRef<HTMLElement | null>(null)
@@ -93,6 +101,11 @@ export function LocationField<T extends Record<string, unknown>>({
         // Optional: hint text
         el.setAttribute("placeholder", "Start typing an address…")
         el.style.width = "100%"
+        
+        const initialAddress = getValues(addressName as unknown as never) as unknown as string | undefined
+        if (initialAddress) {
+          el.setAttribute("value", initialAddress)
+        }
 
         containerRef.current.innerHTML = ""
         containerRef.current.appendChild(el)
@@ -179,7 +192,7 @@ export function LocationField<T extends Record<string, unknown>>({
       // @ts-expect-error - cleanupPromise is a function
       if (typeof cleanupPromise === "function") cleanupPromise()
     }
-  }, [addressName, venueName, placeIdName, latName, lngName, setValue])
+  }, [addressName, venueName, placeIdName, latName, lngName, setValue, getValues])
 
   return (
     <div>

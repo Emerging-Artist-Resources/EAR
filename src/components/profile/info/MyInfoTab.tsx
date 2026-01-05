@@ -1,22 +1,41 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import {  H3, Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { apiGet } from "@/lib/fetch-utils"
+
+interface ProfileData {
+  id: string;
+  name: string | null;
+  email: string | null;
+  pronouns: string | null;
+  website: string | null;
+  organization_name: string | null;
+  location_label: string | null;
+  artist_status: string | null;
+}
 
 export const MyInfoTab: React.FC = () => {
-  // TODO: Replace with real profile data and wire API
-  const [profile, setProfile] = useState({
-    fullName: "John Doe",
-    pronouns: "(he/him)",
-    email: "john@gmail.com",
-    address: "New York, NY",
-    company: "https://website.com",
-    website: "https://website.com",
-    status: "Emerging",
-  })
-  const [draft, setDraft] = useState(profile)
+  const [profile, setProfile] = useState<ProfileData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [draft, setDraft] = useState<ProfileData | null>(null)
   const [isEditing, setIsEditing] = useState(false)
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const data = await apiGet<ProfileData>("/api/profile")
+        setProfile(data)
+        setDraft(data)
+      } catch (error) {
+        console.error("Error fetching profile:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProfile()
+  }, [])
 
   const Field = ({ label, value }: { label: string; value?: string | null }) => (
     <div className="space-y-1">
@@ -27,20 +46,45 @@ export const MyInfoTab: React.FC = () => {
     </div>
   )
 
+  if (loading) {
+    return (
+      <section className="mt-6">
+        <Card border="dashed" padding="md">
+          <Text>Loading profile...</Text>
+        </Card>
+      </section>
+    )
+  }
+
+  if (!profile || !draft) {
+    return (
+      <section className="mt-6">
+        <Card border="dashed" padding="md">
+          <Text>Profile not found</Text>
+        </Card>
+      </section>
+    )
+  }
+
+  const formatStatus = (status: string | null) => {
+    if (!status) return null;
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
   return (
     <section className="mt-6">
       <Card border="dashed" padding="md" className="relative">
         <div className="mb-4 flex items-center justify-between">
           <H3 className="text-gray-900">Personal Info</H3>
           {!isEditing ? (
-            <Button variant="secondary" onClick={() => { setDraft(profile); setIsEditing(true) }}>
+            <Button variant="secondary" onClick={() => { setDraft({ ...profile }); setIsEditing(true) }}>
               Edit Profile
             </Button>
           ) : (
             <div className="flex gap-2">
               <Button
                 onClick={() => {
-                  setProfile(draft) // TODO: call API
+                  setProfile(draft)
                   setIsEditing(false)
                 }}
               >
@@ -49,7 +93,7 @@ export const MyInfoTab: React.FC = () => {
               <Button
                 variant="ghost"
                 onClick={() => {
-                  setDraft(profile)
+                  setDraft({ ...profile })
                   setIsEditing(false)
                 }}
               >
@@ -61,49 +105,49 @@ export const MyInfoTab: React.FC = () => {
 
         {!isEditing ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Field label="Full Name" value={profile.fullName} />
+            <Field label="Full Name" value={profile.name} />
             <Field label="Pronouns" value={profile.pronouns} />
             <Field label="Email" value={profile.email} />
-            <Field label="Address" value={profile.address} />
+            <Field label="Location" value={profile.location_label} />
             <div className="md:col-span-2">
-              <Field label="Company" value={profile.company} />
+              <Field label="Organization" value={profile.organization_name} />
             </div>
             <div className="md:col-span-2">
               <Field label="Website" value={profile.website} />
             </div>
             <div className="md:col-span-2">
-              <Field label="Emerging Artist Status" value={profile.status} />
+              <Field label="Emerging Artist Status" value={formatStatus(profile.artist_status)} />
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-1">
               <Text className="font-semibold text-gray-800">Full Name</Text>
-              <Input value={draft.fullName} onChange={(e) => setDraft({ ...draft, fullName: e.target.value })} />
+              <Input value={draft.name || ""} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             </div>
             <div className="space-y-1">
               <Text className="font-semibold text-gray-800">Pronouns</Text>
-              <Input value={draft.pronouns} onChange={(e) => setDraft({ ...draft, pronouns: e.target.value })} />
+              <Input value={draft.pronouns || ""} onChange={(e) => setDraft({ ...draft, pronouns: e.target.value })} />
             </div>
             <div className="space-y-1">
               <Text className="font-semibold text-gray-800">Email</Text>
-              <Input type="email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
+              <Input type="email" value={draft.email || ""} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
             </div>
             <div className="space-y-1">
-              <Text className="font-semibold text-gray-800">Address</Text>
-              <Input value={draft.address} onChange={(e) => setDraft({ ...draft, address: e.target.value })} />
+              <Text className="font-semibold text-gray-800">Location</Text>
+              <Input value={draft.location_label || ""} onChange={(e) => setDraft({ ...draft, location_label: e.target.value })} />
             </div>
             <div className="md:col-span-2 space-y-1">
-              <Text className="font-semibold text-gray-800">Company</Text>
-              <Input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} />
+              <Text className="font-semibold text-gray-800">Organization</Text>
+              <Input value={draft.organization_name || ""} onChange={(e) => setDraft({ ...draft, organization_name: e.target.value })} />
             </div>
             <div className="md:col-span-2 space-y-1">
               <Text className="font-semibold text-gray-800">Website</Text>
-              <Input value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
+              <Input value={draft.website || ""} onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
             </div>
             <div className="md:col-span-2 space-y-1">
               <Text className="font-semibold text-gray-800">Emerging Artist Status</Text>
-              <Input value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })} />
+              <Input value={formatStatus(draft.artist_status) || ""} disabled />
             </div>
           </div>
         )}

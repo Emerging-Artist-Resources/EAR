@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { SavedEvent } from "@/features/profile/server/types";
-import { getSavedEvents } from "@/features/profile/server/service";
+import { apiGet } from "@/lib/fetch-utils";
 import { SavedEventsFilters } from "./SavedEventsFilters";
 import { SavedEventsGrid } from "./SavedEventsGrid";
 import { H3, Text } from "@/components/ui/typography";
@@ -20,11 +20,15 @@ export const SavedEventsTab = () => {
   useEffect(() => {
     const loadEvents = async () => {
       setIsLoading(true);
-
-      // TODO: replace "user-1" with real userId from auth
-      const data = await getSavedEvents("user-1", { mode: filter });
-      setEvents(data);
-      setIsLoading(false);
+      try {
+        const data = await apiGet<SavedEvent[]>(`/api/profile/saved-events?mode=${filter}`);
+        setEvents(data);
+      } catch (error) {
+        console.error("Error fetching saved events:", error);
+        setEvents([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     void loadEvents();

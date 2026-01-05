@@ -5,7 +5,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
 
-import { supabase } from "@/lib/supabase/client" // <-- singleton export from your Step A
+import { supabase } from "@/lib/supabase/client"
+import { getUserRole, getUserRoleFromProfile } from "@/lib/authz"
 import { H2, Text } from "@/components/ui/typography"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -39,11 +40,15 @@ export default function SignIn() {
         return
       }
 
-      const role = session.user?.app_metadata?.role
+      let role = getUserRole(session.user)
+      if (!role) {
+        role = await getUserRoleFromProfile(supabase, session.user.id)
+      }
+      
       const redirectUrl = role === "ADMIN" ? "/admin" : "/announcement"
 
+      setLoading(false)
       router.replace(redirectUrl)
-      router.refresh()
     } catch (err) {
       console.error("Sign in error:", err)
       setError("Something went wrong")

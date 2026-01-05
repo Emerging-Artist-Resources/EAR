@@ -2,26 +2,55 @@
 
 import { UseFormReturn } from "react-hook-form"
 import { Section } from "@/components/forms/blocks/Section"
-import { EventFormData } from "@/lib/validations/events"
+import { SignupFormData } from "@/lib/validations/signup"
 import { SelectBlock } from "../forms/blocks/Select"
 
 interface SignUpWrapUpProps {
-    form: UseFormReturn<EventFormData>
+    form: UseFormReturn<SignupFormData>
 }
 
 export function SignUpWrapUp({ form }: SignUpWrapUpProps) {
     return (
         <Section title="Wrap Up">
-            <SelectBlock form={form} name="referralSources" label="Referral Sources" allowOther={true} otherName="OTHER" required options={[
-                { label: "Instagram", value: "INSTAGRAM" }, 
-                { label: "Word of Mouth", value: "WORD_OF_MOUTH" }, 
-                { label: "Google", value: "GOOGLE" }]} />
+            <SelectBlock 
+                form={form} 
+                name="referral_source" 
+                label="How did you hear about us?" 
+                allowOther={true} 
+                otherName="referral_source_other" 
+                required 
+                options={[
+                    { label: "Instagram", value: "instagram" }, 
+                    { label: "Word of Mouth", value: "word_of_mouth" }, 
+                    { label: "Google", value: "google" }
+                ]} 
+            />
 
-            <SelectBlock form={form} name="newsLetter" label="Would you like to join our newsletter?" description="We'll send you updates about new shows and events." required options={[
-                { label: "Sign me up for both!", value: "SIGN_ME_UP" },
-                { label: "Sign me up for the calendar only", value: "SIGN_ME_UP_CALENDAR" },
-                { label: "Sign me up for the newsletter only", value: "SIGN_ME_UP_NEWSLETTER" },
-                { label: "No, thanks", value: "NO_THANKS" }]} />
+            <div className="space-y-4">
+                <p className="text-sm font-medium text-gray-700">Newsletter Preferences</p>
+                <SelectBlock 
+                    form={form} 
+                    name="newsletter_ear_opt_in" 
+                    label="Would you like to join the EAR newsletter?" 
+                    description="We'll send you updates about new shows and events." 
+                    required 
+                    options={[
+                        { label: "Yes", value: "true" }, 
+                        { label: "No", value: "false" }
+                    ]} 
+                />
+                <SelectBlock 
+                    form={form} 
+                    name="newsletter_calendar_opt_in" 
+                    label="Would you like to join the calendar newsletter?" 
+                    description="We'll send you updates about calendar events." 
+                    required 
+                    options={[
+                        { label: "Yes", value: "true" }, 
+                        { label: "No", value: "false" }
+                    ]} 
+                />
+            </div>
         </Section>
     )
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
-import { getUserRole } from "@/lib/authz"
+import { getUserRole, getUserRoleFromProfile } from "@/lib/authz"
 
 export interface AuthState {
   user: User | null
@@ -25,6 +25,8 @@ export function useAuth() {
   })
 
   const updateAuthState = useCallback(async () => {
+    setState(prev => ({ ...prev, isLoading: true }))
+    
     const { data, error } = await supabase.auth.getUser()
 
     if (error || !data.user) {
@@ -39,7 +41,12 @@ export function useAuth() {
     }
 
     const user = data.user
-    const role = getUserRole(user)
+    let role = getUserRole(user)
+    
+    if (!role) {
+      role = await getUserRoleFromProfile(supabase, user.id)
+    }
+    
     const name =
       (user.user_metadata?.name as string | undefined) ||
       (user.user_metadata?.full_name as string | undefined) ||
@@ -64,11 +71,18 @@ export function useAuth() {
     // Subscribe to auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!isMounted) return
 
       if (session?.user) {
-        const role = getUserRole(session.user)
+        setState(prev => ({ ...prev, isLoading: true }))
+        
+        let role = getUserRole(session.user)
+        
+        if (!role) {
+          role = await getUserRoleFromProfile(supabase, session.user.id)
+        }
+        
         const name =
           (session.user.user_metadata?.name as string | undefined) ||
           (session.user.user_metadata?.full_name as string | undefined) ||

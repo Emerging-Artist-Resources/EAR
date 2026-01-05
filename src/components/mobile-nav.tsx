@@ -134,8 +134,11 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
                     
                     <Button
                       onClick={async () => {
-                        await supabase.auth.signOut()
                         setIsOpen(false)
+                        const { error } = await supabase.auth.signOut()
+                        if (error) {
+                          console.error("Sign out error:", error)
+                        }
                         window.location.href = "/auth/signin"
                       }}
                       variant="outline"

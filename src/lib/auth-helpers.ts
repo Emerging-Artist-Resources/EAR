@@ -1,5 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { getUserRole } from "@/lib/authz"
+import { getUserRole, getUserRoleFromProfile } from "@/lib/authz"
 import { createErrorResponse, ErrorCodes } from "@/lib/api-utils"
 import type { User } from "@supabase/supabase-js"
 
@@ -22,7 +22,11 @@ export async function getAuthenticatedUser(): Promise<AuthResult | null> {
     return null
   }
 
-  const role = getUserRole(user)
+  let role = getUserRole(user)
+  if (!role) {
+    role = await getUserRoleFromProfile(supabase, user.id)
+  }
+  
   return { user, role }
 }
 

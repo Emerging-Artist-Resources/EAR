@@ -2,58 +2,100 @@
 
 import { UseFormReturn } from "react-hook-form"
 import { Section } from "@/components/forms/blocks/Section"
-import { EventFormData } from "@/lib/validations/events"
+import { SignupFormData } from "@/lib/validations/signup"
 import { SelectBlock } from "../forms/blocks/Select"
+
 interface SignUpEligibilityProps {
-    form: UseFormReturn<EventFormData>
+    form: UseFormReturn<SignupFormData>
 }
 
 export function SignUpEligibility({ form }: SignUpEligibilityProps) {
-    const emergingArtist = form.watch("emergingArtistIdentification" as never) as unknown as string | null | undefined
-    const isEmergingArtist = emergingArtist === "YES"
-
     return (
         <Section title="Emerging Artist Eligibility">
-            
-            <SelectBlock form={form} name="emergingArtistIdentification" label="Do you identify as an Emerging Artist?" required options={[
-                { label: "Yes", value: "YES" }, 
-                { label: "No", value: "NO" }]} />
+            <SelectBlock 
+                form={form} 
+                name="self_identifies_emerging" 
+                label="Do you identify as an Emerging Artist?" 
+                required 
+                options={[
+                    { label: "Yes", value: "true" }, 
+                    { label: "No", value: "false" }
+                ]} 
+            />
 
-            {isEmergingArtist && (
-                <>
-                    <SelectBlock form={form} name="operatingBudget" label="Operating Budget" allowOther={true} otherName="OTHER_BUDGET" required options={[
-                        { label: "$0 - $24,999", value: "TIER_1" },
-                        { label: "$25,000 - $49,999", value: "TEIR_2" },
-                        { label: "$50,000 - $99,999", value: "TIER_3" },
-                        { label: "$100,000 - $499,999", value: "TIER_4" },
-                        { label: "$500,000 - $999,999", value: "TIER_5" },
-                        { label: "$1,000,000 - $1,999,999", value: "TIER_6" },
-                        { label: "$2,000,000 +", value: "TIER_7" },
-                    ]} />
+            <SelectBlock 
+                form={form} 
+                name="operating_budget_range" 
+                label="Operating Budget" 
+                allowOther={true} 
+                otherName="operating_budget_other_text" 
+                required 
+                options={[
+                    { label: "$0 - $24,999", value: "r_0_24999" },
+                    { label: "$25,000 - $49,999", value: "r_25000_49999" },
+                    { label: "$50,000 - $99,999", value: "r_50000_99999" },
+                    { label: "$100,000 - $499,999", value: "r_100000_499999" },
+                    { label: "$500,000 - $999,999", value: "r_500000_999999" },
+                    { label: "$1,000,000 - $1,999,999", value: "r_1000000_1999999" },
+                    { label: "$2,000,000 +", value: "r_2000000_plus" },
+                ]} 
+            />
 
-                    <SelectBlock form={form} name="physicalSpace" allowOther={true} otherName="OTHER_SPACE" required
-                        label="Do you currently own or operate a dedicated venue or studio space?" 
-                        options={[
-                        { label: "Yes", value: "YES" }, 
-                        { label: "No", value: "NO" }]} />
+            <SelectBlock 
+                form={form} 
+                name="owns_or_operates_venue" 
+                allowOther={true} 
+                otherName="owns_or_operates_venue_other_text" 
+                required
+                label="Do you currently own or operate a dedicated venue or studio space?" 
+                options={[
+                    { label: "Yes", value: "yes" }, 
+                    { label: "No", value: "no" },
+                    { label: "Other", value: "other" }
+                ]} 
+            />
 
-                    <SelectBlock form={form} name="affiliation" allowOther={true} otherName="OTHER_AFFILIATION" required
-                        label="Are you being presented or supported by a major institution (e.g, The Joyce Theater, 92nd Street Y, BAM, etc.)?" 
-                        options={[
-                        { label: "Yes", value: "YES" }, 
-                        { label: "No", value: "NO" }]} />
+            <SelectBlock 
+                form={form} 
+                name="supported_by_major_institution" 
+                allowOther={true} 
+                otherName="supported_by_major_institution_other_text" 
+                required
+                label="Are you being presented or supported by a major institution (e.g, The Joyce Theater, 92nd Street Y, BAM, etc.)?" 
+                options={[
+                    { label: "Yes", value: "yes" }, 
+                    { label: "No", value: "no" },
+                    { label: "Other", value: "other" }
+                ]} 
+            />
 
-                    <SelectBlock form={form} name="instruction" allowOther={true} otherName="OTHER_INSTRUCTION" required
-                        label="If offering classes or workshops, are they hosted independently of a larger organization (e.g, Gibney, Peridance, Broadway Dance Center, etc.)?" 
-                        options={[
-                        { label: "Yes", value: "YES" }, 
-                        { label: "No", value: "NO" }]} />
+            <SelectBlock 
+                form={form} 
+                name="classes_hosted_independently" 
+                allowOther={true} 
+                otherName="classes_hosted_independently_other_text" 
+                required
+                label="If offering classes or workshops, are they hosted independently of a larger organization (e.g, Gibney, Peridance, Broadway Dance Center, etc.)?" 
+                options={[
+                    { label: "Yes", value: "yes" }, 
+                    { label: "No", value: "no" },
+                    { label: "Other", value: "other" }
+                ]} 
+            />
 
-                    <SelectBlock form={form} name="status_501c3" allowOther={true} otherName="OTHER_STATUS" required label="Do you have your 501c3 status?" options={[
-                        { label: "Yes", value: "YES" }, 
-                        { label: "No", value: "NO" }]} />
-                </>
-            )}
+            <SelectBlock 
+                form={form} 
+                name="has_501c3" 
+                allowOther={true} 
+                otherName="has_501c3_other_text" 
+                required 
+                label="Do you have your 501c3 status?" 
+                options={[
+                    { label: "Yes", value: "yes" }, 
+                    { label: "No", value: "no" },
+                    { label: "Other", value: "other" }
+                ]} 
+            />
         </Section>
     )
 }
