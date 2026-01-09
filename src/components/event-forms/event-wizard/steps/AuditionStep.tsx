@@ -32,11 +32,14 @@ export function AuditionStep({ form }: AuditionStepProps) {
   return (
     <>
       <Section title="Audition Details">
-        <TextField form={form} name={"auditionName"} label="Audition Name" required placeholder="Audition Name"/>
+        <TextField form={form} name={"auditionName"} label="Audition Name" required/>
         <TextAreaField form={form} name={"aboutProject"} label="Describe the Opportunity" required placeholder="Please provide an overview of the company, contract terms, and key details of the audition opportunity. Include duration, compensation, location, and rehearsal/performance commitments. "/>
         <TextAreaField form={form} name={"eligibility"} label="Eligibility" required placeholder="Please describe who you are seeking and who is eligible to apply. Include relevant details such as style, age, experience, and any other qualifications."/>
         <TextField form={form} name={"compensation"} label="Compensation" required placeholder="Specify the amount, or describe any non-monetary compensation offered"/>
-        <TextAreaField form={form} name={"auditionLink"} label="Audition Submission" required placeholder="Submission link or instructions"/>
+        <TextAreaField form={form} name={"auditionPrequalification"} label="Is there a prescreening process? Please add requirements here."/>
+        <TextAreaField form={form} name={"auditionSubmission"} label="Audition Submission" required placeholder="Submission link or instructions"/>
+        <TextAreaField form={form} name={"auditionClasses"} label="Are there any preaudition classes, workshops, or intensives that are recommended prior to auditioning?"/>
+
         
         <SelectBlock form={form} options={[{ label: "Yes", value: "FEE" }, { label: "No", value: "NO_FEE" }]} name={"auditionFee"} label="Is there an audition fee?" required />
         {isAuditionFee && (
@@ -52,13 +55,13 @@ export function AuditionStep({ form }: AuditionStepProps) {
       </Section>
 
       <Section title="Location">
-        <LocationField form={form} addressName={"address"} venueName={"venueName"} placeIdName={"placeId"} latName={"lat"} lngName={"lng"} instructionsName={"instructions"} instructionsPlaceholder="Include directions for accessing the building or studio." required/>
+        <LocationField form={form} addressName={"address"} venueName={"venueName"} placeIdName={"placeId"} latName={"lat"} lngName={"lng"} instructionsName={"instructions"} instructionsPlaceholder="Include directions for accessing the building or studio."/>
       </Section>
 
       <Section title="Media Uploads">
         <PhotoUploader form={form} name={"promoFiles"} label="Promotional Images" description="Upload up to 5 images" />
         <TextAreaField form={form} name={"credits"} label="Image Description / Photo Credit" placeholder="Describe the images and provide photo credit" rows={3}/>
-        <TextField form={form} name={"socialHandles"} label="Social Handles" placeholder="@..."/>
+        <TextField form={form} name={"socialHandles"} label="Social Media Handles" placeholder="@..."/>
       </Section>
 
 

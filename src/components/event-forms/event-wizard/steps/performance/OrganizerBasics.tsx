@@ -23,9 +23,8 @@ export function OrganizerBasics({ form }: { form: UseFormReturn<EventFormData> }
         ]}
       />
 
-      <TextField form={form} name={"event_title"} label="Performance Title" required />
+      <TextField form={form} name={"event_title"} label="Show Name" required />
       <TextField form={form} name={"event_organizer"} label="Organizer / Presenting Company" required />
-      <TextField form={form} name={"event_contact_email"} label="Contact Email" type="email" required />
 
       <TextField form={form} name={"event_website"} label="Website" type="url" placeholder="https://..." />
       <TextField
@@ -44,7 +43,7 @@ export function OrganizerBasics({ form }: { form: UseFormReturn<EventFormData> }
         required
       />
 
-      <TextAreaField form={form} name={"event_description"} label="Short Performance Description" required rows={4} />
+      <TextAreaField form={form} name={"event_description"} label="Short Show Description" required rows={4} />
 
     </Section>
   )

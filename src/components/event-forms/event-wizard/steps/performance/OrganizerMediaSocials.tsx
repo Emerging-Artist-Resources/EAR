@@ -17,7 +17,7 @@ export function OrganizerMediaSocials({ form }: { form: UseFormReturn<EventFormD
         label="Image captions / photo credits"
         rows={3}
       />
-      <TextField form={form} name={"event_social_handles"} label="Social handles" placeholder="@..."                  />
+      <TextField form={form} name={"event_social_handles"} label="Social Media Handles" placeholder="@..."                  />
     </Section>
   )
 }

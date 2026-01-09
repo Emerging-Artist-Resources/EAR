@@ -55,6 +55,7 @@ export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventF
         />
 
         {wantsToAddPiece && (
+          
           <div className="mt-6 space-y-6">
             {fields.map((field, index) => (
               <PieceDetails
