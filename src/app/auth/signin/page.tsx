@@ -49,6 +49,7 @@ export default function SignIn() {
 
       setLoading(false)
       router.replace(redirectUrl)
+      router.refresh()
     } catch (err) {
       console.error("Sign in error:", err)
       setError("Something went wrong")

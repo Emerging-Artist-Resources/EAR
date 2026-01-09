@@ -59,29 +59,10 @@ export function useAdminAuth() {
       }
     }
 
-    // Initial auth check
     checkAuth()
-
-    // Subscribe to auth state changes to handle sign-in/sign-out events
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!isMounted) return
-
-      if (session?.user) {
-        setAuthLoading(true)
-        await checkAuth(session.user)
-      } else {
-        setAuthLoading(false)
-        setIsAuthorized(false)
-        setUserRole(null)
-        router.push("/auth/signin")
-      }
-    })
 
     return () => {
       isMounted = false
-      subscription.unsubscribe()
     }
   }, [router])
 
