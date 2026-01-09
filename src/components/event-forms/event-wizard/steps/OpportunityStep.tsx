@@ -36,7 +36,6 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
         <TextField form={form} name={"presentingIndividualOrOrganization"} label="Presenting Individual or Organization" required placeholder="Presenting individual or organization"/>
         <TextAreaField form={form} name={"opportunityDescription"} label="Opportunity Description" required placeholder="About the Opportunity"/>
         <TextAreaField form={form} name={"opportunityOffers"} label="What is offered to selected artists?" required placeholder="Include compensation, rehearsal/performance commitments, and any other relevant details."/>       
-        <TextAreaField form={form} name={"eligibility"} label="Eligibility" required placeholder="Eligibility, age, style, experience, etc."/>
         <TextAreaField form={form} name={"opportunityRequirements"} label="Application Requirements" required placeholder="What is required to apply?"/>       
         <TextField form={form} name={"opportunityLink"} label="Opportunity Submission Instructions" required placeholder="submission link or instructions"/>
         <SelectBlock form={form} options={[{ label: "Yes", value: "FEE" }, { label: "No", value: "NO_FEE" }]} name={"opportunityFee"} label="Is there an application fee?" required />
@@ -53,18 +52,13 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
       </Section>
 
       <Section title="Location">
-        {/* TODO: Do we want location for opportunities? */}
-        <LocationField form={form} addressName={"address"} venueName={"venueName"} placeIdName={"placeId"} latName={"lat"} lngName={"lng"} />
+        <LocationField form={form} addressName={"address"} venueName={"venueName"} placeIdName={"placeId"} latName={"lat"} lngName={"lng"} instructionsName={"instructions"} instructionsPlaceholder="Include directions for accessing the building or studio or any other relevant information."/>
       </Section>
 
       <Section title="Media Uploads">
-        <PhotoUploader form={form} name={"promoFiles"} label="Promotional Images" description="Upload up to 5 images" />
+        <PhotoUploader form={form} name={"promoFiles"} label="Promotional Images" description="Images are highly encouraged for marketing! Please upload up to 5 images." />
         <TextAreaField form={form} name={"credits"} label="Image Description / Photo Credit" placeholder="Describe the images and provide photo credit" rows={3}/>
-      </Section>
-
-      <Section title="Credits & Socials">
-        <TextAreaField form={form} name={"credits"} label="Credits" required placeholder="Who should we list as creator(s), performer(s), or presenting organization?"/>
-        <TextField form={form} name={"socialHandles"} label="Social Handles" required placeholder="@username"/>
+        <TextField form={form} name={"socialHandles"} label="Social Media Handles" placeholder="@..."/>
       </Section>
 
       <Section title="Additional Information">

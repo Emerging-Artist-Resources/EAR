@@ -2,7 +2,6 @@
 
 import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { useMemo, useState } from "react"
-import { Section } from "@/components/forms/blocks/Section"
 import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { EventFormData } from "@/lib/validations/events"
@@ -133,7 +132,7 @@ export function PieceOccurrencesPicker({ form, label, mode, enableSampleData = t
   }, [enableSampleData, hasValidExtras, mode, displayConfirmed, derivedOccurrences.length, useCustomDateTime])
 
   return (
-    <Section title={label}>
+    <>
       {flags.hasParentOccurrences && !useCustomDateTime && (
         <>
           <SelectBlock
@@ -209,6 +208,6 @@ export function PieceOccurrencesPicker({ form, label, mode, enableSampleData = t
           />
         </>
       )}
-    </Section>
+    </>
   )
 }

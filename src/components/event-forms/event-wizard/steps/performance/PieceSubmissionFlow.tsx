@@ -10,6 +10,8 @@ import { PieceDetails } from "@/components/forms/blocks/PieceDetails"
 import { EventSearch } from "@/components/forms/blocks/EventSearch"
 import { ListingFeeSection } from "./ListingFeeSection"
 import { OrganizerMediaSocials } from "./OrganizerMediaSocials"
+import { H2, H3, H4 } from "@/components/ui/typography"
+import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 
 export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormData> }) {
   const parentEventMode = useWatch({
@@ -46,14 +48,14 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
           <TextField
             form={form}
             name={"parentEventWebsite" as Path<EventFormData>}
-            label="Website (optional)"
+            label="Website"
             type="url"
             placeholder="https://..."
           />
           <TextField
             form={form}
             name={"parentEventContactEmail" as Path<EventFormData>}
-            label="Contact email (optional)"
+            label="Organizer's Contact Email"
             type="email"
             placeholder="contact@..."
           />
@@ -75,7 +77,7 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
         />
       </Section>
 
-      <Section title="Piece details">
+
         <PieceDetails
           form={form}
           index={0}
@@ -84,8 +86,11 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
           showOccurrences={false}
           occurrencesMode="CUSTOM_ONLY"
         />
+
+        <OrganizerMediaSocials form={form} />
+        <Section title="Additional Information">
+        <TextAreaField form={form} name={"notes"} label="Anything else you'd like us to know?" placeholder="Additional information" rows={4} />
       </Section>
-      <OrganizerMediaSocials form={form} />
       <ListingFeeSection form={form} />
     </>
   )

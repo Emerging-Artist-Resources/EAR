@@ -10,11 +10,12 @@ import { TextField } from "@/components/forms/blocks/TextField"
 export function OrganizerMediaSocials({ form }: { form: UseFormReturn<EventFormData> }) {
   return (
     <Section title="Images & Socials">
-      <PhotoUploader form={form} name={"event_promoFiles"} label="Promotional images" description="Upload up to 5 images" />
+      <PhotoUploader form={form} name={"event_promoFiles"} label="Promotional images" description="Images are highly encouraged for marketing! Please upload up to 5 images." />
       <TextAreaField
         form={form}
         name={"event_photo_credits"}
-        label="Image captions / photo credits"
+        label="Image Description / Photo Credit"
+        placeholder="Describe the images and provide photo credit"
         rows={3}
       />
       <TextField form={form} name={"event_social_handles"} label="Social Media Handles" placeholder="@..."                  />

@@ -55,11 +55,11 @@ export function AuditionStep({ form }: AuditionStepProps) {
       </Section>
 
       <Section title="Location">
-        <LocationField form={form} addressName={"address"} venueName={"venueName"} placeIdName={"placeId"} latName={"lat"} lngName={"lng"} instructionsName={"instructions"} instructionsPlaceholder="Include directions for accessing the building or studio."/>
+        <LocationField form={form} addressName={"address"} venueName={"venueName"} placeIdName={"placeId"} latName={"lat"} lngName={"lng"} instructionsName={"instructions"} instructionsNote="If you are not releasing the location, please explain when & how you are planning to inform the participants." instructionsPlaceholder="Include directions for accessing the building or studio."/>
       </Section>
 
       <Section title="Media Uploads">
-        <PhotoUploader form={form} name={"promoFiles"} label="Promotional Images" description="Upload up to 5 images" />
+        <PhotoUploader form={form} name={"promoFiles"} label="Promotional Images" description="Images are highly encouraged for marketing! Please upload up to 5 images." />
         <TextAreaField form={form} name={"credits"} label="Image Description / Photo Credit" placeholder="Describe the images and provide photo credit" rows={3}/>
         <TextField form={form} name={"socialHandles"} label="Social Media Handles" placeholder="@..."/>
       </Section>

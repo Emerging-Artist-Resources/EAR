@@ -194,13 +194,13 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
           form={form}
           name={"promoFiles"}
           label="Promotional Images"
-          description="Upload up to 5 images"
+          description="Images are highly encouraged for marketing! Please upload up to 5 images."
         />
         <TextAreaField
           form={form}
           name={"credits"}
-          label="Image Credits"
-          placeholder="Photo credit, image descriptions, etc."
+          label="Image Description / Photo Credit"
+          placeholder="Describe the images and provide photo credit"
           rows={3}
         />
         <TextField form={form} name={"socialHandles"} label="Social Media Handles" placeholder="@username" />

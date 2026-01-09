@@ -6,9 +6,6 @@ import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 
-import { OrganizerDatesTimes } from "@/components/event-forms/event-wizard/steps/performance/OrganizerDatesTimes"
-import { ListingFeeSection } from "./ListingFeeSection"
-import { OrganizerMediaSocials } from "./OrganizerMediaSocials"
 
 export function OrganizerSoloForm({ form }: { form: UseFormReturn<EventFormData> }) {
   return (
@@ -21,10 +18,6 @@ export function OrganizerSoloForm({ form }: { form: UseFormReturn<EventFormData>
           placeholder="Include names, roles, and associated work titles, if applicable."
         />
       </Section>
-
-      <OrganizerDatesTimes form={form} />
-      <OrganizerMediaSocials form={form} />
-      <ListingFeeSection form={form} />
     </>
   )
 }

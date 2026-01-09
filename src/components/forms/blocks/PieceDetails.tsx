@@ -30,7 +30,7 @@ export function PieceDetails({
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between">
         
         {canRemove && index > 0 && (
           <Button

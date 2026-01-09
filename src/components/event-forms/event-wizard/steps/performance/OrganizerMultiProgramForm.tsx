@@ -12,6 +12,7 @@ import { PieceDetails } from "@/components/forms/blocks/PieceDetails"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { ListingFeeSection } from "./ListingFeeSection"
 import { OrganizerMediaSocials } from "./OrganizerMediaSocials"
+import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 
 export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventFormData> }) {
   
@@ -102,8 +103,7 @@ export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventF
           </div>
         </div>
       </Section>
-      <OrganizerMediaSocials form={form} />
-      <ListingFeeSection form={form} />
+
     </>
   )
 }
