@@ -56,6 +56,9 @@ export function AdminProfileList({
                     {isNew && !isReviewed && (
                       <Badge variant="warning" size="sm">New</Badge>
                     )}
+                    {isReviewed && (
+                      <Badge variant="success" size="sm">Reviewed</Badge>
+                    )}
                   </div>
                 </td>
                 <td className="px-3 py-2">{profile.email || "—"}</td>
