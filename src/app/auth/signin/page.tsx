@@ -42,14 +42,17 @@ export default function SignIn() {
 
       let role = getUserRole(session.user)
       if (!role) {
-        role = await getUserRoleFromProfile(supabase, session.user.id)
+        try {
+          role = await getUserRoleFromProfile(supabase, session.user.id)
+        } catch (err) {
+          console.error("Error fetching user role:", err)
+        }
       }
       
       const redirectUrl = role === "ADMIN" ? "/admin" : "/announcement"
 
       setLoading(false)
       router.replace(redirectUrl)
-      router.refresh()
     } catch (err) {
       console.error("Sign in error:", err)
       setError("Something went wrong")

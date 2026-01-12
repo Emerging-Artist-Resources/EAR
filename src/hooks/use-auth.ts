@@ -27,9 +27,46 @@ export function useAuth() {
   const updateAuthState = useCallback(async () => {
     setState(prev => ({ ...prev, isLoading: true }))
     
-    const { data, error } = await supabase.auth.getUser()
+    try {
+      const { data, error } = await supabase.auth.getUser()
 
-    if (error || !data.user) {
+      if (error || !data.user) {
+        setState({
+          user: null,
+          role: undefined,
+          userName: null,
+          isAuthed: false,
+          isLoading: false,
+        })
+        return
+      }
+
+      const user = data.user
+      let role = getUserRole(user)
+      
+      if (!role) {
+        try {
+          role = await getUserRoleFromProfile(supabase, user.id)
+        } catch (err) {
+          console.error("Error fetching user role from profile:", err)
+        }
+      }
+      
+      const name =
+        (user.user_metadata?.name as string | undefined) ||
+        (user.user_metadata?.full_name as string | undefined) ||
+        user.email ||
+        null
+
+      setState({
+        user,
+        role,
+        userName: name,
+        isAuthed: true,
+        isLoading: false,
+      })
+    } catch (err) {
+      console.error("Error updating auth state:", err)
       setState({
         user: null,
         role: undefined,
@@ -37,29 +74,7 @@ export function useAuth() {
         isAuthed: false,
         isLoading: false,
       })
-      return
     }
-
-    const user = data.user
-    let role = getUserRole(user)
-    
-    if (!role) {
-      role = await getUserRoleFromProfile(supabase, user.id)
-    }
-    
-    const name =
-      (user.user_metadata?.name as string | undefined) ||
-      (user.user_metadata?.full_name as string | undefined) ||
-      user.email ||
-      null
-
-    setState({
-      user,
-      role,
-      userName: name,
-      isAuthed: true,
-      isLoading: false,
-    })
   }, [])
 
   useEffect(() => {
@@ -74,29 +89,44 @@ export function useAuth() {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!isMounted) return
 
-      if (session?.user) {
-        setState(prev => ({ ...prev, isLoading: true }))
-        
-        let role = getUserRole(session.user)
-        
-        if (!role) {
-          role = await getUserRoleFromProfile(supabase, session.user.id)
-        }
-        
-        const name =
-          (session.user.user_metadata?.name as string | undefined) ||
-          (session.user.user_metadata?.full_name as string | undefined) ||
-          session.user.email ||
-          null
+      try {
+        if (session?.user) {
+          setState(prev => ({ ...prev, isLoading: true }))
+          
+          let role = getUserRole(session.user)
+          
+          if (!role) {
+            try {
+              role = await getUserRoleFromProfile(supabase, session.user.id)
+            } catch (err) {
+              console.error("Error fetching user role from profile:", err)
+            }
+          }
+          
+          const name =
+            (session.user.user_metadata?.name as string | undefined) ||
+            (session.user.user_metadata?.full_name as string | undefined) ||
+            session.user.email ||
+            null
 
-        setState({
-          user: session.user,
-          role,
-          userName: name,
-          isAuthed: true,
-          isLoading: false,
-        })
-      } else {
+          setState({
+            user: session.user,
+            role,
+            userName: name,
+            isAuthed: true,
+            isLoading: false,
+          })
+        } else {
+          setState({
+            user: null,
+            role: undefined,
+            userName: null,
+            isAuthed: false,
+            isLoading: false,
+          })
+        }
+      } catch (err) {
+        console.error("Error in auth state change handler:", err)
         setState({
           user: null,
           role: undefined,
@@ -111,7 +141,7 @@ export function useAuth() {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [updateAuthState])
+  }, [])
 
   return { ...state, refresh: updateAuthState }
 }
