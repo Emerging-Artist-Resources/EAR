@@ -138,7 +138,7 @@ export function PieceOccurrencesPicker({ form, label, mode, enableSampleData = t
           <SelectBlock
             form={form}
             name={"selectedSlots" as Path<EventFormData>}
-            label="Select date(s) & time(s) for this piece"
+            label={label}
             required
             multiple
             options={derivedOccurrences.map((o) => ({ label: o.label, value: o.key }))}

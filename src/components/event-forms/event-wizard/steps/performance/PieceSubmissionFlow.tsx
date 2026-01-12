@@ -10,7 +10,6 @@ import { PieceDetails } from "@/components/forms/blocks/PieceDetails"
 import { EventSearch } from "@/components/forms/blocks/EventSearch"
 import { ListingFeeSection } from "./ListingFeeSection"
 import { OrganizerMediaSocials } from "./OrganizerMediaSocials"
-import { H2, H3, H4 } from "@/components/ui/typography"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 
 export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormData> }) {

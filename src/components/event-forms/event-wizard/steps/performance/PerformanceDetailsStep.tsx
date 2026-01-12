@@ -8,9 +8,6 @@ import { SelectBlock } from "@/components/forms/blocks/Select"
 
 import { OrganizerFlow } from "@/components/event-forms/event-wizard/steps/performance/OrganizerFlow"
 import { PieceSubmissionFlow } from "@/components/event-forms/event-wizard/steps/performance/PieceSubmissionFlow"
-import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
-import { ListingFeeSection } from "./ListingFeeSection"
-import { OrganizerMediaSocials } from "./OrganizerMediaSocials"
 
 type PerfType = "ORGANIZER" | "PIECE"
 
