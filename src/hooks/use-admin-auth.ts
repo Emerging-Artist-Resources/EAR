@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
-import { getUserRole, getUserRoleFromProfile } from "@/lib/authz"
+import { fetchUserRoleWithFallback } from "@/lib/authz"
+import { User } from "@supabase/supabase-js"
 
 export function useAdminAuth() {
   const router = useRouter()
@@ -30,11 +31,7 @@ export function useAdminAuth() {
 
         if (!isMounted) return
 
-        let role = getUserRole(user)
-        
-        if (!role) {
-          role = await getUserRoleFromProfile(supabase, user.id)
-        }
+        const role = await fetchUserRoleWithFallback(user as unknown as User, supabase)
 
         if (!isMounted) return
 
@@ -59,31 +56,12 @@ export function useAdminAuth() {
       }
     }
 
-    // Initial auth check
     checkAuth()
-
-    // Subscribe to auth state changes to handle sign-in/sign-out events
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!isMounted) return
-
-      if (session?.user) {
-        setAuthLoading(true)
-        await checkAuth(session.user)
-      } else {
-        setAuthLoading(false)
-        setIsAuthorized(false)
-        setUserRole(null)
-        router.push("/auth/signin")
-      }
-    })
 
     return () => {
       isMounted = false
-      subscription.unsubscribe()
     }
-  }, [router])
+  }, [])
 
   return { authLoading, userRole, isAuthorized }
 }

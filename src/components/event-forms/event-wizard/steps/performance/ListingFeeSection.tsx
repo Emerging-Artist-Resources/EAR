@@ -70,7 +70,7 @@ export function ListingFeeSection({ form }: { form: UseFormReturn<EventFormData>
             options={[
               { label: "Pay listing fee ($35)", value: "PAY_FEE" },
               { label: "Provide a complementary ticket", value: "PROVIDE_TICKET" },
-              { label: "Explain why I can't pay the fee or provide a ticket", value: "EXPLAIN" },
+              { label: "Fee & Comp Ticket Waiver Request", value: "EXPLAIN" },
             ]}
           />
 

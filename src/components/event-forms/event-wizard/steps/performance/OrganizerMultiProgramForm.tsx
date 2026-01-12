@@ -10,8 +10,6 @@ import { Section } from "@/components/forms/blocks/Section"
 import { Button } from "@/components/ui/button"
 import { PieceDetails } from "@/components/forms/blocks/PieceDetails"
 import { SelectBlock } from "@/components/forms/blocks/Select"
-import { ListingFeeSection } from "./ListingFeeSection"
-import { OrganizerMediaSocials } from "./OrganizerMediaSocials"
 
 export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventFormData> }) {
   
@@ -55,6 +53,7 @@ export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventF
         />
 
         {wantsToAddPiece && (
+          
           <div className="mt-6 space-y-6">
             {fields.map((field, index) => (
               <PieceDetails
@@ -101,8 +100,7 @@ export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventF
           </div>
         </div>
       </Section>
-      <OrganizerMediaSocials form={form} />
-      <ListingFeeSection form={form} />
+
     </>
   )
 }

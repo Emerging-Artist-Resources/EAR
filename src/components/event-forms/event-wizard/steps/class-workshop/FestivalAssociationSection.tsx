@@ -49,7 +49,7 @@ export function FestivalAssociationSection({
           <TextField
             form={form}
             name={"placeholderContactEmail"}
-            label="Contact Email"
+            label="Organizer Contact Email"
             placeholder="name@email.com"
           />
           <TextField

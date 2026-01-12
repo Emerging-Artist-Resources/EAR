@@ -37,7 +37,6 @@ export function PerformanceDetailsStep({ form }: PerformanceDetailsStepProps) {
       {perfType === "ORGANIZER" && <OrganizerFlow form={form} />}
       {perfType === "PIECE" && <PieceSubmissionFlow form={form} />}
 
-      
     </Section>
   )
 }

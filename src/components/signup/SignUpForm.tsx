@@ -4,16 +4,16 @@ import { UseFormReturn } from "react-hook-form"
 import { SignUpBasicInfo } from "@/components/signup/BasicInfo"
 import { SignUpWrapUp } from "@/components/signup/WrapUp"
 import { SignUpEligibility } from "@/components/signup/Eligibility"
-import { EventFormData } from "@/lib/validations/events"
+import { SignupFormData } from "@/lib/validations/signup"
 import { Button } from "@/components/ui/button"
 
 interface SignUpFormProps {
-    form: UseFormReturn<EventFormData>
-    onSubmit?: (data: EventFormData) => void | Promise<void>
+    form: UseFormReturn<SignupFormData>
+    onSubmit?: (data: SignupFormData) => void | Promise<void>
 }
 
 export function SignUpForm({ form, onSubmit }: SignUpFormProps) {
-  const handleSubmit = async (data: EventFormData) => {
+  const handleSubmit = async (data: SignupFormData) => {
     if (onSubmit) {
       await onSubmit(data)
     } else {

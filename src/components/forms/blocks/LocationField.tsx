@@ -16,6 +16,7 @@ interface LocationFieldProps<T extends Record<string, unknown>> {
   label?: string
   note?: string
   instructionsLabel?: string
+  instructionsNote?: string
   instructionsPlaceholder?: string
   required?: boolean
   showAsterisk?: boolean
@@ -33,6 +34,7 @@ export function LocationField<T extends Record<string, unknown>>({
   label = "Location",
   note,
   instructionsLabel = "Location Instructions",
+  instructionsNote,
   instructionsPlaceholder = "Details to help attendees find the location",
   required,
   showAsterisk = true,
@@ -224,7 +226,10 @@ export function LocationField<T extends Record<string, unknown>>({
 
       {instructionsName && (
         <div className="mt-2">
-          <label className="block text-sm font-medium text-gray-700">{instructionsLabel}</label>
+          <div className="mb-1">
+            <label className="block text-sm font-medium text-gray-700">{instructionsLabel}</label>
+            {instructionsNote && <p className="mt-1 text-sm text-gray-500">{instructionsNote}</p>}
+          </div>
           <Input
             {...register(instructionsName as never)}
             placeholder={instructionsPlaceholder}

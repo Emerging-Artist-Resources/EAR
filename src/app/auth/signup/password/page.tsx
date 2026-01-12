@@ -38,7 +38,7 @@ export default function SignUpPasswordPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <Alert variant="destructive">{error}</Alert>
+        <Alert variant="error">{error}</Alert>
       )}
       <SignUpPassword form={form as unknown as never} />
       <div className="flex justify-between">

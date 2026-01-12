@@ -1,6 +1,6 @@
 "use server"
 
-import { signupFormSchema, type SignupFormData } from "@/lib/validations/signup"
+import { signupFormSchema } from "@/lib/validations/signup"
 import { createProfileRepo, createEligibilitySubmissionRepo } from "./repository-signup"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 

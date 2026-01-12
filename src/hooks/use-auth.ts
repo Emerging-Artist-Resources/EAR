@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
-import { getUserRole, getUserRoleFromProfile } from "@/lib/authz"
+import { getUserRole, extractUserName } from "@/lib/authz"
 
 export interface AuthState {
   user: User | null
@@ -11,10 +11,29 @@ export interface AuthState {
   isLoading: boolean
 }
 
-/**
- * Custom hook for managing authentication state
- * Provides consistent auth state across the application
- */
+const updateState = (session: { user: User } | null, setState: (state: AuthState) => void) => {
+  if (session?.user) {
+    const role = getUserRole(session.user)
+    const name = extractUserName(session.user)
+    
+    setState({
+      user: session.user,
+      role,
+      userName: name,
+      isAuthed: true,
+      isLoading: false,
+    })
+  } else {
+    setState({
+      user: null,
+      role: undefined,
+      userName: null,
+      isAuthed: false,
+      isLoading: false,
+    })
+  }
+}
+
 export function useAuth() {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -24,94 +43,48 @@ export function useAuth() {
     isLoading: true,
   })
 
-  const updateAuthState = useCallback(async () => {
-    setState(prev => ({ ...prev, isLoading: true }))
-    
-    const { data, error } = await supabase.auth.getUser()
-
-    if (error || !data.user) {
-      setState({
-        user: null,
-        role: undefined,
-        userName: null,
-        isAuthed: false,
-        isLoading: false,
-      })
-      return
-    }
-
-    const user = data.user
-    let role = getUserRole(user)
-    
-    if (!role) {
-      role = await getUserRoleFromProfile(supabase, user.id)
-    }
-    
-    const name =
-      (user.user_metadata?.name as string | undefined) ||
-      (user.user_metadata?.full_name as string | undefined) ||
-      user.email ||
-      null
-
-    setState({
-      user,
-      role,
-      userName: name,
-      isAuthed: true,
-      isLoading: false,
-    })
-  }, [])
-
   useEffect(() => {
     let isMounted = true
+    let authStateChangeHandled = false
 
-    // Initial auth check
-    updateAuthState()
-
-    // Subscribe to auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!isMounted) return
-
-      if (session?.user) {
-        setState(prev => ({ ...prev, isLoading: true }))
-        
-        let role = getUserRole(session.user)
-        
-        if (!role) {
-          role = await getUserRoleFromProfile(supabase, session.user.id)
-        }
-        
-        const name =
-          (session.user.user_metadata?.name as string | undefined) ||
-          (session.user.user_metadata?.full_name as string | undefined) ||
-          session.user.email ||
-          null
-
-        setState({
-          user: session.user,
-          role,
-          userName: name,
-          isAuthed: true,
-          isLoading: false,
-        })
-      } else {
-        setState({
-          user: null,
-          role: undefined,
-          userName: null,
-          isAuthed: false,
-          isLoading: false,
-        })
-      }
+      authStateChangeHandled = true
+      updateState(session, setState)
     })
+
+    const getSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (!isMounted) return
+
+        if (!authStateChangeHandled) {
+          updateState(session, setState)
+        }
+      } catch (err) {
+        console.error("Error getting session:", err)
+        if (isMounted && !authStateChangeHandled) {
+          setState({
+            user: null,
+            role: undefined,
+            userName: null,
+            isAuthed: false,
+            isLoading: false,
+          })
+        }
+      }
+    }
+
+    getSession()
 
     return () => {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [updateAuthState])
+  }, [])
 
-  return { ...state, refresh: updateAuthState }
+  return state
 }

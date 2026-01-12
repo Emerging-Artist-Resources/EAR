@@ -30,12 +30,13 @@ export function UserDropdown({ userName, isMobile = false }: UserDropdownProps) 
 
   const handleSignOut = async () => {
     setIsOpen(false)
-    const { error } = await supabase.auth.signOut()
-    if (error) {
-      console.error("Sign out error:", error)
-      return
+    try {
+      await supabase.auth.signOut()
+      router.push("/auth/signin")
+    } catch (err) {
+      console.error("Sign out error:", err)
+      router.push("/auth/signin")
     }
-    window.location.href = "/auth/signin"
   }
 
   return (
