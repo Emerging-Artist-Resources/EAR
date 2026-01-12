@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
-import { getUserRole, getUserRoleFromProfile } from "@/lib/authz"
+import { fetchUserRoleWithFallback } from "@/lib/authz"
+import { User } from "@supabase/supabase-js"
 
 export function useAdminAuth() {
   const router = useRouter()
@@ -30,11 +31,7 @@ export function useAdminAuth() {
 
         if (!isMounted) return
 
-        let role = getUserRole(user)
-        
-        if (!role) {
-          role = await getUserRoleFromProfile(supabase, user.id)
-        }
+        const role = await fetchUserRoleWithFallback(user as unknown as User, supabase)
 
         if (!isMounted) return
 
@@ -64,7 +61,7 @@ export function useAdminAuth() {
     return () => {
       isMounted = false
     }
-  }, [router])
+  }, [])
 
   return { authLoading, userRole, isAuthorized }
 }

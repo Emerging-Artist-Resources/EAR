@@ -1,12 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
 
 import { supabase } from "@/lib/supabase/client"
-import { getUserRole, getUserRoleFromProfile } from "@/lib/authz"
 import { H2, Text } from "@/components/ui/typography"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -14,6 +13,7 @@ import { Alert } from "@/components/ui/alert"
 
 export default function SignIn() {
   const router = useRouter()
+  const isMountedRef = useRef(true)
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -29,34 +29,35 @@ export default function SignIn() {
     setError("")
 
     try {
-      const {
-        data: { session },
-        error: signInError,
-      } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      })
 
-      if (signInError || !session) {
-        setError("Invalid credentials")
-        setLoading(false)
+      if (signInError) {
+        if (isMountedRef.current) {
+          setError(signInError.message || "Invalid credentials")
+          setLoading(false)
+        }
         return
       }
 
-      let role = getUserRole(session.user)
-      if (!role) {
-        try {
-          role = await getUserRoleFromProfile(supabase, session.user.id)
-        } catch (err) {
-          console.error("Error fetching user role:", err)
+      if (!isMountedRef.current) return
+
+      if (data?.session) {
+        router.replace("/announcement")
+      } else {
+        if (isMountedRef.current) {
+          setError("Sign in failed. Please try again.")
+          setLoading(false)
         }
       }
-      
-      const redirectUrl = role === "ADMIN" ? "/admin" : "/announcement"
-
-      setLoading(false)
-      router.replace(redirectUrl)
     } catch (err) {
       console.error("Sign in error:", err)
-      setError("Something went wrong")
-      setLoading(false)
+      if (isMountedRef.current) {
+        setError("Something went wrong. Please try again.")
+        setLoading(false)
+      }
     }
   }
 

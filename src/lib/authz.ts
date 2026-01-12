@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js"
+import type { SupabaseClient, User } from "@supabase/supabase-js"
 
 export function requireRole(role: 'ADMIN' | 'REVIEWER' | 'EDITOR' | 'USER' | undefined, expected: 'ADMIN' | 'REVIEWER' | 'EDITOR' | 'USER') {
   return role === expected
@@ -32,4 +32,28 @@ export async function getUserRoleFromProfile(
   } catch {
     return undefined
   }
+}
+
+export async function fetchUserRoleWithFallback(
+  user: User,
+  supabase: SupabaseClient
+): Promise<"ADMIN" | "REVIEWER" | "EDITOR" | "USER" | undefined> {
+  let role = getUserRole(user)
+  if (!role) {
+    try {
+      role = await getUserRoleFromProfile(supabase, user.id)
+    } catch (err) {
+      console.error("Error fetching user role from profile:", err)
+    }
+  }
+  return role
+}
+
+export function extractUserName(user: User): string | null {
+  return (
+    (user.user_metadata?.name as string | undefined) ||
+    (user.user_metadata?.full_name as string | undefined) ||
+    user.email ||
+    null
+  )
 }

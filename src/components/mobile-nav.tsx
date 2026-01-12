@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { VscAccount } from "react-icons/vsc"
@@ -12,6 +13,7 @@ interface MobileNavProps {
 }
 
 export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavProps) {
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [isAuthed, setIsAuthed] = useState(false)
   const [name, setName] = useState<string | null>(null)
@@ -27,7 +29,7 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
       setName(typeof display === 'string' ? display : null)
     })()
     return () => { mounted = false }
-  }, [supabase])
+  }, [])
 
   const publicNavigation = [
     { name: "Calendar", href: "/calendar" },
@@ -124,7 +126,7 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
                   
                     <button
                       onClick={() => {
-                        window.location.href = "/profile"
+                        router.push("/profile")
                         setIsOpen(false)
                       }}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -135,11 +137,13 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
                     <Button
                       onClick={async () => {
                         setIsOpen(false)
-                        const { error } = await supabase.auth.signOut()
-                        if (error) {
-                          console.error("Sign out error:", error)
+                        try {
+                          await supabase.auth.signOut()
+                          router.push("/auth/signin")
+                        } catch (err) {
+                          console.error("Sign out error:", err)
+                          router.push("/auth/signin")
                         }
-                        window.location.href = "/auth/signin"
                       }}
                       variant="outline"
                       className="w-full justify-start text-base"
