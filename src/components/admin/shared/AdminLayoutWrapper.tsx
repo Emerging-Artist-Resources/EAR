@@ -28,7 +28,7 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
   const isAdminPage = pathname?.startsWith("/admin")
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] bg-[var(--gray-50)]">
+    <div className="flex min-h-[calc(100vh-4rem)]">
       <AdminSidebar />
       <main className="flex-1 min-w-0 overflow-auto">
         {isAdminPage ? (

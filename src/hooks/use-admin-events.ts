@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { AdminEventItem, AdminStatus } from "@/components/admin/events/types"
+import { useAuth } from "@/hooks/use-auth"
 
 interface UseAdminEventsOptions {
   filter: AdminStatus
@@ -8,6 +9,7 @@ interface UseAdminEventsOptions {
 }
 
 export function useAdminEvents({ filter, dateFrom, dateTo }: UseAdminEventsOptions) {
+  const { isAuthed } = useAuth()
   const [items, setItems] = useState<AdminEventItem[]>([])
   const [counts, setCounts] = useState<Record<"pending" | "approved" | "rejected", number>>({
     pending: 0,
@@ -17,6 +19,13 @@ export function useAdminEvents({ filter, dateFrom, dateTo }: UseAdminEventsOptio
   const [loading, setLoading] = useState(true)
 
   const fetchEvents = useCallback(async () => {
+    if (!isAuthed) {
+      setLoading(false)
+      setItems([])
+      setCounts({ pending: 0, approved: 0, rejected: 0 })
+      return
+    }
+
     setLoading(true)
     try {
       const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
@@ -36,7 +45,6 @@ export function useAdminEvents({ filter, dateFrom, dateTo }: UseAdminEventsOptio
       setCounts({ pending: p.length, approved: a.length, rejected: r.length })
       let current = filter === "PENDING" ? p : filter === "APPROVED" ? a : r
       
-      // date range filter on submitted_at
       if (dateFrom || dateTo) {
         const fromTime = dateFrom ? new Date(dateFrom).getTime() : -Infinity
         const toTime = dateTo ? new Date(dateTo).getTime() + 24 * 60 * 60 * 1000 - 1 : Infinity
@@ -51,7 +59,7 @@ export function useAdminEvents({ filter, dateFrom, dateTo }: UseAdminEventsOptio
     } finally {
       setLoading(false)
     }
-  }, [filter, dateFrom, dateTo])
+  }, [filter, dateFrom, dateTo, isAuthed])
 
   useEffect(() => {
     fetchEvents()

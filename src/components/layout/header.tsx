@@ -53,7 +53,6 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
           <MobileNav 
-            userRole={userRole} 
             onSubmitPerformance={onSubmitPerformance}
           />
         </div>
