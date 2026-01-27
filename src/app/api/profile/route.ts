@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
-import { getProfileRepo } from "@/features/profile/server/repository";
+import { NextRequest, NextResponse } from "next/server";
+import { getProfileRepo, updateProfileRepo } from "@/features/profile/server/repository";
 import { getAuthenticatedUser } from "@/lib/auth-helpers";
+import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api-utils";
+import { updateProfileSchema } from "@/lib/validations/profile";
 
 export async function GET() {
   try {
@@ -22,3 +24,20 @@ export async function GET() {
   }
 }
 
+export async function PATCH(request: NextRequest) {
+  try {
+    const auth = await getAuthenticatedUser();
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const updates = validateRequestBody(body, updateProfileSchema);
+
+    const updatedProfile = await updateProfileRepo(auth.user.id, updates);
+    
+    return createSuccessResponse(updatedProfile);
+  } catch (error) {
+    return handleApiError(error);
+  }
+}

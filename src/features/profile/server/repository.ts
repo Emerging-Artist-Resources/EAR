@@ -76,6 +76,39 @@ export async function getProfileRepo(userId: string): Promise<ProfileData | null
   return data;
 }
 
+export async function updateProfileRepo(
+  userId: string,
+  updates: Partial<ProfileData>
+): Promise<ProfileData> {
+  const supabase = await getSupabaseServerClient();
+  
+  const updateData: Record<string, unknown> = {};
+  
+  if (updates.name !== undefined) updateData.name = updates.name || null;
+  if (updates.email !== undefined) updateData.email = updates.email || null;
+  if (updates.pronouns !== undefined) updateData.pronouns = updates.pronouns || null;
+  if (updates.website !== undefined) updateData.website = updates.website || null;
+  if (updates.organization_name !== undefined) updateData.organization_name = updates.organization_name || null;
+  if (updates.location_label !== undefined) updateData.location_label = updates.location_label || null;
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update(updateData)
+    .eq("id", userId)
+    .select("id, name, email, pronouns, website, organization_name, location_label, artist_status")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    throw new Error("Profile not found");
+  }
+
+  return data;
+}
+
 export async function getEligibilitySubmissionsRepo(userId: string): Promise<EligibilitySubmission[]> {
   try {
     const supabase = await getSupabaseServerClient();

@@ -22,7 +22,11 @@ export async function middleware(req: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  await supabase.auth.getSession()
 
   const { pathname } = req.nextUrl
   if (pathname.startsWith("/admin")) {

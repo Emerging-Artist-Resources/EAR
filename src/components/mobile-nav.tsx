@@ -1,42 +1,36 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { VscAccount } from "react-icons/vsc"
+import { useAuth } from "@/hooks/use-auth"
 
 interface MobileNavProps {
-  userRole?: string
   onSubmitPerformance?: () => void
 }
 
-export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavProps) {
-  const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false)
-  const [isAuthed, setIsAuthed] = useState(false)
-  const [name, setName] = useState<string | null>(null)
+const isProtectedRoute = (pathname: string): boolean => {
+  return pathname.startsWith("/admin") || 
+         pathname.startsWith("/dashboard") || 
+         pathname.startsWith("/profile") || 
+         pathname.startsWith("/forms")
+}
 
-  useEffect(() => {
-    let mounted = true
-    ;(async () => {
-      const { data } = await supabase.auth.getUser()
-      if (!mounted) return
-      const u = data.user as { email?: string; user_metadata?: Record<string, unknown> } | null
-      setIsAuthed(!!u)
-      const display = (u?.user_metadata?.name as unknown) ?? u?.email ?? null
-      setName(typeof display === 'string' ? display : null)
-    })()
-    return () => { mounted = false }
-  }, [])
+export default function MobileNav({ onSubmitPerformance }: MobileNavProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const [isOpen, setIsOpen] = useState(false)
+  const { isAuthed, userName, role } = useAuth()
 
   const publicNavigation = [
     { name: "Calendar", href: "/calendar" },
     { name: "Announcements", href: "/announcement" },
   ]
 
-  const adminNavigation = userRole === "ADMIN" ? [
+  const adminNavigation = role === "ADMIN" ? [
     { name: "Analytics", href: "/admin/analytics" },
     { name: "Review Listings", href: "/admin" },
     { name: "Manage Notifications", href: "/admin/notifications" },
@@ -121,7 +115,7 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
                 <>
                   <div className="border-t border-gray-200 pt-3 mt-3">
                     <p className="px-3 py-2 text-sm text-gray-500">
-                      Welcome, {name}
+                      Welcome, {userName || "User"}
                     </p>
                   
                     <button
@@ -137,12 +131,25 @@ export default function MobileNav({ userRole, onSubmitPerformance }: MobileNavPr
                     <Button
                       onClick={async () => {
                         setIsOpen(false)
+                        
                         try {
-                          await supabase.auth.signOut()
-                          router.push("/auth/signin")
+                          const { error } = await supabase.auth.signOut()
+                          
+                          if (error) {
+                            console.error("Sign out error:", error)
+                            return
+                          }
+                          
+                          await new Promise(resolve => setTimeout(resolve, 100))
+                          
+                          const currentPath = pathname || (typeof window !== "undefined" ? window.location.pathname : null)
+                          const shouldRedirect = currentPath && isProtectedRoute(currentPath)
+                          
+                          if (shouldRedirect) {
+                            router.replace("/announcement")
+                          }
                         } catch (err) {
                           console.error("Sign out error:", err)
-                          router.push("/auth/signin")
                         }
                       }}
                       variant="outline"

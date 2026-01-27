@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card"
 import {  H3, Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { apiGet } from "@/lib/fetch-utils"
+import { apiGet, apiPatch } from "@/lib/fetch-utils"
 
 interface ProfileData {
   id: string;
@@ -21,21 +21,52 @@ export const MyInfoTab: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [draft, setDraft] = useState<ProfileData | null>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  const fetchProfile = async () => {
+    try {
+      const data = await apiGet<ProfileData>("/api/profile")
+      setProfile(data)
+      setDraft(data)
+    } catch (error) {
+      console.error("Error fetching profile:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    async function fetchProfile() {
-      try {
-        const data = await apiGet<ProfileData>("/api/profile")
-        setProfile(data)
-        setDraft(data)
-      } catch (error) {
-        console.error("Error fetching profile:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
     fetchProfile()
   }, [])
+
+  const handleSave = async () => {
+    if (!draft) return
+
+    setSaving(true)
+    setSaveError(null)
+
+    try {
+      const updates: Partial<ProfileData> = {
+        name: draft.name,
+        email: draft.email,
+        pronouns: draft.pronouns,
+        website: draft.website,
+        organization_name: draft.organization_name,
+        location_label: draft.location_label,
+      }
+
+      const updatedProfile = await apiPatch<ProfileData>("/api/profile", updates)
+      setProfile(updatedProfile)
+      setDraft(updatedProfile)
+      setIsEditing(false)
+    } catch (error) {
+      console.error("Error saving profile:", error)
+      setSaveError(error instanceof Error ? error.message : "Failed to save profile")
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const Field = ({ label, value }: { label: string; value?: string | null }) => (
     <div className="space-y-1">
@@ -83,25 +114,31 @@ export const MyInfoTab: React.FC = () => {
           ) : (
             <div className="flex gap-2">
               <Button
-                onClick={() => {
-                  setProfile(draft)
-                  setIsEditing(false)
-                }}
+                onClick={handleSave}
+                disabled={saving}
               >
-                Save Changes
+                {saving ? "Saving..." : "Save Changes"}
               </Button>
               <Button
                 variant="ghost"
                 onClick={() => {
                   setDraft({ ...profile })
                   setIsEditing(false)
+                  setSaveError(null)
                 }}
+                disabled={saving}
               >
                 Cancel
               </Button>
             </div>
           )}
         </div>
+
+        {saveError && (
+          <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+            {saveError}
+          </div>
+        )}
 
         {!isEditing ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

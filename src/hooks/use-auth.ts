@@ -11,15 +11,36 @@ export interface AuthState {
   isLoading: boolean
 }
 
-const updateState = (session: { user: User } | null, setState: (state: AuthState) => void) => {
+const fetchProfileName = async (userId: string): Promise<string | null> => {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("name")
+      .eq("id", userId)
+      .single()
+
+    if (error || !data) {
+      return null
+    }
+
+    return data.name || null
+  } catch {
+    return null
+  }
+}
+
+const updateState = async (session: { user: User } | null, setState: (state: AuthState) => void) => {
   if (session?.user) {
     const role = getUserRole(session.user)
-    const name = extractUserName(session.user)
+    const fallbackName = extractUserName(session.user)
+    
+    const profileName = await fetchProfileName(session.user.id)
+    const userName = profileName || fallbackName
     
     setState({
       user: session.user,
       role,
-      userName: name,
+      userName,
       isAuthed: true,
       isLoading: false,
     })
