@@ -16,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
   showSubmitButton = false,
   onSubmitPerformance,
 }) => {
-  const { isAuthed, userName, role: userRole, isLoading } = useAuth()
+  const { isAuthed, userName, isLoading } = useAuth()
 
   return (
     <nav className="bg-white shadow">
