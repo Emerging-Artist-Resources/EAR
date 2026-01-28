@@ -204,6 +204,7 @@ const auditionFields = z.object({
   auditionFee: z.enum(["FEE", "NO_FEE"]).optional(),
   auditionFeeAmount: z.string().optional(),
   auditionLink: z.string().url("Invalid URL").optional(),
+  auditionInstructions: z.string().optional(),
   /**
    * Listing fee fields (only shown if auditionFee === "FEE")
    * Established artists: $50
@@ -298,6 +299,7 @@ const classFields = z
       )
       .optional(),
     classPrices: z.string().optional(),
+    classPrice: z.string().optional(),
     classLink: z.string().url("Invalid URL").optional(),
     classDescription: z.string().max(2000).optional(),
     classCreditInfo: z.string().optional(),
@@ -349,6 +351,12 @@ const classFields = z
 
     // Association logic (only for CLASS; workshops can stand alone)
     if (data.classWorkshopType === "CLASS") {
+      if (!data.classPrice) {
+        ctx.addIssue({ code: "custom", path: ["classPrice"], message: "Class price is required" })
+      }
+      if (!data.classLink) {
+        ctx.addIssue({ code: "custom", path: ["classLink"], message: "Registration link is required" })
+      }
       const assoc = data.isPartOfFestivalOrWorkshop ?? "NO"
       if (assoc === "YES") {
         const hasParentId = !!data.parentEventId

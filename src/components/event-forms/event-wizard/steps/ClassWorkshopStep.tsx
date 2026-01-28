@@ -97,8 +97,9 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
         <TextField
           form={form}
           name={"classPrice"}
-          label="Class Price"
+          label={isWorkshop ? "Workshop Price" : "Class Price"}
           placeholder="e.g., $30, Free, $20-40 sliding scale"
+          required={!isWorkshop}
         />
 
         <TextField
@@ -106,12 +107,13 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
           name={"classLink"}
           label="Registration Link"
           placeholder="Link or signup instructions"
+          required={!isWorkshop}
         />
 
         <TextAreaField
           form={form}
           name={"shortDescription"}
-          label="Class Description"
+          label={isWorkshop ? "Workshop Description" : "Class Description"}
           required
           rows={3}
         />

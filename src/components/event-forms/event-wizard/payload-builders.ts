@@ -112,7 +112,7 @@ export function buildAuditionPayload(
       about_project: data.aboutProject ?? "",
       eligibility: data.eligibility ?? "",
       compensation: data.compensation ?? "",
-      audition_link: data.auditionLink ?? "",
+      audition_link: data.auditionInstructions ?? data.auditionLink ?? "",
     },
     occurrences,
   }
@@ -169,12 +169,14 @@ export function buildClassPayload(
     }))
   const occurrences = [...primaryList, ...extraOcc]
 
-  const pricesArray = data.classPrices
-    ? String(data.classPrices)
-        .split(";")
-        .map((s) => s.trim())
-        .filter(Boolean)
-    : []
+  const pricesArray = data.classPrice
+    ? [String(data.classPrice).trim()].filter(Boolean)
+    : data.classPrices
+      ? String(data.classPrices)
+          .split(";")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : []
 
   return {
     type: "class",
