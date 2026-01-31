@@ -18,15 +18,19 @@ export type AdminEventDetail = {
   contact_name?: string
   pronouns?: string | null
   contact_email?: string
-  org_name?: string | null
-  org_website?: string | null
+  company?: string | null
+  company_website?: string | null
+  org_name?: string | null // Legacy field name
+  org_website?: string | null // Legacy field name
   address?: string | null
   borough?: string | null
-  social_handles?: Record<string, string> | null
+  social_handles?: string | Record<string, string> | null
   notes?: string | null
   meta?: Record<string, unknown> | null
-  event_occurrences?: Array<{ id: string; starts_at_utc: string; tz: string }>
-  event_photos?: Array<{ id: string; path: string; credit?: string | null }>
+  event_occurrences?: Array<{ id: string; starts_at_utc: string; tz: string; occurrence_type?: string }>
+  listing_occurrences?: Array<{ id: string; starts_at_utc: string; tz: string; occurrence_type?: string }>
+  event_photos?: Array<{ id: string; path: string; credit?: string | null; sort_order?: number; url?: string | null }>
+  listing_photos?: Array<{ id: string; path: string; credit?: string | null; sort_order?: number; url?: string | null }>
   performance_details?: {
     show_name?: string
     short_description?: string

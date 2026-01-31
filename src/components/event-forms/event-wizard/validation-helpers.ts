@@ -45,6 +45,40 @@ export async function validateStep2(
     }
   }
 
+  if (eventType === "AUDITION") {
+    const occurrences = (form.getValues("occurrences") ?? []) as Array<{
+      date?: string
+      times?: Array<{ time?: string }>
+    }>
+    const deadlineOccurrences = (form.getValues("deadlineOccurrences") ?? []) as Array<{
+      date?: string
+      times?: Array<{ time?: string }>
+    }>
+    
+    const hasOccurrences = Array.isArray(occurrences) &&
+      occurrences.some(
+        (d) =>
+          d?.date && d.date.trim() !== "" &&
+          Array.isArray(d?.times) &&
+          d.times.some((t) => t?.time && t.time.trim() !== "")
+      )
+    
+    const hasDeadlineOccurrences = Array.isArray(deadlineOccurrences) &&
+      deadlineOccurrences.some(
+        (d) =>
+          d?.date && d.date.trim() !== "" &&
+          Array.isArray(d?.times) &&
+          d.times.some((t) => t?.time && t.time.trim() !== "")
+      )
+    
+    if (!hasOccurrences) {
+      return { isValid: false, message: "Please add at least one audition date & time" }
+    }
+    if (!hasDeadlineOccurrences) {
+      return { isValid: false, message: "Please add at least one deadline date & time" }
+    }
+  }
+
   return { isValid: true }
 }
 

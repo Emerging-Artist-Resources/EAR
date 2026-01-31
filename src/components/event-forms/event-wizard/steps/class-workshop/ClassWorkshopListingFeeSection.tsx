@@ -30,46 +30,46 @@ export function ClassWorkshopListingFeeSection({
     ? "EMERGING" 
     : undefined
 
-  const classArtistType = useWatch({
+  const artistTypeField = useWatch({
     control: form.control,
-    name: "classArtistType" as Path<EventFormData>,
+    name: "artistType" as Path<EventFormData>,
   }) as "ESTABLISHED" | "EMERGING" | undefined
 
-  const classListingFeeOption = useWatch({
+  const listingFeeOption = useWatch({
     control: form.control,
-    name: "classListingFeeOption" as Path<EventFormData>,
+    name: "listingFeeOption" as Path<EventFormData>,
   }) as "PAY_FEE" | "PROVIDE_GUEST_SPOT" | "EXPLAIN" | undefined
 
   // Set artistType in form based on profile eligibility
   useEffect(() => {
     if (artistType && !isLoading) {
-      form.setValue("classArtistType" as Path<EventFormData>, artistType as unknown as never)
+      form.setValue("artistType" as Path<EventFormData>, artistType as unknown as never)
     }
   }, [artistType, isLoading, form])
 
-  const feeCalculation = calculateClassFees(isWorkshop, occurrenceCount, classArtistType || artistType)
+  const feeCalculation = calculateClassFees(isWorkshop, occurrenceCount, artistTypeField || artistType)
 
   useEffect(() => {
-    if (classArtistType === "ESTABLISHED") {
-      form.setValue("classListingFeeOption" as Path<EventFormData>, undefined as unknown as never)
-      form.setValue("classListingFeeExplanation" as Path<EventFormData>, "" as unknown as never)
+    if (artistTypeField === "ESTABLISHED") {
+      form.setValue("listingFeeOption" as Path<EventFormData>, undefined as unknown as never)
+      form.setValue("listingFeeExplanation" as Path<EventFormData>, "" as unknown as never)
       form.setValue("guestSpotInfo" as Path<EventFormData>, "" as unknown as never)
-      form.clearErrors(["classListingFeeOption", "classListingFeeExplanation", "guestSpotInfo"] as unknown as never)
+      form.clearErrors(["listingFeeOption", "listingFeeExplanation", "guestSpotInfo"] as unknown as never)
     }
-  }, [classArtistType, form.setValue, form.clearErrors])
+  }, [artistTypeField, form.setValue, form.clearErrors])
 
   useEffect(() => {
-    if (classListingFeeOption !== "PROVIDE_GUEST_SPOT") {
+    if (listingFeeOption !== "PROVIDE_GUEST_SPOT") {
       form.setValue("guestSpotInfo" as Path<EventFormData>, "" as unknown as never)
       form.clearErrors(["guestSpotInfo"] as unknown as never)
     }
-    if (classListingFeeOption !== "EXPLAIN") {
-      form.setValue("classListingFeeExplanation" as Path<EventFormData>, "" as unknown as never)
-      form.clearErrors(["classListingFeeExplanation"] as unknown as never)
+    if (listingFeeOption !== "EXPLAIN") {
+      form.setValue("listingFeeExplanation" as Path<EventFormData>, "" as unknown as never)
+      form.clearErrors(["listingFeeExplanation"] as unknown as never)
     }
-  }, [classListingFeeOption, form.setValue, form.clearErrors])
+  }, [listingFeeOption, form.setValue, form.clearErrors])
 
-  const effectiveArtistType = classArtistType || artistType
+  const effectiveArtistType = artistTypeField || artistType
 
   return (
     <ListingFeeDisplay
@@ -103,11 +103,11 @@ export function ClassWorkshopListingFeeSection({
         </div>
       )}
 
-      {classArtistType === "EMERGING" && feeCalculation && (
+      {artistTypeField === "EMERGING" && feeCalculation && (
         <div className="mt-4 space-y-4">
           <SelectBlock
             form={form}
-            name={"classListingFeeOption" as Path<EventFormData>}
+            name={"listingFeeOption" as Path<EventFormData>}
             label="How would you like to handle the listing fee?"
             required
             options={[
@@ -123,7 +123,7 @@ export function ClassWorkshopListingFeeSection({
             ]}
           />
 
-          {classListingFeeOption === "PROVIDE_GUEST_SPOT" && (
+          {listingFeeOption === "PROVIDE_GUEST_SPOT" && (
             <TextAreaField
               form={form}
               name={"guestSpotInfo" as Path<EventFormData>}
@@ -134,10 +134,10 @@ export function ClassWorkshopListingFeeSection({
             />
           )}
 
-          {classListingFeeOption === "EXPLAIN" && (
+          {listingFeeOption === "EXPLAIN" && (
             <TextAreaField
               form={form}
-              name={"classListingFeeExplanation" as Path<EventFormData>}
+              name={"listingFeeExplanation" as Path<EventFormData>}
               label="Please explain your situation"
               required
               placeholder="Please explain why you cannot pay the listing fee or provide a guest spot"
@@ -145,7 +145,7 @@ export function ClassWorkshopListingFeeSection({
             />
           )}
 
-          {classListingFeeOption === "PAY_FEE" && (
+          {listingFeeOption === "PAY_FEE" && (
             <div className="p-4 bg-primary-50 border border-primary-200 rounded-md">
               <Text className="text-sm font-medium text-gray-900">
                 Listing Fee: ${feeCalculation.totalFee}

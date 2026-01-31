@@ -19,44 +19,52 @@ interface AuditionStepProps {
 export function AuditionStep({ form }: AuditionStepProps) {
   // consume form for fields via blocks
   // const e = errors as FieldErrors<EventFormData>
-  const auditionFee = form.watch("auditionFee") as string | undefined
-  const isAuditionFee = auditionFee === "FEE"
+  const fee = form.watch("fee") as string | undefined
+  const isFee = fee === "FEE"
 
   useEffect(() => {
-    if (!isAuditionFee) {
-      form.setValue("auditionFeeAmount", "")
-      form.setValue("auditionArtistType" as Path<EventFormData>, undefined as unknown as never)
-      form.clearErrors(["auditionFeeAmount", "auditionArtistType"] as unknown as never)
+    if (!isFee) {
+      form.setValue("feeAmount", "")
+      form.setValue("artistType" as Path<EventFormData>, undefined as unknown as never)
+      form.clearErrors(["feeAmount", "artistType"] as unknown as never)
     }
-  }, [isAuditionFee, form])
+  }, [isFee, form])
 
   return (
     <>
       <Section title="Audition Details">
-        <TextField form={form} name={"auditionName"} label="Audition Name" required/>
-        <TextAreaField form={form} name={"aboutProject"} label="Describe the Opportunity" required placeholder="Please provide an overview of the company, contract terms, and key details of the audition opportunity. Include duration, compensation, location, and rehearsal/performance commitments. "/>
+        <TextField form={form} name={"title"} label="Audition Name" required/>
+        <TextAreaField form={form} name={"description"} label="Describe the Opportunity" required placeholder="Please provide an overview of the company, contract terms, and key details of the audition opportunity. Include duration, compensation, location, and rehearsal/performance commitments. "/>
         <TextAreaField form={form} name={"eligibility"} label="Eligibility" required placeholder="Please describe who you are seeking and who is eligible to apply. Include relevant details such as style, age, experience, and any other qualifications."/>
         <TextField form={form} name={"compensation"} label="Compensation" required placeholder="Specify the amount, or describe any non-monetary compensation offered"/>
-        <TextAreaField form={form} name={"auditionInstructions"} label="Audition Instructions" required placeholder="Please describe your audition instructions. Include submission link, email, and all prescreen requirements."/>
-        <TextAreaField form={form} name={"auditionClasses"} label="Are there any preaudition classes, workshops, or intensives that are recommended prior to auditioning?"/>
+        <TextAreaField form={form} name={"instructions"} label="Audition Instructions" required placeholder="Please describe your audition instructions. Include submission link, email, and all prescreen requirements."/>
+        <TextAreaField form={form} name={"preAuditionClasses"} label="Are there any preaudition classes, workshops, or intensives that are recommended prior to auditioning?"/>
 
         
-        <SelectBlock form={form} options={[{ label: "Yes", value: "FEE" }, { label: "No", value: "NO_FEE" }]} name={"auditionFee"} label="Is there an audition fee?" required />
-        {isAuditionFee && (
+        <SelectBlock form={form} options={[{ label: "Yes", value: "FEE" }, { label: "No", value: "NO_FEE" }]} name={"fee"} label="Is there an audition fee?" required />
+        {isFee && (
           <>
-            <TextField form={form} name={"auditionFeeAmount"} label="Audition Fee Amount" required placeholder="$ or description"/>
+            <TextField form={form} name={"feeAmount"} label="Audition Fee Amount" required placeholder="$ or description"/>
           </>
         )}
       </Section>
 
       <Section title="Key Dates">
-        <DateTimeList form={form as unknown as UseFormReturn<Record<string, unknown>>} name={"auditionOccurrences"} maxDates={1} maxTimesPerDate={1} title="Audition Date" note="If you have multiple audition dates, list them in the additional information section" required/>
+        <DateTimeList form={form as unknown as UseFormReturn<Record<string, unknown>>} name={"occurrences"} maxDates={1} maxTimesPerDate={1} title="Audition Date" note="If you have multiple audition dates, list them in the additional information section" required/>
         <DateTimeList form={form as unknown as UseFormReturn<Record<string, unknown>>} name={"deadlineOccurrences"} maxDates={1} maxTimesPerDate={1} title="Deadline" note="If you don't have a deadline, use the audition date" required/>
       </Section>
 
       <Section title="Location">
-        <LocationField form={form} addressName={"address"} venueName={"venueName"} placeIdName={"placeId"} latName={"lat"} lngName={"lng"} instructionsName={"instructions"} instructionsNote="If you are not releasing the location, please use this space to explain how and when participants will be notified." instructionsPlaceholder=""/>
-      </Section>
+      <LocationField
+  form={form}
+  addressName={"address"}
+  venueName={"venueName"}
+  placeIdName={"placeId"}
+  latName={"lat"}
+  lngName={"lng"}
+  instructionsName={"locationInstructions"}
+  required
+/>      </Section>
 
       <Section title="Media Uploads">
         <PhotoUploader form={form} name={"promoFiles"} label="Promotional Images" description="Images are highly encouraged for marketing! Please upload up to 5 images." />
@@ -70,10 +78,10 @@ export function AuditionStep({ form }: AuditionStepProps) {
       </Section>
 
     
-      {isAuditionFee && (
+      {isFee && (
         <SimpleFeeDisplay
           form={form}
-          artistTypeFieldName={"auditionArtistType" as Path<EventFormData>}
+          artistTypeFieldName={"artistType" as Path<EventFormData>}
         />
       )}
     </>

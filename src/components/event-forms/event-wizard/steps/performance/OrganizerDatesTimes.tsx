@@ -22,7 +22,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
   // Use useWatch for better reactivity with nested form values
   const extras = (useWatch({
     control: form.control,
-    name: "extraOccurrences" as Path<EventFormData>,
+    name: "occurrences" as Path<EventFormData>,
     defaultValue: [],
   }) as DateTimeEntry[] | undefined) ?? []
   const isConfirmed = useWatch({
@@ -31,7 +31,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
   }) as boolean | undefined
   const eventType = useWatch({
     control: form.control,
-    name: "event_type" as Path<EventFormData>,
+    name: "eventType" as Path<EventFormData>,
   }) as "SOLO" | "SPLIT_BILL" | "FESTIVAL" | undefined
   
   // For SOLO events, skip confirmation - dates will be saved on submit
@@ -50,11 +50,11 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
   // This ensures values are restored even if handleEdit timing is off
   useEffect(() => {
     if (prevConfirmedRef.current === true && isConfirmed === false && confirmedEntriesRef.current.length > 0) {
-      const currentExtras = (form.getValues("extraOccurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined) ?? []
+      const currentExtras = (form.getValues("occurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined) ?? []
       const validCurrentEntries = filterValidEntries(currentExtras)
       // Restore values if form is empty or invalid - use setValue() to avoid scroll jump
       if (validCurrentEntries.length === 0 || currentExtras.length !== confirmedEntriesRef.current.length) {
-        form.setValue("extraOccurrences" as Path<EventFormData>, confirmedEntriesRef.current as unknown as never, {
+        form.setValue("occurrences" as Path<EventFormData>, confirmedEntriesRef.current as unknown as never, {
           shouldDirty: true,
           shouldTouch: false,
           shouldValidate: false,
@@ -81,11 +81,11 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
 
   const handleConfirm = () => {
     if (hasCompleteEntries) {
-      const currentExtras = (form.getValues("extraOccurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined) ?? []
+      const currentExtras = (form.getValues("occurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined) ?? []
       const valid = filterValidEntries(currentExtras)
       
       confirmedEntriesRef.current = JSON.parse(JSON.stringify(valid))
-      form.setValue("extraOccurrences" as Path<EventFormData>, valid as unknown as never, {
+      form.setValue("occurrences" as Path<EventFormData>, valid as unknown as never, {
         shouldDirty: true,
         shouldTouch: true,
         shouldValidate: false,
@@ -104,7 +104,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
     const currentFormValues = form.getValues()
     form.reset({
       ...currentFormValues,
-      extraOccurrences: confirmedEntriesRef.current,
+      occurrences: confirmedEntriesRef.current,
       eventDatesConfirmed: false,
     } as EventFormData, {
       keepDirty: true,
@@ -112,7 +112,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
       keepErrors: false,
     })
     
-    form.setValue("extraOccurrences" as Path<EventFormData>, confirmedEntriesRef.current as unknown as never, {
+    form.setValue("occurrences" as Path<EventFormData>, confirmedEntriesRef.current as unknown as never, {
       shouldDirty: true,
       shouldTouch: false,
       shouldValidate: false,
@@ -140,7 +140,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
         // For SOLO events, always show the DateTimeList directly (no confirmation needed)
         <DateTimeList<EventFormData>
           form={form}
-          name={"extraOccurrences"}
+          name={"occurrences"}
           title="Event dates and times"
           required
           locationConfig={{
@@ -149,7 +149,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
             placeIdName: "placeId",
             latName: "lat",
             lngName: "lng",
-            instructionsName: "instructions",
+            instructionsName: "locationInstructions",
             label: "Location",
             required: true,
           }}
@@ -162,7 +162,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
               <DateTimeList<EventFormData>
                 key={`edit-${editKeyRef.current}`}
                 form={form}
-                name={"extraOccurrences"}
+                name={"occurrences"}
                 title="Event dates and times"
                 required
                 locationConfig={{
@@ -171,7 +171,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
                   placeIdName: "placeId",
                   latName: "lat",
                   lngName: "lng",
-                  instructionsName: "instructions",
+                  instructionsName: "locationInstructions",
                   label: "Location",
                   required: true,
                 }}

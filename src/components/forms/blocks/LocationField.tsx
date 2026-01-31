@@ -3,16 +3,16 @@
 import { useEffect, useRef, useState } from "react"
 import { UseFormReturn, Path } from "react-hook-form"
 import { Input } from "@/components/ui/input"
-import { loadPlacesLibrary } from "../../../lib/googleMaps"
+import { loadPlacesLibrary } from "@/lib/googleMaps"
 
 interface LocationFieldProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>
-  addressName: string
-  venueName?: string
-  placeIdName?: string
-  latName?: string
-  lngName?: string
-  instructionsName?: string
+  addressName: Path<T>
+  venueName?: Path<T>
+  placeIdName?: Path<T>
+  latName?: Path<T>
+  lngName?: Path<T>
+  instructionsName?: Path<T>
   label?: string
   note?: string
   instructionsLabel?: string
@@ -20,7 +20,6 @@ interface LocationFieldProps<T extends Record<string, unknown>> {
   instructionsPlaceholder?: string
   required?: boolean
   showAsterisk?: boolean
-  errorMode?: "touched" | "always"
 }
 
 export function LocationField<T extends Record<string, unknown>>({
@@ -38,41 +37,20 @@ export function LocationField<T extends Record<string, unknown>>({
   instructionsPlaceholder = "Details to help attendees find the location",
   required,
   showAsterisk = true,
-  errorMode = "touched",
 }: LocationFieldProps<T>) {
-  const { setValue, getValues, register } = form
-
-  // Register fields to ensure they're tracked by RHF and included in form submission
-  useEffect(() => {
-    register(addressName as unknown as never, { shouldUnregister: false })
-    if (placeIdName) {
-      register(placeIdName as unknown as never, { shouldUnregister: false })
-    }
-  }, [register, addressName, placeIdName])
-
   const containerRef = useRef<HTMLDivElement | null>(null)
   const elementRef = useRef<HTMLElement | null>(null)
-
+  const inputRef = useRef<HTMLInputElement | null>(null)
   const [apiError, setApiError] = useState<string | null>(null)
 
-  const addrState = form.getFieldState(addressName as unknown as never)
-  const instrState = instructionsName
-    ? form.getFieldState(instructionsName as unknown as never)
-    : undefined
-
-  const showAddrError =
-    Boolean(addrState.error) &&
-    (errorMode === "always" ||
-      addrState.isTouched ||
-      form.formState.isSubmitted ||
-      form.formState.submitCount > 0)
-
-  const showInstrError =
-    Boolean(instrState?.error) &&
-    (errorMode === "always" ||
-      instrState?.isTouched ||
-      form.formState.isSubmitted ||
-      form.formState.submitCount > 0)
+  // keep aux fields registered so wizard steps don’t drop them
+  useEffect(() => {
+    if (venueName) form.register(venueName, { shouldUnregister: false })
+    if (placeIdName) form.register(placeIdName, { shouldUnregister: false })
+    if (latName) form.register(latName, { shouldUnregister: false })
+    if (lngName) form.register(lngName, { shouldUnregister: false })
+    if (instructionsName) form.register(instructionsName, { shouldUnregister: false })
+  }, [form, venueName, placeIdName, latName, lngName, instructionsName])
 
   useEffect(() => {
     let cancelled = false
@@ -80,163 +58,146 @@ export function LocationField<T extends Record<string, unknown>>({
     async function init() {
       try {
         const placesLib = await loadPlacesLibrary()
-        if (cancelled) return
-        if (!containerRef.current) return
-        if (elementRef.current) return
+        if (cancelled || !containerRef.current || elementRef.current) return
 
-        // Create Google’s new recommended autocomplete element
-        // Some versions expose it on placesLib, others on google.maps.places.*
         const PlaceAutocompleteElement =
-          (placesLib as unknown as { PlaceAutocompleteElement: typeof google.maps.places.PlaceAutocompleteElement }).PlaceAutocompleteElement ||
-          (google.maps.places as unknown as { PlaceAutocompleteElement: typeof google.maps.places.PlaceAutocompleteElement }).PlaceAutocompleteElement
+          (placesLib as any)?.PlaceAutocompleteElement ||
+          (google.maps.places as any)?.PlaceAutocompleteElement
 
         if (!PlaceAutocompleteElement) {
-          setApiError("PlaceAutocompleteElement not available. Check Maps JS API + Places enabled.")
+          setApiError("PlaceAutocompleteElement not available. Check Places enabled + correct key.")
           return
         }
 
-        const el = new PlaceAutocompleteElement({
-          // optional: request the fields you care about
-          // (Google may still require fetchFields for some details)
-        })
-
-        // Optional: hint text
-        el.setAttribute("placeholder", "Start typing an address…")
+        const el = new PlaceAutocompleteElement({})
         el.style.width = "100%"
-        
-        const initialAddress = getValues(addressName as unknown as never) as unknown as string | undefined
-        if (initialAddress) {
-          el.setAttribute("value", initialAddress)
-        }
 
         containerRef.current.innerHTML = ""
         containerRef.current.appendChild(el)
         elementRef.current = el
 
-        // Event when user picks a suggestion
-        const handler = async (evt: any) => {
-          try {
-            const place = evt?.detail?.place
-            if (!place) return
+        const onPlaceSelect = async (evt: any) => {
+          const { placePrediction } = evt?.detail ?? evt ?? {}
+          
+          let place = evt?.place ?? evt?.detail?.place
+          
+          if (!place && evt?.mh) {
+            place = evt.mh.place ?? evt.mh.placePrediction ?? evt.mh
+          }
+          
+          if (!place && placePrediction) {
+            place = placePrediction.toPlace ? placePrediction.toPlace() : placePrediction
+          }
+          
+          if (!place && el) {
+            place = (el as any)?.place ?? (el as any)?.gmpPlace ?? (el as any)?.value
+          }
+          
+          let elementValue = ""
+          if (el && (el as any)?.value) {
+            elementValue = String((el as any).value)
+          }
+          
+          if (!place) return
 
-            // Ensure fields are present (fetchFields is the “new” way)
+          try {
+            if (place && typeof place.toPlace === 'function') {
+              place = place.toPlace()
+            }
+
             if (place.fetchFields) {
               await place.fetchFields({
                 fields: ["formattedAddress", "displayName", "id", "location"],
               })
             }
 
-            const formatted =
-              place.formattedAddress ||
-              place.formatted_address ||
-              ""
+            const address = place.formattedAddress || place.formatted_address || (place as any)?.Sr || elementValue || ""
+            const venue = place.displayName || place.display_name || (place as any)?.IC || ""
+            const placeId = place.id || place.place_id || (place as any)?.RB || ""
+            const loc = place.location || (place as any)?.XC || (place as any)?.vC
 
-            const displayName =
-              place.displayName ||
-              place.name ||
-              ""
-
-            const id =
-              place.id ||
-              place.place_id ||
-              ""
-
-            setValue(addressName as Path<T>, formatted as unknown as never, {
+            form.setValue(addressName, address as any, {
               shouldDirty: true,
               shouldTouch: true,
               shouldValidate: true,
             })
 
-            if (venueName) {
-              setValue(venueName as Path<T>, displayName as never, { shouldDirty: true })
-            }
-            if (placeIdName) {
-              setValue(placeIdName as Path<T>, id as never, { shouldDirty: true })
-            }
+            if (venueName) form.setValue(venueName, venue as any, { shouldDirty: true })
+            if (placeIdName) form.setValue(placeIdName, placeId as any, { shouldDirty: true })
 
-            const loc = place.location || place.geometry?.location
             if (loc) {
               const lat = typeof loc.lat === "function" ? loc.lat() : loc.lat
               const lng = typeof loc.lng === "function" ? loc.lng() : loc.lng
-
-              if (latName) setValue(latName as Path<T>, String(lat) as never, { shouldDirty: true })
-              if (lngName) setValue(lngName as Path<T>, String(lng) as never, { shouldDirty: true })
+              if (latName) form.setValue(latName, Number(lat) as any, { shouldDirty: true })
+              if (lngName) form.setValue(lngName, Number(lng) as any, { shouldDirty: true })
             }
           } catch (e) {
-            console.error(e)
+            console.error("LocationField place select error:", e)
           }
         }
 
-        el.addEventListener("gmp-placeselect", handler)
+        el.addEventListener("gmp-select", onPlaceSelect)
 
-        // cleanup function returned for event listener removal
         return () => {
-          el.removeEventListener("gmp-placeselect", handler)
+          el.removeEventListener("gmp-select", onPlaceSelect)
         }
-      } catch (e: unknown) {
+      } catch (e) {
         console.error(e)
-        setApiError(
-          "Google Places failed to load. Most common: API restrictions blocking Maps JavaScript API."
-        )
+        setApiError("Google Places failed to load. Check API key + restrictions.")
         return undefined
       }
     }
 
     const cleanupPromise = init()
-
     return () => {
       cancelled = true
-      // Remove element on unmount to avoid duplicates
-      if (elementRef.current && containerRef.current) {
-        containerRef.current.innerHTML = ""
-        elementRef.current = null
-      }
-      // @ts-expect-error - cleanupPromise is a function
-      if (typeof cleanupPromise === "function") cleanupPromise()
+      cleanupPromise?.then?.((cleanup) => cleanup?.())
+      if (containerRef.current) containerRef.current.innerHTML = ""
+      elementRef.current = null
     }
-  }, [addressName, venueName, placeIdName, latName, lngName, setValue, getValues])
+  }, [form, addressName, venueName, placeIdName, latName, lngName])
+
+  // ✅ THIS is what RHF validates + submits
+  const addressField = form.register(addressName, {
+    required: required ? "Address is required" : false,
+  })
 
   return (
     <div>
-      <div>
-        <div className="mb-1">
-          <label className="block text-sm font-medium text-gray-700">
-            {label} {required && showAsterisk && <span className="text-error-600">*</span>}
-          </label>
-          {note && <p className="mt-1 text-sm text-gray-500">{note}</p>}
-        </div>
-
-        {apiError ? <div className="text-xs text-error-600 mb-1">{apiError}</div> : null}
-
-        {/* Google renders its own input UI inside this element */}
-        <div
-          ref={containerRef}
-          className={[
-            "w-full",
-            "border-gray-200 border-1 rounded-md",
-            // quick styling to match your inputs a bit
-            // (the element uses shadow DOM; styling is limited)
-            showAddrError ? "ring-1 ring-error-600 rounded-md" : "",
-          ].join(" ")}
-        />
-
-        {/* Optional fallback plain input if you want (manual entry) */}
-        {/* <Input {...register(addressName as any)} placeholder="Enter address" error={showAddrError} /> */}
+      <div className="mb-1">
+        <label className="block text-sm font-medium text-gray-700">
+          {label} {required && showAsterisk ? <span className="text-error-600">*</span> : null}
+        </label>
+        {note ? <p className="mt-1 text-sm text-gray-500">{note}</p> : null}
       </div>
 
-      {instructionsName && (
+      {apiError ? <div className="text-xs text-error-600 mb-2">{apiError}</div> : null}
+
+      {/* RHF-controlled input (typing ALWAYS updates address) */}
+      <Input 
+        {...addressField} 
+        placeholder="Start typing an address…"
+        ref={(e) => {
+          addressField.ref(e)
+          inputRef.current = e
+        }}
+      />
+
+      {/* Place picker UI (selection fills placeId/lat/lng/venue) */}
+      <div className="mt-2" ref={containerRef} />
+
+      {instructionsName ? (
         <div className="mt-2">
           <div className="mb-1">
             <label className="block text-sm font-medium text-gray-700">{instructionsLabel}</label>
-            {instructionsNote && <p className="mt-1 text-sm text-gray-500">{instructionsNote}</p>}
+            {instructionsNote ? <p className="mt-1 text-sm text-gray-500">{instructionsNote}</p> : null}
           </div>
           <Input
-            {...register(instructionsName as never)}
+            {...form.register(instructionsName)}
             placeholder={instructionsPlaceholder}
-            error={showInstrError}
           />
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

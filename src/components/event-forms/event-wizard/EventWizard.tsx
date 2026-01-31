@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
 import type { Resolver } from "react-hook-form"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
@@ -23,6 +23,8 @@ interface EventWizardProps {
   onSuccess: () => void
   onClose: () => void
 }
+
+
 
 export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1)
@@ -48,10 +50,12 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
     resolver,
     defaultValues: {
       agreeCompTickets: false,
-      photoUrls: [""],
       address: "",
-      // Seed one date card with one time for performance extras
-      extraOccurrences: [{ date: "", times: [{ time: "" }] }],
+      // Only initialize extraOccurrences for performance types (legacy field)
+      // For auditions, occurrences and deadlineOccurrences are initialized by DateTimeList
+      extraOccurrences: [],
+      occurrences: [],
+      deadlineOccurrences: [],
     } as Partial<EventFormData>,
     mode: 'onChange',
     reValidateMode: 'onChange',
@@ -118,7 +122,32 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           return
         }
 
+        // Debug: Log form data before building payload
+        console.group("🟢 Form Submission - Before Payload")
+        console.log("Event type:", eventType)
+        console.log("Form data:", data)
+        console.log("Location fields in form data:", {
+          address: data.address,
+          placeId: data.placeId,
+          lat: data.lat,
+          lng: data.lng,
+          venueName: data.venueName,
+          locationInstructions: data.locationInstructions,
+        })
+        console.log("Form state:", {
+          isValid: form.formState.isValid,
+          errors: form.formState.errors,
+          isDirty: form.formState.isDirty,
+        })
+        console.groupEnd()
+
         const payload = buildEventPayload(data, eventType, userInfo)
+        
+        // Debug: Log payload being sent
+        console.group("🟢 Form Submission - Payload")
+        console.log("Payload:", payload)
+        console.log("Payload base (location fields):", payload.base)
+        console.groupEnd()
 
         // Additional validation for occurrences
         if (eventType === "PERFORMANCE" && payload.occurrences.length === 0) {
@@ -153,8 +182,35 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       }
     },
     (errors) => {
-      // Extract first error message for user feedback
+      // Debug: Log all validation errors
+      console.group("🔴 Form Validation Errors")
+      console.log("All errors:", errors)
+      console.log("Form values:", form.getValues())
+      console.log("Form state:", {
+        isDirty: form.formState.isDirty,
+        isValid: form.formState.isValid,
+        errors: form.formState.errors,
+      })
+      
+      // Log each field error
       const errorEntries = Object.entries(errors)
+      console.log(`Total fields with errors: ${errorEntries.length}`)
+      errorEntries.forEach(([field, error]) => {
+        console.log(`Field "${field}":`, error)
+        const fieldValue = form.getValues(field as keyof EventFormData)
+        console.log(`  Current value:`, fieldValue)
+      })
+      
+      // Log location-related fields specifically
+      const locationFields = ['address', 'placeId', 'lat', 'lng', 'venueName', 'locationInstructions']
+      console.log("Location fields:")
+      locationFields.forEach(field => {
+        const value = form.getValues(field as keyof EventFormData)
+        console.log(`  ${field}:`, value, typeof value)
+      })
+      console.groupEnd()
+      
+      // Extract first error message for user feedback
       let errorMessage = "Please check all required fields"
       
       if (errorEntries.length > 0) {

@@ -1,7 +1,8 @@
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
+import { approveListingRepo, rejectListingRepo } from "@/features/events/server/repository"
 
 export async function insertReviewRepo(input: {
-  eventId: string
+  listingId: string
   decision: 'APPROVED' | 'REJECTED'
   notes: string | null
   reviewerUserId: string
@@ -10,7 +11,7 @@ export async function insertReviewRepo(input: {
   const { data, error } = await supabase
     .from('reviews')
     .insert({
-      event_id: input.eventId,
+      listing_id: input.listingId,
       decision: input.decision,
       notes: input.notes,
       reviewer_user_id: input.reviewerUserId,
@@ -21,24 +22,19 @@ export async function insertReviewRepo(input: {
   return data
 }
 
-export async function updateEventStatusRepo(eventId: string, decision: 'APPROVED' | 'REJECTED', approverUserId: string) {
-  const supabase = getSupabaseServiceClient()
-  const status = decision === 'APPROVED' ? 'approved' : 'rejected'
-  const { error } = await supabase
-    .from('events')
-    .update({
-      status,
-      reviewed_at: new Date().toISOString(),
-      reviewer_id: approverUserId,
-    })
-    .eq('id', eventId)
-  if (error) throw error
+export async function updateListingStatusRepo(listingId: string, decision: 'APPROVED' | 'REJECTED', approverUserId: string, notes?: string | null) {
+  // Use the main repository functions which handle photo migration and proper status updates
+  if (decision === 'APPROVED') {
+    await approveListingRepo(listingId, approverUserId)
+  } else {
+    await rejectListingRepo(listingId, approverUserId, notes || undefined)
+  }
 }
 
-export async function ensureEventExistsRepo(eventId: string) {
+export async function ensureListingExistsRepo(listingId: string) {
   const supabase = getSupabaseServiceClient()
-  const { data, error } = await supabase.from('events').select('id').eq('id', eventId).single()
-  if (error || !data) throw new Error('Event not found')
+  const { data, error } = await supabase.from('listings').select('id').eq('id', listingId).single()
+  if (error || !data) throw new Error('Listing not found')
 }
 
 

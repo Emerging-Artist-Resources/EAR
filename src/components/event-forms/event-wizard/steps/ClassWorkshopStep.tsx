@@ -28,9 +28,9 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
     name: "isPartOfFestivalOrWorkshop",
   }) as "YES" | "NO" | undefined
 
-  const classOccurrences = useWatch({
+  const occurrences = useWatch({
     control: form.control,
-    name: "classOccurrences" as Path<EventFormData>,
+    name: "occurrences" as Path<EventFormData>,
   }) as Array<{ date: string; times: Array<{ time: string }> }> | undefined
 
   const isWorkshop = classWorkshopType === "WORKSHOP"
@@ -38,9 +38,9 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
   const shouldUseParentDates = !isWorkshop && isPart
 
   const occurrenceCount = useMemo(() => {
-    if (!classOccurrences || !Array.isArray(classOccurrences)) return 0
-    return classOccurrences.length
-  }, [classOccurrences])
+    if (!occurrences || !Array.isArray(occurrences)) return 0
+    return occurrences.length
+  }, [occurrences])
 
   useEffect(() => {
     if (!isPart) {
@@ -80,7 +80,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
       <Section title="Basic Info">
         <TextField
           form={form}
-          name={"classTitle"}
+          name={"title"}
           label={isWorkshop ? "Workshop Name" : "Class Name"}
           placeholder="e.g., Contemporary Dance Workshop, Intro to Ballet, Hip Hop Class"
           required
@@ -88,7 +88,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
 
         <TextField
           form={form}
-          name={"companyIndividualName"}
+          name={"organizer"}
           label="Company / Individuals"
           required
           placeholder="Name of the company or individual(s) running the class/workshop"
@@ -96,7 +96,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
 
         <TextField
           form={form}
-          name={"classPrice"}
+          name={"price"}
           label={isWorkshop ? "Workshop Price" : "Class Price"}
           placeholder="e.g., $30, Free, $20-40 sliding scale"
           required={!isWorkshop}
@@ -104,7 +104,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
 
         <TextField
           form={form}
-          name={"classLink"}
+          name={"link"}
           label="Registration Link"
           placeholder="Link or signup instructions"
           required={!isWorkshop}
@@ -112,7 +112,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
 
         <TextAreaField
           form={form}
-          name={"shortDescription"}
+          name={"description"}
           label={isWorkshop ? "Workshop Description" : "Class Description"}
           required
           rows={3}
@@ -172,7 +172,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
         <Section title="Schedule">
           <DateTimeList
             form={form as unknown as UseFormReturn<Record<string, unknown>>}
-            name={"classOccurrences"}
+            name={"occurrences"}
             title={isWorkshop ? "Workshop Dates & Times" : "Class Dates & Times"}
             note="Add all known dates and start times."
             required
@@ -183,7 +183,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
               placeIdName: "placeId",
               latName: "lat",
               lngName: "lng",
-              instructionsName: "instructions",
+              instructionsName: "locationInstructions",
               label: "Location",
               required: true,
             }}

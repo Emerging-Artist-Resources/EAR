@@ -5,7 +5,7 @@ import { handleApiError, createSuccessResponse, validateRequestBody } from "@/li
 import { z } from "zod"
 
 const reviewSchema = z.object({
-  eventId: z.string().min(1, "Event ID is required"),
+  eventId: z.string().min(1, "Listing ID is required"), // Keep eventId for backward compatibility with frontend
   decision: z.enum(["APPROVED", "REJECTED"]),
   notes: z.string().optional().nullable(),
 })
@@ -17,8 +17,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { eventId, decision, notes } = validateRequestBody(body, reviewSchema)
 
+    // Use legacy function name which maps eventId to listingId
     const review = await reviewEvent({
-      eventId,
+      eventId, // This will be mapped to listingId in the service
       decision,
       notes: notes ?? null,
       reviewerUserId: auth.user.id,

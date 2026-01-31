@@ -15,7 +15,7 @@ export function OrganizerSoloForm({ form }: { form: UseFormReturn<EventFormData>
       <Section title="Artist Credits (encouraged)">
         <TextAreaField
           form={form}
-          name={"event_participants"}
+          name={"participants"}
           label="Please list all artists and collaborators to be credited for this program"
           placeholder="Include names, roles, and associated work titles, if applicable."
         />

@@ -1,107 +1,362 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getSupabaseServerClientAnon } from "@/lib/supabase/serverAnon"
+import { getSupabaseServiceClient } from "@/lib/supabase/service"
+import { storageService } from "@/services/storage"
 
-export type CreateEventNormalizedInput = {
-  type: 'performance' | 'audition' | 'creative' | 'class' | 'funding'
+export type ListingType = "performance" | "audition" | "creative" | "class" | "funding"
+
+export type ListingStatus = "pending" | "approved" | "rejected" | "draft"
+
+export type OccurrenceType = "event" | "deadline"
+
+export type BaseListingInput = {
   contact_name: string
   pronouns?: string | null
   contact_email: string
-  org_name?: string | null
-  org_website?: string | null
-  address: string
-  social_handles: Record<string, unknown>
+  company?: string | null
+  company_website?: string | null
+  address?: string | null
+  place_id?: string | null
+  lat?: number | null
+  lng?: number | null
+  venue_name?: string | null
+  location_instructions?: string | null
+  social_handles?: string | null
   notes?: string | null
-  created_by: string | null
-  meta: Record<string, unknown>
   borough?: string | null
-  performance?: {
-    show_name: string
-    short_description: string
-    credit_info: string
-    ticket_price_cents: number
-    ticket_link: string
-    agree_comp_tickets: boolean
-  }
-  photos?: Array<{ path: string; credit?: string | null; sort_order?: number }>
-  occurrences: Array<{ starts_at_utc: string; ends_at_utc?: string | null; tz: string }>
+  meta?: Record<string, unknown>
 }
 
-export async function createEventWithDetails(input: CreateEventNormalizedInput) {
+export type OccurrenceInput = {
+  starts_at_utc: string
+  ends_at_utc?: string | null
+  tz: string
+  occurrence_type?: OccurrenceType
+  address?: string | null
+  place_id?: string | null
+  lat?: number | null
+  lng?: number | null
+  venue_name?: string | null
+  location_instructions?: string | null
+}
+
+export type PhotoInput = {
+  path: string
+  credit?: string | null
+  sort_order?: number
+}
+
+export type PieceDetailsInput = {
+  parent_listing_id?: string | null
+  parent_event_name?: string | null
+  parent_event_website?: string | null
+  parent_event_ticket_link?: string | null
+  parent_event_contact_email?: string | null
+  piece_schedule_mode?: string | null
+  selected_slots?: string[] | null
+}
+
+export type CreateListingInput = {
+  type: ListingType
+  base: BaseListingInput
+  details: Record<string, unknown>
+  occurrences: OccurrenceInput[]
+  photos?: PhotoInput[]
+  piece_details?: PieceDetailsInput | null
+  parent_listing_id?: string | null
+  relationship_type?: "performance_piece" | "workshop_class"
+}
+
+const detailTable: Record<Exclude<ListingType, "funding">, string> = {
+  performance: "performance_details",
+  audition: "audition_details",
+  creative: "creative_details",
+  class: "class_workshop_details",
+}
+
+/* ------------------------------------------------------------------ */
+/* CREATE (authenticated owner)                                        */
+/* Owner can edit while status='pending' per RLS                       */
+/* ------------------------------------------------------------------ */
+export async function createListingOwnedRepo(input: CreateListingInput) {
   const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.id) throw new Error("Unauthorized")
 
-  // 1) Insert base event
-  const baseEvent = {
+  // 1) Insert base listing
+  const { data: listing, error: e1 } = await supabase
+    .from("listings")
+    .insert({
     type: input.type,
-    contact_name: input.contact_name,
-    pronouns: input.pronouns ?? null,
-    contact_email: input.contact_email,
-    org_name: input.org_name ?? null,
-    org_website: input.org_website ?? null,
-    address: input.address,
-    social_handles: input.social_handles,
-    notes: input.notes ?? null,
-    created_by: input.created_by,
-    meta: input.meta,
-    borough: input.borough ?? null,
-  }
-
-  const { data: created, error: createErr } = await supabase
-    .from('events')
-    .insert(baseEvent)
-    .select('id, type')
+      status: "pending",
+      created_by: user.id,
+      contact_name: input.base.contact_name,
+      pronouns: input.base.pronouns ?? null,
+      contact_email: input.base.contact_email,
+      company: input.base.company ?? null,
+      company_website: input.base.company_website ?? null,
+      address: input.base.address ?? null,
+      place_id: input.base.place_id ?? null,
+      lat: input.base.lat ?? null,
+      lng: input.base.lng ?? null,
+      venue_name: input.base.venue_name ?? null,
+      location_instructions: input.base.location_instructions ?? null,
+      social_handles: input.base.social_handles ?? null,
+      notes: input.base.notes ?? null,
+      borough: input.base.borough ?? null,
+      meta: input.base.meta ?? {},
+      // submitted_at will be set when user explicitly submits (see submitListingRepo)
+    })
+    .select("id")
     .single()
-  if (createErr) throw createErr
+  if (e1) throw new Error(`Failed to create listing: ${e1.message}`)
 
-  const eventId = created.id as string
+  const listingId = listing.id as string
 
-  // 2) Insert per-type details
-  if (input.type === 'performance' && input.performance) {
-    const { error: perfErr } = await supabase
-      .from('performance_details')
-      .insert({ event_id: eventId, ...input.performance })
-    if (perfErr) throw perfErr
+  // 2) Insert type-specific details
+  if (input.type === "funding") {
+    throw new Error("Funding listings are not currently supported")
   }
+  
+  const tbl = detailTable[input.type]
+  
+  // Validate performance_details constraint: ORGANIZER must have title
+  if (input.type === "performance" && input.details.subtype === "ORGANIZER") {
+    if (!input.details.title) {
+      throw new Error("Performance ORGANIZER must have a title")
+    }
+  }
+  
+  const { error: e2 } = await supabase
+    .from(tbl)
+    .insert({ listing_id: listingId, ...input.details })
+  if (e2) throw new Error(`Failed to insert ${tbl} details: ${e2.message}`)
 
   // 3) Insert occurrences
   if (input.occurrences?.length) {
-    const { error: occErr } = await supabase
-      .from('event_occurrences')
-      .insert(input.occurrences.map((o) => ({ ...o, event_id: eventId })))
-    if (occErr) throw occErr
+    const occurrencesToInsert = input.occurrences.map((o) => ({
+      listing_id: listingId,
+      occurrence_type: o.occurrence_type ?? ("event" as OccurrenceType),
+      starts_at_utc: o.starts_at_utc,
+      ends_at_utc: o.ends_at_utc ?? null,
+      tz: o.tz,
+      address: o.address ?? null,
+      place_id: o.place_id ?? null,
+      lat: o.lat ?? null,
+      lng: o.lng ?? null,
+      venue_name: o.venue_name ?? null,
+      location_instructions: o.location_instructions ?? null,
+    }))
+    const { error: e3 } = await supabase
+      .from("listing_occurrences")
+      .insert(occurrencesToInsert)
+    if (e3) throw new Error(`Failed to insert occurrences: ${e3.message}`)
   }
 
   // 4) Insert photos
   if (input.photos?.length) {
-    const limited = input.photos.slice(0, 5).map((p, idx) => ({ event_id: eventId, path: p.path, credit: p.credit ?? null, sort_order: p.sort_order ?? idx }))
-    const { error: photoErr } = await supabase.from('event_photos').insert(limited)
-    if (photoErr) throw photoErr
+    const photosToInsert = input.photos
+      .slice(0, 5)
+      .map((p, idx) => {
+        const sortOrder = p.sort_order ?? idx
+        // Ensure sort_order is within valid range (0-9)
+        const clampedSortOrder = Math.max(0, Math.min(9, sortOrder))
+        return {
+          listing_id: listingId,
+          path: p.path,
+          credit: p.credit ?? null,
+          sort_order: clampedSortOrder,
+        }
+      })
+    const { error: e4 } = await supabase
+      .from("listing_photos")
+      .insert(photosToInsert)
+    if (e4) throw new Error(`Failed to insert photos: ${e4.message}`)
   }
 
-  return { id: eventId }
+  // 5) Insert piece_details if this is a piece
+  if (input.piece_details) {
+    // Validate piece_details constraint: must have parent_listing_id OR (parent_event_name AND parent_event_contact_email)
+    const hasParentListing = !!input.piece_details.parent_listing_id
+    const hasManualParent = !!(input.piece_details.parent_event_name && input.piece_details.parent_event_contact_email)
+    
+    if (!hasParentListing && !hasManualParent) {
+      throw new Error("Piece details must have either parent_listing_id or both parent_event_name and parent_event_contact_email")
+    }
+    
+    const { error: e5 } = await supabase
+      .from("piece_details")
+      .insert({
+        listing_id: listingId,
+        parent_listing_id: input.piece_details.parent_listing_id ?? null,
+        parent_event_name: input.piece_details.parent_event_name ?? null,
+        parent_event_website: input.piece_details.parent_event_website ?? null,
+        parent_event_ticket_link: input.piece_details.parent_event_ticket_link ?? null,
+        parent_event_contact_email: input.piece_details.parent_event_contact_email ?? null,
+        piece_schedule_mode: input.piece_details.piece_schedule_mode ?? null,
+        selected_slots: input.piece_details.selected_slots || null,
+      })
+    if (e5) throw new Error(`Failed to insert piece_details: ${e5.message}`)
+  }
+
+  // 6) Create parent-child relationship if provided
+  // Check both top-level parent_listing_id and piece_details.parent_listing_id
+  const parentListingId = input.parent_listing_id || input.piece_details?.parent_listing_id || null
+  
+  // Auto-determine relationship_type for pieces if not provided
+  let relationshipType = input.relationship_type
+  if (parentListingId && !relationshipType) {
+    // If this is a piece and has parent_listing_id, it's a performance_piece relationship
+    if (input.type === "performance" && input.details.subtype === "PIECE") {
+      relationshipType = "performance_piece"
+    }
+    // For classes, would need to check if parent is workshop - handled by admin function
+  }
+  
+  if (parentListingId && relationshipType) {
+    const { error: e6 } = await supabase
+      .from("listing_relationships")
+      .insert({
+        parent_listing_id: parentListingId,
+        child_listing_id: listingId,
+        relationship_type: relationshipType,
+        created_by: user.id,
+      })
+    if (e6) throw new Error(`Failed to create relationship: ${e6.message}`)
+  }
+
+  return { id: listingId }
 }
 
-export async function listEvents(params: { status?: string | null, userId?: string | null, limit?: number, cursor?: string | null }) {
-  const supabase = await getSupabaseServerClient()
-  let query = supabase.from('events').select('*')
-  if (params.status) query = query.eq('status', params.status)
-  if (params.userId) query = query.eq('created_by', params.userId)
-  query = query.order('submitted_at', { ascending: false })
-  const limit = params.limit && params.limit > 0 ? params.limit : 20
-  query = query.range(0, Math.max(0, limit - 1))
-  const { data, error } = await query
-  if (error) throw error
-  return { items: data, nextCursor: null }
-}
+/* ------------------------------------------------------------------ */
+/* CREATE (anonymous submission)                                       */
+/* Use SERVICE client in the API route; this repo assumes it's called  */
+/* with a service client available (DI pattern shown below).           */
+/* ------------------------------------------------------------------ */
+export async function createListingAnonymousRepo(
+  serviceSupabase: ReturnType<typeof getSupabaseServiceClient>,
+  input: CreateListingInput
+) {
+  // 1) Insert listing (created_by = null)
+  const { data: listing, error: e1 } = await serviceSupabase
+    .from("listings")
+    .insert({
+      type: input.type,
+      status: "pending",
+      created_by: null,
+      contact_name: input.base.contact_name,
+      pronouns: input.base.pronouns ?? null,
+      contact_email: input.base.contact_email,
+      company: input.base.company ?? null,
+      company_website: input.base.company_website ?? null,
+      address: input.base.address ?? null,
+      place_id: input.base.place_id ?? null,
+      lat: input.base.lat ?? null,
+      lng: input.base.lng ?? null,
+      venue_name: input.base.venue_name ?? null,
+      location_instructions: input.base.location_instructions ?? null,
+      social_handles: input.base.social_handles ?? null,
+      notes: input.base.notes ?? null,
+      borough: input.base.borough ?? null,
+      meta: input.base.meta ?? {},
+      // submitted_at will be set when user explicitly submits (see submitListingRepo)
+    })
+    .select("id")
+    .single()
+  if (e1) throw new Error(`Failed to create listing: ${e1.message}`)
 
+  const listingId = listing.id as string
 
-type EventType = "performance" | "audition" | "creative" | "class" | "funding"
+  // 2) Insert type-specific details
+  if (input.type === "funding") {
+    throw new Error("Funding listings are not currently supported")
+  }
+  
+  const tbl = detailTable[input.type]
+  
+  // Validate performance_details constraint: ORGANIZER must have title
+  if (input.type === "performance" && input.details.subtype === "ORGANIZER") {
+    if (!input.details.title) {
+      throw new Error("Performance ORGANIZER must have a title")
+    }
+  }
+  
+  const { error: e2 } = await serviceSupabase
+    .from(tbl)
+    .insert({ listing_id: listingId, ...input.details })
+  if (e2) throw new Error(`Failed to insert ${tbl} details: ${e2.message}`)
 
-const detailTable: Record<EventType, string> = {
-  performance: "performance_details",
-  audition: "audition_details",
-  creative: "opportunity_details",
-  class: "class_details",
-  funding: "funding_details",
+  // 3) Insert occurrences
+  if (input.occurrences?.length) {
+    const occurrencesToInsert = input.occurrences.map((o) => ({
+      listing_id: listingId,
+      occurrence_type: o.occurrence_type ?? ("event" as OccurrenceType),
+      starts_at_utc: o.starts_at_utc,
+      ends_at_utc: o.ends_at_utc ?? null,
+      tz: o.tz,
+      address: o.address ?? null,
+      place_id: o.place_id ?? null,
+      lat: o.lat ?? null,
+      lng: o.lng ?? null,
+      venue_name: o.venue_name ?? null,
+      location_instructions: o.location_instructions ?? null,
+    }))
+    const { error: e3 } = await serviceSupabase
+      .from("listing_occurrences")
+      .insert(occurrencesToInsert)
+    if (e3) throw new Error(`Failed to insert occurrences: ${e3.message}`)
+  }
+
+  // 4) Insert photos
+  if (input.photos?.length) {
+    const photosToInsert = input.photos
+      .slice(0, 5)
+      .map((p, idx) => {
+        const sortOrder = p.sort_order ?? idx
+        // Ensure sort_order is within valid range (0-9)
+        const clampedSortOrder = Math.max(0, Math.min(9, sortOrder))
+        return {
+          listing_id: listingId,
+          path: p.path,
+          credit: p.credit ?? null,
+          sort_order: clampedSortOrder,
+        }
+      })
+    const { error: e4 } = await serviceSupabase
+      .from("listing_photos")
+      .insert(photosToInsert)
+    if (e4) throw new Error(`Failed to insert photos: ${e4.message}`)
+  }
+
+  // 5) Insert piece_details if this is a piece
+  if (input.piece_details) {
+    // Validate piece_details constraint: must have parent_listing_id OR (parent_event_name AND parent_event_contact_email)
+    const hasParentListing = !!input.piece_details.parent_listing_id
+    const hasManualParent = !!(input.piece_details.parent_event_name && input.piece_details.parent_event_contact_email)
+    
+    if (!hasParentListing && !hasManualParent) {
+      throw new Error("Piece details must have either parent_listing_id or both parent_event_name and parent_event_contact_email")
+    }
+    
+    const { error: e5 } = await serviceSupabase
+      .from("piece_details")
+      .insert({
+        listing_id: listingId,
+        parent_listing_id: input.piece_details.parent_listing_id ?? null,
+        parent_event_name: input.piece_details.parent_event_name ?? null,
+        parent_event_website: input.piece_details.parent_event_website ?? null,
+        parent_event_ticket_link: input.piece_details.parent_event_ticket_link ?? null,
+        parent_event_contact_email: input.piece_details.parent_event_contact_email ?? null,
+        piece_schedule_mode: input.piece_details.piece_schedule_mode ?? null,
+        selected_slots: input.piece_details.selected_slots || null,
+      })
+    if (e5) throw new Error(`Failed to insert piece_details: ${e5.message}`)
+  }
+
+  // 6) Create parent-child relationship if provided (note: anonymous can't create relationships, admin must do this)
+  // Relationships are typically created by admin after both listings exist
+
+  return { id: listingId }
 }
 
 /* ------------------------------------------------------------------ */
@@ -110,7 +365,7 @@ const detailTable: Record<EventType, string> = {
 export async function listCalendarItemsRepo(params: {
   fromISO: string
   toISO: string
-  types?: EventType[]
+  types?: ListingType[]
   borough?: string | null
   limit?: number
 }) {
@@ -118,112 +373,131 @@ export async function listCalendarItemsRepo(params: {
   const { fromISO, toISO, types = [], borough = null, limit = 500 } = params
 
   const sel = `
-    id, event_id, starts_at_utc, tz,
-    events!inner (
+    id, listing_id, occurrence_type, starts_at_utc, ends_at_utc, tz,
+    address, place_id, lat, lng, venue_name, location_instructions,
+    listings!inner (
       id, type, status, borough,
-      performance_details (show_name),
-      audition_details (audition_name),
-      opportunity_details (opportunity_name),
-      class_details (class_name),
-      funding_details (title)
+      performance_details (title),
+      audition_details (title),
+      creative_details (title),
+      class_workshop_details (title)
     )
   `
 
   let q = supabase
-    .from("event_occurrences")
+    .from("listing_occurrences")
     .select(sel)
-    .eq("events.status", "approved")
+    .eq("listings.status", "approved")
+    .is("listings.deleted_at", null)
+    .eq("occurrence_type", "event")
     .gte("starts_at_utc", fromISO)
     .lte("starts_at_utc", toISO)
     .order("starts_at_utc", { ascending: true })
     .limit(Math.min(limit, 1000))
 
-  if (borough) q = q.eq("events.borough", borough)
-  if (types.length) q = q.in("events.type", types)
+  if (borough) q = q.eq("listings.borough", borough)
+  if (types.length) q = q.in("listings.type", types)
 
-  const { data, error } = await q as unknown as { data: Array<{ id: string; event_id: string; starts_at_utc: string; tz: string; events: { type: string; borough?: string | null; performance_details?: { show_name?: string } | null; audition_details?: { audition_name?: string } | null; opportunity_details?: { opportunity_name?: string } | null; class_details?: { class_name?: string } | null; funding_details?: { title?: string } | null } }> , error: unknown }
+  const { data, error } = await q
   if (error) throw error
 
-  // flatten for UI
-  return (data ?? []).map((row) => {
-    const e = row.events
+  return (data ?? []).map((row: any) => {
+    const listing = row.listings
     const title =
-      e.type === "performance" ? e.performance_details?.show_name :
-      e.type === "audition"    ? e.audition_details?.audition_name :
-      e.type === "creative"    ? e.opportunity_details?.opportunity_name :
-      e.type === "class"       ? e.class_details?.class_name :
-      e.funding_details?.title ?? "Untitled"
+      listing.type === "performance" ? listing.performance_details?.title :
+      listing.type === "audition" ? listing.audition_details?.title :
+      listing.type === "creative" ? listing.creative_details?.title :
+      listing.type === "class" ? listing.class_workshop_details?.title :
+      "Untitled"
     return {
       occurrenceId: row.id,
-      eventId: row.event_id,
-      type: e.type as EventType,
+      listingId: row.listing_id,
+      type: listing.type as ListingType,
       title,
       start: row.starts_at_utc as string,
+      endsAt: row.ends_at_utc as string | null,
       tz: row.tz as string,
-      borough: (e as { borough?: string | null }).borough ?? null,
+      borough: listing.borough ?? null,
+      address: row.address ?? null,
+      venue_name: row.venue_name ?? null,
     }
   })
 }
 
 /* ------------------------------------------------------------------ */
-/* PUBLIC EVENT (approved)                                             */
+/* PUBLIC LISTING (approved)                                           */
 /* ------------------------------------------------------------------ */
-export async function getEventPublicRepo(eventId: string) {
+export async function getListingPublicRepo(listingId: string) {
   const supabase = getSupabaseServerClientAnon()
   const { data, error } = await supabase
-    .from("events")
+    .from("listings")
     .select(`
       id, type, status, borough, social_handles, notes, submitted_at,
+      company, company_website, address, place_id, lat, lng, venue_name, location_instructions,
       performance_details (*),
       audition_details (*),
-      opportunity_details (*),
-      class_details (*),
-      funding_details (*),
-      event_occurrences (*),
-      event_photos (*)
+      creative_details (*),
+      class_workshop_details (*),
+      listing_occurrences (*),
+      listing_photos (*)
     `)
-    .eq("id", eventId)
+    .eq("id", listingId)
     .eq("status", "approved")
+    .is("deleted_at", null)
     .single()
 
   if (error) throw error
+
+  // Generate public URLs for photos (approved listings use public bucket)
+  if (data.listing_photos && Array.isArray(data.listing_photos) && data.listing_photos.length > 0) {
+    const svc = getSupabaseServiceClient()
+    const publicBucket = "event-photos-public"
+    
+    data.listing_photos = data.listing_photos.map((photo: { path: string; id: string; credit?: string | null; sort_order?: number }) => ({
+      ...photo,
+      url: storageService.getPublicUrl(svc, publicBucket, photo.path),
+    }))
+  }
+
   return data
 }
 
 /* ------------------------------------------------------------------ */
 /* OWNER reads (any status)                                            */
 /* ------------------------------------------------------------------ */
-export async function listMyEventsRepo() {
+export async function listMyListingsRepo() {
   const supabase = await getSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user?.id) throw new Error("Unauthorized")
 
   const { data, error } = await supabase
-    .from("events")
+    .from("listings")
     .select(`id, type, status, submitted_at`)
     .eq("created_by", user.id)
+    .is("deleted_at", null)
     .order("submitted_at", { ascending: false })
 
   if (error) throw error
   return data
 }
 
-export async function getEventForOwnerRepo(eventId: string) {
+export async function getListingForOwnerRepo(listingId: string) {
   const supabase = await getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("events")
+    .from("listings")
     .select(`
       id, type, status, borough, social_handles, notes, submitted_at,
+      company, company_website, address, place_id, lat, lng, venue_name, location_instructions,
       performance_details (*),
       audition_details (*),
-      opportunity_details (*),
-      class_details (*),
-      funding_details (*),
-      event_occurrences (*),
-      event_photos (*)
+      creative_details (*),
+      class_workshop_details (*),
+      piece_details (*),
+      listing_occurrences (*),
+      listing_photos (*)
     `)
-    .eq("id", eventId)
-    // RLS lets owners read their own; no need to add created_by filter here
+    .eq("id", listingId)
+    .is("deleted_at", null)
     .single()
 
   if (error) throw error
@@ -231,259 +505,325 @@ export async function getEventForOwnerRepo(eventId: string) {
 }
 
 /* ------------------------------------------------------------------ */
-/* CREATE (authenticated owner)                                        */
-/* Owner can edit while status='pending' per RLS                       */
+/* OWNER: update while pending                                         */
 /* ------------------------------------------------------------------ */
-export async function createEventOwnedRepo(input: {
-  type: EventType
-  base: {
-    contact_name: string
-    pronouns?: string | null
-    contact_email: string
-    org_name?: string | null
-    org_website?: string | null
-    address?: string | null
-    social_handles?: Record<string, unknown>
-    notes?: string | null
-    borough?: string | null
-    meta?: Record<string, unknown>
+export async function updatePendingListingRepo(
+  listingId: string,
+  patch: {
+    base?: Partial<BaseListingInput>
+    details?: Record<string, unknown>
   }
-  details: Record<string, unknown>           // matches the chosen detail table
-  occurrences: Array<{ starts_at_utc: string; ends_at_utc?: string | null; tz: string }>
-  photos?: Array<{ path: string; credit?: string | null; sort_order?: number }>
-}) {
+) {
+  const supabase = await getSupabaseServerClient()
+
+  if (patch.base) {
+    const { error } = await supabase
+      .from("listings")
+      .update(patch.base)
+      .eq("id", listingId)
+    if (error) throw new Error(`Failed to update listing base: ${error.message}`)
+  }
+  if (patch.details) {
+    const { data: listing, error: e1 } = await supabase
+      .from("listings")
+      .select("type")
+      .eq("id", listingId)
+    .single()
+    if (e1) throw new Error(`Failed to get listing type: ${e1.message}`)
+    
+    const listingType = listing.type as ListingType
+    if (listingType === "funding") {
+      throw new Error("Funding listings are not currently supported")
+    }
+    
+    const tbl = detailTable[listingType]
+    const { error: e2 } = await supabase
+      .from(tbl)
+      .update(patch.details)
+      .eq("listing_id", listingId)
+    if (e2) throw new Error(`Failed to update ${tbl} details: ${e2.message}`)
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* OWNER: submit listing (sets submitted_at)                          */
+/* ------------------------------------------------------------------ */
+export async function submitListingRepo(listingId: string) {
   const supabase = await getSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user?.id) throw new Error("Unauthorized")
 
-  // 1) insert event
-  const { data: ev, error: e1 } = await supabase
-    .from("events")
-    .insert({
-      type: input.type,
-      status: "pending",
-      created_by: user.id,
-      contact_name: input.base.contact_name,
-      pronouns: input.base.pronouns ?? null,
-      contact_email: input.base.contact_email,
-      org_name: input.base.org_name ?? null,
-      org_website: input.base.org_website ?? null,
-      address: input.base.address ?? null,
-      social_handles: input.base.social_handles ?? {},
-      notes: input.base.notes ?? null,
-      borough: input.base.borough ?? null,
-      meta: input.base.meta ?? {},
-    })
-    .select("id")
+  // Verify listing belongs to user and is in draft or pending status
+  const { data: listing, error: checkError } = await supabase
+    .from("listings")
+    .select("id, status, created_by")
+    .eq("id", listingId)
+    .is("deleted_at", null)
     .single()
-  if (e1) throw e1
-
-  const eventId = ev.id as string
-
-  // 2) insert detail (owner has pending CUD via RLS)
-  const tbl = detailTable[input.type]
-  const { error: e2 } = await supabase
-    .from(tbl)
-    .insert({ event_id: eventId, ...input.details })
-  if (e2) throw e2
-
-  // 3) occurrences
-  if (input.occurrences?.length) {
-    const { error: e3 } = await supabase
-      .from("event_occurrences")
-      .insert(input.occurrences.map(o => ({ ...o, event_id: eventId })))
-    if (e3) throw e3
+  
+  if (checkError) throw new Error(`Failed to get listing: ${checkError.message}`)
+  if (listing.created_by !== user.id) throw new Error("Unauthorized: Listing does not belong to user")
+  if (listing.status !== "draft" && listing.status !== "pending") {
+    throw new Error(`Cannot submit listing with status: ${listing.status}`)
   }
 
-  // 4) photos
-  if (input.photos?.length) {
-    const { error: e4 } = await supabase
-      .from("event_photos")
-      .insert(input.photos.map(p => ({ ...p, event_id: eventId, sort_order: p.sort_order ?? 0 })))
-    if (e4) throw e4
-  }
-
-  return { id: eventId }
-}
-
-/* ------------------------------------------------------------------ */
-/* CREATE (anonymous submission)                                       */
-/* Use SERVICE client in the API route; this repo assumes it's called  */
-/* with a service client available (DI pattern shown below).           */
-/* ------------------------------------------------------------------ */
-import { getSupabaseServiceClient } from "@/lib/supabase/service"
-export async function createEventAnonymousRepo(serviceSupabase: ReturnType<typeof getSupabaseServiceClient>, input: {
-  type: EventType
-  base: {
-    contact_name: string
-    pronouns?: string | null
-    contact_email: string
-    org_name?: string | null
-    org_website?: string | null
-    address?: string | null
-    social_handles?: Record<string, unknown>
-    notes?: string | null
-    borough?: string | null
-    meta?: Record<string, unknown>
-  }
-  details: Record<string, unknown>
-  occurrences: Array<{ starts_at_utc: string; ends_at_utc?: string | null; tz: string }>
-  photos?: Array<{ path: string; credit?: string | null; sort_order?: number }>
-}) {
-  // 1) insert event (created_by = null)
-  const { data: ev, error: e1 } = await serviceSupabase
-    .from("events")
-    .insert({
-      type: input.type,
-      status: "pending",
-      created_by: null,
-      contact_name: input.base.contact_name,
-      pronouns: input.base.pronouns ?? null,
-      contact_email: input.base.contact_email,
-      org_name: input.base.org_name ?? null,
-      org_website: input.base.org_website ?? null,
-      address: input.base.address ?? null,
-      social_handles: input.base.social_handles ?? {},
-      notes: input.base.notes ?? null,
-      borough: input.base.borough ?? null,
-      meta: input.base.meta ?? {},
+  // Set submitted_at and update status to pending if it was draft
+  const { error } = await supabase
+    .from("listings")
+    .update({
+      submitted_at: new Date().toISOString(),
+      status: "pending", // Ensure status is pending when submitted
     })
-    .select("id")
-    .single()
-  if (e1) throw e1
-
-  const eventId = ev.id as string
-  const tbl = detailTable[input.type]
-
-  // 2) detail
-  const { error: e2 } = await serviceSupabase.from(tbl).insert({ event_id: eventId, ...input.details })
-  if (e2) throw e2
-
-  // 3) occurrences
-  if (input.occurrences?.length) {
-    const { error: e3 } = await serviceSupabase
-      .from("event_occurrences")
-      .insert(input.occurrences.map(o => ({ ...o, event_id: eventId })))
-    if (e3) throw e3
-  }
-
-  // 4) photos
-  if (input.photos?.length) {
-    const { error: e4 } = await serviceSupabase
-      .from("event_photos")
-      .insert(input.photos.map(p => ({ ...p, event_id: eventId, sort_order: p.sort_order ?? 0 })))
-    if (e4) throw e4
-  }
-
-  return { id: eventId }
-}
-
-/* ------------------------------------------------------------------ */
-/* OWNER: update while pending                                         */
-/* ------------------------------------------------------------------ */
-export async function updatePendingEventRepo(eventId: string, patch: {
-  base?: Partial<{
-    contact_name: string; contact_email: string; org_name: string | null; org_website: string | null;
-    address: string | null; social_handles: Record<string, unknown>; notes: string | null; borough: string | null;
-  }>
-  details?: Record<string, unknown>
-}) {
-  const supabase = await getSupabaseServerClient()
-
-  if (patch.base) {
-    const { error } = await supabase.from("events").update(patch.base).eq("id", eventId)
-    if (error) throw error
-  }
-  if (patch.details) {
-    // Need event type to know which details table to update
-    const { data: ev, error: e1 } = await supabase.from("events").select("type").eq("id", eventId).single()
-    if (e1) throw e1
-    const tbl = detailTable[ev.type as EventType]
-    const { error: e2 } = await supabase.from(tbl).update(patch.details).eq("event_id", eventId)
-    if (e2) throw e2
-  }
+    .eq("id", listingId)
+  
+  if (error) throw new Error(`Failed to submit listing: ${error.message}`)
 }
 
 /* ------------------------------------------------------------------ */
 /* ADMIN actions                                                       */
 /* ------------------------------------------------------------------ */
-export async function approveEventRepo(eventId: string, reviewerId: string) {
+export async function approveListingRepo(listingId: string, reviewerId: string) {
   const supabase = await getSupabaseServerClient()
+  const svc = getSupabaseServiceClient()
+  
+  // 1) Update listing status
   const { error } = await supabase
-    .from("events")
-    .update({ status: "approved", reviewed_at: new Date().toISOString(), reviewer_id: reviewerId })
-    .eq("id", eventId)
-  if (error) throw error
+    .from("listings")
+    .update({
+      status: "approved",
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: reviewerId,
+    })
+    .eq("id", listingId)
+  if (error) throw new Error(`Failed to approve listing: ${error.message}`)
+
+  // 2) Move photos from private to public bucket
+  const { data: photos, error: photosError } = await supabase
+    .from("listing_photos")
+    .select("id, path")
+    .eq("listing_id", listingId)
+
+  if (photosError) {
+    console.error(`Failed to fetch photos for listing ${listingId}:`, photosError)
+    // Don't fail approval if photos can't be moved
+  } else if (photos && photos.length > 0) {
+    // Move each photo from private to public bucket
+    const privateBucket = "event-photos"
+    const publicBucket = "event-photos-public"
+    
+    for (const photo of photos) {
+      try {
+        await storageService.moveFile(svc, privateBucket, publicBucket, photo.path)
+      } catch (moveError) {
+        console.error(`Failed to move photo ${photo.id} (${photo.path}):`, moveError)
+        // Continue with other photos even if one fails
+      }
+    }
+  }
 }
 
-export async function rejectEventRepo(eventId: string, reviewerId: string, admin_notes?: string) {
+export async function rejectListingRepo(
+  listingId: string,
+  reviewerId: string,
+  admin_notes?: string
+) {
   const supabase = await getSupabaseServerClient()
+  
+  const updateData: {
+    status: string
+    reviewed_at: string
+    reviewed_by: string
+    notes?: string
+  } = {
+    status: "rejected",
+    reviewed_at: new Date().toISOString(),
+    reviewed_by: reviewerId,
+  }
+  
+  if (admin_notes) {
+    const { data: existing } = await supabase
+      .from("listings")
+      .select("notes")
+      .eq("id", listingId)
+      .single()
+    updateData.notes = existing?.notes 
+      ? `${existing.notes}\n\nAdmin notes: ${admin_notes}`
+      : `Admin notes: ${admin_notes}`
+  }
+  
   const { error } = await supabase
-    .from("events")
-    .update({ status: "rejected", reviewed_at: new Date().toISOString(), reviewer_id: reviewerId, admin_notes: admin_notes ?? null })
-    .eq("id", eventId)
+    .from("listings")
+    .update(updateData)
+    .eq("id", listingId)
   if (error) throw error
 }
 
 /* ------------------------------------------------------------------ */
 /* ADMIN list/detail (service client; API enforces role)               */
 /* ------------------------------------------------------------------ */
-export async function listAdminEventsRepo(params: { status: 'pending'|'approved'|'rejected'; limit: number }) {
+export async function listAdminListingsRepo(params: {
+  status: ListingStatus
+  limit: number
+}) {
   const svc = getSupabaseServiceClient()
   const { data, error } = await svc
-    .from('events')
+    .from("listings")
     .select(`
       id, type, status, submitted_at,
-      performance_details (show_name),
-      audition_details (audition_name),
-      opportunity_details (opportunity_name),
-      class_details (class_name),
-      funding_details (title)
+      performance_details (title),
+      audition_details (title),
+      creative_details (title),
+      class_workshop_details (title)
     `)
-    .eq('status', params.status)
-    .order('submitted_at', { ascending: false })
+    .eq("status", params.status)
+    .is("deleted_at", null)
+    .order("submitted_at", { ascending: false })
     .limit(params.limit)
   if (error) throw error
-  type Row = {
-    id: string
-    type: 'performance'|'audition'|'creative'|'class'|'funding'
-    status: 'pending'|'approved'|'rejected'
-    submitted_at: string
-    performance_details?: { show_name?: string } | null
-    audition_details?: { audition_name?: string } | null
-    opportunity_details?: { opportunity_name?: string } | null
-    class_details?: { class_name?: string } | null
-    funding_details?: { title?: string } | null
-  }
-  return (data ?? []).map((e) => {
-    const row = e as Row
+
+  return (data ?? []).map((e: any) => {
     const title =
-      row.type === 'performance' ? row.performance_details?.show_name :
-      row.type === 'audition'    ? row.audition_details?.audition_name :
-      row.type === 'creative'    ? row.opportunity_details?.opportunity_name :
-      row.type === 'class'       ? row.class_details?.class_name :
-      row.funding_details?.title ?? 'Untitled'
-    return { id: row.id, type: row.type, status: row.status, submitted_at: row.submitted_at, title: title ?? null }
+      e.type === "performance" ? e.performance_details?.title :
+      e.type === "audition" ? e.audition_details?.title :
+      e.type === "creative" ? e.creative_details?.title :
+      e.type === "class" ? e.class_workshop_details?.title :
+      "Untitled"
+    return {
+      id: e.id,
+      type: e.type,
+      status: e.status,
+      submitted_at: e.submitted_at,
+      title: title ?? null,
+    }
   })
 }
 
-export async function getAdminEventDetailRepo(eventId: string) {
+export async function getAdminListingDetailRepo(listingId: string) {
   const svc = getSupabaseServiceClient()
   const { data, error } = await svc
-    .from('events')
+    .from("listings")
     .select(`
       id, type, status, submitted_at,
-      contact_name, pronouns, contact_email, org_name, org_website, address, social_handles, notes, borough, meta,
+      contact_name, pronouns, contact_email, company, company_website,
+      address, place_id, lat, lng, venue_name, location_instructions,
+      social_handles, notes, borough, meta,
       performance_details (*),
       audition_details (*),
-      opportunity_details (*),
-      class_details (*),
-      funding_details (*),
-      event_occurrences (*),
-      event_photos (*)
+      creative_details (*),
+      class_workshop_details (*),
+      piece_details (*),
+      listing_occurrences (*),
+      listing_photos (*)
     `)
-    .eq('id', eventId)
+    .eq("id", listingId)
+    .is("deleted_at", null)
     .single()
   if (error) throw error
+
+  // Generate URLs for photos
+  // Approved listings use public bucket, pending/rejected use private bucket with signed URLs
+  if (data.listing_photos && Array.isArray(data.listing_photos) && data.listing_photos.length > 0) {
+    const isApproved = data.status === "approved"
+    const bucket = isApproved ? "event-photos-public" : "event-photos"
+    
+    const photosWithUrls = await Promise.all(
+      data.listing_photos.map(async (photo: { path: string; id: string; credit?: string | null; sort_order?: number }) => {
+        if (isApproved) {
+          // Use public URL for approved listings
+          return {
+            ...photo,
+            url: storageService.getPublicUrl(svc, bucket, photo.path),
+          }
+        } else {
+          // Use signed URL for pending/rejected listings
+          const { data: signed } = await svc.storage
+            .from(bucket)
+            .createSignedUrl(photo.path, 3600) // 1 hour expiry
+          
+          return {
+            ...photo,
+            url: signed?.signedUrl ?? null,
+          }
+        }
+      })
+    )
+    data.listing_photos = photosWithUrls
+  }
+
   return data
+}
+
+/* ------------------------------------------------------------------ */
+/* LEGACY COMPATIBILITY - Keep for backward compatibility             */
+/* These functions map old names to new names                         */
+/* ------------------------------------------------------------------ */
+export async function createEventOwnedRepo(input: Parameters<typeof createListingOwnedRepo>[0]) {
+  return createListingOwnedRepo(input)
+}
+
+export async function createEventAnonymousRepo(
+  serviceSupabase: ReturnType<typeof getSupabaseServiceClient>,
+  input: Parameters<typeof createListingAnonymousRepo>[1]
+) {
+  return createListingAnonymousRepo(serviceSupabase, input)
+}
+
+export async function listEvents(params: {
+  status?: string | null
+  userId?: string | null
+  limit?: number
+  cursor?: string | null
+}) {
+  const supabase = await getSupabaseServerClient()
+  let query = supabase.from("listings").select("*").is("deleted_at", null)
+  if (params.status) query = query.eq("status", params.status)
+  if (params.userId) query = query.eq("created_by", params.userId)
+  query = query.order("submitted_at", { ascending: false })
+  const limit = params.limit && params.limit > 0 ? params.limit : 20
+  query = query.range(0, Math.max(0, limit - 1))
+  const { data, error } = await query
+  if (error) throw error
+  return { items: data, nextCursor: null }
+}
+
+export async function getEventPublicRepo(listingId: string) {
+  return getListingPublicRepo(listingId)
+}
+
+export async function getEventForOwnerRepo(listingId: string) {
+  return getListingForOwnerRepo(listingId)
+}
+
+export async function listMyEventsRepo() {
+  return listMyListingsRepo()
+}
+
+export async function updatePendingEventRepo(
+  listingId: string,
+  patch: Parameters<typeof updatePendingListingRepo>[1]
+) {
+  return updatePendingListingRepo(listingId, patch)
+}
+
+export async function approveEventRepo(listingId: string, reviewerId: string) {
+  return approveListingRepo(listingId, reviewerId)
+}
+
+export async function rejectEventRepo(
+  listingId: string,
+  reviewerId: string,
+  admin_notes?: string
+) {
+  return rejectListingRepo(listingId, reviewerId, admin_notes)
+}
+
+export async function listAdminEventsRepo(params: {
+  status: "pending" | "approved" | "rejected"
+  limit: number
+}) {
+  return listAdminListingsRepo(params)
+}
+
+export async function getAdminEventDetailRepo(listingId: string) {
+  return getAdminListingDetailRepo(listingId)
 }

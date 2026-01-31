@@ -120,7 +120,9 @@ export function AdminEventCard({
               <Row label="Contact" value={`${detail.contact_name ?? ""}${detail.pronouns ? ` (${detail.pronouns})` : ""}`} />
               <Row label="Email" value={detail.contact_email} />
               <Row label="Organization" value={
-                detail.org_name ? (
+                detail.company ? (
+                  detail.company_website ? <a className="underline text-[var(--primary-600)]" href={detail.company_website} target="_blank">{detail.company}</a> : detail.company
+                ) : detail.org_name ? (
                   detail.org_website ? <a className="underline text-[var(--primary-600)]" href={detail.org_website} target="_blank">{detail.org_name}</a> : detail.org_name
                 ) : undefined
               }/>
@@ -128,16 +130,31 @@ export function AdminEventCard({
               <Row label="Borough" value={detail.borough} />
             </div>
             <Row label="Social" value={
-              detail.social_handles ? (
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(detail.social_handles).map(([k,v]) => (
-                    <span key={k} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--gray-100)] text-xs">
-                      <span className="uppercase">{k}</span>
-                      <span className="text-[var(--gray-600)]">{String(v)}</span>
-                    </span>
-                  ))}
-                </div>
-              ) : undefined
+              detail.social_handles ? (() => {
+                // Handle both string (TEXT) and object (legacy JSONB) formats
+                let handles: Record<string, string> | null = null
+                if (typeof detail.social_handles === 'string') {
+                  try {
+                    handles = JSON.parse(detail.social_handles)
+                  } catch {
+                    // If not valid JSON, treat as plain text
+                    return <span className="text-sm">{detail.social_handles}</span>
+                  }
+                } else if (typeof detail.social_handles === 'object' && detail.social_handles !== null) {
+                  handles = detail.social_handles as Record<string, string>
+                }
+                
+                return handles ? (
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(handles).map(([k,v]) => (
+                      <span key={k} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--gray-100)] text-xs">
+                        <span className="uppercase">{k}</span>
+                        <span className="text-[var(--gray-600)]">{String(v)}</span>
+                      </span>
+                    ))}
+                  </div>
+                ) : undefined
+              })() : undefined
             }/>
             <Row label="Notes" value={detail.notes} />
           </section>
@@ -145,11 +162,15 @@ export function AdminEventCard({
           {/* Event occurrences */}
           <section className="space-y-2">
             <h4 className="text-sm font-semibold text-[var(--gray-700)]">Dates & Times</h4>
-            {detail.event_occurrences?.length ? (
+            {(detail.listing_occurrences?.length || detail.event_occurrences?.length) ? (
               <ul className="list-disc ml-5 text-sm">
-                {detail.event_occurrences.map(o => (
+                {(detail.listing_occurrences || detail.event_occurrences || []).map((o: { id: string; starts_at_utc: string; tz: string; occurrence_type?: string }) => (
                   <li key={o.id}>
-                    {new Date(o.starts_at_utc).toLocaleString()} <span className="text-[var(--gray-500)]">({o.tz})</span>
+                    {new Date(o.starts_at_utc).toLocaleString()} 
+                    {o.occurrence_type && o.occurrence_type !== 'event' && (
+                      <span className="text-[var(--gray-500)]"> ({o.occurrence_type})</span>
+                    )}
+                    <span className="text-[var(--gray-500)]"> ({o.tz})</span>
                   </li>
                 ))}
               </ul>
@@ -161,15 +182,90 @@ export function AdminEventCard({
           {/* Photos */}
           <section className="space-y-2">
             <h4 className="text-sm font-semibold text-[var(--gray-700)]">Photos</h4>
-            {detail.event_photos?.length ? (
-              <ul className="list-disc ml-5 text-sm">
-                {detail.event_photos.map(p => (
-                  <li key={p.id}>
-                    <span className="font-mono text-[var(--gray-700)]">{p.path}</span>
-                    {p.credit ? <span className="text-[var(--gray-600)]"> — {p.credit}</span> : null}
-                  </li>
+            {detail.listing_photos?.length ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {detail.listing_photos.map((p: { id: string; path: string; credit?: string | null; sort_order?: number; url?: string | null }) => (
+                  <div key={p.id} className="relative group">
+                    {p.url ? (
+                      <>
+                        <img 
+                          src={p.url} 
+                          alt={p.credit || `Photo ${p.sort_order ?? 0}`}
+                          className="w-full h-32 object-cover rounded border"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center">
+                          <a
+                            href={p.url}
+                            download={`${item.id}-photo-${p.id}.jpg`}
+                            className="opacity-0 group-hover:opacity-100 text-white px-3 py-1 bg-[var(--primary-600)] rounded hover:bg-[var(--primary-500)]"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              // Force download
+                              const link = document.createElement('a')
+                              link.href = p.url!
+                              link.download = `${item.id}-photo-${p.id}.jpg`
+                              document.body.appendChild(link)
+                              link.click()
+                              document.body.removeChild(link)
+                            }}
+                          >
+                            Download
+                          </a>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-32 bg-gray-200 rounded border flex items-center justify-center text-sm text-gray-500 p-2">
+                        <span className="font-mono text-xs break-all">{p.path}</span>
+                      </div>
+                    )}
+                    {p.credit && (
+                      <p className="text-xs text-[var(--gray-600)] mt-1">{p.credit}</p>
+                    )}
+                  </div>
                 ))}
-              </ul>
+              </div>
+            ) : detail.event_photos?.length ? (
+              // Fallback for old event_photos field name
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {detail.event_photos.map((p: { id: string; path: string; credit?: string | null; sort_order?: number; url?: string | null }) => (
+                  <div key={p.id} className="relative group">
+                    {p.url ? (
+                      <>
+                        <img 
+                          src={p.url} 
+                          alt={p.credit || `Photo ${p.sort_order ?? 0}`}
+                          className="w-full h-32 object-cover rounded border"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center">
+                          <a
+                            href={p.url}
+                            download={`${item.id}-photo-${p.id}.jpg`}
+                            className="opacity-0 group-hover:opacity-100 text-white px-3 py-1 bg-[var(--primary-600)] rounded hover:bg-[var(--primary-500)]"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              const link = document.createElement('a')
+                              link.href = p.url!
+                              link.download = `${item.id}-photo-${p.id}.jpg`
+                              document.body.appendChild(link)
+                              link.click()
+                              document.body.removeChild(link)
+                            }}
+                          >
+                            Download
+                          </a>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-32 bg-gray-200 rounded border flex items-center justify-center text-sm text-gray-500 p-2">
+                        <span className="font-mono text-xs break-all">{p.path}</span>
+                      </div>
+                    )}
+                    {p.credit && (
+                      <p className="text-xs text-[var(--gray-600)] mt-1">{p.credit}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
             ) : (
               <p className="text-sm text-[var(--gray-600)]">No photos</p>
             )}

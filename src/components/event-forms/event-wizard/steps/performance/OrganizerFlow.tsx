@@ -16,7 +16,7 @@ type EventType = "SOLO" | "SPLIT_BILL" | "FESTIVAL"
 export function OrganizerFlow({ form }: { form: UseFormReturn<EventFormData> }) {
   const eventType = useWatch({
     control: form.control,
-    name: "event_type" as Path<EventFormData>,
+    name: "eventType" as Path<EventFormData>,
   }) as EventType | undefined
   const isMulti = eventType === "SPLIT_BILL" || eventType === "FESTIVAL"
 
