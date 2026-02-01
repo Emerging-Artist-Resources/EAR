@@ -28,6 +28,7 @@ export async function GET(
       `)
       .eq("id", id)
       .eq("listings.status", "approved")
+      .is("listings.deleted_at", null)
       .single()
 
     if (error || !data) return NextResponse.json({ error: "Not found" }, { status: 404 })
@@ -64,7 +65,7 @@ export async function GET(
       start: data.starts_at_utc,
       tz: data.tz,
       excerpt: description ?? null,
-      borough: listing.borough ?? null,
+      //borough: listing.borough ?? null,
       heroPhoto: heroUrl ? { url: heroUrl, credit: firstPhoto?.credit ?? null } : null,
     }, { headers: { "Cache-Control": "s-maxage=30" } })
   } catch (err) {

@@ -395,14 +395,3 @@ BEGIN
 END;
 $$;
 
--- ============================================================================
--- GRANT PERMISSIONS
--- ============================================================================
--- Grant execute permissions to admin role
--- Adjust based on your role structure
-
--- GRANT EXECUTE ON FUNCTION merge_listings TO admin_role;
--- GRANT EXECUTE ON FUNCTION add_listing_child TO admin_role;
--- GRANT EXECUTE ON FUNCTION remove_listing_child TO admin_role;
--- GRANT EXECUTE ON FUNCTION get_listing_hierarchy TO authenticated;
--- GRANT EXECUTE ON FUNCTION get_listing_full TO authenticated;

@@ -19,8 +19,7 @@ CREATE TYPE listing_type AS ENUM (
   'audition',
   'creative',
   'performance',
-  'class',
-  'funding'
+  'class'
 );
 
 CREATE TYPE listing_status AS ENUM (
@@ -85,7 +84,6 @@ CREATE TABLE listings (
   lng DECIMAL(11, 8),
   venue_name TEXT,
   location_instructions TEXT,
-  borough TEXT,
   
   -- Media and social
   social_handles TEXT,
@@ -96,15 +94,12 @@ CREATE TABLE listings (
   created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  submitted_at TIMESTAMPTZ,
+  submitted_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   reviewed_at TIMESTAMPTZ,
   reviewed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   
   -- Soft delete
-  deleted_at TIMESTAMPTZ,
-  
-  -- Indexes
-  CONSTRAINT listings_type_check CHECK (type IN ('audition', 'creative', 'performance', 'class', 'funding'))
+  deleted_at TIMESTAMPTZ
 );
 
 CREATE INDEX idx_listings_type ON listings(type);
@@ -130,7 +125,7 @@ CREATE TABLE listing_photos (
 );
 
 CREATE INDEX idx_listing_photos_listing_id ON listing_photos(listing_id);
-CREATE INDEX idx_listing_photos_sort_order ON listing_photos(listing_id, sort_order);
+CREATE INDEX idx_listing_photos_listing_sort ON listing_photos(listing_id, sort_order);
 
 -- ============================================================================
 -- LISTING OCCURRENCES
@@ -188,7 +183,7 @@ CREATE TABLE audition_details (
   -- Note: fee can be NULL (for NO_FEE), or one of PAY_FEE, PROVIDE, EXPLAIN
   fee listing_fee_option,
   fee_amount TEXT,
-  artist_type artist_type,
+  artist_type artist_type NOT NULL, -- Should be pulled from profiles.artist_status
   
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
@@ -247,12 +242,6 @@ CREATE TABLE performance_details (
   
   -- Event type (for ORGANIZER)
   event_type performance_event_type,
-  
-  -- Legacy fields (keep for backward compatibility)
-  festival_name TEXT,
-  festival_link TEXT,
-  split_bill_name TEXT,
-  split_bill_link TEXT,
   
   -- Agreement flags
   agree_comp_tickets BOOLEAN DEFAULT FALSE,
@@ -457,47 +446,6 @@ CREATE TRIGGER update_class_workshop_details_updated_at
   EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================================
--- VIEWS FOR COMMON QUERIES
--- ============================================================================
-
--- View for listings with their type-specific details
-CREATE OR REPLACE VIEW listings_with_details AS
-SELECT 
-  l.*,
-  ad.title as audition_title,
-  ad.description as audition_description,
-  cd.title as creative_title,
-  cd.description as creative_description,
-  pd.title as performance_title,
-  pd.description as performance_description,
-  pd.subtype as performance_subtype,
-  cwd.title as class_workshop_title,
-  cwd.description as class_workshop_description,
-  cwd.class_workshop_type
-FROM listings l
-LEFT JOIN audition_details ad ON l.id = ad.listing_id AND l.type = 'audition'
-LEFT JOIN creative_details cd ON l.id = cd.listing_id AND l.type = 'creative'
-LEFT JOIN performance_details pd ON l.id = pd.listing_id AND l.type = 'performance'
-LEFT JOIN class_workshop_details cwd ON l.id = cwd.listing_id AND l.type = 'class';
-
--- View for parent-child relationships
-CREATE OR REPLACE VIEW listing_hierarchy AS
-SELECT 
-  lr.id as relationship_id,
-  lr.relationship_type,
-  lr.created_at as relationship_created_at,
-  parent.id as parent_id,
-  parent.type as parent_type,
-  parent.status as parent_status,
-  child.id as child_id,
-  child.type as child_type,
-  child.status as child_status
-FROM listing_relationships lr
-JOIN listings parent ON lr.parent_listing_id = parent.id
-JOIN listings child ON lr.child_listing_id = child.id
-WHERE parent.deleted_at IS NULL AND child.deleted_at IS NULL;
-
--- ============================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================================================
 -- Note: Adjust these policies based on your specific security requirements
@@ -534,39 +482,24 @@ CREATE POLICY "Users can update their own listings"
 -- Admins have full access
 CREATE POLICY "Admins have full access to listings"
   ON listings FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE id = auth.uid() AND raw_user_meta_data->>'role' = 'admin'
-    )
-  );
+  USING (public.is_admin());
 
 -- Reviews policies
 -- Admins can read all reviews
 CREATE POLICY "Admins can read all reviews"
   ON reviews FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE id = auth.uid() AND raw_user_meta_data->>'role' = 'admin'
-    )
-  );
+  USING (public.is_admin());
 
 -- Admins can create reviews
 CREATE POLICY "Admins can create reviews"
   ON reviews FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE id = auth.uid() AND raw_user_meta_data->>'role' = 'admin'
-    )
-  );
+  WITH CHECK (public.is_admin());
 
 -- ============================================================================
 -- COMMENTS
 -- ============================================================================
 
-COMMENT ON TABLE listings IS 'Base table for all listing types (audition, creative, performance, class, funding)';
+COMMENT ON TABLE listings IS 'Base table for all listing types (audition, creative, performance, class)';
 COMMENT ON TABLE listing_photos IS 'Photos associated with listings';
 COMMENT ON TABLE listing_occurrences IS 'Date/time occurrences for listings. Can be event occurrences or deadlines. Each occurrence can have its own location.';
 COMMENT ON TABLE audition_details IS 'Type-specific details for audition listings';

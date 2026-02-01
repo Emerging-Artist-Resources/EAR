@@ -7,10 +7,8 @@ import { Section } from "@/components/forms/blocks/Section"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
-import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { FestivalAssociationSection } from "./class-workshop/FestivalAssociationSection"
-import { ClassWorkshopListingFeeSection } from "./class-workshop/ClassWorkshopListingFeeSection"
 import { ClassOccurrencesPicker } from "@/components/forms/blocks/ClassOccurrencesPicker"
 
 interface ClassesWorkshopsStepProps {
@@ -190,39 +188,6 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
           />
         </Section>
       )}
-
-      <Section title="Promo Images">
-        <PhotoUploader
-          form={form}
-          name={"promoFiles"}
-          label="Promotional Images"
-          description="Images are highly encouraged for marketing! Please upload up to 5 images."
-        />
-        <TextAreaField
-          form={form}
-          name={"credits"}
-          label="Image Description / Photo Credit"
-          placeholder="Describe the images and provide photo credit"
-          rows={3}
-        />
-        <TextField form={form} name={"socialHandles"} label="Social Media Handles" placeholder="@username" />
-      </Section>
-
-      <ClassWorkshopListingFeeSection
-        form={form}
-        isWorkshop={isWorkshop}
-        occurrenceCount={occurrenceCount}
-      />
-
-      <Section title="Additional Information">
-        <TextAreaField
-          form={form}
-          name={"notes"}
-          label="Anything else you'd like us to know?"
-          placeholder="Pricing, accessibility, what to bring, etc."
-          rows={4}
-        />
-      </Section>
     </>
   )
 }

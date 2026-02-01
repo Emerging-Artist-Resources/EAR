@@ -17,7 +17,7 @@ type EventPayload = {
     location_instructions: string | null
     social_handles: string | null
     notes: string | null
-    borough: string | null
+    //borough: string | null
   }
   details: Record<string, unknown>
   occurrences: Array<{ 
@@ -62,7 +62,7 @@ export function buildBasePayload(
     location_instructions: data.locationInstructions || null,
     social_handles: data.socialHandles || null,
     notes: data.notes || null,
-    borough: null,
+    //borough: null,
   }
 }
 
@@ -109,7 +109,6 @@ export function buildPerformancePayload(
   }
 
   const isPiece = data.type === "PIECE"
-  const isOrganizer = data.type === "ORGANIZER"
 
   // Build piece_details if this is a piece
   let pieceDetails: Record<string, unknown> | null = null
@@ -144,10 +143,6 @@ export function buildPerformancePayload(
       price: data.price ?? null,
       participants: data.participants ?? null,
       event_type: data.eventType || null,
-      festival_name: data.festival_name || null,
-      festival_link: data.festival_link || null,
-      split_bill_name: data.split_bill_name || null,
-      split_bill_link: data.split_bill_link || null,
       agree_comp_tickets: Boolean(data.agreeCompTickets),
       event_dates_confirmed: Boolean(data.eventDatesConfirmed),
       artist_type: data.artistType || null,
@@ -330,9 +325,21 @@ export function buildClassPayload(
     occurrences.push(...primaryList, ...extraOcc)
   }
 
+  // Set base location from first occurrence for backwards compatibility
+  const basePayload = buildBasePayload(data, userInfo)
+  const firstOccurrence = occurrencesData[0]
+  if (firstOccurrence && !basePayload.address) {
+    basePayload.address = (firstOccurrence as any).address || null
+    basePayload.place_id = (firstOccurrence as any).placeId || null
+    basePayload.lat = (firstOccurrence as any).lat || null
+    basePayload.lng = (firstOccurrence as any).lng || null
+    basePayload.venue_name = (firstOccurrence as any).venueName || null
+    basePayload.location_instructions = (firstOccurrence as any).locationInstructions || null
+  }
+
   return {
     type: "class",
-    base: buildBasePayload(data, userInfo),
+    base: basePayload,
     details: {
       class_workshop_type: data.classWorkshopType || "CLASS",
       title: data.title ?? data.className ?? "",
@@ -349,9 +356,6 @@ export function buildClassPayload(
       listing_fee_option: data.listingFeeOption || data.classListingFeeOption || null,
       listing_fee_explanation: data.listingFeeExplanation || data.classListingFeeExplanation || null,
       guest_spot_info: data.guestSpotInfo || null,
-      // Legacy fields for backward compatibility
-      festival_name: data.festivalName || null,
-      festival_link: data.festivalLink || null,
     },
     occurrences,
   }

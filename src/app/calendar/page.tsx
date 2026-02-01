@@ -15,7 +15,7 @@ export default function CalendarView() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [authPromptOpen, setAuthPromptOpen] = useState(false)
   const { isAuthed } = useAuth()
-  const { items, loading, fetchCalendar } = useCalendar()
+  const { items, deadlines, loading, fetchCalendar } = useCalendar()
 
   useEffect(() => {
     fetchCalendar({ limit: 500 })
@@ -46,7 +46,7 @@ export default function CalendarView() {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className={`px-4 py-6 sm:px-0 transition-opacity duration-200 ${isModalOpen ? 'opacity-50' : ''}`}>
           <CallToAction onSubmitPerformance={handleOpenSubmit} />
-          <Calendar items={items} />
+          <Calendar items={items} deadlines={deadlines} />
         </div>
       </div>
       <PerformanceModal

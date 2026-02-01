@@ -3,24 +3,29 @@ import { apiGet } from "@/lib/fetch-utils"
 
 export type CalendarItem = {
   occurrenceId: string
-  eventId: string
+  listingId: string
   type: "performance" | "audition" | "creative" | "class" | "funding"
   title: string | null
   start: string
   tz: string
 }
 
+export type CalendarResponse = {
+  data: CalendarItem[]
+  deadlines?: CalendarItem[]
+}
+
 export interface CalendarParams {
   from?: string
   to?: string
   types?: string[]
-  borough?: string
   q?: string
   limit?: number
 }
 
 export function useCalendar() {
   const [items, setItems] = useState<CalendarItem[]>([])
+  const [deadlines, setDeadlines] = useState<CalendarItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -33,13 +38,14 @@ export function useCalendar() {
       if (params?.from) qs.set("from", params.from)
       if (params?.to) qs.set("to", params.to)
       if (params?.types?.length) qs.set("types", params.types.join(","))
-      if (params?.borough) qs.set("borough", params.borough)
       if (params?.q) qs.set("q", params.q)
       if (params?.limit) qs.set("limit", String(params.limit))
+      qs.set("includeDeadlines", "true")
 
       const url = `/api/calendar${qs.toString() ? `?${qs.toString()}` : ""}`
-      const data = await apiGet<CalendarItem[]>(url)
-      setItems(Array.isArray(data) ? data : [])
+      const response = await apiGet<CalendarResponse>(url)
+      setItems(Array.isArray(response?.data) ? response.data : [])
+      setDeadlines(Array.isArray(response?.deadlines) ? response.deadlines : [])
     } catch (e) {
       setError(e instanceof Error ? e.message : "An error occurred")
     } finally {
@@ -47,7 +53,7 @@ export function useCalendar() {
     }
   }, [])
 
-  return { items, loading, error, fetchCalendar }
+  return { items, deadlines, loading, error, fetchCalendar }
 }
 
 

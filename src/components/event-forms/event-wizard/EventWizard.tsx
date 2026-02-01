@@ -12,12 +12,15 @@ import { PerformanceDetailsStep } from "./steps/performance/PerformanceDetailsSt
 import { ClassesWorkshopsStep } from "./steps/ClassWorkshopStep"
 import { OpportunityStep } from "./steps/OpportunityStep"
 import { AuditionStep } from "./steps/AuditionStep"
+import { MediaAndAdditionalInfoStep } from "./steps/MediaAndAdditionalInfoStep"
 import { PageNumbers } from "@/components/forms/blocks/PageNumbers"
 import { validateStep2 } from "./validation-helpers"
 import { buildEventPayload, type UserInfo } from "./payload-builders"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { apiPost } from "@/lib/fetch-utils"
+import { supabase } from "@/lib/supabase/client"
+import { storageService } from "@/services/storage"
 
 interface EventWizardProps {
   onSuccess: () => void
@@ -77,26 +80,15 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
         showToast("Please select an event type to continue", "warning")
         return
       }
-      if (eventType === 'PERFORMANCE') {
-        const validation = await validateStep2(form, eventType)
-        if (!validation.isValid) {
-          showToast(validation.message || "Please complete required fields on this step", "error")
-          return
-        }
-        setStep(3)
-        return
-      } else {
-        // For non-performance types, step 2 is the submit step
-        const validation = await validateStep2(form, eventType)
-        if (!validation.isValid) {
-          showToast(validation.message || "Please complete required fields on this step", "error")
-          return
-        }
-        // Validation passed, ready to submit
+      const validation = await validateStep2(form, eventType)
+      if (!validation.isValid) {
+        showToast(validation.message || "Please complete required fields on this step", "error")
         return
       }
+      setStep(3)
+      return
     }
-    // Step 3 (Performance Media & Socials) - validation passed, ready to submit
+    // Step 3 - validation passed, ready to submit
   }, [step, eventType, form, showToast])
 
   const goBack = useCallback(() => {
@@ -122,10 +114,59 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           return
         }
 
+        if (!user?.id) {
+          setSubmitMessage("Please sign in to submit")
+          setIsSubmitting(false)
+          return
+        }
+
+        // Upload photos to storage before building payload
+        const photoPaths: Array<{ path: string; credit?: string | null; sort_order?: number }> = []
+        const promoFiles = data.promoFiles as File[] | undefined
+        
+        if (promoFiles && Array.isArray(promoFiles) && promoFiles.length > 0) {
+          const bucket = "event-photos"
+          const userId = user.id
+          
+          for (let i = 0; i < Math.min(promoFiles.length, 5); i++) {
+            const file = promoFiles[i]
+            if (!file || !(file instanceof File)) continue
+            
+            try {
+              // Generate unique filename: listings/{userId}/{timestamp}-{index}.jpg
+              const timestamp = Date.now()
+              const fileExt = file.name.split('.').pop() || 'jpg'
+              const fileName = `${timestamp}-${i}.${fileExt}`
+              const filePath = `listings/${userId}/${fileName}`
+              
+              // Upload file to storage
+              await storageService.uploadFile(supabase, bucket, filePath, file, {
+                cacheControl: '3600',
+                upsert: false
+              })
+              
+              // Add to photo paths array
+              photoPaths.push({
+                path: filePath,
+                credit: data.credits || null,
+                sort_order: i
+              })
+            } catch (uploadError) {
+              console.error(`Failed to upload photo ${i}:`, uploadError)
+              const errorMsg = uploadError instanceof Error ? uploadError.message : "Failed to upload photo"
+              setSubmitMessage(`Photo upload failed: ${errorMsg}`)
+              showToast(`Photo upload failed: ${errorMsg}`, "error")
+              setIsSubmitting(false)
+              return
+            }
+          }
+        }
+
         // Debug: Log form data before building payload
         console.group("🟢 Form Submission - Before Payload")
         console.log("Event type:", eventType)
         console.log("Form data:", data)
+        console.log("Photo paths:", photoPaths)
         console.log("Location fields in form data:", {
           address: data.address,
           placeId: data.placeId,
@@ -142,6 +183,11 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
         console.groupEnd()
 
         const payload = buildEventPayload(data, eventType, userInfo)
+        
+        // Add photos to payload
+        if (photoPaths.length > 0) {
+          payload.photos = photoPaths
+        }
         
         // Debug: Log payload being sent
         console.group("🟢 Form Submission - Payload")
@@ -253,7 +299,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       })()} */}
       {/* Step indicators */}
       <div className="flex justify-center gap-2 text-sm">
-        <PageNumbers current={step} total={eventType === 'PERFORMANCE' ? 3 : 2} />
+        <PageNumbers current={step} total={3} />
       </div>
       {step === 1 && (
         <BasicInfoStep form={form} eventType={eventType} onChangeType={setEventType} />
@@ -271,9 +317,9 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           />
         )
       )}
-      {/*{step === 3 && eventType === 'PERFORMANCE' && (
-        <OrganizerMediaSocials form={form} />
-      )} */}
+      {step === 3 && eventType && (
+        <MediaAndAdditionalInfoStep form={form} eventType={eventType} />
+      )}
 
       {submitMessage && (
         <Alert variant={submitMessage.includes('success') ? 'success' : 'error'}>{submitMessage}</Alert>
@@ -291,12 +337,12 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           */}
         </div>
         <div className="flex gap-2">
-          {(step === 1 || (step === 2 && eventType === 'PERFORMANCE')) && (
+          {(step === 1 || step === 2) && (
             <Button type="button" onClick={goNext}>
               Next
             </Button>
           )}
-          {((step === 2 && eventType !== 'PERFORMANCE') || (step === 3 && eventType === 'PERFORMANCE')) && (
+          {step === 3 && (
             <Button
               type="button"
               onClick={() => {

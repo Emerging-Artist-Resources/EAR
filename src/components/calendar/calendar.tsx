@@ -22,9 +22,35 @@ import {
   addDays,
 } from "date-fns"
 
-interface CalendarProps { items: CalendarItem[] }
+// Helper function to format time in EST/EDT
+const formatTimeEST = (date: Date): string => {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date)
+}
 
-export function Calendar({ items }: CalendarProps) {
+// Helper function to format date and time in EST/EDT
+const formatDateTimeEST = (date: Date): string => {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date)
+}
+
+interface CalendarProps { 
+  items: CalendarItem[]
+  deadlines?: CalendarItem[]
+}
+
+export function Calendar({ items, deadlines = [] }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -88,6 +114,7 @@ export function Calendar({ items }: CalendarProps) {
     })
   }, [items, eventTypeFilter])
 
+  // Get all performances for a date (for details view - shows all occurrences)
   const getPerformancesForDate = (date: Date) => {
     const targetIso = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
       .toISOString()
@@ -96,6 +123,28 @@ export function Calendar({ items }: CalendarProps) {
       const eventIso = String(item.start).slice(0, 10)
       return eventIso === targetIso
     })
+  }
+
+  // Get deduplicated performances for calendar display (one per listing per day)
+  const getDeduplicatedPerformancesForDate = (date: Date) => {
+    const targetIso = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+      .toISOString()
+      .slice(0, 10)
+    const itemsForDate = filteredItems.filter((item) => {
+      const eventIso = String(item.start).slice(0, 10)
+      return eventIso === targetIso
+    })
+    
+    // Group by listingId, keeping the first occurrence for each listing
+    const seen = new Map<string, CalendarItem>()
+    for (const item of itemsForDate) {
+      const key = `${item.listingId}-${targetIso}`
+      if (!seen.has(key)) {
+        seen.set(key, item)
+      }
+    }
+    
+    return Array.from(seen.values())
   }
 
   // Need to call the API to get the upcoming deadlines -- rn upcoming deadlines might be upcoming events
@@ -147,7 +196,7 @@ export function Calendar({ items }: CalendarProps) {
                   <div key={`empty-${idx}`} className="bg-white min-h-[80px] sm:min-h-[120px]" />
                 ))}
                 {daysInMonth.map((day) => {
-                  const dayPerformances = getPerformancesForDate(day)
+                  const dayPerformances = getDeduplicatedPerformancesForDate(day)
                   const isToday = isSameDay(day, new Date())
                   const isCurrentMonth = isSameMonth(day, currentDate)
                   return (
@@ -161,7 +210,7 @@ export function Calendar({ items }: CalendarProps) {
                       </div>
                       <div className="mt-1 space-y-1">
                         {dayPerformances.slice(0, 2).map((performance) => (
-                          <div key={performance.occurrenceId} className="text-xs bg-primary/10 text-primary px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate" title={performance.title || ''}>
+                          <div key={`${performance.listingId}-${day.toISOString()}`} className="text-xs bg-primary/10 text-primary px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate" title={performance.title || ''}>
                             <span className="hidden sm:inline">{performance.title}</span>
                             <span className="sm:hidden">{(performance.title || '').substring(0, 8)}...</span>
                           </div>
@@ -189,7 +238,7 @@ export function Calendar({ items }: CalendarProps) {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-7 gap-px bg-gray-200">
                     {daysOfWeek.map((day) => {
-                      const dayPerformances = getPerformancesForDate(day)
+                      const dayPerformances = getDeduplicatedPerformancesForDate(day)
                       const isToday = isSameDay(day, new Date())
                       return (
                         <div key={day.toISOString()} className={`bg-white p-2 min-h-[100px] sm:min-h-[140px] ${isToday ? 'bg-secondary' : ''}`}>
@@ -199,7 +248,7 @@ export function Calendar({ items }: CalendarProps) {
                               <div className="text-xs text-gray-400">No events</div>
                             ) : (
                               dayPerformances.map((performance) => (
-                                <div key={performance.occurrenceId} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded truncate" title={performance.title || ''}>
+                                <div key={`${performance.listingId}-${day.toISOString()}`} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded truncate" title={performance.title || ''}>
                                   {performance.title}
                                 </div>
                               ))
@@ -217,17 +266,35 @@ export function Calendar({ items }: CalendarProps) {
               <div className="p-2">
                 <div className="text-base sm:text-sm text-gray-600 mb-2">{format(currentDate, 'EEEE, MMMM d, yyyy')}</div>
                 {(() => {
-                  const dayPerformances = getPerformancesForDate(currentDate)
+                  const dayPerformances = getDeduplicatedPerformancesForDate(currentDate)
+                  const allPerformances = getPerformancesForDate(currentDate)
                   if (dayPerformances.length === 0) {
                     return <div className="text-sm text-gray-500">No performances scheduled for this date.</div>
                   }
                   return (
                     <div className="space-y-3">
-                      {dayPerformances.map((performance) => (
-                        <Card key={performance.occurrenceId} padding="sm">
-                          <h4 className="text-base sm:text-lg font-medium text-gray-900">{performance.title}</h4>
-                        </Card>
-                      ))}
+                      {dayPerformances.map((performance) => {
+                        // Get all occurrences for this listing on this date
+                        const listingOccurrences = allPerformances.filter(p => p.listingId === performance.listingId)
+                        return (
+                          <Card key={`${performance.listingId}-${currentDate.toISOString()}`} padding="sm">
+                            <h4 className="text-base sm:text-lg font-medium text-gray-900">{performance.title}</h4>
+                            {listingOccurrences.length > 1 && (
+                              <div className="mt-2 text-sm text-gray-600">
+                                <div className="font-medium mb-1">Occurrences:</div>
+                                <ul className="list-disc list-inside space-y-1">
+                                  {listingOccurrences.map((occ) => (
+                                    <li key={occ.occurrenceId}>
+                                      {formatTimeEST(new Date(occ.start))}
+                                      {occ.endsAt && ` - ${formatTimeEST(new Date(occ.endsAt))}`}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </Card>
+                        )
+                      })}
                     </div>
                   )
                 })()}
@@ -238,17 +305,39 @@ export function Calendar({ items }: CalendarProps) {
           {view === 'month' && selectedDate && (
             <Card className="mt-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Performances on {format(selectedDate, "MMMM d, yyyy")}</h3>
-              {getPerformancesForDate(selectedDate).length === 0 ? (
-                <p className="text-gray-500">No performances scheduled for this date.</p>
-              ) : (
-                <div className="space-y-4">
-                  {getPerformancesForDate(selectedDate).map((performance) => (
-                    <Card key={performance.occurrenceId} padding="sm">
-                      <h4 className="text-lg font-medium text-gray-900">{performance.title}</h4>
-                    </Card>
-                  ))}
-                </div>
-              )}
+              {(() => {
+                const dayPerformances = getDeduplicatedPerformancesForDate(selectedDate)
+                const allPerformances = getPerformancesForDate(selectedDate)
+                if (dayPerformances.length === 0) {
+                  return <p className="text-gray-500">No performances scheduled for this date.</p>
+                }
+                return (
+                  <div className="space-y-4">
+                    {dayPerformances.map((performance) => {
+                      // Get all occurrences for this listing on this date
+                      const listingOccurrences = allPerformances.filter(p => p.listingId === performance.listingId)
+                      return (
+                        <Card key={`${performance.listingId}-${selectedDate.toISOString()}`} padding="sm">
+                          <h4 className="text-lg font-medium text-gray-900">{performance.title}</h4>
+                          {listingOccurrences.length > 1 && (
+                            <div className="mt-2 text-sm text-gray-600">
+                              <div className="font-medium mb-1">Occurrences:</div>
+                              <ul className="list-disc list-inside space-y-1">
+                                {listingOccurrences.map((occ) => (
+                                  <li key={occ.occurrenceId}>
+                                    {formatTimeEST(new Date(occ.start))}
+                                    {occ.endsAt && ` - ${formatTimeEST(new Date(occ.endsAt))}`}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </Card>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </Card>
           )}
         </div>
@@ -258,21 +347,30 @@ export function Calendar({ items }: CalendarProps) {
             <h3 className="text-lg font-semibold text-primary mb-4">Upcoming Deadlines</h3>
             
             <div className="space-y-3">
-              {items
-                .filter(it => {
+              {(() => {
+                // Use start of today for comparison, so deadlines today are still considered "upcoming"
+                const startOfToday = new Date()
+                startOfToday.setHours(0, 0, 0, 0)
+                const now = startOfToday.getTime()
+                return deadlines.filter(it => {
                   const d = new Date(String(it.start))
-                  return d.getTime() >= Date.now()
+                  return d.getTime() >= now
                 })
+              })()
                 .sort((a, b) => new Date(String(a.start)).getTime() - new Date(String(b.start)).getTime())
                 .slice(0, 5)
                 .map((it) => (
                   <div key={it.occurrenceId} className="border-l-4 border-primary/50 pl-3">
                     <div className="font-semibold text-sm text-gray-800">{it.title || "Untitled"}</div>
-                    <div className="text-xs text-gray-600">{format(new Date(String(it.start)), "MMM d, yyyy h:mm a")}</div>
+                    <div className="text-xs text-gray-600">{formatDateTimeEST(new Date(String(it.start)))}</div>
                   </div>
                 ))}
-              {items.filter(it => new Date(String(it.start)).getTime() >= Date.now()).length === 0 && (
-                <div className="text-sm text-gray-500">No upcoming events</div>
+              {(() => {
+                const startOfToday = new Date()
+                startOfToday.setHours(0, 0, 0, 0)
+                return deadlines.filter(it => new Date(String(it.start)).getTime() >= startOfToday.getTime()).length === 0
+              })() && (
+                <div className="text-sm text-gray-500">No upcoming deadlines</div>
               )}
             </div>
           </Card>

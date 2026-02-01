@@ -83,15 +83,24 @@ export function DateTimeList<T extends Record<string, unknown>>({
   // Memoize normalization of watched form values for performance
   const normalizedWatchedValues = useMemo(() => {
     if (!watchedFormValues) return undefined
-    return watchedFormValues.map((d) => {
+    console.log(`[DateTimeList:${name}] normalizedWatchedValues - watchedFormValues:`, JSON.stringify(watchedFormValues, null, 2))
+    const normalized = watchedFormValues.map((d) => {
+      const locationFields = createLocationFields(locationConfig, d)
+      console.log(`[DateTimeList:${name}] normalizedWatchedValues - item:`, {
+        date: d?.date,
+        locationFields,
+        fullItem: d,
+      })
       const normalizedItem: DateItem = {
         date: d?.date ?? "",
         times: showTime ? (d?.times && d.times.length > 0 ? d.times : [{ time: "" }]) : [],
-        ...createLocationFields(locationConfig, d),
+        ...locationFields,
       }
       return normalizedItem
     })
-  }, [watchedFormValues, showTime, locationConfig])
+    console.log(`[DateTimeList:${name}] normalizedWatchedValues - result:`, JSON.stringify(normalized, null, 2))
+    return normalized
+  }, [watchedFormValues, showTime, locationConfig, name])
   
   useEffect(() => {
     // On mount, read from getValues() which includes defaults
@@ -99,15 +108,29 @@ export function DateTimeList<T extends Record<string, unknown>>({
     const formValuesFromGetValues = getValues(name as any) as DateItem[] | undefined
     const currentFormValues = watchedFormValues ?? formValuesFromGetValues ?? []
     
+    console.log(`[DateTimeList:${name}] useEffect - formValuesFromGetValues:`, JSON.stringify(formValuesFromGetValues, null, 2))
+    console.log(`[DateTimeList:${name}] useEffect - watchedFormValues:`, JSON.stringify(watchedFormValues, null, 2))
+    console.log(`[DateTimeList:${name}] useEffect - currentFormValues:`, JSON.stringify(currentFormValues, null, 2))
+    
     // Use memoized normalized values if available, otherwise normalize current form values
     const normalized = normalizedWatchedValues ?? currentFormValues.map((d) => {
+      const locationFields = createLocationFields(locationConfig, d)
+      console.log(`[DateTimeList:${name}] useEffect - normalizing item:`, {
+        date: d?.date,
+        locationFields,
+        fullItem: d,
+      })
       const normalizedItem: DateItem = {
         date: d?.date ?? "",
         times: showTime ? (d?.times && d.times.length > 0 ? d.times : [{ time: "" }]) : [],
-        ...createLocationFields(locationConfig, d),
+        ...locationFields,
       }
       return normalizedItem
     })
+
+    console.log(`[DateTimeList:${name}] useEffect - normalized:`, JSON.stringify(normalized, null, 2))
+    console.log(`[DateTimeList:${name}] useEffect - dateFields.length:`, dateFields.length)
+    console.log(`[DateTimeList:${name}] useEffect - isInitialMount:`, isInitialMountRef.current)
 
     // Create signature to detect changes
     const signature = JSON.stringify(normalized)
@@ -164,10 +187,18 @@ export function DateTimeList<T extends Record<string, unknown>>({
       (formHasCompleteEntries && !userTyping)
     
     if (shouldSync) {
+      console.log(`[DateTimeList:${name}] useEffect - SYNCING: replacing field array with normalized values`)
+      console.log(`[DateTimeList:${name}] useEffect - normalized being set:`, JSON.stringify(normalized, null, 2))
       prevFormValuesRef.current = signature
       replace(normalized as any)
+      // Check what was actually set after replace
+      setTimeout(() => {
+        const afterReplace = getValues(name as any) as DateItem[] | undefined
+        console.log(`[DateTimeList:${name}] useEffect - after replace (10ms):`, JSON.stringify(afterReplace, null, 2))
+      }, 10)
     } else {
       // Update ref to track current state, but don't replace (user is typing)
+      console.log(`[DateTimeList:${name}] useEffect - NOT syncing (user typing)`)
       prevFormValuesRef.current = signature
     }
   }, [normalizedWatchedValues, name, showTime, startWithOne, replace, append, getValues, locationConfig, syncLocation, firstDateField])
@@ -178,6 +209,12 @@ export function DateTimeList<T extends Record<string, unknown>>({
     control,
     name: showTime && syncTimes && dateFields.length > 0 ? (`${name}.0.times` as any) : undefined,
   }) as TimeItem[] | undefined
+
+  // Watch first location address when syncLocation is enabled
+  const firstLocationAddress = useWatch({
+    control,
+    name: locationConfig && syncLocation && dateFields.length > 0 ? (`${name}.0.${locationConfig.addressName}` as any) : undefined,
+  }) as string | undefined
 
   const applyFirstTimesToAll = useCallback((forceSync = false) => {
     const shouldSync = forceSync || syncTimes
@@ -215,12 +252,101 @@ export function DateTimeList<T extends Record<string, unknown>>({
     }
   }, [dateFields.length, getValues, maxTimesPerDate, name, setValue, showTime, syncTimes])
 
+  const applyFirstLocationToAll = useCallback((forceSync = false) => {
+    const shouldSync = forceSync || syncLocation
+    if (!locationConfig || !shouldSync) return
+    if (dateFields.length < 2) return
+
+    // Read first location from form
+    const firstAddress = getValues(`${name}.0.${locationConfig.addressName}` as any) as string | undefined
+    const firstVenueName = locationConfig.venueName ? getValues(`${name}.0.${locationConfig.venueName}` as any) as string | undefined : undefined
+    const firstPlaceId = locationConfig.placeIdName ? getValues(`${name}.0.${locationConfig.placeIdName}` as any) as string | undefined : undefined
+    const firstLat = locationConfig.latName ? getValues(`${name}.0.${locationConfig.latName}` as any) as number | undefined : undefined
+    const firstLng = locationConfig.lngName ? getValues(`${name}.0.${locationConfig.lngName}` as any) as number | undefined : undefined
+    const firstInstructions = locationConfig.instructionsName ? getValues(`${name}.0.${locationConfig.instructionsName}` as any) as string | undefined : undefined
+
+    // Only sync if first location has an address
+    if (!firstAddress || firstAddress.trim() === "") return
+
+    // Apply to all other dates
+    for (let i = 1; i < dateFields.length; i++) {
+      const currentAddress = getValues(`${name}.${i}.${locationConfig.addressName}` as any) as string | undefined
+      
+      // Only update if different
+      if (currentAddress !== firstAddress) {
+        if (firstAddress) {
+          setValue(`${name}.${i}.${locationConfig.addressName}` as any, firstAddress as any, { shouldDirty: true })
+        }
+        if (firstVenueName !== undefined && locationConfig.venueName) {
+          setValue(`${name}.${i}.${locationConfig.venueName}` as any, firstVenueName as any, { shouldDirty: true })
+        }
+        if (firstPlaceId !== undefined && locationConfig.placeIdName) {
+          setValue(`${name}.${i}.${locationConfig.placeIdName}` as any, firstPlaceId as any, { shouldDirty: true })
+        }
+        if (firstLat !== undefined && locationConfig.latName) {
+          setValue(`${name}.${i}.${locationConfig.latName}` as any, firstLat as any, { shouldDirty: true })
+        }
+        if (firstLng !== undefined && locationConfig.lngName) {
+          setValue(`${name}.${i}.${locationConfig.lngName}` as any, firstLng as any, { shouldDirty: true })
+        }
+        if (firstInstructions !== undefined && locationConfig.instructionsName) {
+          setValue(`${name}.${i}.${locationConfig.instructionsName}` as any, firstInstructions as any, { shouldDirty: true })
+        }
+      }
+    }
+  }, [locationConfig, syncLocation, dateFields.length, name, getValues, setValue])
+
   // When first date times change and sync is on -> apply to all
   useEffect(() => {
     if (!syncTimes) return
     if (!firstTimes || firstTimes.length === 0) return
     applyFirstTimesToAll()
   }, [firstTimes, applyFirstTimesToAll, syncTimes])
+
+  // Detect if locations differ and automatically uncheck syncLocation if they do
+  useEffect(() => {
+    if (!locationConfig) return
+    if (dateFields.length < 2) return
+    
+    const firstAddress = getValues(`${name}.0.${locationConfig.addressName}` as any) as string | undefined
+    if (!firstAddress || typeof firstAddress !== "string" || firstAddress.trim() === "") return
+    
+    // Check if all locations are the same
+    const allSame = dateFields.every((_, i) => {
+      if (i === 0) return true
+      const otherAddress = getValues(`${name}.${i}.${locationConfig.addressName}` as any) as string | undefined
+      return otherAddress === firstAddress
+    })
+    
+    // If locations differ and syncLocation is checked, uncheck it
+    if (!allSame && syncLocation) {
+      console.log(`[DateTimeList:${name}] Locations differ across entries, automatically unchecking syncLocation`)
+      setSyncLocation(false)
+    }
+  }, [dateFields.length, locationConfig, name, getValues, syncLocation])
+
+  // When first location changes and sync is on -> apply to all
+  // But only if locations are actually the same (don't overwrite different locations)
+  useEffect(() => {
+    if (!syncLocation) return
+    if (!firstLocationAddress || typeof firstLocationAddress !== "string" || firstLocationAddress.trim() === "") return
+    if (dateFields.length < 2) return
+    
+    // Check if all locations are the same before syncing
+    const allSame = dateFields.every((_, i) => {
+      if (i === 0) return true
+      const otherAddress = getValues(`${name}.${i}.${locationConfig?.addressName}` as any) as string | undefined
+      return otherAddress === firstLocationAddress
+    })
+    
+    // Only sync if all locations are already the same
+    if (allSame) {
+      applyFirstLocationToAll()
+    } else {
+      // Locations differ - don't auto-sync, but allow manual sync via toggle
+      console.log(`[DateTimeList:${name}] Locations differ across entries, skipping auto-sync`)
+    }
+  }, [firstLocationAddress, applyFirstLocationToAll, syncLocation, dateFields.length, locationConfig, name, getValues])
 
   const handleAddDate = () => {
     if (maxDates && dateFields.length >= maxDates) return
@@ -295,6 +421,10 @@ export function DateTimeList<T extends Record<string, unknown>>({
               onChange={(e) => {
                 const checked = (e.target as any).checked
                 setSyncLocation(checked)
+                if (checked) {
+                  // Force sync immediately when toggle is enabled
+                  setTimeout(() => applyFirstLocationToAll(true), 0)
+                }
               }}
             />
             <label htmlFor={`${name}-sync-location`} className="cursor-pointer text-sm font-medium text-gray-700">
@@ -304,18 +434,18 @@ export function DateTimeList<T extends Record<string, unknown>>({
           {syncLocation && (
             <LocationField
               form={form}
-              addressName={locationConfig.addressName}
-              venueName={locationConfig.venueName}
-              placeIdName={locationConfig.placeIdName}
-              latName={locationConfig.latName}
-              lngName={locationConfig.lngName}
-              instructionsName={locationConfig.instructionsName}
+              addressName={`${name}.0.${locationConfig.addressName}` as any}
+              venueName={locationConfig.venueName ? `${name}.0.${locationConfig.venueName}` as any : undefined}
+              placeIdName={locationConfig.placeIdName ? `${name}.0.${locationConfig.placeIdName}` as any : undefined}
+              latName={locationConfig.latName ? `${name}.0.${locationConfig.latName}` as any : undefined}
+              lngName={locationConfig.lngName ? `${name}.0.${locationConfig.lngName}` as any : undefined}
+              instructionsName={locationConfig.instructionsName ? `${name}.0.${locationConfig.instructionsName}` as any : undefined}
               label={locationConfig.label}
               note={locationConfig.note}
               instructionsLabel={locationConfig.instructionsLabel}
               instructionsPlaceholder={locationConfig.instructionsPlaceholder}
               required={locationConfig.required}
-              errorMode={errorMode}
+              //errorMode={errorMode}
             />
           )}
         </div>

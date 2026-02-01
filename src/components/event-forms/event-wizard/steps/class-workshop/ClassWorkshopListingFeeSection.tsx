@@ -38,7 +38,7 @@ export function ClassWorkshopListingFeeSection({
   const listingFeeOption = useWatch({
     control: form.control,
     name: "listingFeeOption" as Path<EventFormData>,
-  }) as "PAY_FEE" | "PROVIDE_GUEST_SPOT" | "EXPLAIN" | undefined
+  }) as "PAY_FEE" | "PROVIDE" | "EXPLAIN" | undefined
 
   // Set artistType in form based on profile eligibility
   useEffect(() => {
@@ -59,7 +59,7 @@ export function ClassWorkshopListingFeeSection({
   }, [artistTypeField, form.setValue, form.clearErrors])
 
   useEffect(() => {
-    if (listingFeeOption !== "PROVIDE_GUEST_SPOT") {
+    if (listingFeeOption !== "PROVIDE") {
       form.setValue("guestSpotInfo" as Path<EventFormData>, "" as unknown as never)
       form.clearErrors(["guestSpotInfo"] as unknown as never)
     }
@@ -115,7 +115,7 @@ export function ClassWorkshopListingFeeSection({
                 label: `Pay listing fee ($${feeCalculation.totalFee}${formatFeeBreakdown(feeCalculation)})`,
                 value: "PAY_FEE",
               },
-              { label: "Provide a guest spot", value: "PROVIDE_GUEST_SPOT" },
+              { label: "Provide a guest spot", value: "PROVIDE" },
               {
                 label: "Explain why I can't pay the fee or provide a guest spot",
                 value: "EXPLAIN",
@@ -123,7 +123,7 @@ export function ClassWorkshopListingFeeSection({
             ]}
           />
 
-          {listingFeeOption === "PROVIDE_GUEST_SPOT" && (
+          {listingFeeOption === "PROVIDE" && (
             <TextAreaField
               form={form}
               name={"guestSpotInfo" as Path<EventFormData>}

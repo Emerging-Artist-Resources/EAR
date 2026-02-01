@@ -15,30 +15,6 @@ interface PieceOccurrencesPickerProps {
   enableSampleData?: boolean
 }
 
-// Move sample data outside component to avoid recreation on every render
-const SAMPLE_EXTRAS: Array<{ date: string; times: Array<{ time: string }> }> = [
-  {
-    date: "2024-12-15",
-    times: [
-      { time: "19:00" },
-      { time: "21:00" }
-    ]
-  },
-  {
-    date: "2024-12-16",
-    times: [
-      { time: "14:00" },
-      { time: "19:30" }
-    ]
-  },
-  {
-    date: "2024-12-17",
-    times: [
-      { time: "20:00" }
-    ]
-  }
-]
-
 /**
  * Expected fields (suggested):
  * - pieceOccurrenceMode: "FROM_PARENT" | "CUSTOM"
@@ -49,7 +25,7 @@ const SAMPLE_EXTRAS: Array<{ date: string; times: Array<{ time: string }> }> = [
  *
  * If you don't have these yet, you can adapt to whatever your schema uses.
  */
-export function PieceOccurrencesPicker({ form, label, mode, enableSampleData = true }: PieceOccurrencesPickerProps) {
+export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPickerProps) {
   const [useCustomDateTime, setUseCustomDateTime] = useState(false)
   
   const extras = (useWatch({
@@ -63,27 +39,12 @@ export function PieceOccurrencesPicker({ form, label, mode, enableSampleData = t
     name: "eventDatesConfirmed" as Path<EventFormData>,
   }) as boolean | undefined
 
-  const hasValidExtras = useMemo(() => {
-    return extras.some(ex => {
-      if (!ex?.date || !ex.date.trim()) return false
-      if (!ex.times || ex.times.length === 0) return false
-      return ex.times.some(t => t?.time && t.time.trim() !== "")
-    })
-  }, [extras])
-
-  // Memoize display values to avoid recalculation on every render
-  const displayExtras = useMemo(() => {
-    return enableSampleData && !hasValidExtras ? SAMPLE_EXTRAS : extras
-  }, [enableSampleData, hasValidExtras, extras])
-
-  const displayConfirmed = useMemo(() => {
-    return enableSampleData && !hasValidExtras ? true : (isConfirmed ?? false)
-  }, [enableSampleData, hasValidExtras, isConfirmed])
+  const displayConfirmed = isConfirmed ?? false
 
   const derivedOccurrences = useMemo(() => {
     const list: { key: string; label: string }[] = []
     
-    for (const ex of displayExtras) {
+    for (const ex of extras) {
       if (!ex?.date || !ex.date.trim()) {
         continue
       }
@@ -100,26 +61,21 @@ export function PieceOccurrencesPicker({ form, label, mode, enableSampleData = t
     }
     
     return list
-  }, [displayExtras])
+  }, [extras])
 
-  // Consolidate boolean flags into a single memoized object
   const flags = useMemo(() => {
-    const isUsingSampleData = enableSampleData && !hasValidExtras
-    const hasSampleData = isUsingSampleData && SAMPLE_EXTRAS.length > 0
     const isSelectFromEvent = mode === "SELECT_FROM_EVENT"
     const isSelectFromParent = mode === "SELECT_FROM_PARENT"
     const isCustomOnly = mode === "CUSTOM_ONLY"
     
-    const canSelect = isSelectFromParent || isSelectFromEvent || hasSampleData
+    const canSelect = isSelectFromParent || isSelectFromEvent
     const hasParentOccurrences = canSelect && displayConfirmed && derivedOccurrences.length > 0
     
     const allowManualEntryForParent = isSelectFromParent && (useCustomDateTime || !hasParentOccurrences)
     const allowManualEntry = isCustomOnly || allowManualEntryForParent
-    const shouldShowCustomDateTime = allowManualEntry && (isCustomOnly || !hasSampleData || useCustomDateTime || !hasParentOccurrences)
+    const shouldShowCustomDateTime = allowManualEntry && (isCustomOnly || useCustomDateTime || !hasParentOccurrences)
 
     return {
-      isUsingSampleData,
-      hasSampleData,
       isSelectFromEvent,
       isSelectFromParent,
       isCustomOnly,
@@ -129,7 +85,7 @@ export function PieceOccurrencesPicker({ form, label, mode, enableSampleData = t
       allowManualEntry,
       shouldShowCustomDateTime,
     }
-  }, [enableSampleData, hasValidExtras, mode, displayConfirmed, derivedOccurrences.length, useCustomDateTime])
+  }, [mode, displayConfirmed, derivedOccurrences.length, useCustomDateTime])
 
   return (
     <>

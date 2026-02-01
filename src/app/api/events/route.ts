@@ -1,8 +1,10 @@
-import { NextRequest } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { listCalendarItems } from "@/features/events/server/service"
 import { z } from "zod"
-import { createEventOwnedRepo } from "@/features/events/server/repository"
+import { createEventOwnedRepo, CreateListingInput } from "@/features/events/server/repository"
 import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamArray, validateRequestBody } from "@/lib/api-utils"
+import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { getAuthenticatedUser } from "@/lib/auth-helpers"
 
 const eventTypeSchema = z.enum(["performance", "audition", "creative", "class", "funding"])
 
@@ -17,13 +19,12 @@ export async function GET(req: NextRequest) {
         return result.success ? result.data : null
       })
       .filter((t): t is "performance" | "audition" | "creative" | "class" | "funding" => t !== null)
-    const borough = getQueryParam(req, "borough")
+    //const borough = getQueryParam(req, "borough")
 
     const data = await listCalendarItems({
       fromISO: from,
       toISO: to,
-      types: types.length > 0 ? types : undefined,
-      borough: borough ?? null,
+      types: types.length > 0 ? types as Array<'performance'|'audition'|'creative'|'class'> : undefined,
     })
 
     return createSuccessResponse(data, 200)
@@ -91,9 +92,16 @@ const payloadSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // Require authentication - no anonymous submissions allowed
+    const auth = await getAuthenticatedUser()
+    if (!auth) {
+      return NextResponse.json({ error: { code: "UNAUTHORIZED", message: "Authentication required" } }, { status: 401 })
+    }
+
     const body = await req.json()
     const input = validateRequestBody(body, payloadSchema)
-    const created = await createEventOwnedRepo(input)
+    const supabase = await getSupabaseServerClient()
+    const created = await createEventOwnedRepo(supabase, input as unknown as CreateListingInput)
     return createSuccessResponse(created, 201)
   } catch (error) {
     return handleApiError(error)

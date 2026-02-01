@@ -21,13 +21,19 @@ export async function GET(
 
 const basePatchSchema = z.object({
   contact_name: z.string().min(1).optional(),
+  pronouns: z.string().optional().nullable(),
   contact_email: z.string().email().optional(),
-  org_name: z.string().optional().nullable(),
-  org_website: z.string().url().optional().nullable(),
+  company: z.string().optional().nullable(),
+  company_website: z.string().url().optional().nullable(),
   address: z.string().optional().nullable(),
-  social_handles: z.record(z.string(), z.string()).optional(),
+  place_id: z.string().optional().nullable(),
+  lat: z.number().optional().nullable(),
+  lng: z.number().optional().nullable(),
+  venue_name: z.string().optional().nullable(),
+  location_instructions: z.string().optional().nullable(),
+  social_handles: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
-  borough: z.string().optional().nullable(),
+  //borough: z.string().optional().nullable(),
 })
 
 const detailsPatchSchema = z.record(z.string(), z.string()) // validate in feature service if desired

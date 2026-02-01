@@ -10,7 +10,7 @@ type EventType = "performance" | "audition" | "creative" | "class" | "funding"
 
 type CalendarItem = {
   occurrenceId: string
-  eventId: string
+  listingId: string
   type: EventType
   title: string | null
   start: string
@@ -161,8 +161,8 @@ export function EventSearch<T extends Record<string, unknown>>({
     }
   }, [searchState.query, eventMode, selectedEventId, form, eventIdField])
 
-  const handleSelectEvent = (eventId: string, title: string | null) => {
-    form.setValue(eventIdField, eventId as unknown as never)
+  const handleSelectEvent = (listingId: string, title: string | null) => {
+    form.setValue(eventIdField, listingId as unknown as never)
     if (eventModeField) {
       form.setValue(eventModeField, "SELECT" as unknown as never)
     }
@@ -219,9 +219,9 @@ export function EventSearch<T extends Record<string, unknown>>({
             <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg max-h-60 overflow-auto">
               {searchState.results.map((item) => (
                 <button
-                  key={item.eventId}
+                  key={item.listingId}
                   type="button"
-                  onClick={() => handleSelectEvent(item.eventId, item.title)}
+                  onClick={() => handleSelectEvent(item.listingId, item.title)}
                   className="w-full px-4 py-2 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
                 >
                   <div className="font-medium text-gray-900">{item.title || "Untitled Event"}</div>

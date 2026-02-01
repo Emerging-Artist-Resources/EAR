@@ -7,7 +7,6 @@ import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
 import { LocationField } from "@/components/forms/blocks/LocationField"
-import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { useEffect } from "react"
 import { SimpleFeeDisplay } from "@/components/event-forms/event-wizard/shared/SimpleFeeDisplay"
@@ -65,25 +64,7 @@ export function AuditionStep({ form }: AuditionStepProps) {
   instructionsName={"locationInstructions"}
   required
 />      </Section>
-
-      <Section title="Media Uploads">
-        <PhotoUploader form={form} name={"promoFiles"} label="Promotional Images" description="Images are highly encouraged for marketing! Please upload up to 5 images." />
-        <TextAreaField form={form} name={"credits"} label="Image Description / Photo Credit" placeholder="Describe the images and provide photo credit" rows={3}/>
-        <TextField form={form} name={"socialHandles"} label="Social Media Handles" placeholder="@..."/>
-      </Section>
-
-
-      <Section title="Additional Information">
-        <TextAreaField form={form} name={"notes"} label="Anything else you'd like us to know?" placeholder="Additional information" rows={4} />
-      </Section>
-
     
-      {isFee && (
-        <SimpleFeeDisplay
-          form={form}
-          artistTypeFieldName={"artistType" as Path<EventFormData>}
-        />
-      )}
     </>
   )
 }

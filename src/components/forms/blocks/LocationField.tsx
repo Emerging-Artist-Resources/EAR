@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { UseFormReturn, Path } from "react-hook-form"
+import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { loadPlacesLibrary } from "@/lib/googleMaps"
 
@@ -43,6 +43,19 @@ export function LocationField<T extends Record<string, unknown>>({
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [apiError, setApiError] = useState<string | null>(null)
 
+  // Watch the address field to update the Google Places element when form values change externally
+  const currentAddress = form.watch(addressName) as string | undefined
+  
+  useEffect(() => {
+    if (elementRef.current && currentAddress && (elementRef.current as any).value !== currentAddress) {
+      console.log("[LocationField] Updating Google Places element value:", currentAddress)
+      ;(elementRef.current as any).value = currentAddress
+      if (inputRef.current) {
+        inputRef.current.value = currentAddress
+      }
+    }
+  }, [currentAddress, addressName])
+
   // keep aux fields registered so wizard steps don’t drop them
   useEffect(() => {
     if (venueName) form.register(venueName, { shouldUnregister: false })
@@ -71,6 +84,16 @@ export function LocationField<T extends Record<string, unknown>>({
 
         const el = new PlaceAutocompleteElement({})
         el.style.width = "100%"
+
+        // Set initial value from form if it exists
+        const currentAddress = form.getValues(addressName) as string | undefined
+        if (currentAddress) {
+          el.value = currentAddress
+          // Also set it on the input if it exists
+          if (inputRef.current) {
+            inputRef.current.value = currentAddress
+          }
+        }
 
         containerRef.current.innerHTML = ""
         containerRef.current.appendChild(el)

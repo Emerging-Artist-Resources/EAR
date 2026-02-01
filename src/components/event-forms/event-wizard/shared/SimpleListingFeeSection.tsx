@@ -36,7 +36,7 @@ export function SimpleListingFeeSection({
   emergingFee = 35,
   emergingOptions = [
     { label: `Pay listing fee ($${emergingFee})`, value: "PAY_FEE" },
-    { label: "Provide a complementary ticket", value: "PROVIDE_TICKET" },
+    { label: "Provide a complementary ticket", value: "PROVIDE" },
     { label: "Fee & Comp Ticket Waiver Request", value: "EXPLAIN" },
   ],
   complementaryLabel = "Complementary Ticket Information",
@@ -54,7 +54,7 @@ export function SimpleListingFeeSection({
   const listingFeeOption = useWatch({
     control: form.control,
     name: feeOptionFieldName,
-  }) as "PAY_FEE" | "PROVIDE_TICKET" | "EXPLAIN" | undefined
+  }) as "PAY_FEE" | "PROVIDE" | "EXPLAIN" | undefined
 
   // Set artistType in form based on profile eligibility
   useEffect(() => {
@@ -79,7 +79,7 @@ export function SimpleListingFeeSection({
 
   // Clear conditional fields based on option selected
   useEffect(() => {
-    if (listingFeeOption !== "PROVIDE_TICKET" && complementaryFieldName) {
+    if (listingFeeOption !== "PROVIDE" && complementaryFieldName) {
       form.setValue(complementaryFieldName, "" as unknown as never)
       form.clearErrors([complementaryFieldName] as unknown as never)
     }
@@ -107,7 +107,7 @@ export function SimpleListingFeeSection({
             options={emergingOptions}
           />
 
-          {listingFeeOption === "PROVIDE_TICKET" && complementaryFieldName && (
+          {listingFeeOption === "PROVIDE" && complementaryFieldName && (
             <TextAreaField
               form={form}
               name={complementaryFieldName}

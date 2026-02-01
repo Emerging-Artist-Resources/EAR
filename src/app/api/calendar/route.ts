@@ -1,6 +1,6 @@
 // src/app/api/calendar/route.ts
 import { NextResponse } from "next/server"
-import { listCalendarItemsRepo } from "@/features/events/server/repository"
+import { listCalendarItemsRepo, listDeadlinesRepo } from "@/features/events/server/repository"
 type EventType = "performance" | "audition" | "creative" | "class" | "funding"
 
 function isoOrDefault(s: string | null, d: Date) {
@@ -9,10 +9,17 @@ function isoOrDefault(s: string | null, d: Date) {
   return isNaN(+dt) ? d.toISOString() : dt.toISOString()
 }
 
+function startOfToday() {
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  return now
+}
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url)
-    const from = isoOrDefault(url.searchParams.get("from"), new Date())
+    // Use start of today for "from" to include deadlines/events that are today
+    const from = isoOrDefault(url.searchParams.get("from"), startOfToday())
     const to = isoOrDefault(
       url.searchParams.get("to"),
       new Date(Date.now() + 1000 * 60 * 60 * 24 * 30) // +30d
@@ -21,25 +28,59 @@ export async function GET(req: Request) {
       .split(",")
       .map(s => s.trim())
       .filter(Boolean) as EventType[]
-    const borough = url.searchParams.get("borough") as string | null
+    //const borough = url.searchParams.get("borough") as string | null
     const q = url.searchParams.get("q")?.toLowerCase() ?? null
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 500), 1000)
+    const includeDeadlines = url.searchParams.get("includeDeadlines") === "true"
 
     const items = await listCalendarItemsRepo({
       fromISO: from,
       toISO: to,
       types,
-      borough: borough as string | null,
+      //borough: borough as string | null,
       limit,
     })
 
+    let deadlines: typeof items = []
+    if (includeDeadlines) {
+      // Only fetch deadlines for auditions and creative opportunities
+      // If types filter is empty, fetch all deadlines (pass undefined)
+      // If types filter includes audition/creative, only fetch those
+      // If types filter only includes performance/class, don't fetch deadlines
+      const deadlineTypes = types.length > 0
+        ? types.filter(t => t === "audition" || t === "creative")
+        : undefined
+      
+      if (!deadlineTypes || deadlineTypes.length > 0) {
+        deadlines = await listDeadlinesRepo({
+          fromISO: from,
+          toISO: to,
+          types: deadlineTypes,
+          limit: 100,
+        })
+      }
+    }
+
     // lightweight client-side text filter
-    const result = q
+    const filteredItems = q
       ? items.filter(i => i.title?.toLowerCase().includes(q))
       : items
+    
+    const filteredDeadlines = q
+      ? deadlines.filter(i => i.title?.toLowerCase().includes(q))
+      : deadlines
 
     // cache for 60s at the edge/CDN
-    return NextResponse.json({ data: result }, { headers: { "Cache-Control": "s-maxage=60" } })
+    // Return wrapped in 'data' to match ApiResponse<T> structure, but include deadlines at top level
+    return NextResponse.json(
+      { 
+        data: {
+          data: filteredItems,
+          deadlines: filteredDeadlines
+        }
+      }, 
+      { headers: { "Cache-Control": "s-maxage=60" } }
+    )
   } catch (err) {
     console.error("Calendar GET error:", err)
     return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
