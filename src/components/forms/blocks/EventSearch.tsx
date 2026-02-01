@@ -9,12 +9,12 @@ import { apiGet } from "@/lib/fetch-utils"
 type EventType = "performance" | "audition" | "creative" | "class" | "funding"
 
 type CalendarItem = {
-  occurrenceId: string
+  occurrenceId?: string
   listingId: string
   type: EventType
   title: string | null
-  start: string
-  tz: string
+  start: string | null
+  tz: string | null
 }
 
 type SearchState = {
@@ -125,8 +125,9 @@ export function EventSearch<T extends Record<string, unknown>>({
           types: apiTypes,
           limit: "20",
         })
-        const data = await apiGet<CalendarItem[]>(`/api/calendar?${qs.toString()}`)
-        dispatch({ type: "SET_RESULTS", payload: Array.isArray(data) ? data : [] })
+        const response = await apiGet<{ data: CalendarItem[]; deadlines?: CalendarItem[] }>(`/api/calendar?${qs.toString()}`)
+        const items = Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : [])
+        dispatch({ type: "SET_RESULTS", payload: items })
         dispatch({ type: "SET_SHOW_RESULTS", payload: true })
       } catch (error) {
         console.error("Error searching events:", error)
@@ -225,9 +226,11 @@ export function EventSearch<T extends Record<string, unknown>>({
                   className="w-full px-4 py-2 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
                 >
                   <div className="font-medium text-gray-900">{item.title || "Untitled Event"}</div>
-                  <div className="text-sm text-gray-500">
-                    {new Date(item.start).toLocaleDateString()}
-                  </div>
+                  {item.start && (
+                    <div className="text-sm text-gray-500">
+                      {new Date(item.start).toLocaleDateString()}
+                    </div>
+                  )}
                 </button>
               ))}
             </div>

@@ -79,7 +79,9 @@ export const eventFormSchema = baseSchema
     
     // Only validate occurrences for types that definitely need it
     // Skip validation for creative opportunities (they only use deadlineOccurrences)
-    if ((isPerformance || isClass || isAudition) && !isCreative) {
+    // Skip validation for PIECE type - it has its own validation logic that checks extraOccurrences/selectedSlots
+    const isPiece = data.type === "PIECE"
+    if ((isPerformance || isClass || isAudition) && !isCreative && !isPiece) {
       if (!data.occurrences || data.occurrences.length === 0) {
         ctx.addIssue({
           code: "custom",

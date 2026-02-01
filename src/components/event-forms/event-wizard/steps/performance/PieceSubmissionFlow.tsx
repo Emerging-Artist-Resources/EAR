@@ -85,12 +85,6 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
           showOccurrences={false}
           occurrencesMode="CUSTOM_ONLY"
         />
-
-        <OrganizerMediaSocials form={form} />
-        <Section title="Additional Information">
-        <TextAreaField form={form} name={"notes"} label="Anything else you'd like us to know?" placeholder="Additional information" rows={4} />
-      </Section>
-      <ListingFeeSection form={form} />
     </>
   )
 }

@@ -479,7 +479,7 @@ export function DateTimeList<T extends Record<string, unknown>>({
       <div className="space-y-4">
         {dateFields.map((field, index) => (
           <DateCard
-            key={field.id}
+            key={`${field.id}-${index}`}
             form={form as any}
             name={name}
             index={index}

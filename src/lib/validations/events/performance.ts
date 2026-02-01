@@ -63,7 +63,14 @@ export const performanceFields = z
     /**
      * Organizer flow: optionally add a piece now
      */
-    addPiece: z.boolean().optional(),
+    addPiece: z.preprocess(
+      (val) => {
+        if (val === "true" || val === true) return true
+        if (val === "false" || val === false) return false
+        return val
+      },
+      z.boolean().optional()
+    ),
 
     /**
      * Piece flow: link to parent event
@@ -98,10 +105,32 @@ export const performanceFields = z
   })
   .superRefine((data, ctx) => {
     // Helper: normalize occurrences from either field
+    // Check if occurrences has valid data (date and time)
+    const hasValidOccurrences = Array.isArray(data.occurrences) &&
+      data.occurrences.length > 0 &&
+      data.occurrences.some(
+        (d) =>
+          d?.date && d.date.trim() !== "" &&
+          Array.isArray(d?.times) &&
+          d.times.length > 0 &&
+          d.times.some((t) => t?.time && t.time.trim() !== "")
+      )
+    
+    // Check if extraOccurrences has valid data
+    const hasValidExtraOccurrences = Array.isArray(data.extraOccurrences) &&
+      data.extraOccurrences.length > 0 &&
+      data.extraOccurrences.some(
+        (d) =>
+          d?.date && d.date.trim() !== "" &&
+          Array.isArray(d?.times) &&
+          d.times.length > 0 &&
+          d.times.some((t) => t?.time && t.time.trim() !== "")
+      )
+    
     const normalizedOccurrences =
-      (data.occurrences && data.occurrences.length > 0
+      (hasValidOccurrences
         ? data.occurrences
-        : data.extraOccurrences && data.extraOccurrences.length > 0
+        : hasValidExtraOccurrences
           ? data.extraOccurrences
           : undefined)
 
@@ -176,8 +205,26 @@ export const performanceFields = z
       }
 
       // Schedule requirement depends on schedule mode
-      if (scheduleMode === "FROM_PARENT") {
-        if (!data.selectedSlots || data.selectedSlots.length === 0) {
+      // But also check if user has custom occurrences (they might have added custom dates even in FROM_PARENT mode)
+      const hasCustomOccurrences = Array.isArray(data.extraOccurrences) &&
+        data.extraOccurrences.length > 0 &&
+        data.extraOccurrences.some(
+          (d) =>
+            d?.date && d.date.trim() !== "" &&
+            Array.isArray(d?.times) &&
+            d.times.length > 0 &&
+            d.times.some((t) => t?.time && t.time.trim() !== "")
+        )
+      
+      // Check if selectedSlots has data
+      const hasSelectedSlots = Array.isArray(data.selectedSlots) && data.selectedSlots.length > 0
+      
+      // Determine actual mode: if user has custom occurrences, they're in custom mode (even if scheduleMode says FROM_PARENT)
+      const actualMode = hasCustomOccurrences ? "CUSTOM" : scheduleMode
+      
+      if (actualMode === "FROM_PARENT") {
+        // FROM_PARENT mode - require selectedSlots
+        if (!hasSelectedSlots) {
           ctx.addIssue({
             code: "custom",
             path: ["selectedSlots"],
@@ -185,10 +232,12 @@ export const performanceFields = z
           })
         }
       } else {
-        if (!normalizedOccurrences?.length) {
+        // CUSTOM mode - check extraOccurrences directly (this is the source of truth for custom mode)
+        // Don't check occurrences field at all for CUSTOM mode
+        if (!hasCustomOccurrences) {
           ctx.addIssue({
             code: "custom",
-            path: ["occurrences"],
+            path: ["extraOccurrences"],
             message: "Add at least one date & time for your piece",
           })
         }

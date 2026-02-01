@@ -6,6 +6,7 @@ import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
 import { Button } from "@/components/ui/button"
+import { formatTime12Hour } from "@/lib/datetime-utils"
 
 type DateTimeEntry = { 
   date: string
@@ -27,6 +28,8 @@ function isValidEntry(entry: DateTimeEntry | undefined): boolean {
 function filterValidEntries(entries: DateTimeEntry[]): DateTimeEntry[] {
   return entries.filter(isValidEntry)
 }
+
+// Use the utility function from datetime-utils
 
 export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormData> }) {
   // Use useWatch for better reactivity with nested form values
@@ -350,10 +353,13 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
                 {confirmedEntries.length > 0 ? (
                   <ul className="space-y-1 text-sm text-gray-600">
                     {confirmedEntries.map((ex, idx) => {
-                      const validTimes = ex.times?.filter(t => t?.time && t.time.trim() !== "").map(t => t.time) || []
+                      const validTimes = ex.times?.filter(t => t?.time && t.time.trim() !== "").map(t => formatTime12Hour(t.time)) || []
+                      const venueName = ex.venueName || ex.address || ""
+                      const timesDisplay = validTimes.join(", ")
+                      const locationDisplay = venueName ? ` · ${venueName}` : ""
                       return (
                         <li key={idx}>
-                          {ex.date} · {validTimes.join(", ")}
+                          {ex.date} · {timesDisplay}{locationDisplay}
                         </li>
                       )
                     })}

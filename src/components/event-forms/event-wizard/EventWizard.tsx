@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo, useEffect } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
 import type { Resolver } from "react-hook-form"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
@@ -67,24 +67,32 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
   })
 
   const goNext = useCallback(async () => {
+    console.log("[EventWizard] goNext called, step:", step)
     if (step === 1) {
       if (!eventType) {
+        console.log("[EventWizard] No event type selected")
         showToast("Please select an event type to continue", "warning")
         return
       }
+      console.log("[EventWizard] Moving to step 2")
       setStep(2)
       return
     }
     if (step === 2) {
       if (!eventType) {
+        console.log("[EventWizard] No event type selected")
         showToast("Please select an event type to continue", "warning")
         return
       }
+      console.log("[EventWizard] Validating step 2 for eventType:", eventType)
       const validation = await validateStep2(form, eventType)
+      console.log("[EventWizard] Validation result:", validation)
       if (!validation.isValid) {
+        console.log("[EventWizard] Validation failed:", validation.message)
         showToast(validation.message || "Please complete required fields on this step", "error")
         return
       }
+      console.log("[EventWizard] Validation passed, moving to step 3")
       setStep(3)
       return
     }
@@ -182,7 +190,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
         })
         console.groupEnd()
 
-        const payload = buildEventPayload(data, eventType, userInfo)
+        const payload = await buildEventPayload(data, eventType, userInfo)
         
         // Add photos to payload
         if (photoPaths.length > 0) {

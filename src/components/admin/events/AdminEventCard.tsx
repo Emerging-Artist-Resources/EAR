@@ -16,6 +16,7 @@ import {
 import { ReviewActions } from "./ReviewActions"
 import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
 import { useAuth } from "@/hooks/use-auth"
+import { formatDateTimeEST } from "@/lib/datetime-utils"
 
 function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   if (value === undefined || value === null || value === "") return null
@@ -179,12 +180,11 @@ export function AdminEventCard({
               <ul className="list-disc ml-5 text-sm">
                 {detail.listing_occurrences.map((o) => (
                   <li key={o.id}>
-                    {new Date(o.starts_at_utc).toLocaleString()}
-                    {o.ends_at_utc && ` - ${new Date(o.ends_at_utc).toLocaleString()}`}
+                    {formatDateTimeEST(o.starts_at_utc)}
+                    {o.ends_at_utc && ` - ${formatDateTimeEST(o.ends_at_utc)}`}
                     {o.occurrence_type && o.occurrence_type !== 'event' && (
                       <span className="text-[var(--gray-500)]"> ({o.occurrence_type})</span>
                     )}
-                    <span className="text-[var(--gray-500)]"> ({o.tz})</span>
                     {o.venue_name && (
                       <span className="text-[var(--gray-500)]"> - {o.venue_name}</span>
                     )}

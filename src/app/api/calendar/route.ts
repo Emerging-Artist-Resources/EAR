@@ -1,6 +1,6 @@
 // src/app/api/calendar/route.ts
 import { NextResponse } from "next/server"
-import { listCalendarItemsRepo, listDeadlinesRepo } from "@/features/events/server/repository"
+import { listCalendarItemsRepo, listDeadlinesRepo, searchListingsRepo } from "@/features/events/server/repository"
 type EventType = "performance" | "audition" | "creative" | "class" | "funding"
 
 function isoOrDefault(s: string | null, d: Date) {
@@ -29,17 +29,28 @@ export async function GET(req: Request) {
       .map(s => s.trim())
       .filter(Boolean) as EventType[]
     //const borough = url.searchParams.get("borough") as string | null
-    const q = url.searchParams.get("q")?.toLowerCase() ?? null
+    const q = url.searchParams.get("q")?.trim() ?? null
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 500), 1000)
     const includeDeadlines = url.searchParams.get("includeDeadlines") === "true"
 
-    const items = await listCalendarItemsRepo({
-      fromISO: from,
-      toISO: to,
-      types,
-      //borough: borough as string | null,
-      limit,
-    })
+    // If there's a search query, use searchListingsRepo to get unique listings
+    // Otherwise, use listCalendarItemsRepo for calendar view with occurrences
+    let items
+    if (q) {
+      items = await searchListingsRepo({
+        query: q,
+        types,
+        limit,
+      })
+    } else {
+      items = await listCalendarItemsRepo({
+        fromISO: from,
+        toISO: to,
+        types,
+        //borough: borough as string | null,
+        limit,
+      })
+    }
 
     let deadlines: typeof items = []
     if (includeDeadlines) {
@@ -61,10 +72,8 @@ export async function GET(req: Request) {
       }
     }
 
-    // lightweight client-side text filter
-    const filteredItems = q
-      ? items.filter(i => i.title?.toLowerCase().includes(q))
-      : items
+    // Search already filtered by query, so no need to filter again
+    const filteredItems = items
     
     const filteredDeadlines = q
       ? deadlines.filter(i => i.title?.toLowerCase().includes(q))

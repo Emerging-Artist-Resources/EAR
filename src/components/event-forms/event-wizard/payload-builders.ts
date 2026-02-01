@@ -1,5 +1,8 @@
 import { EventFormData } from "@/lib/validations/events"
 import { EventType } from "./EventTypeSelector"
+import { convertESTToUTC } from "@/lib/datetime-utils"
+
+const EST_TIMEZONE = 'America/New_York'
 
 type EventPayload = {
   type: string
@@ -66,11 +69,11 @@ export function buildBasePayload(
   }
 }
 
-export function buildPerformancePayload(
+export async function buildPerformancePayload(
   data: EventFormData,
   userInfo: UserInfo,
-  tz: string
-): EventPayload {
+  _tz: string // Unused - we always use EST_TIMEZONE for consistency
+): Promise<EventPayload> {
   const occurrences: EventPayload["occurrences"] = []
 
   // Primary date/time (legacy support)
@@ -78,37 +81,215 @@ export function buildPerformancePayload(
   const primaryTime = data.showTime
   if (primaryDate && primaryTime) {
     occurrences.push({
-      starts_at_utc: new Date(`${primaryDate}T${primaryTime}:00Z`).toISOString(),
-      tz,
+      starts_at_utc: convertESTToUTC(primaryDate, primaryTime),
+      tz: EST_TIMEZONE,
       occurrence_type: 'event',
     })
   }
 
-  // Use occurrences (preferred) or fall back to extraOccurrences (legacy)
-  const occurrencesData = data.occurrences && data.occurrences.length > 0 
-    ? data.occurrences 
-    : data.extraOccurrences ?? []
+  const isPiece = data.type === "PIECE"
+  const scheduleMode = data.pieceScheduleMode ?? "FROM_PARENT"
+  const hasSelectedSlots = data.selectedSlots && data.selectedSlots.length > 0
+  const hasCustomOccurrences = data.extraOccurrences && data.extraOccurrences.length > 0
 
-  for (const d of occurrencesData) {
-    if (!d?.date || !Array.isArray(d?.times)) continue
-    for (const t of d.times) {
-      if (!t?.time) continue
-      occurrences.push({
-        starts_at_utc: new Date(`${d.date}T${t.time}:00Z`).toISOString(),
-        tz,
-        occurrence_type: 'event',
-        // Extract location fields from date item if present
-        address: (d as any).address || null,
-        place_id: (d as any).placeId || null,
-        lat: (d as any).lat || null,
-        lng: (d as any).lng || null,
-        venue_name: (d as any).venueName || null,
-        location_instructions: (d as any).locationInstructions || null,
+  // For pieces, handle different scenarios:
+  // 1. FROM_PARENT mode with selectedSlots → add selectedSlots + custom occurrences (filter duplicates of selectedSlots)
+  // 2. FROM_PARENT mode with only custom occurrences → add custom occurrences only
+  // 3. CUSTOM mode → add custom occurrences only
+  if (isPiece && (scheduleMode === "FROM_PARENT" || scheduleMode === "CUSTOM")) {
+    // Get parent occurrences (from the organizer's confirmed dates/times)
+    // These are in data.occurrences when the parent event is confirmed
+    const parentOccurrences = data.occurrences || []
+    
+    // Track selectedSlots occurrences to check for duplicates
+    const selectedOccurrences: Array<{
+      date: string
+      time: string
+      address: string | null
+      place_id: string | null
+      venue_name: string | null
+      location_instructions: string | null
+    }> = []
+    
+    // First, add occurrences from selectedSlots (parent event selections) if they exist
+    if (hasSelectedSlots) {
+      for (const slotKey of data.selectedSlots ?? []) {
+        // Parse slot key: "YYYY-MM-DD|HH:mm"
+        const [date, time] = slotKey.split("|")
+        if (!date || !time) continue
+        
+        // Find matching parent occurrence to get location fields
+        const parentOcc = parentOccurrences.find((occ: any) => {
+          if (!occ?.date || occ.date !== date) return false
+          const matchingTime = occ.times?.find((t: any) => t?.time === time)
+          return !!matchingTime
+        })
+        
+        const selectedOcc = {
+          date,
+          time,
+          address: parentOcc?.address || null,
+          place_id: parentOcc?.placeId || null,
+          venue_name: parentOcc?.venueName || null,
+          location_instructions: parentOcc?.locationInstructions || null,
+        }
+        
+        // Store for duplicate checking
+        selectedOccurrences.push(selectedOcc)
+        
+        // Create occurrence with location fields from parent
+        occurrences.push({
+          starts_at_utc: convertESTToUTC(date, time),
+          tz: EST_TIMEZONE,
+          occurrence_type: 'event',
+          // Copy location fields from parent occurrence if available
+          address: selectedOcc.address,
+          place_id: selectedOcc.place_id,
+          lat: parentOcc?.lat || null,
+          lng: parentOcc?.lng || null,
+          venue_name: selectedOcc.venue_name,
+          location_instructions: selectedOcc.location_instructions,
+        })
+      }
+    }
+    
+    // Helper: check if a custom occurrence exactly matches a selectedSlot
+    // (same date, time, AND location/instructions)
+    const isDuplicateOfSelected = (
+      date: string,
+      time: string,
+      address: string | null | undefined,
+      placeId: string | null | undefined,
+      venueName: string | null | undefined,
+      locationInstructions: string | null | undefined
+    ): boolean => {
+      return selectedOccurrences.some((selected) => {
+        if (selected.date !== date || selected.time !== time) return false
+        
+        // Compare location fields - all must match for it to be a duplicate
+        const addressMatch = (selected.address || null) === (address || null)
+        const placeIdMatch = (selected.place_id || null) === (placeId || null)
+        const venueNameMatch = (selected.venue_name || null) === (venueName || null)
+        const instructionsMatch = (selected.location_instructions || null) === (locationInstructions || null)
+        
+        return addressMatch && placeIdMatch && venueNameMatch && instructionsMatch
       })
     }
+    
+    // Then, add any custom occurrences from extraOccurrences (added via "Don't see your date/time?")
+    // Filter out only exact duplicates of selectedSlots (same date, time, AND location/instructions)
+    if (hasCustomOccurrences) {
+      const customOccurrences = data.extraOccurrences ?? []
+      for (const d of customOccurrences) {
+        if (!d?.date || !Array.isArray(d?.times)) continue
+        for (const t of d.times) {
+          if (!t?.time) continue
+          
+          // Skip if this custom occurrence exactly matches a selectedSlot
+          if (isDuplicateOfSelected(
+            d.date,
+            t.time,
+            (d as any).address,
+            (d as any).placeId,
+            (d as any).venueName,
+            (d as any).locationInstructions
+          )) {
+            continue
+          }
+          
+          occurrences.push({
+            starts_at_utc: convertESTToUTC(d.date, t.time),
+            tz: EST_TIMEZONE,
+            occurrence_type: 'event',
+            // Extract location fields from date item if present
+            address: (d as any).address || null,
+            place_id: (d as any).placeId || null,
+            lat: (d as any).lat || null,
+            lng: (d as any).lng || null,
+            venue_name: (d as any).venueName || null,
+            location_instructions: (d as any).locationInstructions || null,
+          })
+        }
+      }
+    }
+  } else {
+    // ORGANIZER (parent) submissions
+    // Only add custom date/time entries from occurrences field
+    // Check for uniqueness (no duplicates within form entries)
+    // TODO: If listingId is added to EventFormData for updates, also check against existing listing_occurrences
+    
+    // Helper: check if a custom occurrence exactly matches another occurrence
+    // (same date, time, AND location/instructions)
+    const isDuplicate = (
+      date: string,
+      time: string,
+      address: string | null | undefined,
+      placeId: string | null | undefined,
+      venueName: string | null | undefined,
+      locationInstructions: string | null | undefined,
+      allOccurrences: Array<{ date?: string; times?: Array<{ time?: string }> }>,
+      currentIndex: number
+    ): boolean => {
+      // Check against other entries in the form
+      for (let i = 0; i < allOccurrences.length; i++) {
+        if (i === currentIndex) continue // Skip self
+        
+        const other = allOccurrences[i]
+        if (!other?.date || !Array.isArray(other?.times)) continue
+        
+        if (other.date !== date) continue
+        
+        for (const t of other.times) {
+          if (!t?.time || t.time !== time) continue
+          
+          // Check if location matches
+          const addressMatch = ((other as any).address || null) === (address || null)
+          const placeIdMatch = ((other as any).placeId || null) === (placeId || null)
+          const venueNameMatch = ((other as any).venueName || null) === (venueName || null)
+          const instructionsMatch = ((other as any).locationInstructions || null) === (locationInstructions || null)
+          
+          if (addressMatch && placeIdMatch && venueNameMatch && instructionsMatch) {
+            return true // Found duplicate
+          }
+        }
+      }
+      return false
+    }
+    
+    // Add custom occurrences from occurrences field only
+    const customOccurrences = data.occurrences || []
+    
+    for (let i = 0; i < customOccurrences.length; i++) {
+      const d = customOccurrences[i]
+      if (!d?.date || !Array.isArray(d?.times)) continue
+      
+      for (const t of d.times) {
+        if (!t?.time) continue
+        
+        const address = (d as any).address || null
+        const placeId = (d as any).placeId || null
+        const venueName = (d as any).venueName || null
+        const locationInstructions = (d as any).locationInstructions || null
+        
+        // Skip if this duplicates another occurrence in the form
+        if (isDuplicate(d.date, t.time, address, placeId, venueName, locationInstructions, customOccurrences, i)) {
+          continue
+        }
+        
+        occurrences.push({
+          starts_at_utc: convertESTToUTC(d.date, t.time),
+          tz: EST_TIMEZONE,
+          occurrence_type: 'event',
+          address,
+          place_id: placeId,
+          lat: (d as any).lat || null,
+          lng: (d as any).lng || null,
+          venue_name: venueName,
+          location_instructions: locationInstructions,
+        })
+      }
+    }
   }
-
-  const isPiece = data.type === "PIECE"
 
   // Build piece_details if this is a piece
   let pieceDetails: Record<string, unknown> | null = null
@@ -161,7 +342,7 @@ export function buildPerformancePayload(
 export function buildAuditionPayload(
   data: EventFormData,
   userInfo: UserInfo,
-  tz: string
+  _tz: string // Unused - we always use EST_TIMEZONE for consistency
 ): EventPayload {
   const occurrences: EventPayload["occurrences"] = []
   
@@ -171,8 +352,8 @@ export function buildAuditionPayload(
     for (const t of occ.times) {
       if (!t?.time) continue
       occurrences.push({
-        starts_at_utc: new Date(`${occ.date}T${t.time}:00Z`).toISOString(),
-        tz,
+        starts_at_utc: convertESTToUTC(occ.date, t.time),
+        tz: EST_TIMEZONE,
         occurrence_type: 'event',
         // Extract location fields from occurrence if present
         address: (occ as any).address || null,
@@ -191,8 +372,8 @@ export function buildAuditionPayload(
     for (const t of deadline.times) {
       if (!t?.time) continue
       occurrences.push({
-        starts_at_utc: new Date(`${deadline.date}T${t.time}:00Z`).toISOString(),
-        tz,
+        starts_at_utc: convertESTToUTC(deadline.date, t.time),
+        tz: EST_TIMEZONE,
         occurrence_type: 'deadline',
       })
     }
@@ -225,7 +406,7 @@ export function buildAuditionPayload(
 export function buildCreativePayload(
   data: EventFormData,
   userInfo: UserInfo,
-  tz: string
+  _tz: string // Unused - we always use EST_TIMEZONE for consistency
 ): EventPayload {
   const occurrences: EventPayload["occurrences"] = []
 
@@ -235,8 +416,8 @@ export function buildCreativePayload(
     for (const t of deadline.times) {
       if (!t?.time) continue
       occurrences.push({
-        starts_at_utc: new Date(`${deadline.date}T${t.time}:00Z`).toISOString(),
-        tz,
+        starts_at_utc: convertESTToUTC(deadline.date, t.time),
+        tz: EST_TIMEZONE,
         occurrence_type: 'deadline',
       })
     }
@@ -270,7 +451,7 @@ export function buildCreativePayload(
 export function buildClassPayload(
   data: EventFormData,
   userInfo: UserInfo,
-  tz: string
+  _tz: string // Unused - we always use EST_TIMEZONE for consistency
 ): EventPayload {
   const occurrences: EventPayload["occurrences"] = []
 
@@ -286,8 +467,8 @@ export function buildClassPayload(
     for (const t of d.times) {
       if (!t?.time) continue
       occurrences.push({
-        starts_at_utc: new Date(`${d.date}T${t.time}:00Z`).toISOString(),
-        tz,
+        starts_at_utc: convertESTToUTC(d.date, t.time),
+        tz: EST_TIMEZONE,
         occurrence_type: 'event',
         // Extract location fields from date item if present
         address: (d as any).address || null,
@@ -311,15 +492,15 @@ export function buildClassPayload(
     const primaryList = tokens
       .filter((tok) => dateRegex.test(tok))
       .map((tok) => ({
-        starts_at_utc: new Date(`${tok}T${primaryTime}:00Z`).toISOString(),
-        tz,
+        starts_at_utc: convertESTToUTC(tok, primaryTime),
+        tz: EST_TIMEZONE,
         occurrence_type: 'event' as const,
       }))
     const extraOcc = (data.classExtraOccurrences ?? [])
       .filter((o) => o?.date && o?.time)
       .map((o) => ({
-        starts_at_utc: new Date(`${o.date}T${o.time}:00Z`).toISOString(),
-        tz,
+        starts_at_utc: convertESTToUTC(o.date, o.time),
+        tz: EST_TIMEZONE,
         occurrence_type: 'event' as const,
       }))
     occurrences.push(...primaryList, ...extraOcc)
@@ -378,12 +559,13 @@ export function buildFundingPayload(
   }
 }
 
-export function buildEventPayload(
+export async function buildEventPayload(
   data: EventFormData,
   eventType: EventType,
   userInfo: UserInfo
-): EventPayload {
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York"
+): Promise<EventPayload> {
+  // Always use EST timezone for consistency
+  const tz = EST_TIMEZONE
   const type = eventType.toLowerCase() as
     | "performance"
     | "audition"
@@ -393,7 +575,7 @@ export function buildEventPayload(
 
   switch (type) {
     case "performance":
-      return buildPerformancePayload(data, userInfo, tz)
+      return await buildPerformancePayload(data, userInfo, tz)
     case "audition":
       return buildAuditionPayload(data, userInfo, tz)
     case "creative":

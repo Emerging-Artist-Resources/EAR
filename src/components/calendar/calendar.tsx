@@ -21,28 +21,16 @@ import {
   subWeeks,
   addDays,
 } from "date-fns"
+import { formatTimeEST12Hour, formatDateTimeEST as formatDateTimeESTUtil } from "@/lib/datetime-utils"
 
-// Helper function to format time in EST/EDT
+// Helper function to format time in EST/EDT (for Date objects)
 const formatTimeEST = (date: Date): string => {
-  return new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  }).format(date)
+  return formatTimeEST12Hour(date.toISOString())
 }
 
-// Helper function to format date and time in EST/EDT
+// Helper function to format date and time in EST/EDT (for Date objects)
 const formatDateTimeEST = (date: Date): string => {
-  return new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  }).format(date)
+  return formatDateTimeESTUtil(date.toISOString())
 }
 
 interface CalendarProps { 
