@@ -125,13 +125,26 @@ export async function buildPerformancePayload(
           return !!matchingTime
         })
         
+        // Get location from parent occurrence - check time-level first, then date-level
+        // Location is stored per time slot in the times array, with date-level as fallback
+        const timeSlot = parentOcc?.times?.find((t: any) => t?.time === time)
+        const locationData = {
+          // Time-level location takes precedence, fallback to date-level
+          address: timeSlot?.address || parentOcc?.address || null,
+          place_id: timeSlot?.placeId || parentOcc?.placeId || null,
+          venue_name: timeSlot?.venueName || parentOcc?.venueName || null,
+          location_instructions: timeSlot?.instructions || parentOcc?.locationInstructions || parentOcc?.instructions || null,
+          lat: timeSlot?.lat || parentOcc?.lat || null,
+          lng: timeSlot?.lng || parentOcc?.lng || null,
+        }
+        
         const selectedOcc = {
           date,
           time,
-          address: parentOcc?.address || null,
-          place_id: parentOcc?.placeId || null,
-          venue_name: parentOcc?.venueName || null,
-          location_instructions: parentOcc?.locationInstructions || null,
+          address: locationData.address,
+          place_id: locationData.place_id,
+          venue_name: locationData.venue_name,
+          location_instructions: locationData.location_instructions,
         }
         
         // Store for duplicate checking
@@ -143,12 +156,12 @@ export async function buildPerformancePayload(
           tz: EST_TIMEZONE,
           occurrence_type: 'event',
           // Copy location fields from parent occurrence if available
-          address: selectedOcc.address,
-          place_id: selectedOcc.place_id,
-          lat: parentOcc?.lat || null,
-          lng: parentOcc?.lng || null,
-          venue_name: selectedOcc.venue_name,
-          location_instructions: selectedOcc.location_instructions,
+          address: locationData.address,
+          place_id: locationData.place_id,
+          lat: locationData.lat,
+          lng: locationData.lng,
+          venue_name: locationData.venue_name,
+          location_instructions: locationData.location_instructions,
         })
       }
     }
@@ -300,6 +313,14 @@ export async function buildPerformancePayload(
     parentListingId = data.parentEventId || null
     relationshipType = parentListingId ? "performance_piece" : null
     
+    // Extract piece-specific fields from form data
+    // Form uses "piece_" prefix for single piece, or "pieces.${index}_" for multiple
+    const pieceCompany = (data as any).piece_company || (data as any).piece?.company || null
+    const pieceCompanyWebsite = (data as any).piece_companyWebsite || (data as any).piece?.companyWebsite || null
+    const pieceTitle = (data as any).piece_title || (data as any).piece?.title || null
+    const pieceDescription = (data as any).piece_description || (data as any).piece?.description || null
+    const choreographer = (data as any).piece_choreographer || (data as any).piece?.choreographer || null
+    
     pieceDetails = {
       parent_listing_id: parentListingId,
       parent_event_name: data.parentEventName || null,
@@ -308,6 +329,11 @@ export async function buildPerformancePayload(
       parent_event_contact_email: data.parentEventContactEmail || null,
       piece_schedule_mode: data.pieceScheduleMode || null,
       selected_slots: data.selectedSlots || null,
+      piece_title: pieceTitle,
+      piece_company: pieceCompany,
+      piece_company_website: pieceCompanyWebsite,
+      piece_description: pieceDescription,
+      choreographer: choreographer,
     }
   }
 

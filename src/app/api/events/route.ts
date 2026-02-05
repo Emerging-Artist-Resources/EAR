@@ -77,6 +77,11 @@ const pieceDetailsSchema = z.object({
   parent_event_contact_email: z.string().email("Invalid email address").optional().nullable(),
   piece_schedule_mode: z.enum(["FROM_PARENT", "CUSTOM"]).optional().nullable(),
   selected_slots: z.array(z.string()).optional().nullable(),
+  piece_title: z.string().optional().nullable(),
+  piece_company: z.string().optional().nullable(),
+  piece_company_website: z.string().url("Invalid URL").optional().nullable(),
+  piece_description: z.string().optional().nullable(),
+  choreographer: z.string().optional().nullable(),
 })
 
 const payloadSchema = z.object({

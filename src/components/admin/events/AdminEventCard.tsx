@@ -21,11 +21,21 @@ import { formatDateTimeEST } from "@/lib/datetime-utils"
 function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   if (value === undefined || value === null || value === "") return null
   return (
-    <div className="flex items-start gap-3">
-      <span className="inline-block min-w-28 text-[var(--gray-500)]">{label}</span>
+    <div className="grid grid-cols-[200px_1fr] gap-4 items-start">
+      <span className="text-[var(--gray-600)] font-medium">{label}</span>
       <div className="text-[var(--gray-800)]">{value}</div>
     </div>
   )
+}
+
+function getGoogleMapsLink(address: string | null | undefined, placeId: string | null | undefined): string | null {
+  if (placeId) {
+    return `https://www.google.com/maps/place/?q=place_id:${placeId}`
+  }
+  if (address) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+  }
+  return null
 }
 
 export function AdminEventCard({
@@ -108,14 +118,42 @@ export function AdminEventCard({
   }
 
   // choose a title for display if item.title is missing
-  const computedTitle =
-    item.title ??
-    (detail?.type === "performance" ? detail?.performance_details?.title :
-     detail?.type === "audition" ? detail?.audition_details?.title :
-     detail?.type === "creative" ? detail?.creative_details?.title :
-     detail?.type === "class" ? detail?.class_workshop_details?.title :
-     null) ??
-    "Untitled"
+  const computedTitle = (() => {
+    if (item.title) return item.title
+    
+    if (detail?.type === "performance") {
+      if (detail.performance_details?.subtype === "PIECE") {
+        // For pieces: construct title from festival/parent event + piece info
+        const parentEventName = detail.piece_details?.parent_event_name
+        const parentListingTitle = detail.piece_details?.parent_listing_title
+        const festivalName = parentListingTitle || parentEventName
+        
+        // Get piece title from piece_details table
+        const pieceTitle = detail.piece_details?.piece_title || detail.piece_details?.piece_company || null
+        
+        if (festivalName && pieceTitle) {
+          return `${festivalName} - ${pieceTitle}`
+        } else if (festivalName) {
+          return festivalName
+        } else if (pieceTitle) {
+          return pieceTitle
+        } else {
+          return "Untitled Piece"
+        }
+      } else {
+        // ORGANIZER
+        return detail.performance_details?.title ?? null
+      }
+    } else if (detail?.type === "audition") {
+      return detail.audition_details?.title ?? null
+    } else if (detail?.type === "creative") {
+      return detail.creative_details?.title ?? null
+    } else if (detail?.type === "class") {
+      return detail.class_workshop_details?.title ?? null
+    }
+    
+    return null
+  })() ?? "Untitled"
 
   return (
     <Card className="p-5">
@@ -155,50 +193,196 @@ export function AdminEventCard({
       {expanded && detail && (
         <div className="mt-4 grid gap-6 bg-[var(--gray-50)] rounded-md p-4">
           {/* General info */}
-          <section className="space-y-2">
-            <h4 className="text-sm font-semibold text-[var(--gray-700)]">General</h4>
-            <div className="grid sm:grid-cols-2 gap-3">
+          <section className="space-y-3">
+            <h4 className="text-base font-bold text-[var(--gray-900)]">General</h4>
+            <div className="space-y-2">
               <Row label="Contact" value={`${detail.contact_name ?? ""}${detail.pronouns ? ` (${detail.pronouns})` : ""}`} />
               <Row label="Email" value={detail.contact_email} />
               <Row label="Organization" value={
                 detail.company ? (
-                  detail.company_website ? <a className="underline text-[var(--primary-600)]" href={detail.company_website} target="_blank">{detail.company}</a> : detail.company
+                  detail.company_website ? <a className="underline text-[var(--primary-600)]" href={detail.company_website} target="_blank" rel="noopener noreferrer">{detail.company}</a> : detail.company
                 ) : undefined
               }/>
-              <Row label="Address" value={detail.address} />
-              <Row label="Venue" value={detail.venue_name} />
-              <Row label="Location Instructions" value={detail.location_instructions} />
+              {detail.social_handles && <Row label="Social" value={<SocialHandles socialHandles={detail.social_handles} />} />}
+              {detail.notes && <Row label="Additional Info" value={detail.notes} />}
             </div>
-            <Row label="Social" value={<SocialHandles socialHandles={detail.social_handles} />} />
-            <Row label="Notes" value={detail.notes} />
           </section>
 
-          {/* Event occurrences */}
-          <section className="space-y-2">
-            <h4 className="text-sm font-semibold text-[var(--gray-700)]">Dates & Times</h4>
-            {detail.listing_occurrences?.length ? (
-              <ul className="list-disc ml-5 text-sm">
-                {detail.listing_occurrences.map((o) => (
-                  <li key={o.id}>
-                    {formatDateTimeEST(o.starts_at_utc)}
-                    {o.ends_at_utc && ` - ${formatDateTimeEST(o.ends_at_utc)}`}
-                    {o.occurrence_type && o.occurrence_type !== 'event' && (
-                      <span className="text-[var(--gray-500)]"> ({o.occurrence_type})</span>
-                    )}
-                    {o.venue_name && (
-                      <span className="text-[var(--gray-500)]"> - {o.venue_name}</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-[var(--gray-600)]">No occurrences</p>
-            )}
-          </section>
+          {/* Location and Event occurrences */}
+          {(() => {
+            // Check if all occurrences have the same location
+            const hasSingleLocation = (() => {
+              if (!detail.listing_occurrences || detail.listing_occurrences.length === 0) return false
+              
+              const firstOcc = detail.listing_occurrences[0]
+              const firstLocation = {
+                address: firstOcc.address || detail.address,
+                place_id: firstOcc.place_id || detail.place_id,
+                venue_name: firstOcc.venue_name || detail.venue_name,
+              }
+              
+              return detail.listing_occurrences.every(occ => {
+                const occLocation = {
+                  address: occ.address || detail.address,
+                  place_id: occ.place_id || detail.place_id,
+                  venue_name: occ.venue_name || detail.venue_name,
+                }
+                return occLocation.address === firstLocation.address &&
+                       occLocation.place_id === firstLocation.place_id &&
+                       occLocation.venue_name === firstLocation.venue_name
+              })
+            })()
+
+            const singleLocation = hasSingleLocation && detail.listing_occurrences?.[0] 
+              ? {
+                  address: detail.listing_occurrences[0].address || detail.address,
+                  place_id: detail.listing_occurrences[0].place_id || detail.place_id,
+                  venue_name: detail.listing_occurrences[0].venue_name || detail.venue_name,
+                  location_instructions: detail.listing_occurrences[0].location_instructions || detail.location_instructions,
+                }
+              : null
+
+            return (
+              <>
+                {/* Location - Single Location */}
+                {hasSingleLocation && singleLocation && (singleLocation.address || singleLocation.venue_name) && (
+                  <section className="space-y-3">
+                    <h4 className="text-base font-bold text-[var(--gray-900)]">Location</h4>
+                    <div className="space-y-2">
+                      {singleLocation.address && (
+                        <Row 
+                          label="Address" 
+                          value={
+                            <div className="flex items-center gap-2">
+                              <span>{singleLocation.address}</span>
+                              {getGoogleMapsLink(singleLocation.address, singleLocation.place_id) && (
+                                <a
+                                  href={getGoogleMapsLink(singleLocation.address, singleLocation.place_id)!}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[var(--primary-600)] hover:underline text-sm"
+                                >
+                                  View on Maps
+                                </a>
+                              )}
+                            </div>
+                          } 
+                        />
+                      )}
+                      {singleLocation.venue_name && (
+                        <Row label="Venue" value={singleLocation.venue_name} />
+                      )}
+                      {singleLocation.location_instructions && (
+                        <Row label="Location Instructions" value={singleLocation.location_instructions} />
+                      )}
+                    </div>
+                  </section>
+                )}
+
+                {/* Dates & Times */}
+                <section className="space-y-3">
+                  <h4 className="text-base font-bold text-[var(--gray-900)]">Dates & Times</h4>
+                  {detail.listing_occurrences?.length ? (
+                    (() => {
+                      // Separate deadlines and events
+                      const deadlines = detail.listing_occurrences.filter(o => o.occurrence_type === 'deadline')
+                      const events = detail.listing_occurrences.filter(o => !o.occurrence_type || o.occurrence_type === 'event')
+                      
+                      // Get event type label
+                      const eventTypeLabels: Record<string, string> = {
+                        performance: "Performance",
+                        audition: "Audition",
+                        creative: "Creative",
+                        class: "Class",
+                      }
+                      const eventTypeLabel = eventTypeLabels[detail.type] || "Event"
+                      
+                      const renderOccurrence = (o: NonNullable<AdminEventDetail['listing_occurrences']>[0]) => {
+                        const occurrenceLocation = {
+                          address: o.address || detail.address,
+                          place_id: o.place_id || detail.place_id,
+                          venue_name: o.venue_name || detail.venue_name,
+                          location_instructions: o.location_instructions || detail.location_instructions,
+                        }
+                        const hasLocation = occurrenceLocation.address || occurrenceLocation.venue_name
+                        
+                        return (
+                          <div key={o.id} className="border-l-2 border-[var(--gray-200)] pl-3 space-y-1">
+                            <div className="text-sm font-medium text-[var(--gray-800)]">
+                              {formatDateTimeEST(o.starts_at_utc)}
+                              {o.ends_at_utc && ` - ${formatDateTimeEST(o.ends_at_utc)}`}
+                            </div>
+                            {!hasSingleLocation && hasLocation && (
+                              <div className="ml-4 space-y-1 text-sm">
+                                {occurrenceLocation.address && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[var(--gray-600)]">Address:</span>
+                                    <span className="text-[var(--gray-800)]">{occurrenceLocation.address}</span>
+                                    {getGoogleMapsLink(occurrenceLocation.address, occurrenceLocation.place_id) && (
+                                      <a
+                                        href={getGoogleMapsLink(occurrenceLocation.address, occurrenceLocation.place_id)!}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-[var(--primary-600)] hover:underline text-xs"
+                                      >
+                                        View on Maps
+                                      </a>
+                                    )}
+                                  </div>
+                                )}
+                                {occurrenceLocation.venue_name && (
+                                  <div>
+                                    <span className="text-[var(--gray-600)]">Venue: </span>
+                                    <span className="text-[var(--gray-800)]">{occurrenceLocation.venue_name}</span>
+                                  </div>
+                                )}
+                                {occurrenceLocation.location_instructions && (
+                                  <div>
+                                    <span className="text-[var(--gray-600)]">Instructions: </span>
+                                    <span className="text-[var(--gray-800)]">{occurrenceLocation.location_instructions}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      }
+                      
+                      return (
+                        <div className="space-y-4">
+                          {/* Deadlines subsection */}
+                          {deadlines.length > 0 && (
+                            <div className="space-y-2">
+                              <h5 className="text-sm font-semibold text-[var(--gray-700)]">Deadlines</h5>
+                              <div className="space-y-3">
+                                {deadlines.map(renderOccurrence)}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Event dates subsection */}
+                          {events.length > 0 && (
+                            <div className="space-y-2">
+                              <h5 className="text-sm font-semibold text-[var(--gray-700)]">{eventTypeLabel} Dates</h5>
+                              <div className="space-y-3">
+                                {events.map(renderOccurrence)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })()
+                  ) : (
+                    <p className="text-sm text-[var(--gray-600)]">No occurrences</p>
+                  )}
+                </section>
+              </>
+            )
+          })()}
 
           {/* Photos */}
           <section className="space-y-2">
-            <h4 className="text-sm font-semibold text-[var(--gray-700)]">Photos</h4>
+            <h4 className="text-base font-bold text-[var(--gray-900)]">Photos</h4>
             {detail.listing_photos?.length ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {detail.listing_photos.map((p: { id: string; path: string; credit?: string | null; sort_order?: number; url?: string | null }) => {
@@ -246,9 +430,8 @@ export function AdminEventCard({
 
           {/* Type-specific details */}
           <section className="space-y-2">
-            <h4 className="text-sm font-semibold text-[var(--gray-700)]">Event Details</h4>
             {detail.type === "performance" && detail.performance_details && (
-              <PerformanceDetails details={detail.performance_details} />
+              <PerformanceDetails details={detail.performance_details} fullDetail={detail} />
             )}
             {detail.piece_details && (
               <PieceDetails details={detail.piece_details} />
@@ -261,20 +444,6 @@ export function AdminEventCard({
             )}
             {detail.type === "class" && detail.class_workshop_details && (
               <ClassDetails details={detail.class_workshop_details} />
-            )}
-          </section>
-
-          {/* Meta */}
-          <section className="space-y-2">
-            <h4 className="text-sm font-semibold text-[var(--gray-700)]">Meta</h4>
-            {detail.meta && Object.keys(detail.meta).length ? (
-              <div className="grid gap-2">
-                {Object.entries(detail.meta).map(([k, v]) => (
-                  <Row key={k} label={k} value={typeof v === "object" ? JSON.stringify(v) : String(v)} />
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-[var(--gray-600)]">No meta</p>
             )}
           </section>
 

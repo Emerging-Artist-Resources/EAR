@@ -13,11 +13,12 @@ export async function GET(
     const anon = getSupabaseServerClientAnon()
 
     // Join occurrence -> listing -> minimal detail fields
+    // Use explicit relationship name to avoid ambiguity with source_piece_listing_id
     const { data, error } = await anon
       .from("listing_occurrences")
       .select(`
         id, listing_id, starts_at_utc, tz,
-        listings!inner(
+        listings!listing_occurrences_listing_id_fkey!inner(
           id, type, status, borough,
           performance_details (title, description),
           audition_details (title, description),

@@ -36,7 +36,9 @@ export type AdminEventDetail = {
     tz: string
     occurrence_type?: string
     address?: string | null
+    place_id?: string | null
     venue_name?: string | null
+    location_instructions?: string | null
   }>
   listing_photos?: Array<{ id: string; path: string; credit?: string | null; sort_order?: number; url?: string | null }>
   performance_details?: {
@@ -67,6 +69,12 @@ export type AdminEventDetail = {
     parent_event_contact_email?: string | null
     piece_schedule_mode?: string | null
     selected_slots?: unknown
+    parent_listing_title?: string | null
+    piece_title?: string | null
+    piece_company?: string | null
+    piece_company_website?: string | null
+    piece_description?: string | null
+    choreographer?: string | null
   } | null
   audition_details?: {
     id?: string

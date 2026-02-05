@@ -51,6 +51,11 @@ export type PieceDetailsInput = {
   parent_event_contact_email?: string | null
   piece_schedule_mode?: string | null
   selected_slots?: string[] | null
+  piece_title?: string | null
+  piece_company?: string | null
+  piece_company_website?: string | null
+  piece_description?: string | null
+  choreographer?: string | null
 }
 
 export type CreateListingInput = {

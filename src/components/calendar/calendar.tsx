@@ -21,7 +21,7 @@ import {
   subWeeks,
   addDays,
 } from "date-fns"
-import { formatTimeEST12Hour, formatDateTimeEST as formatDateTimeESTUtil } from "@/lib/datetime-utils"
+import { formatTimeEST12Hour, formatDateTimeEST as formatDateTimeESTUtil, convertUTCToEST } from "@/lib/datetime-utils"
 
 // Helper function to format time in EST/EDT (for Date objects)
 const formatTimeEST = (date: Date): string => {
@@ -103,30 +103,34 @@ export function Calendar({ items, deadlines = [] }: CalendarProps) {
   }, [items, eventTypeFilter])
 
   // Get all performances for a date (for details view - shows all occurrences)
+  // Compare dates in EST to match user's local calendar view
   const getPerformancesForDate = (date: Date) => {
-    const targetIso = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-      .toISOString()
-      .slice(0, 10)
+    // Get target date in YYYY-MM-DD format (local date, not UTC)
+    const targetDateStr = format(date, 'yyyy-MM-dd')
+    
     return filteredItems.filter((item) => {
-      const eventIso = String(item.start).slice(0, 10)
-      return eventIso === targetIso
+      // Convert UTC start time to EST date for comparison
+      const estDate = convertUTCToEST(String(item.start))
+      return estDate.date === targetDateStr
     })
   }
 
   // Get deduplicated performances for calendar display (one per listing per day)
+  // Compare dates in EST to match user's local calendar view
   const getDeduplicatedPerformancesForDate = (date: Date) => {
-    const targetIso = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-      .toISOString()
-      .slice(0, 10)
+    // Get target date in YYYY-MM-DD format (local date, not UTC)
+    const targetDateStr = format(date, 'yyyy-MM-dd')
+    
     const itemsForDate = filteredItems.filter((item) => {
-      const eventIso = String(item.start).slice(0, 10)
-      return eventIso === targetIso
+      // Convert UTC start time to EST date for comparison
+      const estDate = convertUTCToEST(String(item.start))
+      return estDate.date === targetDateStr
     })
     
     // Group by listingId, keeping the first occurrence for each listing
     const seen = new Map<string, CalendarItem>()
     for (const item of itemsForDate) {
-      const key = `${item.listingId}-${targetIso}`
+      const key = `${item.listingId}-${targetDateStr}`
       if (!seen.has(key)) {
         seen.set(key, item)
       }

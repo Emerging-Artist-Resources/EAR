@@ -81,9 +81,9 @@ export const performanceFields = z
 
     // If MANUAL:
     parentEventName: z.string().optional(),
-    parentEventWebsite: z.string().url("Invalid URL").optional(),
+    parentEventWebsite: z.string().url("Invalid URL").optional().or(z.literal("")),
     parentEventTicketLink: z.string().url("Invalid URL").optional(),
-    parentEventContactEmail: z.string().email("Invalid email address").optional(),
+    parentEventContactEmail: z.string().email("Invalid email address").optional().or(z.literal("")),
 
     /**
      * Piece schedule mode:
@@ -204,8 +204,7 @@ export const performanceFields = z
         }
       }
 
-      // Schedule requirement depends on schedule mode
-      // But also check if user has custom occurrences (they might have added custom dates even in FROM_PARENT mode)
+      // Check if user has custom occurrences (they can add custom dates even when selecting from parent)
       const hasCustomOccurrences = Array.isArray(data.extraOccurrences) &&
         data.extraOccurrences.length > 0 &&
         data.extraOccurrences.some(
@@ -219,22 +218,18 @@ export const performanceFields = z
       // Check if selectedSlots has data
       const hasSelectedSlots = Array.isArray(data.selectedSlots) && data.selectedSlots.length > 0
       
-      // Determine actual mode: if user has custom occurrences, they're in custom mode (even if scheduleMode says FROM_PARENT)
-      const actualMode = hasCustomOccurrences ? "CUSTOM" : scheduleMode
-      
-      if (actualMode === "FROM_PARENT") {
-        // FROM_PARENT mode - require selectedSlots
-        if (!hasSelectedSlots) {
+      // Users can now have both selectedSlots AND extraOccurrences simultaneously
+      // Require at least one of them
+      if (!hasSelectedSlots && !hasCustomOccurrences) {
+        // If in FROM_PARENT mode and parent occurrences are available, suggest selecting from parent
+        if (scheduleMode === "FROM_PARENT") {
           ctx.addIssue({
             code: "custom",
             path: ["selectedSlots"],
-            message: "Select at least one date/time from the event schedule",
+            message: "Select at least one date/time from the event schedule, or add custom dates/times",
           })
-        }
-      } else {
-        // CUSTOM mode - check extraOccurrences directly (this is the source of truth for custom mode)
-        // Don't check occurrences field at all for CUSTOM mode
-        if (!hasCustomOccurrences) {
+        } else {
+          // CUSTOM mode - require custom occurrences
           ctx.addIssue({
             code: "custom",
             path: ["extraOccurrences"],

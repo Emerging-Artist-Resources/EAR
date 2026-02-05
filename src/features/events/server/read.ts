@@ -18,7 +18,7 @@ export async function searchListingsRepo(params: {
     audition_details (title),
     creative_details (title),
     class_workshop_details (title),
-    listing_occurrences (
+    listing_occurrences!listing_occurrences_listing_id_fkey (
       id, starts_at_utc, tz
     )
   `
@@ -103,7 +103,7 @@ export async function listCalendarItemsRepo(params: {
   const sel = `
     id, listing_id, occurrence_type, starts_at_utc, ends_at_utc, tz,
     address, place_id, lat, lng, venue_name, location_instructions,
-    listings!inner (
+    listings!listing_occurrences_listing_id_fkey!inner (
       id, type, status,
       performance_details (title, subtype),
       audition_details (title),
@@ -170,7 +170,7 @@ export async function listDeadlinesRepo(params: {
 
   const sel = `
     id, listing_id, occurrence_type, starts_at_utc, ends_at_utc, tz,
-    listings!inner (
+    listings!listing_occurrences_listing_id_fkey!inner (
       id, type, status,
       audition_details (title),
       creative_details (title)
@@ -224,7 +224,7 @@ export async function getListingPublicRepo(listingId: string) {
       audition_details (*),
       creative_details (*),
       class_workshop_details (*),
-      listing_occurrences (*),
+      listing_occurrences!listing_occurrences_listing_id_fkey (*),
       listing_photos (*)
     `)
     .eq("id", listingId)
@@ -276,7 +276,7 @@ export async function getListingForOwnerRepo(listingId: string) {
       creative_details (*),
       class_workshop_details (*),
       piece_details (*),
-      listing_occurrences (*),
+      listing_occurrences!listing_occurrences_listing_id_fkey (*),
       listing_photos (*)
     `)
     .eq("id", listingId)

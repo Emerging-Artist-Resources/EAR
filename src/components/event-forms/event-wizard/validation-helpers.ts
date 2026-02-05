@@ -79,7 +79,7 @@ export async function validateStep2(
       const scheduleMode = form.getValues("pieceScheduleMode") as "FROM_PARENT" | "CUSTOM" | undefined
       console.log("[validateStep2] Schedule mode:", scheduleMode)
       
-      // Check if user has custom occurrences (even if in FROM_PARENT mode, they might have added custom dates)
+      // Check if user has custom occurrences (they can add custom dates even when selecting from parent)
       const extras = (form.getValues("extraOccurrences") ?? []) as Array<{
         date?: string
         times?: Array<{ time?: string }>
@@ -95,49 +95,25 @@ export async function validateStep2(
             d.times.some((t) => t?.time && t.time.trim() !== "")
         )
       
-      console.log("[validateStep2] Has custom occurrences:", hasCustomOccurrences, "extras:", JSON.stringify(extras, null, 2))
+      // Check if selectedSlots has data
+      const selectedSlots = form.getValues("selectedSlots") as string[] | undefined
+      const hasSelectedSlots = Array.isArray(selectedSlots) && selectedSlots.length > 0
       
-      // If user has custom occurrences, validate those (even if in FROM_PARENT mode)
-      if (hasCustomOccurrences) {
-        console.log("[validateStep2] Custom occurrences found - validating those")
-        console.log("[validateStep2] Custom occurrences validation passed")
-      } else if (scheduleMode === "FROM_PARENT") {
-        // If selecting from parent and no custom occurrences, require selectedSlots
-        const selectedSlots = form.getValues("selectedSlots") as string[] | undefined
-        console.log("[validateStep2] Selected slots:", selectedSlots)
-        if (!selectedSlots || selectedSlots.length === 0) {
-          console.log("[validateStep2] Validation failed: No selectedSlots")
-          return { isValid: false, message: "Select at least one date/time from the event schedule" }
-        }
-        console.log("[validateStep2] Selected slots validation passed")
-      } else {
-        // CUSTOM mode - check occurrences or extraOccurrences
-        console.log("[validateStep2] CUSTOM mode - checking occurrences")
-        const occurrences = (form.getValues("occurrences") ?? []) as Array<{
-          date?: string
-          times?: Array<{ time?: string }>
-        }>
-        
-        console.log("[validateStep2] Occurrences:", JSON.stringify(occurrences, null, 2))
-        
-        const hasNewOccurrences = Array.isArray(occurrences) &&
-          occurrences.length > 0 &&
-          occurrences.some(
-            (d) =>
-              d?.date && d.date.trim() !== "" &&
-              Array.isArray(d?.times) &&
-              d.times.length > 0 &&
-              d.times.some((t) => t?.time && t.time.trim() !== "")
-          )
-        
-        console.log("[validateStep2] Has new occurrences:", hasNewOccurrences, "array length:", occurrences?.length)
-        
-        if (!hasNewOccurrences && !hasCustomOccurrences) {
-          console.log("[validateStep2] Validation failed: No occurrences found")
+      console.log("[validateStep2] Has custom occurrences:", hasCustomOccurrences, "Has selected slots:", hasSelectedSlots)
+      
+      // Users can now have both selectedSlots AND extraOccurrences simultaneously
+      // Require at least one of them
+      if (!hasSelectedSlots && !hasCustomOccurrences) {
+        if (scheduleMode === "FROM_PARENT") {
+          console.log("[validateStep2] Validation failed: No selectedSlots or custom occurrences")
+          return { isValid: false, message: "Select at least one date/time from the event schedule, or add custom dates/times" }
+        } else {
+          console.log("[validateStep2] Validation failed: No custom occurrences")
           return { isValid: false, message: "Add at least one date & time for your piece" }
         }
-        console.log("[validateStep2] Custom occurrences validation passed")
       }
+      
+      console.log("[validateStep2] Validation passed - has selectedSlots:", hasSelectedSlots, "has custom occurrences:", hasCustomOccurrences)
     } else {
       console.log("[validateStep2] ORGANIZER submission - checking occurrences")
       // For ORGANIZER submissions, check occurrences or extraOccurrences

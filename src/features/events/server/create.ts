@@ -129,12 +129,12 @@ export async function createListingOwnedRepo(
 
     // 5) Insert piece_details if this is a piece
     if (input.piece_details) {
-      // Validate piece_details constraint: must have parent_listing_id OR (parent_event_name AND parent_event_contact_email)
+      // Validate piece_details constraint: must have parent_listing_id OR parent_event_name
       const hasParentListing = !!input.piece_details.parent_listing_id
-      const hasManualParent = !!(input.piece_details.parent_event_name && input.piece_details.parent_event_contact_email)
+      const hasManualParent = !!input.piece_details.parent_event_name
       
       if (!hasParentListing && !hasManualParent) {
-        throw new Error("Piece details must have either parent_listing_id or both parent_event_name and parent_event_contact_email")
+        throw new Error("Piece details must have either parent_listing_id or parent_event_name")
       }
       
       const { error: e5 } = await supabase
@@ -148,6 +148,11 @@ export async function createListingOwnedRepo(
           parent_event_contact_email: input.piece_details.parent_event_contact_email ?? null,
           piece_schedule_mode: input.piece_details.piece_schedule_mode ?? null,
           selected_slots: input.piece_details.selected_slots || null,
+          piece_title: input.piece_details.piece_title ?? null,
+          piece_company: input.piece_details.piece_company ?? null,
+          piece_company_website: input.piece_details.piece_company_website ?? null,
+          piece_description: input.piece_details.piece_description ?? null,
+          choreographer: input.piece_details.choreographer ?? null,
         })
       if (e5) throw new Error(`Failed to insert piece_details: ${e5.message}`)
     }
@@ -293,12 +298,12 @@ export async function createListingAnonymousRepo(
 
     // 5) Insert piece_details if this is a piece
     if (input.piece_details) {
-      // Validate piece_details constraint: must have parent_listing_id OR (parent_event_name AND parent_event_contact_email)
+      // Validate piece_details constraint: must have parent_listing_id OR parent_event_name
       const hasParentListing = !!input.piece_details.parent_listing_id
-      const hasManualParent = !!(input.piece_details.parent_event_name && input.piece_details.parent_event_contact_email)
+      const hasManualParent = !!input.piece_details.parent_event_name
       
       if (!hasParentListing && !hasManualParent) {
-        throw new Error("Piece details must have either parent_listing_id or both parent_event_name and parent_event_contact_email")
+        throw new Error("Piece details must have either parent_listing_id or parent_event_name")
       }
       
       const { error: e5 } = await serviceSupabase
@@ -312,6 +317,11 @@ export async function createListingAnonymousRepo(
           parent_event_contact_email: input.piece_details.parent_event_contact_email ?? null,
           piece_schedule_mode: input.piece_details.piece_schedule_mode ?? null,
           selected_slots: input.piece_details.selected_slots || null,
+          piece_title: input.piece_details.piece_title ?? null,
+          piece_company: input.piece_details.piece_company ?? null,
+          piece_company_website: input.piece_details.piece_company_website ?? null,
+          piece_description: input.piece_details.piece_description ?? null,
+          choreographer: input.piece_details.choreographer ?? null,
         })
       if (e5) throw new Error(`Failed to insert piece_details: ${e5.message}`)
     }

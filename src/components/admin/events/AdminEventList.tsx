@@ -101,7 +101,7 @@ export function AdminEventList({
         </table>
       </div>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title="Submission details" headerClassName="bg-primary">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title="Submission details" headerClassName="bg-primary" size="lg">
         {loadingSelected && (
           <div className="p-6 text-center text-[var(--gray-600)]">Loading…</div>
         )}

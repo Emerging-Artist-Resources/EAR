@@ -286,6 +286,13 @@ CREATE TABLE piece_details (
   piece_schedule_mode TEXT, -- 'FROM_PARENT' or 'CUSTOM'
   selected_slots JSONB, -- Array of selected slot keys from parent schedule
   
+  -- Piece-specific information
+  piece_title TEXT,
+  piece_company TEXT,
+  piece_company_website TEXT,
+  piece_description TEXT,
+  choreographer TEXT,
+  
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   
@@ -506,6 +513,11 @@ COMMENT ON TABLE audition_details IS 'Type-specific details for audition listing
 COMMENT ON TABLE creative_details IS 'Type-specific details for creative opportunity listings';
 COMMENT ON TABLE performance_details IS 'Type-specific details for performance listings (ORGANIZER or PIECE)';
 COMMENT ON TABLE piece_details IS 'Additional details for PIECE subtype performances';
+COMMENT ON COLUMN piece_details.piece_title IS 'Title of the piece/performance';
+COMMENT ON COLUMN piece_details.piece_company IS 'Company or artist name for this piece';
+COMMENT ON COLUMN piece_details.piece_company_website IS 'Website for the company/artist';
+COMMENT ON COLUMN piece_details.piece_description IS 'Description of the piece';
+COMMENT ON COLUMN piece_details.choreographer IS 'Choreographer or creator name (if different from company)';
 COMMENT ON TABLE class_workshop_details IS 'Type-specific details for class/workshop listings';
 COMMENT ON TABLE listing_relationships IS 'Tracks parent-child relationships (e.g., Performance->Pieces, Workshop->Classes)';
 COMMENT ON TABLE listing_merges IS 'Tracks admin merge operations for duplicate listings';

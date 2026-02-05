@@ -100,15 +100,19 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
             d.times.some((t) => t?.time && t.time.trim() !== "")
         )
       
-      // If user has custom occurrences, set to CUSTOM mode and show custom view
-      if (hasCustomData) {
+      // If user has selected slots, prefer FROM_PARENT mode (even if they also have custom occurrences)
+      // Both can coexist now, but FROM_PARENT is the primary mode when parent selections exist
+      if (selectedSlots && selectedSlots.length > 0) {
+        form.setValue("pieceScheduleMode" as Path<EventFormData>, "FROM_PARENT" as never)
+        // Show custom view if they have custom data
+        if (hasCustomData) {
+          setUseCustomDateTime(true)
+        }
+        scheduleModeSetRef.current = true
+      } else if (hasCustomData) {
+        // Only custom occurrences, no selected slots
         form.setValue("pieceScheduleMode" as Path<EventFormData>, "CUSTOM" as never)
         setUseCustomDateTime(true)
-        scheduleModeSetRef.current = true
-      } else if (selectedSlots && selectedSlots.length > 0) {
-        // If user has selected slots from parent, set to FROM_PARENT mode
-        form.setValue("pieceScheduleMode" as Path<EventFormData>, "FROM_PARENT" as never)
-        setUseCustomDateTime(false)
         scheduleModeSetRef.current = true
       }
     }
@@ -238,13 +242,16 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
 
 
 
-  // For selection dropdown, use parent occurrences; for custom entry, use all occurrences
+  // For selection dropdown, always use parent occurrences when available
   const occurrencesForSelection = useMemo(() => {
-    if (mode === "SELECT_FROM_PARENT" && !useCustomDateTime && parentOccurrences.length > 0) {
+    if (mode === "SELECT_FROM_PARENT" && parentOccurrences.length > 0) {
       return parentOccurrences
     }
-    return extras
-  }, [mode, useCustomDateTime, parentOccurrences, extras])
+    if (mode === "SELECT_FROM_EVENT") {
+      return extras
+    }
+    return []
+  }, [mode, parentOccurrences, extras])
 
   const derivedOccurrences = useMemo(() => {
     const list: { key: string; label: string }[] = []
@@ -280,13 +287,10 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
     const canSelect = isSelectFromParent || isSelectFromEvent
     const hasParentOccurrences = canSelect && displayConfirmed && derivedOccurrences.length > 0
     
-    const allowManualEntryForParent = isSelectFromParent && (useCustomDateTime || !hasParentOccurrences)
-    const allowManualEntry = isCustomOnly || allowManualEntryForParent
-    // Only show custom DateTimeList if we're in custom mode OR if we don't have parent occurrences
-    // When useCustomDateTime is true, we should show DateTimeList, not the selection dropdown
-    const shouldShowCustomDateTime = allowManualEntry && (isCustomOnly || useCustomDateTime || !hasParentOccurrences)
-    // Only show selection dropdown if we have parent occurrences AND we're NOT in custom mode
-    const shouldShowSelection = hasParentOccurrences && !useCustomDateTime
+    // Show selection dropdown when we have parent occurrences (regardless of custom mode)
+    const shouldShowSelection = hasParentOccurrences
+    // Show custom DateTimeList when: custom mode is enabled, OR in CUSTOM_ONLY mode, OR no parent occurrences
+    const shouldShowCustomDateTime = isCustomOnly || useCustomDateTime || (isSelectFromParent && !hasParentOccurrences)
 
     return {
       isSelectFromEvent,
@@ -294,8 +298,6 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
       isCustomOnly,
       canSelect,
       hasParentOccurrences,
-      allowManualEntryForParent,
-      allowManualEntry,
       shouldShowCustomDateTime,
       shouldShowSelection,
     }
@@ -313,13 +315,10 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
             multiple
             options={derivedOccurrences.map((o) => ({ label: o.label, value: o.key }))}
           />
-          {flags.isSelectFromParent && (
+          {flags.isSelectFromParent && !useCustomDateTime && (
             <button
               type="button"
               onClick={() => {
-                // Clear selectedSlots when switching to custom mode
-                form.setValue("selectedSlots" as Path<EventFormData>, [] as never)
-                // Switch to custom mode (useEffect will handle clearing extraOccurrences)
                 setUseCustomDateTime(true)
               }}
               className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
@@ -342,13 +341,13 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
         </p>
       )}
 
-      {flags.isSelectFromParent && !flags.shouldShowCustomDateTime && (loadingParent || !displayConfirmed) && (
+      {flags.isSelectFromParent && !flags.shouldShowSelection && (loadingParent || !displayConfirmed) && (
         <p className="text-sm text-gray-500">
           {loadingParent ? "Loading event schedule..." : "Please wait for the event schedule to load."}
         </p>
       )}
 
-      {flags.isSelectFromParent && !flags.shouldShowCustomDateTime && displayConfirmed && derivedOccurrences.length === 0 && (
+      {flags.isSelectFromParent && !flags.shouldShowSelection && displayConfirmed && derivedOccurrences.length === 0 && (
         <p className="text-sm text-gray-500">
           No dates & times available from the event schedule.
         </p>
@@ -356,20 +355,6 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
 
       {flags.shouldShowCustomDateTime && (
         <>
-          {flags.isSelectFromParent && useCustomDateTime && parentOccurrences.length > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                setUseCustomDateTime(false)
-                // Clear any custom occurrences when going back to selection
-                form.setValue("extraOccurrences" as Path<EventFormData>, [] as never)
-                form.setValue("eventDatesConfirmed" as Path<EventFormData>, true as never)
-              }}
-              className="mb-4 text-sm text-blue-600 hover:text-blue-800 underline"
-            >
-              ← Back to selecting from parent event
-            </button>
-          )}
           <DateTimeList
             key={customDateTimeKey}
             form={form as unknown as UseFormReturn<Record<string, unknown>>}
@@ -389,7 +374,7 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
           />
           {flags.isSelectFromParent && useCustomDateTime && parentOccurrences.length > 0 && (
             <p className="mt-2 text-sm text-gray-500">
-              Your custom dates/times will be added to the parent event's schedule.
+              Your custom dates/times will be added to the parent event's schedule once your piece is approved.
             </p>
           )}
         </>
