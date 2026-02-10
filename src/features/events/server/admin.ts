@@ -247,6 +247,196 @@ async function addPieceOccurrencesToParent(
 }
 
 /**
+ * Adds custom occurrences from a class to its parent workshop
+ * Only adds occurrences if:
+ * - Class has parent_listing_id
+ * - Parent listing exists and is a WORKSHOP
+ * - Occurrences don't already exist on parent (duplicate check)
+ */
+async function addClassOccurrencesToParent(
+  supabase: SupabaseClient,
+  classListingId: string
+): Promise<void> {
+  console.log(`[Class Occurrence Sync] Checking class ${classListingId} for occurrence sync`)
+  
+  // 1. Check if this is a class and get parent_listing_id
+  const { data: classData, error: classError } = await supabase
+    .from("class_workshop_details")
+    .select("parent_listing_id, class_workshop_type")
+    .eq("listing_id", classListingId)
+    .single()
+
+  if (classError || !classData) {
+    console.log(`[Class Occurrence Sync] Not a class or no class details for ${classListingId}:`, classError?.message || 'no data')
+    return
+  }
+
+  if (classData.class_workshop_type !== "CLASS") {
+    console.log(`[Class Occurrence Sync] Skipping - listing ${classListingId} is not a CLASS`)
+    return
+  }
+
+  const parentListingId = classData.parent_listing_id
+  if (!parentListingId) {
+    console.log(`[Class Occurrence Sync] Skipping - class ${classListingId} has no parent listing`)
+    return
+  }
+
+  console.log(`[Class Occurrence Sync] Class ${classListingId} has parent: ${parentListingId}`)
+
+  // 2. Verify parent is a WORKSHOP
+  const { data: parentData, error: parentError } = await supabase
+    .from("class_workshop_details")
+    .select("class_workshop_type")
+    .eq("listing_id", parentListingId)
+    .single()
+
+  if (parentError || !parentData || parentData.class_workshop_type !== "WORKSHOP") {
+    console.log(`[Class Occurrence Sync] Parent ${parentListingId} is not a WORKSHOP:`, parentError?.message || `type is ${parentData?.class_workshop_type}`)
+    return
+  }
+
+  console.log(`[Class Occurrence Sync] Parent ${parentListingId} verified as WORKSHOP`)
+
+  // 3. Get class's occurrences
+  const { data: classOccurrences, error: occurrencesError } = await supabase
+    .from("listing_occurrences")
+    .select("*")
+    .eq("listing_id", classListingId)
+    .is("source_class_listing_id", null)
+
+  if (occurrencesError || !classOccurrences || classOccurrences.length === 0) {
+    console.log(`[Class Occurrence Sync] No occurrences found for class ${classListingId}:`, occurrencesError?.message || 'no occurrences')
+    return
+  }
+
+  console.log(`[Class Occurrence Sync] Found ${classOccurrences.length} occurrences for class ${classListingId}`)
+
+  // 4. Get parent's existing occurrences to check for duplicates
+  const { data: parentOccurrences, error: parentOccurrencesError } = await supabase
+    .from("listing_occurrences")
+    .select("starts_at_utc, address, place_id, venue_name, location_instructions")
+    .eq("listing_id", parentListingId)
+
+  if (parentOccurrencesError) {
+    console.error(`[Class Occurrence Sync] Failed to fetch parent occurrences: ${parentOccurrencesError.message}`)
+    return
+  }
+
+  console.log(`[Class Occurrence Sync] Parent ${parentListingId} has ${parentOccurrences?.length || 0} existing occurrences`)
+
+  // 5. Filter occurrences to add (check for duplicates)
+  const occurrencesToAdd = classOccurrences.filter((classOcc) => {
+    // Check if this occurrence already exists on parent
+    const isDuplicate = parentOccurrences?.some((parentOcc) => {
+      // Match by starts_at_utc and location fields
+      const timeMatch = parentOcc.starts_at_utc === classOcc.starts_at_utc
+      const addressMatch = (parentOcc.address || null) === (classOcc.address || null)
+      const placeIdMatch = (parentOcc.place_id || null) === (classOcc.place_id || null)
+      const venueMatch = (parentOcc.venue_name || null) === (classOcc.venue_name || null)
+      const instructionsMatch = (parentOcc.location_instructions || null) === (classOcc.location_instructions || null)
+
+      return timeMatch && addressMatch && placeIdMatch && venueMatch && instructionsMatch
+    })
+
+    if (isDuplicate) {
+      console.log(`[Class Occurrence Sync] Duplicate occurrence found: ${classOcc.starts_at_utc} at ${classOcc.venue_name || classOcc.address || 'unknown location'}`)
+    }
+
+    return !isDuplicate
+  })
+
+  if (occurrencesToAdd.length === 0) {
+    console.log(`[Class Occurrence Sync] No occurrences to add (all ${classOccurrences.length} occurrences already exist on parent)`)
+    return
+  }
+
+  console.log(`[Class Occurrence Sync] Adding ${occurrencesToAdd.length} occurrences to parent ${parentListingId} (${classOccurrences.length - occurrencesToAdd.length} already exist on parent)`)
+
+  // 6. Insert occurrences into parent with source tracking
+  const occurrencesWithSource = occurrencesToAdd.map((occ) => ({
+    listing_id: parentListingId,
+    occurrence_type: occ.occurrence_type,
+    starts_at_utc: occ.starts_at_utc,
+    ends_at_utc: occ.ends_at_utc,
+    tz: occ.tz,
+    address: occ.address,
+    place_id: occ.place_id,
+    lat: occ.lat,
+    lng: occ.lng,
+    venue_name: occ.venue_name,
+    location_instructions: occ.location_instructions,
+    source_class_listing_id: classListingId,
+  }))
+
+  console.log(`[Class Occurrence Sync] Inserting ${occurrencesWithSource.length} occurrences:`, occurrencesWithSource.map(occ => ({
+    starts_at_utc: occ.starts_at_utc,
+    venue: occ.venue_name || occ.address || 'unknown',
+    source_class: occ.source_class_listing_id
+  })))
+
+  const { error: insertError } = await supabase
+    .from("listing_occurrences")
+    .insert(occurrencesWithSource)
+
+  if (insertError) {
+    console.error(`[Class Occurrence Sync] Failed to add class occurrences to parent: ${insertError.message}`, insertError)
+    // Don't throw - approval should still succeed even if this fails
+  } else {
+    console.log(`[Class Occurrence Sync] Successfully added ${occurrencesWithSource.length} occurrences to parent ${parentListingId}`)
+  }
+}
+
+/**
+ * Removes occurrences from parent workshop that were added by a class
+ * Called when a class is rejected
+ */
+async function removeClassOccurrencesFromParent(
+  supabase: SupabaseClient,
+  classListingId: string
+): Promise<void> {
+  console.log(`[Class Occurrence Sync] Removing occurrences added by class ${classListingId}`)
+  
+  // First, check how many occurrences will be removed
+  const { data: occurrencesToRemove, error: countError } = await supabase
+    .from("listing_occurrences")
+    .select("id, listing_id, starts_at_utc, venue_name, address")
+    .eq("source_class_listing_id", classListingId)
+
+  if (countError) {
+    console.error(`[Class Occurrence Sync] Failed to count occurrences to remove: ${countError.message}`)
+    return
+  }
+
+  if (!occurrencesToRemove || occurrencesToRemove.length === 0) {
+    console.log(`[Class Occurrence Sync] No occurrences found to remove for class ${classListingId}`)
+    return
+  }
+
+  console.log(`[Class Occurrence Sync] Found ${occurrencesToRemove.length} occurrences to remove:`, 
+    occurrencesToRemove.map(occ => ({
+      id: occ.id,
+      parent_listing_id: occ.listing_id,
+      starts_at_utc: occ.starts_at_utc,
+      venue: occ.venue_name || occ.address || 'unknown'
+    }))
+  )
+
+  // Find and delete all occurrences on parent workshops that were added by this class
+  const { error: deleteError } = await supabase
+    .from("listing_occurrences")
+    .delete()
+    .eq("source_class_listing_id", classListingId)
+
+  if (deleteError) {
+    console.error(`[Class Occurrence Sync] Failed to remove class occurrences from parent: ${deleteError.message}`)
+    // Don't throw - rejection should still succeed even if this fails
+  } else {
+    console.log(`[Class Occurrence Sync] Successfully removed ${occurrencesToRemove.length} occurrences from parent workshops`)
+  }
+}
+
+/**
  * Removes occurrences from parent event that were added by a piece
  * Called when a piece is rejected
  */
@@ -334,12 +524,23 @@ export async function approveListingRepo(listingId: string, reviewerId: string) 
     }
   }
 
-  // 3) If this is a piece, add its custom occurrences to parent event
+  // 3) If this is a piece or class, add its custom occurrences to parent event/workshop
   console.log(`[Approval] Processing approval for listing ${listingId}`)
   try {
-    await addPieceOccurrencesToParent(supabase, listingId)
+    // Check listing type to determine which occurrence sync to call
+    const { data: listing } = await supabase
+      .from("listings")
+      .select("type")
+      .eq("id", listingId)
+      .single()
+    
+    if (listing?.type === "performance") {
+      await addPieceOccurrencesToParent(supabase, listingId)
+    } else if (listing?.type === "class") {
+      await addClassOccurrencesToParent(supabase, listingId)
+    }
   } catch (error) {
-    console.error(`[Approval] Failed to add piece occurrences to parent for listing ${listingId}:`, error)
+    console.error(`[Approval] Failed to add occurrences to parent for listing ${listingId}:`, error)
     // Don't fail approval if this fails
   }
   console.log(`[Approval] Completed approval processing for listing ${listingId}`)
@@ -380,12 +581,23 @@ export async function rejectListingRepo(
     .eq("id", listingId)
   if (error) throw error
 
-  // Remove occurrences from parent event that were added by this piece
+  // Remove occurrences from parent event/workshop that were added by this piece/class
   console.log(`[Rejection] Processing rejection for listing ${listingId}`)
   try {
-    await removePieceOccurrencesFromParent(supabase, listingId)
+    // Check listing type to determine which occurrence sync to call
+    const { data: listing } = await supabase
+      .from("listings")
+      .select("type")
+      .eq("id", listingId)
+      .single()
+    
+    if (listing?.type === "performance") {
+      await removePieceOccurrencesFromParent(supabase, listingId)
+    } else if (listing?.type === "class") {
+      await removeClassOccurrencesFromParent(supabase, listingId)
+    }
   } catch (error) {
-    console.error(`[Rejection] Failed to remove piece occurrences from parent for listing ${listingId}:`, error)
+    console.error(`[Rejection] Failed to remove occurrences from parent for listing ${listingId}:`, error)
     // Don't fail rejection if this fails
   }
   console.log(`[Rejection] Completed rejection processing for listing ${listingId}`)
@@ -417,7 +629,7 @@ export async function listAdminListingsRepo(params: {
       performance_details (title, subtype),
       audition_details (title),
       creative_details (title),
-      class_workshop_details (title),
+      class_workshop_details!class_workshop_details_listing_id_fkey (title, class_workshop_type, parent_workshop_name, parent_listing_id),
       piece_details!piece_details_listing_id_fkey (parent_event_name, parent_listing_id, piece_title, piece_company, piece_company_website)
     `)
     .eq("status", params.status)
@@ -426,7 +638,7 @@ export async function listAdminListingsRepo(params: {
     .limit(params.limit)
   if (error) throw error
 
-  // Fetch parent listing titles for pieces that have parent_listing_id
+  // Fetch parent listing titles for pieces and classes that have parent_listing_id
   const pieceParentIds = (data ?? [])
     .filter((e: any) => {
       if (e.type !== "performance" || e.performance_details?.subtype !== "PIECE") return false
@@ -439,21 +651,43 @@ export async function listAdminListingsRepo(params: {
     })
     .filter((id): id is string => !!id)
   
+  const classParentIds = (data ?? [])
+    .filter((e: any) => {
+      if (e.type !== "class") return false
+      const classDetails = Array.isArray(e.class_workshop_details) ? e.class_workshop_details[0] : e.class_workshop_details
+      return classDetails?.parent_listing_id && classDetails?.class_workshop_type === "CLASS"
+    })
+    .map((e: any) => {
+      const classDetails = Array.isArray(e.class_workshop_details) ? e.class_workshop_details[0] : e.class_workshop_details
+      return classDetails?.parent_listing_id
+    })
+    .filter((id): id is string => !!id)
+  
   let parentTitles: Record<string, string> = {}
-  if (pieceParentIds.length > 0) {
+  const allParentIds = [...new Set([...pieceParentIds, ...classParentIds])]
+  
+  if (allParentIds.length > 0) {
     const { data: parentData } = await svc
       .from("listings")
       .select(`
         id,
-        performance_details (title)
+        type,
+        performance_details (title),
+        class_workshop_details!class_workshop_details_listing_id_fkey (title)
       `)
-      .in("id", pieceParentIds)
+      .in("id", allParentIds)
     
     if (parentData) {
       parentTitles = Object.fromEntries(
         parentData.map((p: any) => {
-          const perfDetails = Array.isArray(p.performance_details) ? p.performance_details[0] : p.performance_details
-          return [p.id, perfDetails?.title || ""]
+          if (p.type === "performance") {
+            const perfDetails = Array.isArray(p.performance_details) ? p.performance_details[0] : p.performance_details
+            return [p.id, perfDetails?.title || ""]
+          } else if (p.type === "class") {
+            const classDetails = Array.isArray(p.class_workshop_details) ? p.class_workshop_details[0] : p.class_workshop_details
+            return [p.id, classDetails?.title || ""]
+          }
+          return [p.id, ""]
         })
       )
     }
@@ -497,7 +731,29 @@ export async function listAdminListingsRepo(params: {
       title = creativeDetails?.title ?? null
     } else if (e.type === "class") {
       const classDetails = Array.isArray(e.class_workshop_details) ? e.class_workshop_details[0] : e.class_workshop_details
-      title = classDetails?.title ?? null
+      if (classDetails?.class_workshop_type === "CLASS") {
+        // For classes: construct title from workshop/parent + class info
+        const parentWorkshopName = classDetails?.parent_workshop_name
+        const parentListingTitle = classDetails?.parent_listing_id 
+          ? parentTitles[classDetails.parent_listing_id] 
+          : null
+        const workshopName = parentListingTitle || parentWorkshopName
+        
+        const className = classDetails?.title || null
+        
+        if (workshopName && className) {
+          title = `${workshopName} - ${className}`
+        } else if (workshopName) {
+          title = workshopName
+        } else if (className) {
+          title = className
+        } else {
+          title = "Untitled Class"
+        }
+      } else {
+        // WORKSHOP
+        title = classDetails?.title ?? null
+      }
     } else {
       title = "Untitled"
     }
@@ -524,7 +780,7 @@ export async function getAdminListingDetailRepo(listingId: string) {
       performance_details (*),
       audition_details (*),
       creative_details (*),
-      class_workshop_details (*),
+      class_workshop_details!class_workshop_details_listing_id_fkey (*),
       piece_details!piece_details_listing_id_fkey (*),
       listing_occurrences!listing_occurrences_listing_id_fkey (*),
       listing_photos (*)
@@ -558,6 +814,34 @@ export async function getAdminListingDetailRepo(listingId: string) {
           }
         } else if (data.piece_details) {
           (data.piece_details as any).parent_listing_title = parentPerfDetails.title
+        }
+      }
+    }
+  }
+
+  // If this is a class with a parent listing, fetch the parent's title
+  const classDetails = Array.isArray(data.class_workshop_details) ? data.class_workshop_details[0] : data.class_workshop_details
+  
+  if (data.type === "class" && classDetails?.class_workshop_type === "CLASS" && classDetails?.parent_listing_id) {
+    const { data: parentData } = await svc
+      .from("listings")
+      .select(`
+        id,
+        class_workshop_details!class_workshop_details_listing_id_fkey (title)
+      `)
+      .eq("id", classDetails.parent_listing_id)
+      .single()
+    
+    if (parentData) {
+      const parentClassDetails = Array.isArray(parentData.class_workshop_details) ? parentData.class_workshop_details[0] : parentData.class_workshop_details
+      if (parentClassDetails?.title) {
+        // Add parent title to class_workshop_details for easy access
+        if (Array.isArray(data.class_workshop_details)) {
+          if (data.class_workshop_details[0]) {
+            (data.class_workshop_details[0] as any).parent_listing_title = parentClassDetails.title
+          }
+        } else if (data.class_workshop_details) {
+          (data.class_workshop_details as any).parent_listing_title = parentClassDetails.title
         }
       }
     }
@@ -840,4 +1124,251 @@ export async function listPiecesNeedingLinkRepo() {
         parent_event_contact_email: pieceDetails?.parent_event_contact_email || null,
       }
     })
+}
+
+export async function searchParentWorkshopsRepo(params: {
+  query: string
+  limit?: number
+}) {
+  const svc = getSupabaseServiceClient()
+  const limit = params.limit ?? 20
+  const queryLower = params.query.toLowerCase().trim()
+  
+  const { data, error } = await svc
+    .from("listings")
+    .select(`
+      id,
+      class_workshop_details!class_workshop_details_listing_id_fkey!inner (title, class_workshop_type)
+    `)
+    .eq("class_workshop_details.class_workshop_type", "WORKSHOP")
+    .is("deleted_at", null)
+  
+  if (error) throw error
+  
+  const filtered = (data ?? [])
+    .map((item: any) => {
+      const classDetails = Array.isArray(item.class_workshop_details) 
+        ? item.class_workshop_details[0] 
+        : item.class_workshop_details
+      return {
+        id: item.id,
+        title: classDetails?.title || "Untitled",
+        classDetails,
+      }
+    })
+    .filter((item) => {
+      return item.title.toLowerCase().includes(queryLower)
+    })
+    .sort((a, b) => a.title.localeCompare(b.title))
+    .slice(0, limit)
+  
+  return filtered.map((item) => ({
+    id: item.id,
+    title: item.title,
+  }))
+}
+
+export async function listClassesNeedingLinkRepo() {
+  const svc = getSupabaseServiceClient()
+  
+  const { data, error } = await svc
+    .from("listings")
+    .select(`
+      id,
+      status,
+      submitted_at,
+      contact_name,
+      contact_email,
+      address,
+      venue_name,
+      location_instructions,
+      class_workshop_details!class_workshop_details_listing_id_fkey!inner (
+        class_workshop_type,
+        title,
+        organizer,
+        teachers,
+        parent_workshop_name,
+        parent_workshop_website,
+        parent_workshop_contact_email,
+        parent_listing_id
+      ),
+      listing_occurrences!listing_occurrences_listing_id_fkey (
+        id,
+        starts_at_utc,
+        ends_at_utc,
+        tz,
+        venue_name,
+        address
+      )
+    `)
+    .eq("class_workshop_details.class_workshop_type", "CLASS")
+    .is("class_workshop_details.parent_listing_id", null)
+    .not("class_workshop_details.parent_workshop_name", "is", null)
+    .is("deleted_at", null)
+    .order("submitted_at", { ascending: false })
+  
+  if (error) throw error
+  
+  return (data ?? [])
+    .filter((item: any) => {
+      const classDetails = Array.isArray(item.class_workshop_details) 
+        ? item.class_workshop_details[0] 
+        : item.class_workshop_details
+      return classDetails && classDetails.parent_workshop_name && !classDetails.parent_listing_id
+    })
+    .map((item: any) => {
+      const classDetails = Array.isArray(item.class_workshop_details) 
+        ? item.class_workshop_details[0] 
+        : item.class_workshop_details
+      const occurrences = Array.isArray(item.listing_occurrences) 
+        ? item.listing_occurrences 
+        : (item.listing_occurrences ? [item.listing_occurrences] : [])
+      
+      return {
+        id: item.id,
+        status: item.status,
+        submitted_at: item.submitted_at,
+        title: classDetails?.title || null,
+        organizer: classDetails?.organizer || null,
+        teachers: classDetails?.teachers || null,
+        contact_name: item.contact_name || null,
+        contact_email: item.contact_email || null,
+        address: item.address || null,
+        venue_name: item.venue_name || null,
+        location_instructions: item.location_instructions || null,
+        occurrences: occurrences.map((occ: any) => ({
+          id: occ.id,
+          starts_at_utc: occ.starts_at_utc,
+          ends_at_utc: occ.ends_at_utc || null,
+          tz: occ.tz,
+          venue_name: occ.venue_name || null,
+          address: occ.address || null,
+        })),
+        parent_workshop_name: classDetails?.parent_workshop_name || null,
+        parent_workshop_website: classDetails?.parent_workshop_website || null,
+        parent_workshop_contact_email: classDetails?.parent_workshop_contact_email || null,
+      }
+    })
+}
+
+export async function updateClassParentLinkRepo(params: {
+  classListingId: string
+  parentListingId: string
+}) {
+  const svc = getSupabaseServiceClient()
+  
+  const { error } = await svc
+    .from("class_workshop_details")
+    .update({
+      parent_listing_id: params.parentListingId,
+      parent_workshop_name: null,
+      parent_workshop_website: null,
+      parent_workshop_contact_email: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("listing_id", params.classListingId)
+  
+  if (error) throw new Error(`Failed to update class parent link: ${error.message}`)
+  
+  const { error: relError } = await svc.rpc("link_listings", {
+    p_parent_listing_id: params.parentListingId,
+    p_child_listing_id: params.classListingId,
+    p_relationship_type: "workshop_class",
+  })
+  
+  if (relError) {
+    console.warn(`Failed to create listing relationship: ${relError.message}`)
+  }
+  
+  await addClassOccurrencesToParent(svc, params.classListingId)
+}
+
+export async function createMinimalParentWorkshopRepo(params: {
+  name: string
+  website?: string | null
+  email?: string | null
+  classIds: string[]
+}) {
+  const svc = getSupabaseServiceClient()
+  
+  const { data: { user } } = await svc.auth.getUser()
+  if (!user?.id) {
+    throw new Error("Unauthorized")
+  }
+  
+  let listingId: string | null = null
+  
+  try {
+    const { data: listing, error: listingError } = await svc
+      .from("listings")
+      .insert({
+        type: "class",
+        status: "pending",
+        created_by: user.id,
+        contact_name: "Admin Created",
+        contact_email: params.email || "admin@example.com",
+        company: null,
+        company_website: params.website || null,
+        meta: { admin_created: true, minimal_parent: true },
+      })
+      .select("id")
+      .single()
+    
+    if (listingError) {
+      throw new Error(`Failed to create listing: ${listingError.message}`)
+    }
+    
+    listingId = listing.id as string
+    
+    const { error: classError } = await svc
+      .from("class_workshop_details")
+      .insert({
+        listing_id: listingId,
+        class_workshop_type: "WORKSHOP",
+        title: params.name,
+        description: "Workshop created by admin",
+        organizer: "Admin",
+        teachers: "",
+        website: params.website || null,
+      })
+    
+    if (classError) {
+      throw new Error(`Failed to create class workshop details: ${classError.message}`)
+    }
+    
+    for (const classId of params.classIds) {
+      const { error: classUpdateError } = await svc
+        .from("class_workshop_details")
+        .update({
+          parent_listing_id: listingId,
+          parent_workshop_name: null,
+          parent_workshop_website: null,
+          parent_workshop_contact_email: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("listing_id", classId)
+      
+      if (classUpdateError) {
+        console.warn(`Failed to link class ${classId}: ${classUpdateError.message}`)
+        continue
+      }
+      
+      const { error: relError } = await svc.rpc("link_listings", {
+        p_parent_listing_id: listingId,
+        p_child_listing_id: classId,
+        p_relationship_type: "workshop_class",
+      })
+      
+      if (relError) {
+        console.warn(`Failed to create relationship for class ${classId}: ${relError.message}`)
+      }
+    }
+    
+    return { listingId }
+  } catch (error) {
+    if (listingId) {
+      await svc.from("listings").delete().eq("id", listingId)
+    }
+    throw error
+  }
 }

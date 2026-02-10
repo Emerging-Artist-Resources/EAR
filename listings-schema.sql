@@ -155,6 +155,10 @@ CREATE TABLE listing_occurrences (
   venue_name TEXT,
   location_instructions TEXT,
   
+  -- Source tracking for occurrences added by child listings
+  source_piece_listing_id UUID REFERENCES listings(id) ON DELETE SET NULL,
+  source_class_listing_id UUID REFERENCES listings(id) ON DELETE SET NULL,
+  
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
@@ -162,6 +166,8 @@ CREATE INDEX idx_listing_occurrences_listing_id ON listing_occurrences(listing_i
 CREATE INDEX idx_listing_occurrences_starts_at ON listing_occurrences(starts_at_utc);
 CREATE INDEX idx_listing_occurrences_listing_starts ON listing_occurrences(listing_id, starts_at_utc);
 CREATE INDEX idx_listing_occurrences_type ON listing_occurrences(occurrence_type);
+CREATE INDEX idx_listing_occurrences_source_piece ON listing_occurrences(source_piece_listing_id) WHERE source_piece_listing_id IS NOT NULL;
+CREATE INDEX idx_listing_occurrences_source_class ON listing_occurrences(source_class_listing_id) WHERE source_class_listing_id IS NOT NULL;
 
 -- ============================================================================
 -- AUDITION DETAILS
@@ -338,12 +344,27 @@ CREATE TABLE class_workshop_details (
   listing_fee_explanation TEXT,
   guest_spot_info TEXT,
   
+  -- Parent workshop relationship (for CLASS type)
+  parent_listing_id UUID REFERENCES listings(id) ON DELETE SET NULL,
+  parent_workshop_name TEXT,
+  parent_workshop_website TEXT,
+  parent_workshop_contact_email TEXT,
+  
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  
+  -- Constraint: Allow WORKSHOP (no parent), CLASS with parent_listing_id, CLASS with placeholder info, or standalone CLASS
+  CONSTRAINT class_workshop_details_parent_check CHECK (
+    (class_workshop_type = 'WORKSHOP') OR
+    (parent_listing_id IS NOT NULL) OR
+    (parent_workshop_name IS NOT NULL AND parent_workshop_contact_email IS NOT NULL) OR
+    (parent_listing_id IS NULL AND parent_workshop_name IS NULL AND parent_workshop_contact_email IS NULL)
+  )
 );
 
 CREATE INDEX idx_class_workshop_details_listing_id ON class_workshop_details(listing_id);
 CREATE INDEX idx_class_workshop_details_type ON class_workshop_details(class_workshop_type);
+CREATE INDEX idx_class_workshop_details_parent_listing_id ON class_workshop_details(parent_listing_id);
 
 -- ============================================================================
 -- PARENT-CHILD RELATIONSHIPS

@@ -23,7 +23,7 @@ export async function GET(
           performance_details (title, description),
           audition_details (title, description),
           creative_details (title, description),
-          class_workshop_details (title, description),
+          class_workshop_details!class_workshop_details_listing_id_fkey (title, description),
           listing_photos (id, path, credit, sort_order)
         )
       `)

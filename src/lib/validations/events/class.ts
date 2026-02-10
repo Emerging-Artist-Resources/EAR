@@ -26,8 +26,12 @@ export const classFields = z
      * Note: Using z.array() without .min() to allow empty arrays.
      * Validation requiring at least one occurrence is done conditionally in superRefine based on event type.
      */
-    occurrences: z.array(occurrenceSchema).optional(),
-    classOccurrences: occurrencesSchema.optional(), // Legacy support (keep occurrencesSchema for backward compat)
+    occurrences: z.array(
+      occurrenceSchema.extend({
+        date: z.string().optional(),
+        times: z.array(z.object({ time: z.string().optional() })).optional(),
+      })
+    ).optional(),
 
     /**
      * NEW: festival/workshop association flow (simple + user-friendly)
@@ -105,13 +109,10 @@ export const classFields = z
 
     if (!isClassOrWorkshop) return
 
-    // Helper: normalize occurrences from either field
-    const normalizedOccurrences =
-      (data.occurrences && data.occurrences.length > 0
-        ? data.occurrences
-        : data.classOccurrences && data.classOccurrences.length > 0
-          ? data.classOccurrences
-          : undefined)
+    // Helper: normalize occurrences
+    const normalizedOccurrences = data.occurrences && data.occurrences.length > 0
+      ? data.occurrences
+      : undefined
 
     // Required essentials (only when this is the active listing type)
     if (!data.title || data.title.trim() === "") {

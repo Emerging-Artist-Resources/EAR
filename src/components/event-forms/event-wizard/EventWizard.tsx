@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
 import type { Resolver } from "react-hook-form"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
@@ -18,13 +18,24 @@ import { validateStep2 } from "./validation-helpers"
 import { buildEventPayload, type UserInfo } from "./payload-builders"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
-import { apiPost } from "@/lib/fetch-utils"
+import { apiPost, apiGet } from "@/lib/fetch-utils"
 import { supabase } from "@/lib/supabase/client"
 import { storageService } from "@/services/storage"
 
 interface EventWizardProps {
   onSuccess: () => void
   onClose: () => void
+}
+
+interface ProfileData {
+  id: string
+  name: string | null
+  email: string | null
+  pronouns: string | null
+  website: string | null
+  organization_name: string | null
+  location_label: string | null
+  artist_status: string | null
 }
 
 
@@ -34,18 +45,37 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
   const [eventType, setEventType] = useState<EventType | null>(null)
   const [submitMessage, setSubmitMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [profilePronouns, setProfilePronouns] = useState<string | null>(null)
   const { user, userName } = useAuth()
   const { showToast } = useToast()
 
-  // Derive userInfo from auth state
+  // Fetch pronouns from profile
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return
+      try {
+        const profile = await apiGet<ProfileData>("/api/profile")
+        console.log("[EventWizard] Fetched profile:", profile)
+        setProfilePronouns(profile?.pronouns || null)
+      } catch (error) {
+        console.error("Error fetching profile for pronouns:", error)
+        setProfilePronouns(null)
+      }
+    }
+    fetchProfile()
+  }, [user])
+
+  // Derive userInfo from auth state and profile
   const userInfo = useMemo<UserInfo | null>(() => {
     if (!user || !userName || !user.email) return null
-    return {
+    const info = {
       name: userName,
       email: user.email,
-      pronouns: (user.user_metadata?.pronouns as string | undefined) || null,
+      pronouns: profilePronouns,
     }
-  }, [user, userName])
+    console.log("[EventWizard] userInfo:", info)
+    return info
+  }, [user, userName, profilePronouns])
 
 
   const resolver = zodResolver(eventFormSchema) as unknown as Resolver<EventFormData>

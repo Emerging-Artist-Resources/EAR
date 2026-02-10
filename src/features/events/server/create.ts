@@ -158,17 +158,23 @@ export async function createListingOwnedRepo(
     }
 
     // 6) Create parent-child relationship if provided
-    // Check both top-level parent_listing_id and piece_details.parent_listing_id
-    const parentListingId = input.parent_listing_id || input.piece_details?.parent_listing_id || null
+    // Check top-level parent_listing_id, piece_details.parent_listing_id, or class_workshop_details.parent_listing_id
+    const parentListingId = input.parent_listing_id || 
+      input.piece_details?.parent_listing_id || 
+      (input.details as any).parent_listing_id || 
+      null
     
-    // Auto-determine relationship_type for pieces if not provided
+    // Auto-determine relationship_type if not provided
     let relationshipType = input.relationship_type
     if (parentListingId && !relationshipType) {
       // If this is a piece and has parent_listing_id, it's a performance_piece relationship
       if (input.type === "performance" && input.details.subtype === "PIECE") {
         relationshipType = "performance_piece"
       }
-      // For classes, would need to check if parent is workshop - handled by admin function
+      // If this is a class and has parent_listing_id, it's a workshop_class relationship
+      else if (input.type === "class" && (input.details as any).class_workshop_type === "CLASS") {
+        relationshipType = "workshop_class"
+      }
     }
     
     if (parentListingId && relationshipType) {

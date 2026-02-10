@@ -15,30 +15,7 @@ export async function validateStep2(
     return { isValid: true }
   }
 
-  // For CLASS type, check if classOccurrences is being used (for multi-day events)
-  // If so, we'll validate it separately instead of requiring occurrences
   let fieldsToValidate = fields
-  if (eventType === "CLASS") {
-    const classOccurrences = form.getValues("classOccurrences") as Array<{
-      date?: string
-      times?: Array<{ time?: string }>
-    }> | undefined
-    
-    const hasClassOccurrences = Array.isArray(classOccurrences) &&
-      classOccurrences.some(
-        (d) =>
-          d?.date && d.date.trim() !== "" &&
-          Array.isArray(d?.times) &&
-          d.times.some((t) => t?.time && t.time.trim() !== "")
-      )
-    
-    // If classOccurrences has data, remove occurrences from required fields
-    // (ClassOccurrencesPicker uses classOccurrences for multi-day events)
-    if (hasClassOccurrences) {
-      fieldsToValidate = fields.filter(f => f !== "occurrences") as Array<keyof EventFormData>
-      fieldsToValidate.push("classOccurrences" as keyof EventFormData)
-    }
-  }
 
   // For PERFORMANCE type, check if it's a PIECE submission
   // For PIECE submissions, we validate occurrences/extraOccurrences/selectedSlots in custom validation
@@ -158,14 +135,8 @@ export async function validateStep2(
   }
 
   if (eventType === "CLASS") {
-    // Check new canonical occurrences field
+    // Check occurrences field
     const occurrences = (form.getValues("occurrences") ?? []) as Array<{
-      date?: string
-      times?: Array<{ time?: string }>
-    }>
-    
-    // Check classOccurrences (used by ClassOccurrencesPicker for multi-day events)
-    const classOccurrences = (form.getValues("classOccurrences") ?? []) as Array<{
       date?: string
       times?: Array<{ time?: string }>
     }>
@@ -174,18 +145,9 @@ export async function validateStep2(
     const classDates = form.getValues("classDates")
     const extraOcc = form.getValues("classExtraOccurrences") ?? []
     
-    // Validate new occurrences format
-    const hasNewOccurrences = Array.isArray(occurrences) &&
+    // Validate occurrences format
+    const hasOccurrences = Array.isArray(occurrences) &&
       occurrences.some(
-        (d) =>
-          d?.date && d.date.trim() !== "" &&
-          Array.isArray(d?.times) &&
-          d.times.some((t) => t?.time && t.time.trim() !== "")
-      )
-    
-    // Validate classOccurrences format (used by ClassOccurrencesPicker)
-    const hasClassOccurrences = Array.isArray(classOccurrences) &&
-      classOccurrences.some(
         (d) =>
           d?.date && d.date.trim() !== "" &&
           Array.isArray(d?.times) &&
@@ -195,7 +157,7 @@ export async function validateStep2(
     // Check legacy fields
     const hasLegacyDates = classDates || (Array.isArray(extraOcc) && extraOcc.length > 0)
     
-    if (!hasNewOccurrences && !hasClassOccurrences && !hasLegacyDates) {
+    if (!hasOccurrences && !hasLegacyDates) {
       return { isValid: false, message: "Please provide at least one valid class date/time" }
     }
   }

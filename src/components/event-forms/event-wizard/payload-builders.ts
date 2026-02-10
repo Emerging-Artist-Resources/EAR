@@ -481,12 +481,10 @@ export function buildClassPayload(
 ): EventPayload {
   const occurrences: EventPayload["occurrences"] = []
 
-  // Use occurrences (preferred) or fall back to classOccurrences or legacy fields
+  // Use occurrences field
   const occurrencesData = data.occurrences && data.occurrences.length > 0
     ? data.occurrences
-    : data.classOccurrences && data.classOccurrences.length > 0
-      ? data.classOccurrences
-      : []
+    : []
 
   for (const d of occurrencesData) {
     if (!d?.date || !Array.isArray(d?.times)) continue
@@ -544,6 +542,17 @@ export function buildClassPayload(
     basePayload.location_instructions = (firstOccurrence as any).locationInstructions || null
   }
 
+  // Handle parent workshop relationship for CLASS type
+  const isClass = (data.classWorkshopType || "CLASS") === "CLASS"
+  const isPartOfFestivalOrWorkshop = data.isPartOfFestivalOrWorkshop === "YES"
+  let parentListingId: string | null = null
+  let relationshipType: "performance_piece" | "workshop_class" | null = null
+
+  if (isClass && isPartOfFestivalOrWorkshop) {
+    parentListingId = data.parentEventId || null
+    relationshipType = parentListingId ? "workshop_class" : null
+  }
+
   return {
     type: "class",
     base: basePayload,
@@ -563,8 +572,15 @@ export function buildClassPayload(
       listing_fee_option: data.listingFeeOption || data.classListingFeeOption || null,
       listing_fee_explanation: data.listingFeeExplanation || data.classListingFeeExplanation || null,
       guest_spot_info: data.guestSpotInfo || null,
+      // Parent workshop relationship fields
+      parent_listing_id: parentListingId,
+      parent_workshop_name: parentListingId ? null : (data.placeholderTitle || null),
+      parent_workshop_website: parentListingId ? null : (data.placeholderWebsiteOrSocial || null),
+      parent_workshop_contact_email: parentListingId ? null : (data.placeholderContactEmail || null),
     },
     occurrences,
+    parent_listing_id: parentListingId,
+    relationship_type: relationshipType,
   }
 }
 

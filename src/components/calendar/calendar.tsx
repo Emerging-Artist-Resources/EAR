@@ -1,10 +1,11 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { H2 } from "@/components/ui/typography"
 import { FilterBar } from "@/components/calendar/FilterBar"
+import { ListingDetailsModal } from "./ListingDetailsModal"
 import type { CalendarItem } from "@/hooks/use-calendar"
 import {
   format,
@@ -36,17 +37,30 @@ const formatDateTimeEST = (date: Date): string => {
 interface CalendarProps { 
   items: CalendarItem[]
   deadlines?: CalendarItem[]
+  onMonthChange?: (monthStart: Date, monthEnd: Date) => void
 }
 
-export function Calendar({ items, deadlines = [] }: CalendarProps) {
+export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [eventTypeFilter, setEventTypeFilter] = useState<string>('ALL')
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const monthStart = startOfMonth(currentDate)
-  const monthEnd = endOfMonth(currentDate)
+  const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate])
+  const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate])
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd })
+
+  const onMonthChangeRef = useRef(onMonthChange)
+  const initialMonthKey = useMemo(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${now.getMonth()}`
+  }, [])
+  const lastFetchedMonthRef = useRef<string | null>(initialMonthKey)
+
+  useEffect(() => {
+    onMonthChangeRef.current = onMonthChange
+  }, [onMonthChange])
 
   const firstDayOfMonth = monthStart.getDay()
   const emptyCells = Array.from({ length: firstDayOfMonth }, () => null)
@@ -54,7 +68,19 @@ export function Calendar({ items, deadlines = [] }: CalendarProps) {
   const navigate = (direction: 'prev' | 'next') => {
     const delta = direction === 'prev' ? -1 : 1
     if (view === 'month') {
-      setCurrentDate(delta === -1 ? subMonths(currentDate, 1) : addMonths(currentDate, 1))
+      const newDate = delta === -1 ? subMonths(currentDate, 1) : addMonths(currentDate, 1)
+      setCurrentDate(newDate)
+      
+      if (onMonthChangeRef.current) {
+        const newMonthStart = startOfMonth(newDate)
+        const newMonthEnd = endOfMonth(newDate)
+        const newMonthKey = `${newDate.getFullYear()}-${newDate.getMonth()}`
+        
+        if (lastFetchedMonthRef.current !== newMonthKey) {
+          lastFetchedMonthRef.current = newMonthKey
+          onMonthChangeRef.current(newMonthStart, newMonthEnd)
+        }
+      }
     } else if (view === 'week') {
       setCurrentDate(delta === -1 ? subWeeks(currentDate, 1) : addWeeks(currentDate, 1))
     } else {
@@ -101,6 +127,17 @@ export function Calendar({ items, deadlines = [] }: CalendarProps) {
       return true
     })
   }, [items, eventTypeFilter])
+
+  const upcomingDeadlines = useMemo(() => {
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+    const now = startOfToday.getTime()
+    
+    return deadlines
+      .filter(it => new Date(String(it.start)).getTime() >= now)
+      .sort((a, b) => new Date(String(a.start)).getTime() - new Date(String(b.start)).getTime())
+      .slice(0, 5)
+  }, [deadlines])
 
   // Get all performances for a date (for details view - shows all occurrences)
   // Compare dates in EST to match user's local calendar view
@@ -164,7 +201,20 @@ export function Calendar({ items, deadlines = [] }: CalendarProps) {
               <Button variant="ghost" size="icon" onClick={() => navigate('next')} aria-label="Next">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </Button>
-              <Button variant="outline" size="sm" onClick={() => { setCurrentDate(new Date()); setSelectedDate(null) }}>Today</Button>
+              <Button variant="outline" size="sm" onClick={() => {
+                const today = new Date()
+                setCurrentDate(today)
+                if (view === 'month' && onMonthChangeRef.current) {
+                  const newMonthStart = startOfMonth(today)
+                  const newMonthEnd = endOfMonth(today)
+                  const newMonthKey = `${today.getFullYear()}-${today.getMonth()}`
+                  
+                  if (lastFetchedMonthRef.current !== newMonthKey) {
+                    lastFetchedMonthRef.current = newMonthKey
+                    onMonthChangeRef.current(newMonthStart, newMonthEnd)
+                  }
+                }
+              }}>Today</Button>
             </div>
           </div>
           <div className="pt-3 border-t border-gray-200">
@@ -195,19 +245,41 @@ export function Calendar({ items, deadlines = [] }: CalendarProps) {
                     <div
                       key={day.toISOString()}
                       className={`bg-white p-1 sm:p-2 min-h-[80px] sm:min-h-[120px] cursor-pointer hover:bg-gray-50 ${!isCurrentMonth ? 'text-gray-300' : ''} ${isToday ? 'bg-secondary' : ''}`}
-                      onClick={() => setSelectedDate(day)}
+                      onClick={() => {}}
                     >
                       <div className={`text-xs sm:text-sm font-medium ${isToday ? 'text-primary' : isCurrentMonth ? 'text-gray-900' : 'text-gray-300'}`}>
                         {format(day, 'd')}
                       </div>
                       <div className="mt-1 space-y-1">
                         {dayPerformances.slice(0, 2).map((performance) => (
-                          <div key={`${performance.listingId}-${day.toISOString()}`} className="text-xs bg-primary/10 text-primary px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate" title={performance.title || ''}>
+                          <div 
+                            key={`${performance.listingId}-${day.toISOString()}`} 
+                            className="text-xs bg-primary/10 text-primary px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate cursor-pointer hover:bg-primary/20 transition-colors" 
+                            title={performance.title || ''}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedListingId(performance.listingId)
+                              setIsModalOpen(true)
+                            }}
+                          >
                             <span className="hidden sm:inline">{performance.title}</span>
                             <span className="sm:hidden">{(performance.title || '').substring(0, 8)}...</span>
                           </div>
                         ))}
-                        {dayPerformances.length > 2 && <div className="text-xs text-gray-500">+{dayPerformances.length - 2} more</div>}
+                        {dayPerformances.length > 2 && (
+                          <div 
+                            className="text-xs text-gray-500 cursor-pointer hover:text-gray-700"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (dayPerformances[2]) {
+                                setSelectedListingId(dayPerformances[2].listingId)
+                                setIsModalOpen(true)
+                              }
+                            }}
+                          >
+                            +{dayPerformances.length - 2} more
+                          </div>
+                        )}
                       </div>
                     </div>
                   )
@@ -240,7 +312,15 @@ export function Calendar({ items, deadlines = [] }: CalendarProps) {
                               <div className="text-xs text-gray-400">No events</div>
                             ) : (
                               dayPerformances.map((performance) => (
-                                <div key={`${performance.listingId}-${day.toISOString()}`} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded truncate" title={performance.title || ''}>
+                                <div 
+                                  key={`${performance.listingId}-${day.toISOString()}`} 
+                                  className="text-xs bg-primary/10 text-primary px-2 py-1 rounded truncate cursor-pointer hover:bg-primary/20 transition-colors" 
+                                  title={performance.title || ''}
+                                  onClick={() => {
+                                    setSelectedListingId(performance.listingId)
+                                    setIsModalOpen(true)
+                                  }}
+                                >
                                   {performance.title}
                                 </div>
                               ))
@@ -269,7 +349,15 @@ export function Calendar({ items, deadlines = [] }: CalendarProps) {
                         // Get all occurrences for this listing on this date
                         const listingOccurrences = allPerformances.filter(p => p.listingId === performance.listingId)
                         return (
-                          <Card key={`${performance.listingId}-${currentDate.toISOString()}`} padding="sm">
+                          <Card 
+                            key={`${performance.listingId}-${currentDate.toISOString()}`} 
+                            padding="sm"
+                            className="cursor-pointer hover:shadow-md transition-shadow"
+                            onClick={() => {
+                              setSelectedListingId(performance.listingId)
+                              setIsModalOpen(true)
+                            }}
+                          >
                             <h4 className="text-base sm:text-lg font-medium text-gray-900">{performance.title}</h4>
                             {listingOccurrences.length > 1 && (
                               <div className="mt-2 text-sm text-gray-600">
@@ -278,7 +366,6 @@ export function Calendar({ items, deadlines = [] }: CalendarProps) {
                                   {listingOccurrences.map((occ) => (
                                     <li key={occ.occurrenceId}>
                                       {formatTimeEST(new Date(occ.start))}
-                                      {occ.endsAt && ` - ${formatTimeEST(new Date(occ.endsAt))}`}
                                     </li>
                                   ))}
                                 </ul>
@@ -293,45 +380,6 @@ export function Calendar({ items, deadlines = [] }: CalendarProps) {
               </div>
             )}
           </Card>
-
-          {view === 'month' && selectedDate && (
-            <Card className="mt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Performances on {format(selectedDate, "MMMM d, yyyy")}</h3>
-              {(() => {
-                const dayPerformances = getDeduplicatedPerformancesForDate(selectedDate)
-                const allPerformances = getPerformancesForDate(selectedDate)
-                if (dayPerformances.length === 0) {
-                  return <p className="text-gray-500">No performances scheduled for this date.</p>
-                }
-                return (
-                  <div className="space-y-4">
-                    {dayPerformances.map((performance) => {
-                      // Get all occurrences for this listing on this date
-                      const listingOccurrences = allPerformances.filter(p => p.listingId === performance.listingId)
-                      return (
-                        <Card key={`${performance.listingId}-${selectedDate.toISOString()}`} padding="sm">
-                          <h4 className="text-lg font-medium text-gray-900">{performance.title}</h4>
-                          {listingOccurrences.length > 1 && (
-                            <div className="mt-2 text-sm text-gray-600">
-                              <div className="font-medium mb-1">Occurrences:</div>
-                              <ul className="list-disc list-inside space-y-1">
-                                {listingOccurrences.map((occ) => (
-                                  <li key={occ.occurrenceId}>
-                                    {formatTimeEST(new Date(occ.start))}
-                                    {occ.endsAt && ` - ${formatTimeEST(new Date(occ.endsAt))}`}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </Card>
-                      )
-                    })}
-                  </div>
-                )
-              })()}
-            </Card>
-          )}
         </div>
 
         <div className="lg:col-span-1">
@@ -339,35 +387,28 @@ export function Calendar({ items, deadlines = [] }: CalendarProps) {
             <h3 className="text-lg font-semibold text-primary mb-4">Upcoming Deadlines</h3>
             
             <div className="space-y-3">
-              {(() => {
-                // Use start of today for comparison, so deadlines today are still considered "upcoming"
-                const startOfToday = new Date()
-                startOfToday.setHours(0, 0, 0, 0)
-                const now = startOfToday.getTime()
-                return deadlines.filter(it => {
-                  const d = new Date(String(it.start))
-                  return d.getTime() >= now
-                })
-              })()
-                .sort((a, b) => new Date(String(a.start)).getTime() - new Date(String(b.start)).getTime())
-                .slice(0, 5)
-                .map((it) => (
-                  <div key={it.occurrenceId} className="border-l-4 border-primary/50 pl-3">
-                    <div className="font-semibold text-sm text-gray-800">{it.title || "Untitled"}</div>
-                    <div className="text-xs text-gray-600">{formatDateTimeEST(new Date(String(it.start)))}</div>
-                  </div>
-                ))}
-              {(() => {
-                const startOfToday = new Date()
-                startOfToday.setHours(0, 0, 0, 0)
-                return deadlines.filter(it => new Date(String(it.start)).getTime() >= startOfToday.getTime()).length === 0
-              })() && (
+              {upcomingDeadlines.map((it) => (
+                <div key={it.occurrenceId} className="border-l-4 border-primary/50 pl-3">
+                  <div className="font-semibold text-sm text-gray-800">{it.title || "Untitled"}</div>
+                  <div className="text-xs text-gray-600">{formatDateTimeEST(new Date(String(it.start)))}</div>
+                </div>
+              ))}
+              {upcomingDeadlines.length === 0 && (
                 <div className="text-sm text-gray-500">No upcoming deadlines</div>
               )}
             </div>
           </Card>
         </div>
       </div>
+
+      <ListingDetailsModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setSelectedListingId(null)
+        }}
+        listingId={selectedListingId}
+      />
     </>
   )
 }

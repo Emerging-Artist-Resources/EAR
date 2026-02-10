@@ -17,7 +17,7 @@ export async function searchListingsRepo(params: {
     performance_details (title, subtype),
     audition_details (title),
     creative_details (title),
-    class_workshop_details (title),
+    class_workshop_details!class_workshop_details_listing_id_fkey (title),
     listing_occurrences!listing_occurrences_listing_id_fkey (
       id, starts_at_utc, tz
     )
@@ -108,7 +108,7 @@ export async function listCalendarItemsRepo(params: {
       performance_details (title, subtype),
       audition_details (title),
       creative_details (title),
-      class_workshop_details (title)
+      class_workshop_details!class_workshop_details_listing_id_fkey (title)
     )
   `
 
@@ -223,7 +223,7 @@ export async function getListingPublicRepo(listingId: string) {
       performance_details (*),
       audition_details (*),
       creative_details (*),
-      class_workshop_details (*),
+      class_workshop_details!class_workshop_details_listing_id_fkey (*),
       listing_occurrences!listing_occurrences_listing_id_fkey (*),
       listing_photos (*)
     `)
@@ -274,7 +274,7 @@ export async function getListingForOwnerRepo(listingId: string) {
       performance_details (*),
       audition_details (*),
       creative_details (*),
-      class_workshop_details (*),
+      class_workshop_details!class_workshop_details_listing_id_fkey (*),
       piece_details (*),
       listing_occurrences!listing_occurrences_listing_id_fkey (*),
       listing_photos (*)
