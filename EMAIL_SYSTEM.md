@@ -1,0 +1,525 @@
+# Email System Documentation
+
+## Overview
+
+The email system uses Postmark for transactional emails. It's designed to send automated emails to users when certain events occur (e.g., listing submissions, updates).
+
+## Architecture
+
+### File Structure
+
+```
+src/lib/email/
+├── postmark.ts          # Postmark client initialization
+├── sendListingEmail.ts  # Listing-specific email functions
+└── sendEmail.ts         # Generic email function (legacy/stub)
+```
+
+### Components
+
+1. **Postmark Client** (`postmark.ts`)
+   - Initializes the Postmark ServerClient
+   - Requires `POSTMARK_TRANSACTIONAL_TOKEN` environment variable
+
+2. **Email Functions** (`sendListingEmail.ts`)
+   - Type-safe email sending for listing-related events
+   - Uses Postmark template aliases
+   - Handles template variable mapping
+
+3. **Service Layer** (`features/events/server/service.ts`)
+   - Business logic for sending emails after events
+   - Extracts data needed for emails
+   - Called from API routes
+
+## Setup
+
+### 1. Environment Variables
+
+Add to your `.env.local` or deployment environment:
+
+```bash
+POSTMARK_TRANSACTIONAL_TOKEN=your_postmark_server_token
+POSTMARK_FROM_NAME=EAR  # Required: Display name for sender
+POSTMARK_FROM_EMAIL=no-reply@yourdomain.com  # Required: Must be verified in Postmark
+NEXT_PUBLIC_APP_URL=https://your-domain.com  # Used for email links
+```
+
+**Email Pattern:**
+The email will be sent using the format: `{POSTMARK_FROM_NAME} <{POSTMARK_FROM_EMAIL}>`
+
+**Example:**
+- `POSTMARK_FROM_NAME=EAR`
+- `POSTMARK_FROM_EMAIL=no-reply@earplatform.org`
+- Result: Emails appear from `EAR <no-reply@earplatform.org>`
+
+**Important:** 
+- Both `POSTMARK_FROM_NAME` and `POSTMARK_FROM_EMAIL` are **required**
+- The `POSTMARK_FROM_EMAIL` address must be verified as a Sender Signature in Postmark
+- See step 2 below for Sender Signature setup
+
+### 2. Postmark Account Setup
+
+1. Create a Postmark account at https://postmarkapp.com
+2. Create a Server in Postmark
+3. Copy the Server API Token to `POSTMARK_TRANSACTIONAL_TOKEN`
+4. **Add and Verify Sender Signature** (CRITICAL):
+   - Go to Postmark Dashboard → Sender Signatures
+   - Click "Add Signature" or "Verify a domain"
+   - Add the email address you want to use (e.g., `no-reply@earplatform.org`)
+   - Complete the domain verification process (add DNS records)
+   - Wait for verification to complete (usually a few minutes)
+   - Set `POSTMARK_FROM_EMAIL` to match your verified address
+   - Set `POSTMARK_FROM_NAME` to your desired display name (e.g., "EAR")
+   
+   **Note:** The email will be sent as `{POSTMARK_FROM_NAME} <{POSTMARK_FROM_EMAIL}>`
+   
+   **Example:** If `POSTMARK_FROM_NAME=EAR` and `POSTMARK_FROM_EMAIL=no-reply@earplatform.org`, 
+   emails will appear from: `EAR <no-reply@earplatform.org>`
+
+### 3. Create Email Templates in Postmark
+
+For each email type, create a template in Postmark with the corresponding alias:
+
+#### Template: `listing-received`
+- **Alias**: `listing-received`
+- **Subject**: Your listing has been received
+- **Template Variables**:
+  - `{{submitter_name}}` - Name of the person who submitted
+  - `{{listing_title}}` - Title of the listing
+  - `{{cta_url}}` - Link to view the listing in dashboard
+
+#### Template: `listing-updated`
+- **Alias**: `listing-updated`
+- **Subject**: Your listing has been updated
+- **Template Variables**:
+  - `{{submitter_name}}` - Name of the person who submitted
+  - `{{listing_title}}` - Title of the listing
+  - `{{cta_url}}` - Link to view the listing in dashboard
+
+## Current Implementation
+
+### Listing Confirmation Email
+
+When a user submits a listing, a confirmation email is automatically sent:
+
+**Flow:**
+1. User submits listing via `/api/events` POST endpoint
+2. Listing is created in database
+3. `sendListingConfirmationEmail()` is called from the API route
+4. Email is sent using the `listing-received` template
+
+**Location:** `src/app/api/events/route.ts` (lines 110-114)
+
+**Service Function:** `src/features/events/server/service.ts` (lines 114-124)
+
+**Error Handling:**
+- Email failures are caught and logged
+- Listing creation still succeeds even if email fails
+- Errors are logged to console for debugging
+
+## Adding New Email Types
+
+### Step 1: Add Email Type to `sendListingEmail.ts`
+
+```typescript
+// Add to ListingEmailType union
+type ListingEmailType = 
+  | "listing-received" 
+  | "listing-updated"
+  | "listing-approved"  // New type
+  | "listing-rejected"  // New type
+```
+
+### Step 2: Create Service Function
+
+Add a new function in `src/features/events/server/service.ts`:
+
+```typescript
+export async function sendListingApprovalEmail(
+  input: CreateListingInput,
+  listingId: string
+): Promise<void> {
+  const listingTitle = getListingTitle(input)
+  await sendListingEmail("listing-approved", {
+    to: input.base.contact_email,
+    submitterName: input.base.contact_name,
+    listingTitle,
+    listingId,
+  })
+}
+```
+
+### Step 3: Create Postmark Template
+
+1. Go to Postmark dashboard → Templates
+2. Create new template with alias matching your email type (e.g., `listing-approved`)
+3. Add template variables that match what you're sending
+4. Design your email template
+
+### Step 4: Call from Appropriate Location
+
+Call your service function from the relevant API route or server action:
+
+```typescript
+// Example: In admin approval route
+try {
+  await sendListingApprovalEmail(listingInput, listingId)
+} catch (emailError) {
+  console.error("Failed to send approval email:", emailError)
+  // Don't fail the approval if email fails
+}
+```
+
+## Template Variables
+
+### Standard Variables (for listing emails)
+
+- `submitter_name` - String - Name of the person who submitted
+- `listing_title` - String - Title of the listing (auto-extracted)
+- `cta_url` - String - Full URL to view listing in dashboard
+
+### Adding Custom Variables
+
+If you need additional variables, update both:
+
+1. **Template Model** in `sendListingEmail.ts`:
+```typescript
+TemplateModel: {
+  submitter_name: submitterName,
+  listing_title: listingTitle,
+  cta_url: `${baseUrl}/dashboard/listings/${listingId}`,
+  custom_field: customValue,  // Add here
+}
+```
+
+2. **Postmark Template** - Add `{{custom_field}}` in your template
+
+## Error Handling Best Practices
+
+### 1. Don't Fail Critical Operations
+
+Email sending should not block critical operations (like creating a listing):
+
+```typescript
+try {
+  await sendListingConfirmationEmail(input, listingId)
+} catch (emailError) {
+  console.error("Failed to send email:", emailError)
+  // Continue with success response
+}
+```
+
+### 2. Log Errors for Debugging
+
+Always log email errors so you can monitor and fix issues:
+
+```typescript
+catch (emailError) {
+  console.error("Failed to send listing confirmation email:", emailError)
+  // In production, consider using a logging service
+}
+```
+
+### 3. Consider Async/Background Processing
+
+For high-volume scenarios, consider:
+- Queueing emails (e.g., using a job queue)
+- Sending emails asynchronously (fire-and-forget)
+- Batching emails
+
+## Testing
+
+### Development/Staging
+
+1. **Check Environment Variable**: Ensure `POSTMARK_TRANSACTIONAL_TOKEN` is set
+2. **Use Postmark Test Server**: Postmark provides test servers for development
+3. **Check Postmark Dashboard**: View sent emails in Postmark's Activity feed
+4. **Monitor Console**: Check for error logs
+
+### Testing Email Sending
+
+```typescript
+// In a test or development script
+import { sendListingConfirmationEmail } from "@/features/events/server/service"
+
+const testInput = {
+  type: "performance",
+  base: {
+    contact_name: "Test User",
+    contact_email: "test@example.com",
+    // ... other fields
+  },
+  details: {
+    title: "Test Performance",
+    // ... other fields
+  },
+  occurrences: [/* ... */],
+}
+
+await sendListingConfirmationEmail(testInput, "test-listing-id")
+```
+
+## Troubleshooting
+
+### Quick Diagnostic Checklist
+
+Before diving into specific issues, verify these basics:
+
+- [ ] `POSTMARK_TRANSACTIONAL_TOKEN` is set and valid
+- [ ] `POSTMARK_FROM_NAME` is set (e.g., "EAR")
+- [ ] `POSTMARK_FROM_EMAIL` is set and matches a verified Sender Signature in Postmark
+- [ ] Email template exists in Postmark with the correct alias
+- [ ] Template is active (not archived) in Postmark
+- [ ] Server logs show email attempts (check for `[EMAIL]` prefixed logs)
+
+### Issue: "Missing Postmark sender env variables"
+
+**Error Message:**
+```
+Missing Postmark sender environment variables: POSTMARK_FROM_NAME, POSTMARK_FROM_EMAIL
+```
+
+**Symptoms:**
+- Email sending fails immediately
+- Error appears in server logs before attempting to send
+
+**Solution:**
+1. Check your environment variables:
+   ```bash
+   echo $POSTMARK_FROM_NAME
+   echo $POSTMARK_FROM_EMAIL
+   ```
+
+2. Add to `.env.local` (or your deployment environment):
+   ```bash
+   POSTMARK_FROM_NAME=EAR
+   POSTMARK_FROM_EMAIL=no-reply@earplatform.org
+   ```
+
+3. Restart your development server or redeploy
+
+4. Verify the variables are loaded (check server startup logs for `[EMAIL] ✅ Postmark client initialized`)
+
+### Issue: "The 'From' address is not a Sender Signature"
+
+**Error Message:**
+```
+The 'From' address you supplied (EAR <no-reply@earplatform.org>) is not a Sender Signature on your account
+```
+
+**Symptoms:**
+- Email sending fails with 422 status code
+- Error appears after attempting to send
+
+**Solution:**
+1. Go to Postmark Dashboard → Sender Signatures
+2. Check if your email address is listed and verified
+3. If not present:
+   - Click "Add Signature" or "Verify a domain"
+   - Enter the email address from `POSTMARK_FROM_EMAIL` (e.g., `no-reply@earplatform.org`)
+   - Complete domain verification (add DNS records if needed)
+   - Wait for verification to complete (usually a few minutes)
+4. If present but not verified:
+   - Click on the signature
+   - Complete the verification process
+5. Ensure `POSTMARK_FROM_EMAIL` exactly matches the verified address (case-sensitive)
+6. Try sending again
+
+**Common Mistakes:**
+- Using a different email than what's verified (e.g., verified `noreply@domain.com` but using `no-reply@domain.com`)
+- Domain not fully verified (check DNS records)
+- Using a different domain than verified
+
+### Issue: Template Not Found
+
+**Error Message:**
+```
+Template with alias 'listing-received' not found
+```
+
+**Symptoms:**
+- Email sending fails
+- Error mentions template alias
+
+**Solution:**
+1. Go to Postmark Dashboard → Templates
+2. Search for template with alias matching your email type (e.g., `listing-received`)
+3. If template doesn't exist:
+   - Create a new template
+   - Set the alias exactly as used in code (case-sensitive)
+   - Add required template variables: `{{submitter_name}}`, `{{listing_title}}`, `{{cta_url}}`
+4. If template exists but is archived:
+   - Unarchive the template
+5. Verify template is active and published
+
+### Issue: Template Variables Not Rendering
+
+**Symptoms:**
+- Email sends successfully but shows `{{variable_name}}` instead of actual values
+- Variables appear blank in emails
+
+**Solution:**
+1. **Check Variable Names** (case-sensitive):
+   - Code uses: `submitter_name`, `listing_title`, `cta_url`
+   - Template must use: `{{submitter_name}}`, `{{listing_title}}`, `{{cta_url}}`
+   - No spaces, exact spelling
+
+2. **Check Template Syntax**:
+   - Use double curly braces: `{{variable_name}}`
+   - Not single braces: `{variable_name}` ❌
+   - Not without braces: `variable_name` ❌
+
+3. **Verify Data is Being Passed**:
+   - Check server logs for `[EMAIL] 📤 Sending email via Postmark`
+   - Look at `templateModel` in the logs to see what data is being sent
+   - Ensure values are not null or undefined
+
+4. **Test in Postmark**:
+   - Use Postmark's template testing feature
+   - Send a test email with sample data
+
+### Issue: Email Not Appearing in Inbox
+
+**Symptoms:**
+- No error in logs
+- Email shows as sent in Postmark dashboard
+- Recipient doesn't receive email
+
+**Solution:**
+1. **Check Postmark Activity Feed**:
+   - Go to Postmark Dashboard → Activity
+   - Find your email
+   - Check delivery status (Delivered, Bounced, Spam, etc.)
+
+2. **Check Spam Folder**:
+   - Ask recipient to check spam/junk folder
+   - Check if email is being filtered
+
+3. **Verify Recipient Email**:
+   - Check server logs for the `to` address
+   - Ensure email address is valid and correct
+
+4. **Check Bounce Status**:
+   - If bounced, check bounce reason in Postmark
+   - Common reasons: invalid email, mailbox full, domain issues
+
+5. **Check Rate Limits**:
+   - Postmark has rate limits based on your plan
+   - Check if you've exceeded limits in Postmark dashboard
+
+### Issue: Rate Limiting
+
+**Symptoms:**
+- Emails fail after sending many in a short time
+- Error mentions rate limit or quota
+
+**Solution:**
+1. Check your Postmark plan limits
+2. Monitor usage in Postmark Dashboard → Activity
+3. Implement rate limiting in your code:
+   - Add delays between sends
+   - Queue emails for later sending
+   - Batch emails when possible
+4. Consider upgrading your Postmark plan
+5. For high volume, consider:
+   - Using a job queue (Bull, BullMQ)
+   - Implementing exponential backoff retry logic
+
+### Issue: Postmark Client Not Initialized
+
+**Error Message:**
+```
+Postmark client not initialized. POSTMARK_TRANSACTIONAL_TOKEN is missing.
+```
+
+**Symptoms:**
+- Email sending fails immediately
+- Warning in server startup logs
+
+**Solution:**
+1. Check `POSTMARK_TRANSACTIONAL_TOKEN` is set:
+   ```bash
+   echo $POSTMARK_TRANSACTIONAL_TOKEN
+   ```
+
+2. Verify token is correct:
+   - Go to Postmark Dashboard → Servers
+   - Copy the Server API Token
+   - Ensure it matches your environment variable
+
+3. Check token hasn't expired or been regenerated
+
+4. Restart server after setting environment variable
+
+### Debugging Tips
+
+1. **Check Server Logs**:
+   - Look for `[EMAIL]` prefixed logs
+   - Success: `[EMAIL] ✅ Email sent successfully`
+   - Errors: `[EMAIL] ❌` with detailed error information
+
+2. **Use Postmark Dashboard**:
+   - Activity feed shows all email attempts
+   - Templates section shows all available templates
+   - Sender Signatures shows verified addresses
+
+3. **Test Environment Variables**:
+   ```bash
+   # In your terminal
+   node -e "console.log('FROM_NAME:', process.env.POSTMARK_FROM_NAME)"
+   node -e "console.log('FROM_EMAIL:', process.env.POSTMARK_FROM_EMAIL)"
+   ```
+
+4. **Verify Email Pattern**:
+   - Expected format: `{POSTMARK_FROM_NAME} <{POSTMARK_FROM_EMAIL}>`
+   - Example: `EAR <no-reply@earplatform.org>`
+   - Check logs for `from: emailData.From` to see what's being sent
+
+### Getting Help
+
+If you've tried the above and still have issues:
+
+1. **Check Logs**: Share the full error log with `[EMAIL]` prefix
+2. **Postmark Support**: Check Postmark's status page and documentation
+3. **Verify Setup**: Double-check all environment variables and Postmark configuration
+4. **Test Template**: Use Postmark's template tester with sample data
+
+## Future Enhancements
+
+### Potential Improvements
+
+1. **Email Queue System**
+   - Use a job queue (e.g., Bull, BullMQ) for reliable delivery
+   - Retry failed emails automatically
+   - Batch email sending
+
+2. **Email Preferences**
+   - Allow users to opt-out of certain email types
+   - Store preferences in database
+
+3. **Email Templates in Code**
+   - Store templates in codebase for version control
+   - Use template engine (e.g., Handlebars) for dynamic content
+
+4. **Analytics**
+   - Track email open rates
+   - Track click-through rates
+   - Monitor bounce rates
+
+5. **Multi-language Support**
+   - Support multiple email templates per language
+   - Detect user language preference
+
+## Related Files
+
+- `src/lib/email/postmark.ts` - Postmark client
+- `src/lib/email/sendListingEmail.ts` - Listing email functions
+- `src/features/events/server/service.ts` - Email service functions
+- `src/features/events/server/listing-utils.ts` - Listing title extraction
+- `src/app/api/events/route.ts` - API route that sends emails
+
+## Resources
+
+- [Postmark Documentation](https://postmarkapp.com/developer)
+- [Postmark Template API](https://postmarkapp.com/developer/api/templates-api)
+- [Postmark Transactional API](https://postmarkapp.com/developer/api/transactional-api)

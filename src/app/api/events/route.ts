@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { listCalendarItems } from "@/features/events/server/service"
+import { listCalendarItems, sendListingConfirmationEmail } from "@/features/events/server/service"
 import { z } from "zod"
 import { createEventOwnedRepo, CreateListingInput } from "@/features/events/server/repository"
 import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamArray, validateRequestBody } from "@/lib/api-utils"
@@ -97,7 +97,6 @@ const payloadSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    // Require authentication - no anonymous submissions allowed
     const auth = await getAuthenticatedUser()
     if (!auth) {
       return NextResponse.json({ error: { code: "UNAUTHORIZED", message: "Authentication required" } }, { status: 401 })
@@ -107,6 +106,13 @@ export async function POST(req: NextRequest) {
     const input = validateRequestBody(body, payloadSchema)
     const supabase = await getSupabaseServerClient()
     const created = await createEventOwnedRepo(supabase, input as unknown as CreateListingInput)
+    
+    try {
+      await sendListingConfirmationEmail(input as unknown as CreateListingInput, created.id)
+    } catch (emailError) {
+      // Email failures don't block listing creation
+    }
+    
     return createSuccessResponse(created, 201)
   } catch (error) {
     return handleApiError(error)

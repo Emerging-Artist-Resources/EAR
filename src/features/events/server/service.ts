@@ -1,6 +1,9 @@
 import { createListingOwnedRepo, listEvents, listCalendarItemsRepo, getEventPublicRepo, listMyEventsRepo, getEventForOwnerRepo, listAdminEventsRepo, getAdminEventDetailRepo, submitListingRepo } from "./repository"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { sendListingEmail } from "@/lib/email/sendListingEmail"
+import { getListingTitle } from "./listing-utils"
+import type { CreateListingInput } from "./repository-types"
 
 export interface UserInfo {
   name: string
@@ -105,6 +108,33 @@ export async function listPerformances(params: ListOptions) {
     userId: params.userId ?? null,
     limit: params.limit,
     cursor: params.cursor ?? null,
+  })
+}
+
+export async function sendListingConfirmationEmail(
+  input: CreateListingInput,
+  listingId: string
+): Promise<void> {
+  const listingTitle = getListingTitle(input)
+  await sendListingEmail("listing-received", {
+    to: input.base.contact_email,
+    submitterName: input.base.contact_name,
+    listingTitle,
+    listingId,
+  })
+}
+
+export async function sendListingUpdateEmail(
+  listingId: string,
+  contactEmail: string,
+  contactName: string,
+  listingTitle: string
+): Promise<void> {
+  await sendListingEmail("listing-updated", {
+    to: contactEmail,
+    submitterName: contactName,
+    listingTitle,
+    listingId,
   })
 }
 

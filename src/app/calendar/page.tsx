@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { subMonths, addMonths, startOfMonth, endOfMonth } from "date-fns"
 import { CallToAction } from "@/components/layout/call-to-action"
 import PerformanceModal from "@/components/performance-modal"
 import { useCalendar } from "@/hooks/use-calendar"
@@ -18,11 +19,25 @@ export default function CalendarView() {
   const { items, deadlines, loading, fetchCalendar } = useCalendar()
 
   useEffect(() => {
-    fetchCalendar({ limit: 500 })
+    const now = new Date()
+    const from = startOfMonth(subMonths(now, 3)).toISOString()
+    const to = endOfMonth(addMonths(now, 3)).toISOString()
+    fetchCalendar({ 
+      from,
+      to,
+      limit: 500 
+    })
   }, [fetchCalendar])
 
   const handleModalSuccess = () => {
-    fetchCalendar({ limit: 500 })
+    const now = new Date()
+    const from = startOfMonth(subMonths(now, 3)).toISOString()
+    const to = endOfMonth(addMonths(now, 3)).toISOString()
+    fetchCalendar({ 
+      from,
+      to,
+      limit: 500 
+    })
   }
 
   const handleOpenSubmit = useCallback(() => {

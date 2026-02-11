@@ -1,11 +1,14 @@
 "use client"
 
-import { useMemo, useState, useEffect, useRef } from "react"
+import { useMemo, useState, useRef, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { H2 } from "@/components/ui/typography"
 import { FilterBar } from "@/components/calendar/FilterBar"
 import { ListingDetailsModal } from "./ListingDetailsModal"
+import { MonthView } from "./MonthView"
+import { WeekView } from "./WeekView"
+import { DayView } from "./DayView"
 import type { CalendarItem } from "@/hooks/use-calendar"
 import {
   format,
@@ -14,25 +17,23 @@ import {
   startOfWeek,
   endOfWeek,
   eachDayOfInterval,
-  isSameMonth,
-  isSameDay,
   addMonths,
   subMonths,
   addWeeks,
   subWeeks,
   addDays,
 } from "date-fns"
-import { formatTimeEST12Hour, formatDateTimeEST as formatDateTimeESTUtil, convertUTCToEST } from "@/lib/datetime-utils"
+import { formatDateTimeEST as formatDateTimeESTUtil, convertUTCToEST } from "@/lib/datetime-utils"
+import { filterCalendarItems, getItemsForDate, handleMonthChange } from "./calendar-utils"
 
-// Helper function to format time in EST/EDT (for Date objects)
-const formatTimeEST = (date: Date): string => {
-  return formatTimeEST12Hour(date.toISOString())
-}
-
-// Helper function to format date and time in EST/EDT (for Date objects)
 const formatDateTimeEST = (date: Date): string => {
   return formatDateTimeESTUtil(date.toISOString())
 }
+
+const INITIAL_MONTH_KEY = (() => {
+  const now = new Date()
+  return `${now.getFullYear()}-${now.getMonth()}`
+})()
 
 interface CalendarProps { 
   items: CalendarItem[]
@@ -43,90 +44,78 @@ interface CalendarProps {
 export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
-  const [eventTypeFilter, setEventTypeFilter] = useState<string>('ALL')
+  const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set(['PERFORMANCE', 'CLASS', 'AUDITION', 'CREATIVE']))
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const lastFetchedMonthRef = useRef<string | null>(INITIAL_MONTH_KEY)
 
   const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate])
   const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate])
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd })
-
-  const onMonthChangeRef = useRef(onMonthChange)
-  const initialMonthKey = useMemo(() => {
-    const now = new Date()
-    return `${now.getFullYear()}-${now.getMonth()}`
-  }, [])
-  const lastFetchedMonthRef = useRef<string | null>(initialMonthKey)
-
-  useEffect(() => {
-    onMonthChangeRef.current = onMonthChange
-  }, [onMonthChange])
-
-  const firstDayOfMonth = monthStart.getDay()
-  const emptyCells = Array.from({ length: firstDayOfMonth }, () => null)
-
-  const navigate = (direction: 'prev' | 'next') => {
-    const delta = direction === 'prev' ? -1 : 1
-    if (view === 'month') {
-      const newDate = delta === -1 ? subMonths(currentDate, 1) : addMonths(currentDate, 1)
-      setCurrentDate(newDate)
-      
-      if (onMonthChangeRef.current) {
-        const newMonthStart = startOfMonth(newDate)
-        const newMonthEnd = endOfMonth(newDate)
-        const newMonthKey = `${newDate.getFullYear()}-${newDate.getMonth()}`
-        
-        if (lastFetchedMonthRef.current !== newMonthKey) {
-          lastFetchedMonthRef.current = newMonthKey
-          onMonthChangeRef.current(newMonthStart, newMonthEnd)
-        }
-      }
-    } else if (view === 'week') {
-      setCurrentDate(delta === -1 ? subWeeks(currentDate, 1) : addWeeks(currentDate, 1))
-    } else {
-      setCurrentDate(delta === -1 ? addDays(currentDate, -1) : addDays(currentDate, 1))
-    }
-  }
-
+  
   const filteredItems = useMemo(() => {
-    type PerfLike = CalendarItem | (CalendarItem & { [key: string]: unknown })
+    return filterCalendarItems(items, selectedTypes)
+  }, [items, selectedTypes])
 
-    const asRecord = (val: unknown): Record<string, unknown> | null => {
-      return val && typeof val === 'object' && !Array.isArray(val) ? (val as Record<string, unknown>) : null
+  const itemsByDate = useMemo(() => {
+    const map = new Map<string, CalendarItem[]>()
+    const itemsByDateStr = new Map<string, CalendarItem[]>()
+    
+    let startDate: Date
+    let endDate: Date
+    
+    if (view === 'month') {
+      startDate = monthStart
+      endDate = monthEnd
+    } else if (view === 'week') {
+      startDate = startOfWeek(currentDate, { weekStartsOn: 0 })
+      endDate = endOfWeek(currentDate, { weekStartsOn: 0 })
+    } else {
+      startDate = currentDate
+      endDate = currentDate
     }
-
-    const getFrom = (rec: Record<string, unknown> | null, key: string): unknown => {
-      return rec ? rec[key] : undefined
-    }
-
-    const getEventType = (p: PerfLike): string | undefined => {
-      const prec = asRecord(p)
-      const details = asRecord(getFrom(prec, 'details'))
-      const val = getFrom(prec, 'eventType') ?? getFrom(prec, 'event_type') ?? getFrom(details, 'eventType') ?? getFrom(details, 'event_type')
-      return typeof val === 'string' ? val : undefined
-    }
-
-    const getOpportunitySubtype = (p: PerfLike): string | undefined => {
-      const prec = asRecord(p)
-      const details = asRecord(getFrom(prec, 'details'))
-      const val = getFrom(details, 'opportunityType') ?? getFrom(prec, 'opportunityType')
-      return typeof val === 'string' ? val : undefined
-    }
-
-    return items.filter((p: PerfLike) => {
-      const type = (getEventType(p) || '').toUpperCase()
-      if (eventTypeFilter !== 'ALL') {
-        if (eventTypeFilter === 'PERFORMANCE' || eventTypeFilter === 'CLASS') {
-          if (type !== eventTypeFilter) return false
-        } else {
-          const sub = getOpportunitySubtype(p)
-          if (String(sub || '').toUpperCase() !== eventTypeFilter) return false
+    
+    const startDateStr = format(startDate, 'yyyy-MM-dd')
+    const endDateStr = format(endDate, 'yyyy-MM-dd')
+    
+    filteredItems.forEach((item) => {
+      const estDate = convertUTCToEST(String(item.start))
+      const dateStr = estDate.date
+      
+      if (dateStr >= startDateStr && dateStr <= endDateStr) {
+        if (!itemsByDateStr.has(dateStr)) {
+          itemsByDateStr.set(dateStr, [])
+        }
+        itemsByDateStr.get(dateStr)!.push(item)
+      }
+    })
+    
+    itemsByDateStr.forEach((items, dateStr) => {
+      const seen = new Map<string, CalendarItem>()
+      for (const item of items) {
+        const key = `${item.listingId}-${dateStr}`
+        if (!seen.has(key)) {
+          seen.set(key, item)
         }
       }
-
-      return true
+      const deduplicated = Array.from(seen.values())
+      if (deduplicated.length > 0) {
+        map.set(dateStr, deduplicated)
+      }
     })
-  }, [items, eventTypeFilter])
+    
+    return map
+  }, [filteredItems, view, currentDate, monthStart, monthEnd])
+
+  const daysInMonth = useMemo(() => {
+    return eachDayOfInterval({ start: monthStart, end: monthEnd })
+  }, [monthStart, monthEnd])
+
+  const firstDayOfMonth = useMemo(() => {
+    return monthStart.getDay()
+  }, [monthStart])
+
+  const emptyCells = useMemo(() => {
+    return Array.from({ length: firstDayOfMonth }, () => null)
+  }, [firstDayOfMonth])
 
   const upcomingDeadlines = useMemo(() => {
     const startOfToday = new Date()
@@ -139,45 +128,59 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
       .slice(0, 5)
   }, [deadlines])
 
-  // Get all performances for a date (for details view - shows all occurrences)
-  // Compare dates in EST to match user's local calendar view
-  const getPerformancesForDate = (date: Date) => {
-    // Get target date in YYYY-MM-DD format (local date, not UTC)
-    const targetDateStr = format(date, 'yyyy-MM-dd')
-    
-    return filteredItems.filter((item) => {
-      // Convert UTC start time to EST date for comparison
-      const estDate = convertUTCToEST(String(item.start))
-      return estDate.date === targetDateStr
-    })
-  }
+  const handleItemClick = useCallback((listingId: string) => {
+    setSelectedListingId(listingId)
+  }, [])
 
-  // Get deduplicated performances for calendar display (one per listing per day)
-  // Compare dates in EST to match user's local calendar view
-  const getDeduplicatedPerformancesForDate = (date: Date) => {
-    // Get target date in YYYY-MM-DD format (local date, not UTC)
-    const targetDateStr = format(date, 'yyyy-MM-dd')
-    
-    const itemsForDate = filteredItems.filter((item) => {
-      // Convert UTC start time to EST date for comparison
-      const estDate = convertUTCToEST(String(item.start))
-      return estDate.date === targetDateStr
-    })
-    
-    // Group by listingId, keeping the first occurrence for each listing
-    const seen = new Map<string, CalendarItem>()
-    for (const item of itemsForDate) {
-      const key = `${item.listingId}-${targetDateStr}`
-      if (!seen.has(key)) {
-        seen.set(key, item)
-      }
+  const handleModalClose = useCallback(() => {
+    setSelectedListingId(null)
+  }, [])
+
+  const navigate = useCallback((direction: 'prev' | 'next') => {
+    const delta = direction === 'prev' ? -1 : 1
+    if (view === 'month') {
+      const newDate = delta === -1 ? subMonths(currentDate, 1) : addMonths(currentDate, 1)
+      setCurrentDate(newDate)
+      handleMonthChange(newDate, onMonthChange, lastFetchedMonthRef)
+    } else if (view === 'week') {
+      setCurrentDate(delta === -1 ? subWeeks(currentDate, 1) : addWeeks(currentDate, 1))
+    } else {
+      setCurrentDate(delta === -1 ? addDays(currentDate, -1) : addDays(currentDate, 1))
     }
-    
-    return Array.from(seen.values())
-  }
+  }, [view, currentDate, onMonthChange])
 
-  // Need to call the API to get the upcoming deadlines -- rn upcoming deadlines might be upcoming events
-  // Need to update old api calls 
+  const handleTodayClick = useCallback(() => {
+    const today = new Date()
+    setCurrentDate(today)
+    if (view === 'month') {
+      handleMonthChange(today, onMonthChange, lastFetchedMonthRef)
+    }
+  }, [view, onMonthChange])
+
+  const formattedDateTitle = useMemo(() => {
+    if (view === 'month') {
+      return format(currentDate, "MMMM yyyy")
+    } else if (view === 'week') {
+      const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 })
+      const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 })
+      return `${format(weekStart, "MMM d")} – ${format(weekEnd, "MMM d, yyyy")}`
+    } else {
+      return format(currentDate, "MMMM d, yyyy")
+    }
+  }, [view, currentDate])
+
+  const weekViewDays = useMemo(() => {
+    if (view !== 'week') return []
+    const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 })
+    return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+  }, [view, currentDate])
+
+  const dayViewData = useMemo(() => {
+    if (view !== 'day') return { deduplicated: [], all: [] }
+    const deduplicated = getItemsForDate(filteredItems, currentDate, true)
+    const all = getItemsForDate(filteredItems, currentDate, false)
+    return { deduplicated, all }
+  }, [view, currentDate, filteredItems])
 
   return (
     <>
@@ -194,31 +197,16 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
               </Button>
               <H2 className="text-xl sm:text-2xl">
-                {view === 'month' && format(currentDate, "MMMM yyyy")}
-                {view === 'week' && `${format(startOfWeek(currentDate, { weekStartsOn: 0 }), "MMM d")} – ${format(endOfWeek(currentDate, { weekStartsOn: 0 }), "MMM d, yyyy")}`}
-                {view === 'day' && format(currentDate, "MMMM d, yyyy")}
+                {formattedDateTitle}
               </H2>
               <Button variant="ghost" size="icon" onClick={() => navigate('next')} aria-label="Next">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </Button>
-              <Button variant="outline" size="sm" onClick={() => {
-                const today = new Date()
-                setCurrentDate(today)
-                if (view === 'month' && onMonthChangeRef.current) {
-                  const newMonthStart = startOfMonth(today)
-                  const newMonthEnd = endOfMonth(today)
-                  const newMonthKey = `${today.getFullYear()}-${today.getMonth()}`
-                  
-                  if (lastFetchedMonthRef.current !== newMonthKey) {
-                    lastFetchedMonthRef.current = newMonthKey
-                    onMonthChangeRef.current(newMonthStart, newMonthEnd)
-                  }
-                }
-              }}>Today</Button>
+              <Button variant="outline" size="sm" onClick={handleTodayClick}>Today</Button>
             </div>
           </div>
           <div className="pt-3 border-t border-gray-200">
-            <FilterBar eventType={eventTypeFilter} onChangeEventType={setEventTypeFilter} />
+            <FilterBar selectedTypes={selectedTypes} onChangeEventType={setSelectedTypes} />
           </div>
         </div>
       </Card>
@@ -227,157 +215,30 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
         <div className="lg:col-span-3">
           <Card className="p-2 sm:p-3 shadow-md">
             {view === 'month' && (
-              <div className="grid grid-cols-7 gap-px bg-gray-200">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                  <div key={day} className="bg-gray-50 py-2 text-center text-xs sm:text-sm font-medium text-gray-500">
-                    <span className="hidden sm:inline">{day}</span>
-                    <span className="sm:hidden">{day.charAt(0)}</span>
-                  </div>
-                ))}
-                {emptyCells.map((__, idx) => (
-                  <div key={`empty-${idx}`} className="bg-white min-h-[80px] sm:min-h-[120px]" />
-                ))}
-                {daysInMonth.map((day) => {
-                  const dayPerformances = getDeduplicatedPerformancesForDate(day)
-                  const isToday = isSameDay(day, new Date())
-                  const isCurrentMonth = isSameMonth(day, currentDate)
-                  return (
-                    <div
-                      key={day.toISOString()}
-                      className={`bg-white p-1 sm:p-2 min-h-[80px] sm:min-h-[120px] cursor-pointer hover:bg-gray-50 ${!isCurrentMonth ? 'text-gray-300' : ''} ${isToday ? 'bg-secondary' : ''}`}
-                      onClick={() => {}}
-                    >
-                      <div className={`text-xs sm:text-sm font-medium ${isToday ? 'text-primary' : isCurrentMonth ? 'text-gray-900' : 'text-gray-300'}`}>
-                        {format(day, 'd')}
-                      </div>
-                      <div className="mt-1 space-y-1">
-                        {dayPerformances.slice(0, 2).map((performance) => (
-                          <div 
-                            key={`${performance.listingId}-${day.toISOString()}`} 
-                            className="text-xs bg-primary/10 text-primary px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate cursor-pointer hover:bg-primary/20 transition-colors" 
-                            title={performance.title || ''}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setSelectedListingId(performance.listingId)
-                              setIsModalOpen(true)
-                            }}
-                          >
-                            <span className="hidden sm:inline">{performance.title}</span>
-                            <span className="sm:hidden">{(performance.title || '').substring(0, 8)}...</span>
-                          </div>
-                        ))}
-                        {dayPerformances.length > 2 && (
-                          <div 
-                            className="text-xs text-gray-500 cursor-pointer hover:text-gray-700"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (dayPerformances[2]) {
-                                setSelectedListingId(dayPerformances[2].listingId)
-                                setIsModalOpen(true)
-                              }
-                            }}
-                          >
-                            +{dayPerformances.length - 2} more
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+              <MonthView
+                daysInMonth={daysInMonth}
+                emptyCells={emptyCells}
+                currentDate={currentDate}
+                itemsByDate={itemsByDate}
+                onItemClick={handleItemClick}
+              />
             )}
 
-            {view === 'week' && (() => {
-              const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 })
-              const daysOfWeek = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
-              return (
-                <>
-                  <div className="hidden sm:grid grid-cols-7 gap-px bg-gray-200">
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                      <div key={day} className="bg-gray-50 py-2 text-center text-xs sm:text-sm font-medium text-gray-500">
-                        <span className="hidden sm:inline">{day}</span>
-                        <span className="sm:hidden">{day.charAt(0)}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-7 gap-px bg-gray-200">
-                    {daysOfWeek.map((day) => {
-                      const dayPerformances = getDeduplicatedPerformancesForDate(day)
-                      const isToday = isSameDay(day, new Date())
-                      return (
-                        <div key={day.toISOString()} className={`bg-white p-2 min-h-[100px] sm:min-h-[140px] ${isToday ? 'bg-secondary' : ''}`}>
-                          <div className={`text-xs sm:text-sm font-medium ${isToday ? 'text-primary' : 'text-gray-900'}`}>{format(day, 'EEE d')}</div>
-                          <div className="mt-1 space-y-1">
-                            {dayPerformances.length === 0 ? (
-                              <div className="text-xs text-gray-400">No events</div>
-                            ) : (
-                              dayPerformances.map((performance) => (
-                                <div 
-                                  key={`${performance.listingId}-${day.toISOString()}`} 
-                                  className="text-xs bg-primary/10 text-primary px-2 py-1 rounded truncate cursor-pointer hover:bg-primary/20 transition-colors" 
-                                  title={performance.title || ''}
-                                  onClick={() => {
-                                    setSelectedListingId(performance.listingId)
-                                    setIsModalOpen(true)
-                                  }}
-                                >
-                                  {performance.title}
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </>
-              )
-            })()}
+            {view === 'week' && (
+              <WeekView
+                daysOfWeek={weekViewDays}
+                itemsByDate={itemsByDate}
+                onItemClick={handleItemClick}
+              />
+            )}
 
             {view === 'day' && (
-              <div className="p-2">
-                <div className="text-base sm:text-sm text-gray-600 mb-2">{format(currentDate, 'EEEE, MMMM d, yyyy')}</div>
-                {(() => {
-                  const dayPerformances = getDeduplicatedPerformancesForDate(currentDate)
-                  const allPerformances = getPerformancesForDate(currentDate)
-                  if (dayPerformances.length === 0) {
-                    return <div className="text-sm text-gray-500">No performances scheduled for this date.</div>
-                  }
-                  return (
-                    <div className="space-y-3">
-                      {dayPerformances.map((performance) => {
-                        // Get all occurrences for this listing on this date
-                        const listingOccurrences = allPerformances.filter(p => p.listingId === performance.listingId)
-                        return (
-                          <Card 
-                            key={`${performance.listingId}-${currentDate.toISOString()}`} 
-                            padding="sm"
-                            className="cursor-pointer hover:shadow-md transition-shadow"
-                            onClick={() => {
-                              setSelectedListingId(performance.listingId)
-                              setIsModalOpen(true)
-                            }}
-                          >
-                            <h4 className="text-base sm:text-lg font-medium text-gray-900">{performance.title}</h4>
-                            {listingOccurrences.length > 1 && (
-                              <div className="mt-2 text-sm text-gray-600">
-                                <div className="font-medium mb-1">Occurrences:</div>
-                                <ul className="list-disc list-inside space-y-1">
-                                  {listingOccurrences.map((occ) => (
-                                    <li key={occ.occurrenceId}>
-                                      {formatTimeEST(new Date(occ.start))}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </Card>
-                        )
-                      })}
-                    </div>
-                  )
-                })()}
-              </div>
+              <DayView
+                currentDate={currentDate}
+                deduplicatedItems={dayViewData.deduplicated}
+                allItems={dayViewData.all}
+                onItemClick={handleItemClick}
+              />
             )}
           </Card>
         </div>
@@ -402,11 +263,8 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
       </div>
 
       <ListingDetailsModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setSelectedListingId(null)
-        }}
+        isOpen={selectedListingId !== null}
+        onClose={handleModalClose}
         listingId={selectedListingId}
       />
     </>

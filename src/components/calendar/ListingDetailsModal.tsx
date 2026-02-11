@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card"
 import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
 import { formatDateTimeEST } from "@/lib/datetime-utils"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
+import { getListingTitle } from "@/features/events/server/listing-utils"
 import {
   PieceDetails,
   ClassDetails,
@@ -28,29 +29,6 @@ function getGoogleMapsLink(address: string | null | undefined, placeId: string |
   return null
 }
 
-function getTitle(listing: PublicListingDetail): string {
-  if (listing.type === "performance" && listing.performance_details) {
-    if (listing.performance_details.subtype === "PIECE" && listing.piece_details) {
-      const pieceTitle = listing.piece_details.piece_title || listing.piece_details.piece_company
-      const parentName = listing.piece_details.parent_event_name
-      if (parentName && pieceTitle) {
-        return `${parentName} - ${pieceTitle}`
-      }
-      return pieceTitle || parentName || "Untitled Piece"
-    }
-    return listing.performance_details.title || "Untitled Performance"
-  }
-  if (listing.type === "audition" && listing.audition_details) {
-    return listing.audition_details.title || "Untitled Audition"
-  }
-  if (listing.type === "creative" && listing.creative_details) {
-    return listing.creative_details.title || "Untitled Creative Opportunity"
-  }
-  if (listing.type === "class" && listing.class_workshop_details) {
-    return listing.class_workshop_details.title || "Untitled Class/Workshop"
-  }
-  return "Untitled Listing"
-}
 
 function getTypeLabel(type: string): string {
   const labels: Record<string, string> = {
@@ -130,7 +108,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId }: ListingDetai
     }
   }, [isOpen, listingId])
 
-  const title = listing ? getTitle(listing) : "Listing Details"
+  const title = listing ? getListingTitle(listing) : "Listing Details"
   const typeLabel = listing ? getTypeLabel(listing.type) : ""
 
   const { hasSingleLocation, singleLocation } = useMemo(() => {

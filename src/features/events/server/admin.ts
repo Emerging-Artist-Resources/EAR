@@ -4,6 +4,9 @@ import { storageService } from "@/services/storage"
 import type { ListingStatus, ListingType } from "./repository-types"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { convertUTCToEST } from "@/lib/datetime-utils"
+import { sendListingUpdateEmail } from "./service"
+import { getListingTitle } from "./listing-utils"
+import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
 
 /**
  * Adds custom occurrences from a piece to its parent event
@@ -544,6 +547,35 @@ export async function approveListingRepo(listingId: string, reviewerId: string) 
     // Don't fail approval if this fails
   }
   console.log(`[Approval] Completed approval processing for listing ${listingId}`)
+
+  // 4) Send email notification
+  try {
+    const { data: listingData } = await supabase
+      .from("listings")
+      .select(`
+        id, type, contact_name, contact_email,
+        performance_details (*),
+        audition_details (*),
+        creative_details (*),
+        class_workshop_details!class_workshop_details_listing_id_fkey (*),
+        piece_details!piece_details_listing_id_fkey (*)
+      `)
+      .eq("id", listingId)
+      .single()
+
+    if (listingData?.contact_email && listingData?.contact_name) {
+      const listingForTitle = listingData as unknown as PublicListingDetail
+      const listingTitle = getListingTitle(listingForTitle)
+      await sendListingUpdateEmail(
+        listingId,
+        listingData.contact_email,
+        listingData.contact_name,
+        listingTitle
+      )
+    }
+  } catch (emailError) {
+    // Don't fail approval if email fails
+  }
 }
 
 export async function rejectListingRepo(
@@ -601,6 +633,35 @@ export async function rejectListingRepo(
     // Don't fail rejection if this fails
   }
   console.log(`[Rejection] Completed rejection processing for listing ${listingId}`)
+
+  // Send email notification
+  try {
+    const { data: listingData } = await supabase
+      .from("listings")
+      .select(`
+        id, type, contact_name, contact_email,
+        performance_details (*),
+        audition_details (*),
+        creative_details (*),
+        class_workshop_details!class_workshop_details_listing_id_fkey (*),
+        piece_details!piece_details_listing_id_fkey (*)
+      `)
+      .eq("id", listingId)
+      .single()
+
+    if (listingData?.contact_email && listingData?.contact_name) {
+      const listingForTitle = listingData as unknown as PublicListingDetail
+      const listingTitle = getListingTitle(listingForTitle)
+      await sendListingUpdateEmail(
+        listingId,
+        listingData.contact_email,
+        listingData.contact_name,
+        listingTitle
+      )
+    }
+  } catch (emailError) {
+    // Don't fail rejection if email fails
+  }
 }
 
 export async function deleteListingRepo(listingId: string, deletedBy: string) {
