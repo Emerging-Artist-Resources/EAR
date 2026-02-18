@@ -10,11 +10,24 @@ import { Calendar } from "@/components/calendar/calendar"
 import { Text } from "@/components/ui/typography"
 import { Modal } from "@/components/ui/modal"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { HorizontalScrollCards } from "@/components/shared/HorizontalScrollCards"
+import { ListingCard } from "@/components/shared/ListingCard"
+import { ListingDetailsModal } from "@/components/calendar/ListingDetailsModal"
 import Link from "next/link"
 
 export default function CalendarView() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [authPromptOpen, setAuthPromptOpen] = useState(false)
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
+  const [recentListings, setRecentListings] = useState<Array<{
+    id: string
+    type: string
+    title: string
+    starts_at_utc: string | null
+    ends_at_utc: string | null
+  }>>([])
+  const [loadingRecent, setLoadingRecent] = useState(false)
   const { isAuthed } = useAuth()
   const { items, deadlines, loading, fetchCalendar } = useCalendar()
 
@@ -28,6 +41,27 @@ export default function CalendarView() {
       limit: 500 
     })
   }, [fetchCalendar])
+
+  useEffect(() => {
+    setLoadingRecent(true)
+    fetch("/api/calendar/recent?limit=12")
+      .then(async (res) => {
+        if (!res.ok) {
+          return []
+        }
+        const json = await res.json()
+        return json.data || []
+      })
+      .then((data) => {
+        setRecentListings(data)
+        setLoadingRecent(false)
+      })
+      .catch((err) => {
+        console.error("Error loading recent listings:", err)
+        setRecentListings([])
+        setLoadingRecent(false)
+      })
+  }, [])
 
   const handleModalSuccess = () => {
     const now = new Date()
@@ -62,6 +96,34 @@ export default function CalendarView() {
         <div className={`px-4 py-6 sm:px-0 transition-opacity duration-200 ${isModalOpen ? 'opacity-50' : ''}`}>
           <CallToAction onSubmitPerformance={handleOpenSubmit} />
           <Calendar items={items} deadlines={deadlines} />
+          
+          {recentListings.length > 0 && (
+            <div className="mt-8">
+              <Card className="p-6 shadow-md">
+                <HorizontalScrollCards
+                  title="Recently Added"
+                  cardsPerView={4}
+                  onCardClick={(index) => {
+                    const listing = recentListings[index]
+                    if (listing) {
+                      setSelectedListingId(listing.id)
+                    }
+                  }}
+                >
+                  {recentListings.map((listing) => (
+                    <ListingCard
+                      key={listing.id}
+                      id={listing.id}
+                      type={listing.type}
+                      title={listing.title}
+                      starts_at_utc={listing.starts_at_utc}
+                      ends_at_utc={listing.ends_at_utc}
+                    />
+                  ))}
+                </HorizontalScrollCards>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
       <PerformanceModal
@@ -88,6 +150,12 @@ export default function CalendarView() {
           </div>
         </div>
       </Modal>
+      <ListingDetailsModal
+        isOpen={selectedListingId !== null}
+        onClose={() => setSelectedListingId(null)}
+        listingId={selectedListingId}
+        onListingClick={setSelectedListingId}
+      />
     </div>
   )
 }

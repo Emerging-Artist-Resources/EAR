@@ -26,6 +26,7 @@ export async function POST(
     await updateClassParentLinkRepo({
       classListingId: classId,
       parentListingId,
+      createdBy: auth.user.id,
     })
 
     return createSuccessResponse({ success: true })

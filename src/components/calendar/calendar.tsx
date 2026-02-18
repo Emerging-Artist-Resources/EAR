@@ -266,6 +266,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
         isOpen={selectedListingId !== null}
         onClose={handleModalClose}
         listingId={selectedListingId}
+        onListingClick={handleItemClick}
       />
     </>
   )

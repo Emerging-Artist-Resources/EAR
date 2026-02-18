@@ -39,14 +39,50 @@ export function PieceList({ pieces, onLinkClick }: PieceListProps) {
 
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium text-gray-700">Piece Information</h4>
+                  {piece.occurrences.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-1">Submitted Dates:</p>
+                      <ul className="list-disc ml-5 text-sm text-gray-600 space-y-1">
+                        {piece.occurrences.map((occ) => (
+                          <li key={occ.id}>
+                            {formatDateTimeEST(occ.starts_at_utc)}
+                            {occ.ends_at_utc && ` - ${formatDateTimeEST(occ.ends_at_utc)}`}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   {piece.piece_company && (
                     <p className="text-sm text-gray-600">
                       Company/Artist: {piece.piece_company}
                     </p>
                   )}
+                  {piece.piece_company_website && (
+                    <p className="text-sm text-gray-600">
+                      Website:{" "}
+                      <a
+                        href={piece.piece_company_website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {piece.piece_company_website}
+                      </a>
+                    </p>
+                  )}
+                  {piece.piece_description && (
+                    <p className="text-sm text-gray-600">
+                      Piece Description: {piece.piece_description}
+                    </p>
+                  )}
                   {piece.choreographer && (
                     <p className="text-sm text-gray-600">
                       Choreographer: {piece.choreographer}
+                    </p>
+                  )}
+                  {piece.notes && (
+                    <p className="text-sm text-gray-600">
+                      Credits: {piece.notes}
                     </p>
                   )}
                 </div>
@@ -67,31 +103,15 @@ export function PieceList({ pieces, onLinkClick }: PieceListProps) {
                   </div>
                 )}
 
-                {(piece.occurrences.length > 0 || piece.venue_name || piece.address) && (
+                {(piece.venue_name || piece.address || piece.location_instructions) && (
                   <div className="space-y-2 pt-2 border-t border-gray-200">
-                    <h4 className="text-sm font-medium text-gray-700">Date/Time & Location</h4>
-                    {piece.occurrences.length > 0 && (
-                      <ul className="list-disc ml-5 text-sm text-gray-600 space-y-1">
-                        {piece.occurrences.map((occ) => (
-                          <li key={occ.id}>
-                            {formatDateTimeEST(occ.starts_at_utc)}
-                            {occ.ends_at_utc && ` - ${formatDateTimeEST(occ.ends_at_utc)}`}
-                            {(occ.venue_name || occ.address) && (
-                              <span className="text-gray-500">
-                                {" "}
-                                {occ.venue_name || occ.address}
-                              </span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    {!piece.occurrences.length && piece.venue_name && (
+                    <h4 className="text-sm font-medium text-gray-700">Location</h4>
+                    {piece.venue_name && (
                       <p className="text-sm text-gray-600">
                         Venue: {piece.venue_name}
                       </p>
                     )}
-                    {!piece.occurrences.length && piece.address && (
+                    {piece.address && (
                       <p className="text-sm text-gray-600">
                         Address: {piece.address}
                       </p>

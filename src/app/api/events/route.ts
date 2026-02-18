@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { listCalendarItems, sendListingConfirmationEmail } from "@/features/events/server/service"
+import { listCalendarItems, sendListingConfirmationEmail, sendAdminListingNotificationEmail } from "@/features/events/server/service"
 import { z } from "zod"
 import { createEventOwnedRepo, CreateListingInput } from "@/features/events/server/repository"
 import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamArray, validateRequestBody } from "@/lib/api-utils"
@@ -109,6 +109,7 @@ export async function POST(req: NextRequest) {
     
     try {
       await sendListingConfirmationEmail(input as unknown as CreateListingInput, created.id)
+      await sendAdminListingNotificationEmail(input as unknown as CreateListingInput, created.id)
     } catch (emailError) {
       // Email failures don't block listing creation
     }

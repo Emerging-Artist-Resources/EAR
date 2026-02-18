@@ -138,4 +138,24 @@ export async function sendListingUpdateEmail(
   })
 }
 
+export async function sendAdminListingNotificationEmail(
+  input: CreateListingInput,
+  listingId: string
+): Promise<void> {
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL
+  if (!adminEmail) {
+    console.warn("[EMAIL] ADMIN_NOTIFICATION_EMAIL not set, skipping admin notification")
+    return
+  }
+
+  const listingTitle = getListingTitle(input)
+  await sendListingEmail("admin-listing-received", {
+    to: adminEmail,
+    submitterName: input.base.contact_name,
+    listingTitle,
+    listingId,
+    submitterEmail: input.base.contact_email,
+  })
+}
+
 

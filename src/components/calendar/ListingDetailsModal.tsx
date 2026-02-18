@@ -8,6 +8,8 @@ import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
 import { formatDateTimeEST } from "@/lib/datetime-utils"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { getListingTitle } from "@/features/events/server/listing-utils"
+import { HorizontalScrollCards } from "@/components/shared/HorizontalScrollCards"
+import { ListingCard } from "@/components/shared/ListingCard"
 import {
   PieceDetails,
   ClassDetails,
@@ -57,19 +59,49 @@ interface ListingDetailsModalProps {
   isOpen: boolean
   onClose: () => void
   listingId: string | null
+  onListingClick?: (listingId: string) => void
 }
 
-export function ListingDetailsModal({ isOpen, onClose, listingId }: ListingDetailsModalProps) {
+export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick }: ListingDetailsModalProps) {
   const [loading, setLoading] = useState(false)
   const [listing, setListing] = useState<PublicListingDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showAllDates, setShowAllDates] = useState(false)
+  const [childListings, setChildListings] = useState<Array<{
+    id: string
+    type: string
+    title: string
+    is_piece?: boolean
+    is_class?: boolean
+    starts_at_utc: string | null
+    ends_at_utc: string | null
+    piece_company?: string | null
+    piece_company_website?: string | null
+    piece_description?: string | null
+    choreographer?: string | null
+    class_title?: string | null
+    class_description?: string | null
+    class_organizer?: string | null
+    class_teachers?: string | null
+    class_price?: string | null
+    class_link?: string | null
+    class_style_category?: string | null
+    notes?: string | null
+    occurrences?: Array<{
+      id: string
+      starts_at_utc: string
+      ends_at_utc: string | null
+      tz: string
+    }>
+  }>>([])
+  const [loadingChildren, setLoadingChildren] = useState(false)
 
   useEffect(() => {
     if (!isOpen || !listingId) {
       setListing(null)
       setError(null)
       setShowAllDates(false)
+      setChildListings([])
       return
     }
 
@@ -100,6 +132,43 @@ export function ListingDetailsModal({ isOpen, onClose, listingId }: ListingDetai
         if (!abortController.signal.aborted) {
           setError(err.message || "Failed to load listing")
           setLoading(false)
+        }
+      })
+
+    return () => {
+      abortController.abort()
+    }
+  }, [isOpen, listingId])
+
+  useEffect(() => {
+    if (!isOpen || !listingId) {
+      setChildListings([])
+      return
+    }
+
+    const abortController = new AbortController()
+    setLoadingChildren(true)
+    
+    fetch(`/api/calendar/listing/${listingId}/children`, { signal: abortController.signal })
+      .then(async (res) => {
+        if (!res.ok) {
+          return []
+        }
+        const json = await res.json()
+        return json.data || []
+      })
+      .then((data) => {
+        if (!abortController.signal.aborted) {
+          setChildListings(data)
+          setLoadingChildren(false)
+        }
+      })
+      .catch((err) => {
+        if (err.name === 'AbortError') return
+        console.error("Error loading child listings:", err)
+        if (!abortController.signal.aborted) {
+          setChildListings([])
+          setLoadingChildren(false)
         }
       })
 
@@ -265,8 +334,12 @@ export function ListingDetailsModal({ isOpen, onClose, listingId }: ListingDetai
                   {listing.listing_occurrences && listing.listing_occurrences.length > 0 && (
                     <div className="mt-4">
                 {(() => {
-                  const deadlines = listing.listing_occurrences.filter(o => o.occurrence_type === 'deadline')
-                  const events = listing.listing_occurrences.filter(o => !o.occurrence_type || o.occurrence_type === 'event')
+                  const deadlines = listing.listing_occurrences
+                    .filter(o => o.occurrence_type === 'deadline')
+                    .sort((a, b) => new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime())
+                  const events = listing.listing_occurrences
+                    .filter(o => !o.occurrence_type || o.occurrence_type === 'event')
+                    .sort((a, b) => new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime())
                   
                   const eventTypeLabel = getTypeLabel(listing.type)
                   
@@ -361,7 +434,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId }: ListingDetai
               </Card>
             ) : null}
 
-            {/* Contact Info Card */}
+            {/* Contact Info Card 
             {(listing.contact_name || listing.contact_email) && (
               <Card className="p-4">
                 <h3 className="text-base font-semibold text-gray-900 mb-3">Contact Information</h3>
@@ -392,16 +465,72 @@ export function ListingDetailsModal({ isOpen, onClose, listingId }: ListingDetai
                   )}
                 </div>
               </Card>
-            )}
+            )}*/}
 
-            {/* Additional Info Card - Photos, Social Media, Notes */}
+            {/* Child Listings Card */}
+            {childListings.length > 0 && (() => {
+              const allPieces = childListings.every((child) => child.is_piece)
+              const allClasses = childListings.every((child) => child.is_class)
+              const title = allPieces 
+                ? "Pieces in this Performance"
+                : allClasses
+                ? "Classes in this Workshop"
+                : "Related Listings"
+              
+              return (
+                <HorizontalScrollCards
+                  title={title}
+                  cardsPerView={3}
+                  onCardClick={(index) => {
+                    const childListing = childListings[index]
+                    if (childListing && !childListing.is_piece && !childListing.is_class && onListingClick) {
+                      onClose()
+                      onListingClick(childListing.id)
+                    }
+                  }}
+                >
+                  {childListings.map((child) => (
+                    <ListingCard
+                      key={child.id}
+                      id={child.id}
+                      type={child.type}
+                      title={child.title}
+                      starts_at_utc={child.starts_at_utc}
+                      ends_at_utc={child.ends_at_utc}
+                      is_piece={child.is_piece}
+                      piece_company={child.piece_company}
+                      piece_company_website={child.piece_company_website}
+                      piece_description={child.piece_description}
+                      choreographer={child.choreographer}
+                      is_class={child.is_class}
+                      class_title={child.class_title}
+                      class_description={child.class_description}
+                      class_organizer={child.class_organizer}
+                      class_teachers={child.class_teachers}
+                      class_price={child.class_price}
+                      class_link={child.class_link}
+                      class_style_category={child.class_style_category}
+                      notes={child.notes}
+                      occurrences={child.occurrences}
+                      onClick={child.is_piece || child.is_class ? undefined : () => {
+                        if (onListingClick) {
+                          onClose()
+                          onListingClick(child.id)
+                        }
+                      }}
+                    />
+                  ))}
+                </HorizontalScrollCards>
+              )
+            })()}
+
+            {/* Additional Info Card - Photos, Social Media, Notes 
             {(sortedPhotos.length > 0) || 
              listing.social_handles || 
              listing.notes ? (
               <Card className="p-4">
                 <h3 className="text-base font-semibold text-gray-900 mb-3">Additional Information</h3>
                 <div className="space-y-0">
-                  {/* Photos - Full width */}
                   {sortedPhotos.length > 0 && (
                     <div className="py-2 col-span-2">
                       <div className="text-sm text-gray-600 mb-2">Photos:</div>
@@ -417,10 +546,8 @@ export function ListingDetailsModal({ isOpen, onClose, listingId }: ListingDetai
                     </div>
                   )}
 
-                  {/* Social Media and Notes in two columns */}
                   {(listing.social_handles || listing.notes) && (
                     <div className="grid grid-cols-2 gap-x-6 gap-y-0">
-                      {/* Social Media */}
                       {listing.social_handles && (
                         <FieldRow 
                           label="Social Media" 
@@ -428,7 +555,6 @@ export function ListingDetailsModal({ isOpen, onClose, listingId }: ListingDetai
                         />
                       )}
 
-                      {/* Notes */}
                       {listing.notes && (
                         <FieldRow 
                           label="Additional Information" 
@@ -439,7 +565,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId }: ListingDetai
                   )}
                 </div>
               </Card>
-            ) : null}
+            ) : null}*/}
           </div>
         )}
     </Modal>

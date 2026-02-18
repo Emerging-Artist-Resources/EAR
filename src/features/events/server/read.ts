@@ -3,6 +3,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { storageService } from "@/services/storage"
 import type { ListingType } from "./repository-types"
+import { normalizeSupabaseRelation } from "./admin-utils"
 
 export async function searchListingsRepo(params: {
   query: string
@@ -17,7 +18,7 @@ export async function searchListingsRepo(params: {
     performance_details (title, subtype),
     audition_details (title),
     creative_details (title),
-    class_workshop_details!class_workshop_details_listing_id_fkey (title),
+    class_workshop_details!class_workshop_details_listing_id_fkey (title, class_workshop_type),
     listing_occurrences!listing_occurrences_listing_id_fkey (
       id, starts_at_utc, tz
     )
@@ -47,6 +48,14 @@ export async function searchListingsRepo(params: {
       // For performance type, only show ORGANIZER performances (not PIECE)
       if (listing.type === "performance") {
         if (listing.performance_details?.subtype !== "ORGANIZER") {
+          return false
+        }
+      }
+      
+      // For class type, only show WORKSHOP types (not CLASS)
+      if (listing.type === "class") {
+        const classDetails = normalizeSupabaseRelation(listing.class_workshop_details)
+        if (classDetails?.class_workshop_type !== "WORKSHOP") {
           return false
         }
       }
@@ -108,7 +117,8 @@ export async function listCalendarItemsRepo(params: {
       performance_details (title, subtype),
       audition_details (title),
       creative_details (title),
-      class_workshop_details!class_workshop_details_listing_id_fkey (title)
+      class_workshop_details!class_workshop_details_listing_id_fkey (title, class_workshop_type, parent_workshop_name, parent_listing_id),
+      piece_details!piece_details_listing_id_fkey (parent_event_name, parent_listing_id, piece_title, piece_company)
     )
   `
 
@@ -130,21 +140,49 @@ export async function listCalendarItemsRepo(params: {
 
   return (data ?? [])
     .filter((row: any) => {
-      // For performance type, only show ORGANIZER performances (not PIECE)
-      // PIECE performances are children and shouldn't appear in parent event search
       if (row.listings?.type === "performance") {
-        return row.listings.performance_details?.subtype === "ORGANIZER"
+        const subtype = row.listings.performance_details?.subtype
+        if (subtype === "PIECE") {
+          // Allow pieces with parent_event_name but no parent_listing_id
+          const pieceDetails = normalizeSupabaseRelation(row.listings.piece_details)
+          return pieceDetails?.parent_event_name && !pieceDetails?.parent_listing_id
+        }
+        return subtype === "ORGANIZER"
+      }
+      if (row.listings?.type === "class") {
+        const classDetails = normalizeSupabaseRelation(row.listings.class_workshop_details)
+        if (classDetails?.class_workshop_type === "CLASS") {
+          // Allow classes with parent_workshop_name but no parent_listing_id
+          return classDetails?.parent_workshop_name && !classDetails?.parent_listing_id
+        }
+        // Show all workshops (class_workshop_type === "WORKSHOP")
+        return classDetails?.class_workshop_type === "WORKSHOP"
       }
       return true
     })
     .map((row: any) => {
       const listing = row.listings
-      const title =
-        listing.type === "performance" ? listing.performance_details?.title :
-        listing.type === "audition" ? listing.audition_details?.title :
-        listing.type === "creative" ? listing.creative_details?.title :
-        listing.type === "class" ? listing.class_workshop_details?.title :
-        "Untitled"
+      let title: string
+      
+      if (listing.type === "performance" && listing.performance_details?.subtype === "PIECE") {
+        // Use getListingTitle logic for pieces
+        const pieceDetails = normalizeSupabaseRelation(listing.piece_details)
+        const pieceTitle = pieceDetails?.piece_title || pieceDetails?.piece_company
+        const parentName = pieceDetails?.parent_event_name
+        if (parentName && pieceTitle) {
+          title = `${parentName} - ${pieceTitle}`
+        } else {
+          title = pieceTitle || parentName || "Untitled Piece"
+        }
+      } else {
+        // Existing logic for other types
+        title = listing.type === "performance" ? listing.performance_details?.title :
+                listing.type === "audition" ? listing.audition_details?.title :
+                listing.type === "creative" ? listing.creative_details?.title :
+                listing.type === "class" ? listing.class_workshop_details?.title :
+                "Untitled"
+      }
+      
       return {
         occurrenceId: row.id,
         listingId: row.listing_id,
@@ -224,6 +262,7 @@ export async function getListingPublicRepo(listingId: string) {
       audition_details (*),
       creative_details (*),
       class_workshop_details!class_workshop_details_listing_id_fkey (*),
+      piece_details!piece_details_listing_id_fkey (*),
       listing_occurrences!listing_occurrences_listing_id_fkey (*),
       listing_photos (*)
     `)

@@ -102,9 +102,9 @@ export function PieceDetails({ details }: { details: NonNullable<PublicListingDe
   return (
     <>
       {details.parent_event_name && !details.parent_listing_id && (
-        <FieldRow label="Festival/Parent Event" value={details.parent_event_name} />
+        <FieldRow label="Festival" value={details.parent_event_name} />
       )}
-      <FieldRow label="Title" value={details.piece_title} />
+      <FieldRow label="Piece Title" value={details.piece_title} />
       <FieldRow label="Company/Artist Name" value={details.piece_company} />
       <FieldRow 
         label="Company/Artist Website" 

@@ -253,7 +253,7 @@ export function PieceDetails({
     <div className="mt-2 pt-2 border-t border-[var(--gray-200)]">
       <h5 className="text-sm font-semibold text-[var(--gray-700)] mb-2">Piece Details</h5>
       <div className="grid gap-2">
-        <Row label="Festival/Parent Event" value={festivalName} />
+        <Row label="Festival" value={festivalName} />
         {details.parent_listing_id && (
           <Row label="Parent Listing ID" value={details.parent_listing_id} />
         )}

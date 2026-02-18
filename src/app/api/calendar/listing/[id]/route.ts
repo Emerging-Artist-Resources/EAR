@@ -10,18 +10,17 @@ export async function GET(
   try {
     const { id } = await ctx.params
     
-    // Get the base listing data
+    // Get the base listing data (now includes piece_details)
     const listingData = await getListingPublicRepo(id)
     
-    // Fetch contact info and piece_details separately since getListingPublicRepo doesn't include them
+    // Fetch contact info separately since getListingPublicRepo doesn't include them
     const supabase = getSupabaseServerClientAnon()
     const { data: additionalData, error: additionalError } = await supabase
       .from("listings")
       .select(`
         contact_name, 
         pronouns, 
-        contact_email,
-        piece_details!piece_details_listing_id_fkey (*)
+        contact_email
       `)
       .eq("id", id)
       .eq("status", "approved")
@@ -32,18 +31,11 @@ export async function GET(
       console.error("Error fetching additional data:", additionalError)
     }
     
-    // Merge additional data into listing data
-    // Handle piece_details which might be an array or single object
-    const pieceDetails = Array.isArray(additionalData?.piece_details) 
-      ? additionalData.piece_details[0] 
-      : additionalData?.piece_details ?? null
-    
     const result = {
       ...listingData,
       contact_name: additionalData?.contact_name ?? null,
       pronouns: additionalData?.pronouns ?? null,
       contact_email: additionalData?.contact_email ?? null,
-      piece_details: pieceDetails,
     }
     
     return NextResponse.json({ data: result }, { 

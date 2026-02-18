@@ -1,23 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getSavedEvents } from "@/features/profile/server/service";
 import { getAuthenticatedUser } from "@/lib/auth-helpers";
+import { handleApiError, createSuccessResponse, getQueryParam } from "@/lib/api-utils";
 
 export async function GET(request: NextRequest) {
   try {
     const auth = await getAuthenticatedUser();
     if (!auth) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return handleApiError(new Error("Unauthorized"));
     }
 
-    const { searchParams } = new URL(request.url);
-    const mode = (searchParams.get("mode") || "all") as "all" | "upcoming" | "past";
+    const mode = (getQueryParam(request, "mode", "all") || "all") as "all" | "upcoming" | "past";
 
     const events = await getSavedEvents(auth.user.id, { mode });
     
-    return NextResponse.json({ data: events });
-  } catch (err: unknown) {
-    console.error("Get saved events error:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return createSuccessResponse(events);
+  } catch (error) {
+    return handleApiError(error);
   }
 }
 

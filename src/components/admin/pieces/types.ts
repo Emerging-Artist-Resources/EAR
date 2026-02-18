@@ -5,12 +5,14 @@ export interface PieceNeedingLink {
   piece_title: string | null
   piece_company: string | null
   piece_company_website: string | null
+  piece_description: string | null
   choreographer: string | null
   contact_name: string | null
   contact_email: string | null
   address: string | null
   venue_name: string | null
   location_instructions: string | null
+  notes: string | null
   occurrences: Array<{
     id: string
     starts_at_utc: string

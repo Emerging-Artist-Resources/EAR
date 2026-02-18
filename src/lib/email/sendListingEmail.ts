@@ -10,13 +10,14 @@
 
 import { postmarkClient } from "./postmark"
 
-type ListingEmailType = "listing-received" | "listing-updated"
+type ListingEmailType = "listing-received" | "listing-updated" | "admin-listing-received"
 
 type SendListingEmailArgs = {
   to: string
   submitterName: string
   listingTitle: string
   listingId: string
+  submitterEmail?: string
 }
 
 export async function sendListingEmail(
@@ -26,8 +27,14 @@ export async function sendListingEmail(
     submitterName,
     listingTitle,
     listingId,
+    submitterEmail,
   }: SendListingEmailArgs
 ) {
+  if (process.env.DISABLE_EMAILS === "true") {
+    console.log(`[EMAIL] Email sending disabled. Would send ${type} to ${to}`)
+    return
+  }
+
   if (!postmarkClient) {
     throw new Error(
       "Postmark client not initialized. POSTMARK_TRANSACTIONAL_TOKEN is missing."
@@ -48,15 +55,21 @@ export async function sendListingEmail(
   
   const fromAddress = `${process.env.POSTMARK_FROM_NAME} <${process.env.POSTMARK_FROM_EMAIL}>`
 
+  const templateModel: Record<string, string> = {
+    submitter_name: submitterName,
+    listing_title: listingTitle,
+    cta_url: `${baseUrl}/dashboard/listings/${listingId}`,
+  }
+
+  if (submitterEmail) {
+    templateModel.submitter_email = submitterEmail
+  }
+
   const emailData = {
     From: fromAddress,
     To: to,
     TemplateAlias: type,
-    TemplateModel: {
-      submitter_name: submitterName,
-      listing_title: listingTitle,
-      cta_url: `${baseUrl}/dashboard/listings/${listingId}`,
-    },
+    TemplateModel: templateModel,
   }
 
   return await postmarkClient.sendEmailWithTemplate(emailData)

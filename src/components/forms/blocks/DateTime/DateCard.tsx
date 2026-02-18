@@ -113,11 +113,14 @@ export function DateCard<T extends FieldValues>({
     if (isFirst) onFirstDateTimesChange?.()
   }
 
+  // Only auto-add time if showTime is true and times array is empty
+  // This is a safety net - parent DateTimeList should initialize times correctly,
+  // but this ensures at least one time input exists if parent doesn't
   useEffect(() => {
     if (!showTime) return
     if (times.length > 0) return
     timesArray.append({ time: "" } as any)
-  }, [showTime, index, times.length])
+  }, [showTime, times.length, timesArray])
 
   return (
     <Card className="space-y-3 rounded-2xl border border-primary-200 bg-primary-50/40 p-4">

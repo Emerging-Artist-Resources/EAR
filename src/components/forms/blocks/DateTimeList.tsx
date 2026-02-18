@@ -79,18 +79,33 @@ export function DateTimeList<T extends Record<string, unknown>>({
   // Sync field array when form values change externally (e.g., when editing confirmed entries)
   const prevFormValuesRef = useRef<string>("")
   const isInitialMountRef = useRef(true)
+  const hasInitializedRef = useRef(false)
+  const initialAppendRef = useRef(false)
+  
+  // Helper to create a comparison signature - optimized for common cases
+  const createSignature = useCallback((normalized: DateItem[]): string => {
+    // For empty arrays, use simple string
+    if (normalized.length === 0) return "[]"
+    // For single empty entry (common initial state), use optimized signature
+    if (normalized.length === 1 && normalized[0]?.date === "" && normalized[0]?.times?.length === 1 && normalized[0]?.times[0]?.time === "") {
+      return `[empty]`
+    }
+    // Otherwise use JSON.stringify (needed for deep comparison)
+    return JSON.stringify(normalized)
+  }, [])
+  
+  // Helper to check if normalized array represents empty initial state
+  const isEmptyInitialState = useCallback((normalized: DateItem[]): boolean => {
+    return normalized.length === 1 && 
+           normalized[0]?.date === "" && 
+           (!showTime || (normalized[0]?.times?.length === 1 && normalized[0]?.times[0]?.time === ""))
+  }, [showTime])
   
   // Memoize normalization of watched form values for performance
   const normalizedWatchedValues = useMemo(() => {
     if (!watchedFormValues) return undefined
-    console.log(`[DateTimeList:${name}] normalizedWatchedValues - watchedFormValues:`, JSON.stringify(watchedFormValues, null, 2))
     const normalized = watchedFormValues.map((d) => {
       const locationFields = createLocationFields(locationConfig, d)
-      console.log(`[DateTimeList:${name}] normalizedWatchedValues - item:`, {
-        date: d?.date,
-        locationFields,
-        fullItem: d,
-      })
       const normalizedItem: DateItem = {
         date: d?.date ?? "",
         times: showTime ? (d?.times && d.times.length > 0 ? d.times : [{ time: "" }]) : [],
@@ -98,9 +113,8 @@ export function DateTimeList<T extends Record<string, unknown>>({
       }
       return normalizedItem
     })
-    console.log(`[DateTimeList:${name}] normalizedWatchedValues - result:`, JSON.stringify(normalized, null, 2))
     return normalized
-  }, [watchedFormValues, showTime, locationConfig, name])
+  }, [watchedFormValues, showTime, locationConfig])
   
   useEffect(() => {
     // On mount, read from getValues() which includes defaults
@@ -108,18 +122,9 @@ export function DateTimeList<T extends Record<string, unknown>>({
     const formValuesFromGetValues = getValues(name as any) as DateItem[] | undefined
     const currentFormValues = watchedFormValues ?? formValuesFromGetValues ?? []
     
-    console.log(`[DateTimeList:${name}] useEffect - formValuesFromGetValues:`, JSON.stringify(formValuesFromGetValues, null, 2))
-    console.log(`[DateTimeList:${name}] useEffect - watchedFormValues:`, JSON.stringify(watchedFormValues, null, 2))
-    console.log(`[DateTimeList:${name}] useEffect - currentFormValues:`, JSON.stringify(currentFormValues, null, 2))
-    
     // Use memoized normalized values if available, otherwise normalize current form values
-    const normalized = normalizedWatchedValues ?? currentFormValues.map((d) => {
+    let normalized = normalizedWatchedValues ?? currentFormValues.map((d) => {
       const locationFields = createLocationFields(locationConfig, d)
-      console.log(`[DateTimeList:${name}] useEffect - normalizing item:`, {
-        date: d?.date,
-        locationFields,
-        fullItem: d,
-      })
       const normalizedItem: DateItem = {
         date: d?.date ?? "",
         times: showTime ? (d?.times && d.times.length > 0 ? d.times : [{ time: "" }]) : [],
@@ -128,12 +133,15 @@ export function DateTimeList<T extends Record<string, unknown>>({
       return normalizedItem
     })
 
-    console.log(`[DateTimeList:${name}] useEffect - normalized:`, JSON.stringify(normalized, null, 2))
-    console.log(`[DateTimeList:${name}] useEffect - dateFields.length:`, dateFields.length)
-    console.log(`[DateTimeList:${name}] useEffect - isInitialMount:`, isInitialMountRef.current)
+    // Enforce maxDates constraint: trim excess entries if switching from a form that allows multiple dates
+    // to one that only allows a single date (e.g., performance -> audition)
+    if (maxDates !== undefined && normalized.length > maxDates) {
+      // Keep only the first maxDates items
+      normalized = normalized.slice(0, maxDates)
+    }
 
-    // Create signature to detect changes
-    const signature = JSON.stringify(normalized)
+    // Create signature to detect changes - optimized for performance
+    const signature = createSignature(normalized)
     
     // On initial mount, initialize field array from form values or add blank row
     if (isInitialMountRef.current) {
@@ -142,22 +150,79 @@ export function DateTimeList<T extends Record<string, unknown>>({
         const hasCompleteEntries = normalized.some(d => d.date && d.date.trim() !== "")
         if (hasCompleteEntries) {
           prevFormValuesRef.current = signature
+          hasInitializedRef.current = true
           replace(normalized as any)
           return
         }
       }
-      if (startWithOne && dateFields.length === 0) {
+      // CRITICAL: Check ref FIRST before any other logic to prevent race conditions
+      if (startWithOne && dateFields.length === 0 && !initialAppendRef.current) {
+        // Double-check: if ref was set between the condition check and here, abort
+        if (initialAppendRef.current) {
+          return
+        }
         const initial: DateItem = {
           date: "",
           times: showTime ? [{ time: "" }] : [],
           ...(locationConfig && !syncLocation ? createLocationFields(locationConfig, undefined, true) : {}),
         }
-        append(initial as any)
-        // Set signature after append to prevent re-triggering on next effect run
-        prevFormValuesRef.current = JSON.stringify([initial])
+        // CRITICAL: Only use replace if watchedFormValues has VALID date items (with date field)
+        // If watchedFormValues only has location fields or invalid items, proceed with append
+        if (watchedFormValues && watchedFormValues.length > 0) {
+          const hasValidDateItems = watchedFormValues.some(d => d?.date && d.date.trim() !== "")
+          if (hasValidDateItems) {
+            const normalized = normalizedWatchedValues ?? watchedFormValues.map((d) => {
+              const locationFields = createLocationFields(locationConfig, d)
+              return {
+                date: d?.date ?? "",
+                times: showTime ? (d?.times && d.times.length > 0 ? d.times : [{ time: "" }]) : [],
+                ...locationFields,
+              }
+            })
+            prevFormValuesRef.current = createSignature(normalized)
+            hasInitializedRef.current = true
+            replace(normalized as any)
+            return
+          }
+        }
+        // CRITICAL: Set ref IMMEDIATELY before replace to prevent duplicate appends during async re-renders
+        initialAppendRef.current = true
+        // Use replace with single item instead of append to avoid potential duplicates
+        replace([initial] as any)
+        // Set signature to prevent re-triggering
+        prevFormValuesRef.current = createSignature([initial])
+        hasInitializedRef.current = true
+        return
       } else {
         prevFormValuesRef.current = signature
+        hasInitializedRef.current = true
       }
+      return
+    }
+    
+    // Skip if we just initialized with an append and this is the watchedFormValues catching up
+    // This prevents duplicate blocks when watchedFormValues updates after initial append
+    if (initialAppendRef.current && dateFields.length === 1 && normalized.length === 1) {
+      // If this is just the watchedFormValues reflecting our initial append, skip sync
+      if (isEmptyInitialState(normalized)) {
+        // Update signature to match what's now in watchedFormValues
+        prevFormValuesRef.current = createSignature(normalized)
+        // Clear the flag after handling the first update
+        initialAppendRef.current = false
+        return
+      }
+      // If we get here, something else changed, so clear the flag and continue
+      initialAppendRef.current = false
+    }
+    
+    // Additional guard: if field array already has the right number of empty entries,
+    // and normalized matches that, skip sync to prevent duplicates
+    if (dateFields.length > 0 && 
+        dateFields.length === normalized.length && 
+        isEmptyInitialState(normalized) &&
+        !normalized.some(d => d.date && d.date.trim() !== "")) {
+      // Field array already has empty entries matching normalized - no need to sync
+      prevFormValuesRef.current = signature
       return
     }
     
@@ -187,21 +252,16 @@ export function DateTimeList<T extends Record<string, unknown>>({
       (formHasCompleteEntries && !userTyping)
     
     if (shouldSync) {
-      console.log(`[DateTimeList:${name}] useEffect - SYNCING: replacing field array with normalized values`)
-      console.log(`[DateTimeList:${name}] useEffect - normalized being set:`, JSON.stringify(normalized, null, 2))
       prevFormValuesRef.current = signature
       replace(normalized as any)
-      // Check what was actually set after replace
-      setTimeout(() => {
-        const afterReplace = getValues(name as any) as DateItem[] | undefined
-        console.log(`[DateTimeList:${name}] useEffect - after replace (10ms):`, JSON.stringify(afterReplace, null, 2))
-      }, 10)
     } else {
       // Update ref to track current state, but don't replace (user is typing)
-      console.log(`[DateTimeList:${name}] useEffect - NOT syncing (user typing)`)
-      prevFormValuesRef.current = signature
+      // CRITICAL: Don't overwrite prevSignature if we just did an initial append and watchedFormValues hasn't caught up yet
+      if (!initialAppendRef.current || normalized.length > 0) {
+        prevFormValuesRef.current = signature
+      }
     }
-  }, [normalizedWatchedValues, name, showTime, startWithOne, replace, append, getValues, locationConfig, syncLocation, firstDateField])
+  }, [normalizedWatchedValues, name, showTime, startWithOne, replace, append, getValues, locationConfig, syncLocation, firstDateField, dateFields.length, createSignature, isEmptyInitialState, maxDates])
 
   const canAddDate = !maxDates || dateFields.length < maxDates
 
@@ -320,7 +380,6 @@ export function DateTimeList<T extends Record<string, unknown>>({
     
     // If locations differ and syncLocation is checked, uncheck it
     if (!allSame && syncLocation) {
-      console.log(`[DateTimeList:${name}] Locations differ across entries, automatically unchecking syncLocation`)
       setSyncLocation(false)
     }
   }, [dateFields.length, locationConfig, name, getValues, syncLocation])
@@ -342,9 +401,6 @@ export function DateTimeList<T extends Record<string, unknown>>({
     // Only sync if all locations are already the same
     if (allSame) {
       applyFirstLocationToAll()
-    } else {
-      // Locations differ - don't auto-sync, but allow manual sync via toggle
-      console.log(`[DateTimeList:${name}] Locations differ across entries, skipping auto-sync`)
     }
   }, [firstLocationAddress, applyFirstLocationToAll, syncLocation, dateFields.length, locationConfig, name, getValues])
 
@@ -423,7 +479,7 @@ export function DateTimeList<T extends Record<string, unknown>>({
                 setSyncLocation(checked)
                 if (checked) {
                   // Force sync immediately when toggle is enabled
-                  setTimeout(() => applyFirstLocationToAll(true), 0)
+                  requestAnimationFrame(() => applyFirstLocationToAll(true))
                 }
               }}
             />

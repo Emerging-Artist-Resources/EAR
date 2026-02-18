@@ -35,6 +35,7 @@ export function FestivalAssociationSection({
           form={form}
           eventType="CLASS"
           eventIdField={"parentEventId" as Path<EventFormData>}
+          eventModeField={"parentEventMode" as Path<EventFormData>}
           label="Search for festival/workshop by name"
           placeholder="Start typing the event name…"
           showCantLocateButton={true}
