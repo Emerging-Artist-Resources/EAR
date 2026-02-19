@@ -47,7 +47,8 @@ export async function getEventForOwnerRepo(listingId: string) {
 }
 
 export async function listMyEventsRepo() {
-  return listMyListingsRepo()
+  const result = await listMyListingsRepo()
+  return result.listings
 }
 
 export async function updatePendingEventRepo(

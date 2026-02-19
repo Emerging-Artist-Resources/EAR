@@ -9,9 +9,9 @@ export interface FavoriteButtonProps extends Omit<React.ButtonHTMLAttributes<HTM
 }
 
 const sizeToIcon = {
-  sm: "h-4 w-4",
-  md: "h-5 w-5",
-  lg: "h-6 w-6",
+  sm: "h-5 w-5",
+  md: "h-6 w-6",
+  lg: "h-7 w-7",
 }
 
 export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
@@ -36,7 +36,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       {...props}
     >
       <svg
-        className={cn(sizeToIcon[size])}
+        className={cn(sizeToIcon[size], active && "text-yellow-500 fill-yellow-500")}
         viewBox="0 0 24 24"
         fill={active ? "currentColor" : "none"}
         stroke="currentColor"

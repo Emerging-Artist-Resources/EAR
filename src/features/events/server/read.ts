@@ -287,20 +287,29 @@ export async function getListingPublicRepo(listingId: string) {
   return data
 }
 
-export async function listMyListingsRepo() {
+export async function listMyListingsRepo(page: number = 0, limit: number = 10) {
   const supabase = await getSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user?.id) throw new Error("Unauthorized")
 
+  // Get total count
+  const { count } = await supabase
+    .from("listings")
+    .select("*", { count: "exact", head: true })
+    .eq("created_by", user.id)
+    .is("deleted_at", null)
+
+  // Get paginated listings
   const { data, error } = await supabase
     .from("listings")
     .select(`id, type, status, submitted_at`)
     .eq("created_by", user.id)
     .is("deleted_at", null)
     .order("submitted_at", { ascending: false })
+    .range(page * limit, (page + 1) * limit - 1)
 
   if (error) throw error
-  return data
+  return { listings: data || [], total: count || 0 }
 }
 
 export async function getListingForOwnerRepo(listingId: string) {

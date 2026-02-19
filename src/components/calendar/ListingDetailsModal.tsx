@@ -4,12 +4,15 @@ import { useState, useEffect, useMemo } from "react"
 import { Modal } from "@/components/ui/modal"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
+import { FavoriteButton } from "@/components/ui/favorite-button"
 import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
 import { formatDateTimeEST } from "@/lib/datetime-utils"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { getListingTitle } from "@/features/events/server/listing-utils"
 import { HorizontalScrollCards } from "@/components/shared/HorizontalScrollCards"
 import { ListingCard } from "@/components/shared/ListingCard"
+import { useSavedListings } from "@/hooks/use-saved-listings"
+import { useAuth } from "@/hooks/use-auth"
 import {
   PieceDetails,
   ClassDetails,
@@ -63,6 +66,8 @@ interface ListingDetailsModalProps {
 }
 
 export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick }: ListingDetailsModalProps) {
+  const { isAuthed } = useAuth();
+  const { isSaved, loading: savingLoading, saving, error: saveError, toggleSave } = useSavedListings(listingId || undefined);
   const [loading, setLoading] = useState(false)
   const [listing, setListing] = useState<PublicListingDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -240,11 +245,31 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
 
         {!loading && !error && listing && (
           <div className="space-y-4">
-            {/* Header with type badge */}
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-              <Badge variant="primary" size="sm">{typeLabel}</Badge>
-              {listing.company && (
-                <span className="text-sm text-gray-600">{listing.company}</span>
+            {/* Header with type badge and save button */}
+            <div className="flex items-center justify-between gap-3 pb-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <Badge variant="primary" size="sm">{typeLabel}</Badge>
+                {listing.company && (
+                  <span className="text-sm text-gray-600">{listing.company}</span>
+                )}
+              </div>
+              {isAuthed && (
+                <div className="flex items-center gap-2">
+                  {saveError && (
+                    <span className="text-sm text-red-600">{saveError}</span>
+                  )}
+                  <FavoriteButton
+                    active={isSaved}
+                    onToggle={() => {
+                      if (!saving && !savingLoading) {
+                        void toggleSave();
+                      }
+                    }}
+                    size="md"
+                    disabled={saving || savingLoading}
+                    aria-label={isSaved ? "Remove from favorites" : "Add to favorites"}
+                  />
+                </div>
               )}
             </div>
 

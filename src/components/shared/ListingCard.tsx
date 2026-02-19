@@ -2,7 +2,10 @@
 
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { FavoriteButton } from "@/components/ui/favorite-button"
 import { formatDateTimeEST } from "@/lib/datetime-utils"
+import { useSavedListings } from "@/hooks/use-saved-listings"
+import { useAuth } from "@/hooks/use-auth"
 
 interface ListingCardProps {
   id: string
@@ -66,21 +69,39 @@ export function ListingCard({
   notes,
   occurrences,
 }: ListingCardProps) {
+  const { isAuthed } = useAuth();
+  const { isSaved, loading, saving, toggleSave } = useSavedListings(id);
   const sortedOccurrences = occurrences?.sort((a, b) => 
     new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime()
   ) || []
 
   return (
     <Card
-      className="p-4 h-full cursor-pointer hover:shadow-md transition-shadow"
+      className="p-4 h-full cursor-pointer hover:shadow-md transition-shadow relative"
       onClick={onClick}
     >
+      {isAuthed && (
+        <div className="absolute top-2 right-2 z-10">
+          <FavoriteButton
+            active={isSaved}
+            onToggle={(e, next) => {
+              e.stopPropagation();
+              if (!saving && !loading) {
+                void toggleSave();
+              }
+            }}
+            size="sm"
+            disabled={saving || loading}
+            aria-label={isSaved ? "Remove from favorites" : "Add to favorites"}
+          />
+        </div>
+      )}
       <div className="space-y-2">
-        <div className="flex items-start justify-between gap-2">
-          <h4 className="font-semibold text-sm text-gray-900 line-clamp-2 flex-1">{title}</h4>
-          <Badge variant="primary" size="sm" className="flex-shrink-0">
+        <div className="space-y-1">
+          <Badge variant="primary" size="sm" className="inline-block">
             {getTypeLabel(type)}
           </Badge>
+          <h4 className="font-semibold text-sm text-gray-900 line-clamp-2 pr-8">{title}</h4>
         </div>
         
         {is_piece && sortedOccurrences.length > 0 && (

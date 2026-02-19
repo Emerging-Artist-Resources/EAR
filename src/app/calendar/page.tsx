@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { subMonths, addMonths, startOfMonth, endOfMonth } from "date-fns"
 import { CallToAction } from "@/components/layout/call-to-action"
 import PerformanceModal from "@/components/performance-modal"
@@ -16,7 +17,9 @@ import { ListingCard } from "@/components/shared/ListingCard"
 import { ListingDetailsModal } from "@/components/calendar/ListingDetailsModal"
 import Link from "next/link"
 
-export default function CalendarView() {
+function CalendarViewContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [authPromptOpen, setAuthPromptOpen] = useState(false)
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
@@ -30,6 +33,23 @@ export default function CalendarView() {
   const [loadingRecent, setLoadingRecent] = useState(false)
   const { isAuthed } = useAuth()
   const { items, deadlines, loading, fetchCalendar } = useCalendar()
+
+  // Handle listingId query parameter
+  useEffect(() => {
+    const listingId = searchParams.get("listingId")
+    if (listingId) {
+      setSelectedListingId(listingId)
+    }
+  }, [searchParams])
+
+  const handleModalClose = useCallback(() => {
+    setSelectedListingId(null)
+    // Remove listingId from URL without page reload
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete("listingId")
+    const newUrl = params.toString() ? `/calendar?${params.toString()}` : "/calendar"
+    router.replace(newUrl)
+  }, [searchParams, router])
 
   useEffect(() => {
     const now = new Date()
@@ -152,10 +172,22 @@ export default function CalendarView() {
       </Modal>
       <ListingDetailsModal
         isOpen={selectedListingId !== null}
-        onClose={() => setSelectedListingId(null)}
+        onClose={handleModalClose}
         listingId={selectedListingId}
         onListingClick={setSelectedListingId}
       />
     </div>
+  )
+}
+
+export default function CalendarView() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Text className="text-lg">Loading calendar...</Text>
+      </div>
+    }>
+      <CalendarViewContent />
+    </Suspense>
   )
 }

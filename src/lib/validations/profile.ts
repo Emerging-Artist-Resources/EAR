@@ -10,3 +10,15 @@ export const updateProfileSchema = z.object({
 })
 
 export type UpdateProfileData = z.infer<typeof updateProfileSchema>
+
+export const saveListingSchema = z.object({
+  listingId: z.string().uuid("Invalid listing ID"),
+})
+
+export type SaveListingData = z.infer<typeof saveListingSchema>
+
+export const updateAttendanceSchema = z.object({
+  attendanceStatus: z.enum(["attended", "missed"]).nullable(),
+})
+
+export type UpdateAttendanceData = z.infer<typeof updateAttendanceSchema>

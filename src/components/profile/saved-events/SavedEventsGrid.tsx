@@ -6,9 +6,10 @@ import { Card } from "@/components/ui/card";
 interface SavedEventsGridProps {
   events: SavedEvent[];
   isLoading?: boolean;
+  onListingClick?: (listingId: string) => void;
 }
 
-export const SavedEventsGrid = ({ events, isLoading }: SavedEventsGridProps) => {
+export const SavedEventsGrid = ({ events, isLoading, onListingClick }: SavedEventsGridProps) => {
   if (isLoading) {
     return <Text className="mt-4 text-sm text-gray-600">Loading events…</Text>;
   }
@@ -16,7 +17,7 @@ export const SavedEventsGrid = ({ events, isLoading }: SavedEventsGridProps) => 
   if (!events.length) {
     return (
       <Card className="mt-4 p-4">
-        <Text className="text-sm text-gray-600">You haven’t saved any events yet.</Text>
+        <Text className="text-sm text-gray-600">You haven't saved any events yet.</Text>
       </Card>
     );
   }
@@ -24,7 +25,7 @@ export const SavedEventsGrid = ({ events, isLoading }: SavedEventsGridProps) => 
   return (
     <div className="mt-4 grid gap-4 md:grid-cols-2">
       {events.map((event) => (
-        <SavedEventCard key={event.id} event={event} />
+        <SavedEventCard key={event.id} event={event} onListingClick={onListingClick} />
       ))}
     </div>
   );
