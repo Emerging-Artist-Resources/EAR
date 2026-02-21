@@ -30,7 +30,6 @@ function CalendarViewContent() {
     starts_at_utc: string | null
     ends_at_utc: string | null
   }>>([])
-  const [loadingRecent, setLoadingRecent] = useState(false)
   const { isAuthed } = useAuth()
   const { items, deadlines, loading, fetchCalendar } = useCalendar()
 
@@ -63,7 +62,6 @@ function CalendarViewContent() {
   }, [fetchCalendar])
 
   useEffect(() => {
-    setLoadingRecent(true)
     fetch("/api/calendar/recent?limit=12")
       .then(async (res) => {
         if (!res.ok) {
@@ -74,12 +72,10 @@ function CalendarViewContent() {
       })
       .then((data) => {
         setRecentListings(data)
-        setLoadingRecent(false)
       })
       .catch((err) => {
         console.error("Error loading recent listings:", err)
         setRecentListings([])
-        setLoadingRecent(false)
       })
   }, [])
 
