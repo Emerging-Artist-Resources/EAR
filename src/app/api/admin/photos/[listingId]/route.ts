@@ -5,7 +5,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { storageService } from "@/services/storage"
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   ctx: { params: Promise<{ listingId: string }> }
 ) {
   try {

@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
         audition_details (*),
         creative_details (*),
         class_workshop_details!class_workshop_details_listing_id_fkey (*),
-        piece_details!piece_details_listing_id_fkey (parent_listing_id),
+        piece_details!piece_details_listing_id_fkey (*),
         listing_occurrences!listing_occurrences_listing_id_fkey (
           id,
           starts_at_utc,
