@@ -9,7 +9,7 @@ interface ParentSearchProps {
   selectedParentId?: string | null
 }
 
-export function ParentSearch({ onSelect, selectedParentId }: ParentSearchProps) {
+export function ParentSearch({ onSelect, selectedParentId: _selectedParentId }: ParentSearchProps) {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<ParentWorkshopOption[]>([])
   const [isSearching, setIsSearching] = useState(false)

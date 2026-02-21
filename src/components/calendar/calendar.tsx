@@ -124,7 +124,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
     
     return deadlines
       .filter(it => new Date(String(it.start)).getTime() >= now)
-      .sort((a, b) => new Date(String(a.start)).getTime() - new Date(String(b.start)).getTime())
+      .sort((a: { start: string | Date }, b: { start: string | Date }) => new Date(String(a.start)).getTime() - new Date(String(b.start)).getTime())
       .slice(0, 5)
   }, [deadlines])
 

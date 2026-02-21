@@ -108,8 +108,7 @@ export async function addPieceOccurrencesToParent(
       supabase,
       baseOccurrences,
       "source_piece_listing_id",
-      pieceListingId,
-      "[Piece Occurrence Sync]"
+      pieceListingId
     )
   } catch (error) {
     console.error(`[Piece Occurrence Sync] Failed to add occurrences:`, error)

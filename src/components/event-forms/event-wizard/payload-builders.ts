@@ -123,17 +123,17 @@ export async function buildPerformancePayload(
           if (!occ?.date || occ.date !== date) return false
           const matchingTime = occ.times?.find((t: any) => t?.time === time)
           return !!matchingTime
-        })
+        }) as any
         
         // Get location from parent occurrence - check time-level first, then date-level
         // Location is stored per time slot in the times array, with date-level as fallback
-        const timeSlot = parentOcc?.times?.find((t: any) => t?.time === time)
+        const timeSlot = parentOcc?.times?.find((t: any) => t?.time === time) as any
         const locationData = {
           // Time-level location takes precedence, fallback to date-level
           address: timeSlot?.address || parentOcc?.address || null,
           place_id: timeSlot?.placeId || parentOcc?.placeId || null,
           venue_name: timeSlot?.venueName || parentOcc?.venueName || null,
-          location_instructions: timeSlot?.instructions || parentOcc?.locationInstructions || parentOcc?.instructions || null,
+          location_instructions: timeSlot?.instructions || parentOcc?.locationInstructions || null,
           lat: timeSlot?.lat || parentOcc?.lat || null,
           lng: timeSlot?.lng || parentOcc?.lng || null,
         }

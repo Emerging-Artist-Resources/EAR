@@ -11,7 +11,7 @@ export interface UserInfo {
   pronouns?: string | null
 }
 
-export async function createPerformance(supabase: SupabaseClient, formData: EventFormData, userInfo: UserInfo, createdBy: string | null) {
+export async function createPerformance(supabase: SupabaseClient, formData: EventFormData, userInfo: UserInfo) {
   const parsed = eventFormSchema.parse(formData)
   // For now we support performance path; other types will follow similarly
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York'

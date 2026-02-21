@@ -71,7 +71,7 @@ export function ListingCard({
 }: ListingCardProps) {
   const { isAuthed } = useAuth();
   const { isSaved, loading, saving, toggleSave } = useSavedListings(id);
-  const sortedOccurrences = occurrences?.sort((a, b) => 
+  const sortedOccurrences = occurrences?.sort((a: { starts_at_utc: string }, b: { starts_at_utc: string }) => 
     new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime()
   ) || []
 
@@ -84,7 +84,7 @@ export function ListingCard({
         <div className="absolute top-2 right-2 z-10">
           <FavoriteButton
             active={isSaved}
-            onToggle={(e, next) => {
+            onToggle={(e) => {
               e.stopPropagation();
               if (!saving && !loading) {
                 void toggleSave();

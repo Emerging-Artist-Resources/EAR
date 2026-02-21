@@ -17,7 +17,7 @@ export async function POST(
     }
 
     const { id } = await ctx.params
-    await deleteListingRepo(id, user.id)
+    await deleteListingRepo(id)
     return NextResponse.json({ data: { ok: true } })
   } catch (err) {
     console.error("Delete error:", err instanceof Error ? err.message : String(err))

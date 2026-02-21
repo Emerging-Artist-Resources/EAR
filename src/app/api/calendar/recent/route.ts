@@ -202,7 +202,7 @@ export async function GET(req: NextRequest) {
     
     // Sort by submitted_at descending and limit
     const recentListings = Array.from(uniqueListings.values())
-      .sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())
+      .sort((a: { submitted_at: string }, b: { submitted_at: string }) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())
       .slice(0, limit)
     
     return NextResponse.json({ data: recentListings }, { 

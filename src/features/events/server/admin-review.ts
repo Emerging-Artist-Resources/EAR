@@ -207,7 +207,7 @@ export async function rejectListingRepo(
   await sendRejectionEmail(listingId)
 }
 
-export async function deleteListingRepo(listingId: string, deletedBy: string) {
+export async function deleteListingRepo(listingId: string) {
   const svc = getSupabaseServiceClient()
   
   // Check if this is a piece or class before deleting

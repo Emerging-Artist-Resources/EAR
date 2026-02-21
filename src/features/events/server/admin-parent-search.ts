@@ -32,7 +32,7 @@ export async function searchParentEventsRepo(params: {
     .filter((item) => {
       return item.title.toLowerCase().includes(queryLower)
     })
-    .sort((a, b) => a.title.localeCompare(b.title))
+    .sort((a: { title: string }, b: { title: string }) => a.title.localeCompare(b.title))
     .slice(0, limit)
   
   return filtered.map((item) => ({
@@ -72,7 +72,7 @@ export async function searchParentWorkshopsRepo(params: {
     .filter((item) => {
       return item.title.toLowerCase().includes(queryLower)
     })
-    .sort((a, b) => a.title.localeCompare(b.title))
+    .sort((a: { title: string }, b: { title: string }) => a.title.localeCompare(b.title))
     .slice(0, limit)
   
   return filtered.map((item) => ({

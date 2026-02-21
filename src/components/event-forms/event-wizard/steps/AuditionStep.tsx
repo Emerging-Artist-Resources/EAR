@@ -9,7 +9,7 @@ import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
 import { LocationField } from "@/components/forms/blocks/LocationField"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { useEffect } from "react"
-import { SimpleFeeDisplay } from "@/components/event-forms/event-wizard/shared/SimpleFeeDisplay"
+//import { SimpleFeeDisplay } from "@/components/event-forms/event-wizard/shared/SimpleFeeDisplay"
 
 interface AuditionStepProps {
   form: UseFormReturn<EventFormData>

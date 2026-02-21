@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { occurrenceSchema, occurrencesSchema } from "./base"
+import { occurrenceSchema } from "./base"
 
 // Class / Workshop-only
 export const classFields = z

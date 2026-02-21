@@ -5,7 +5,6 @@ import { Modal } from "@/components/ui/modal"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { FavoriteButton } from "@/components/ui/favorite-button"
-import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
 import { formatDateTimeEST } from "@/lib/datetime-utils"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { getListingTitle } from "@/features/events/server/listing-utils"
@@ -20,7 +19,6 @@ import {
   WorkshopDetails,
   AuditionDetails,
   CreativeDetails,
-  SocialHandles,
   FieldRow,
 } from "./PublicListingDetailSections"
 
@@ -99,7 +97,6 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       tz: string
     }>
   }>>([])
-  const [loadingChildren, setLoadingChildren] = useState(false)
 
   useEffect(() => {
     if (!isOpen || !listingId) {
@@ -152,7 +149,6 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
     }
 
     const abortController = new AbortController()
-    setLoadingChildren(true)
     
     fetch(`/api/calendar/listing/${listingId}/children`, { signal: abortController.signal })
       .then(async (res) => {
@@ -165,7 +161,6 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       .then((data) => {
         if (!abortController.signal.aborted) {
           setChildListings(data)
-          setLoadingChildren(false)
         }
       })
       .catch((err) => {
@@ -173,7 +168,6 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
         console.error("Error loading child listings:", err)
         if (!abortController.signal.aborted) {
           setChildListings([])
-          setLoadingChildren(false)
         }
       })
 
@@ -208,11 +202,6 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       singleLocation: allSame ? firstLocation : null
     }
   }, [listing])
-
-  const sortedPhotos = useMemo(() => {
-    if (!listing?.listing_photos) return []
-    return [...listing.listing_photos].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-  }, [listing?.listing_photos])
 
   return (
     <Modal
@@ -361,10 +350,10 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                 {(() => {
                   const deadlines = listing.listing_occurrences
                     .filter(o => o.occurrence_type === 'deadline')
-                    .sort((a, b) => new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime())
+                    .sort((a: { starts_at_utc: string }, b: { starts_at_utc: string }) => new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime())
                   const events = listing.listing_occurrences
                     .filter(o => !o.occurrence_type || o.occurrence_type === 'event')
-                    .sort((a, b) => new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime())
+                    .sort((a: { starts_at_utc: string }, b: { starts_at_utc: string }) => new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime())
                   
                   const eventTypeLabel = getTypeLabel(listing.type)
                   

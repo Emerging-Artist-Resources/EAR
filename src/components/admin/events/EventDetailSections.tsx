@@ -21,7 +21,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function OrganizerPerformanceDetails({ 
   details, 
-  fullDetail 
+  fullDetail: _fullDetail 
 }: { 
   details: NonNullable<AdminEventDetail['performance_details']>
   fullDetail: AdminEventDetail

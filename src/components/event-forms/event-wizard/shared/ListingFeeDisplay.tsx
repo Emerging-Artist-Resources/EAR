@@ -27,7 +27,7 @@ export function ListingFeeDisplay({
   isFirstSubmission,
   isLoading,
   establishedFee,
-  emergingFee,
+  //emergingFee,
   children,
   feeCalculation,
 }: ListingFeeDisplayProps) {

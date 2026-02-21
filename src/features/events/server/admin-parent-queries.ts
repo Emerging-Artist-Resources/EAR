@@ -80,7 +80,7 @@ export async function listPiecesNeedingLinkRepo() {
             venue_name: occ.venue_name || null,
             address: occ.address || null,
           }))
-          .sort((a, b) => new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime()),
+          .sort((a: any, b: any) => new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime()),
         parent_event_name: pieceDetails?.parent_event_name || null,
         parent_event_website: pieceDetails?.parent_event_website || null,
         parent_event_contact_email: pieceDetails?.parent_event_contact_email || null,

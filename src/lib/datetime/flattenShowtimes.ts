@@ -51,7 +51,7 @@ export function flattenShowtimes(
     }
   }
 
-  out.sort((a, b) => {
+  out.sort((a: { date: string; start_time: string }, b: { date: string; start_time: string }) => {
     if (a.date !== b.date) return a.date < b.date ? -1 : 1
     if (a.start_time !== b.start_time) return a.start_time < b.start_time ? -1 : 1
     return 0

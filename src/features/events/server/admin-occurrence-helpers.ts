@@ -8,7 +8,6 @@ export async function tryInsertWithSourceColumn(
   occurrences: Array<Record<string, any>>,
   sourceColumnName: string,
   sourceListingId: string,
-  logPrefix: string
 ): Promise<void> {
   const occurrencesWithSource = occurrences.map(occ => ({
     ...occ,

@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
-import { UseFormReturn, Path, useWatch } from "react-hook-form"
+import { useEffect } from "react"
+import { UseFormReturn, useWatch } from "react-hook-form"
 import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { TextField } from "@/components/forms/blocks/TextField"
@@ -26,19 +26,19 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
     name: "isPartOfFestivalOrWorkshop",
   }) as "YES" | "NO" | undefined
 
-  const occurrences = useWatch({
-    control: form.control,
-    name: "occurrences" as Path<EventFormData>,
-  }) as Array<{ date: string; times: Array<{ time: string }> }> | undefined
+  // const occurrences = useWatch({
+  //   control: form.control,
+  //   name: "occurrences" as Path<EventFormData>,
+  // }) as Array<{ date: string; times: Array<{ time: string }> }> | undefined
 
   const isWorkshop = classWorkshopType === "WORKSHOP"
   const isPart = isPartOfFestivalOrWorkshop === "YES"
   const shouldUseParentDates = !isWorkshop && isPart
 
-  const occurrenceCount = useMemo(() => {
-    if (!occurrences || !Array.isArray(occurrences)) return 0
-    return occurrences.length
-  }, [occurrences])
+  // const occurrenceCount = useMemo(() => {
+  //   if (!occurrences || !Array.isArray(occurrences)) return 0
+  //   return occurrences.length
+  // }, [occurrences])
 
   useEffect(() => {
     if (!isPart) {

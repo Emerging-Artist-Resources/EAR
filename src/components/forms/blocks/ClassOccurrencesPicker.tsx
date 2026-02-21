@@ -151,7 +151,7 @@ export function ClassOccurrencesPicker({ form, label }: ClassOccurrencesPickerPr
           date,
           times: [{ time: "" }],
         })),
-      ].sort((a, b) => a.date.localeCompare(b.date))
+      ].sort((a: { date: string }, b: { date: string }) => a.date.localeCompare(b.date))
 
       form.setValue("occurrences" as Path<EventFormData>, newOccurrences as never)
     }
