@@ -32,7 +32,7 @@ export function PieceList({ pieces, onLinkClick }: PieceListProps) {
                   <h3 className="font-semibold text-gray-900">
                     {piece.piece_title || "Untitled Piece"}
                   </h3>
-                  <Badge variant={piece.status === "pending" ? "default" : "secondary"}>
+                  <Badge variant={piece.status === "pending" ? "default" : "info"}>
                     {piece.status}
                   </Badge>
                 </div>

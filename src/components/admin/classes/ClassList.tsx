@@ -32,7 +32,7 @@ export function ClassList({ classes, onLinkClick }: ClassListProps) {
                   <h3 className="font-semibold text-gray-900">
                     {classItem.title || "Untitled Class"}
                   </h3>
-                  <Badge variant={classItem.status === "pending" ? "default" : "secondary"}>
+                  <Badge variant={classItem.status === "pending" ? "default" : "info"}>
                     {classItem.status}
                   </Badge>
                 </div>
