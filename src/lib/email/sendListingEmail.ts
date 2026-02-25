@@ -41,7 +41,7 @@ export async function sendListingEmail(
     )
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://eararts.org"
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://ear-two.vercel.app"
   if (!process.env.POSTMARK_FROM_NAME || !process.env.POSTMARK_FROM_EMAIL) {
     const missing = []
     if (!process.env.POSTMARK_FROM_NAME) missing.push("POSTMARK_FROM_NAME")

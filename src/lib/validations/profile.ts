@@ -6,6 +6,7 @@ export const updateProfileSchema = z.object({
   pronouns: z.string().optional().nullable(),
   website: z.string().url("Invalid URL").optional().nullable().or(z.literal("")),
   organization_name: z.string().optional().nullable(),
+  location_place_id: z.string().optional().nullable(),
   location_label: z.string().optional().nullable(),
 })
 

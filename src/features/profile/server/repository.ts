@@ -319,6 +319,7 @@ export interface ProfileData {
   pronouns: string | null;
   website: string | null;
   organization_name: string | null;
+  location_place_id: string | null;
   location_label: string | null;
   artist_status: string | null;
 }
@@ -339,7 +340,7 @@ export async function getProfileRepo(userId: string): Promise<ProfileData | null
   
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, name, email, pronouns, website, organization_name, location_label, artist_status")
+    .select("id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status")
     .eq("id", userId)
     .single();
 
@@ -366,13 +367,14 @@ export async function updateProfileRepo(
   if (updates.pronouns !== undefined) updateData.pronouns = updates.pronouns || null;
   if (updates.website !== undefined) updateData.website = updates.website || null;
   if (updates.organization_name !== undefined) updateData.organization_name = updates.organization_name || null;
+  if (updates.location_place_id !== undefined) updateData.location_place_id = updates.location_place_id && typeof updates.location_place_id === "string" && updates.location_place_id.trim() !== "" ? updates.location_place_id.trim() : null;
   if (updates.location_label !== undefined) updateData.location_label = updates.location_label || null;
 
   const { data, error } = await supabase
     .from("profiles")
     .update(updateData)
     .eq("id", userId)
-    .select("id, name, email, pronouns, website, organization_name, location_label, artist_status")
+    .select("id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status")
     .single();
 
   if (error) {
