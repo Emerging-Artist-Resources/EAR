@@ -35,6 +35,20 @@ export default function AdminDashboardPage() {
     [refetch]
   )
 
+  const handleDelete = useCallback(
+    async (id: string) => {
+      const res = await fetch(`/api/admin/events/${id}/delete`, {
+        method: "POST",
+      })
+      if (res.ok) {
+        await refetch()
+      } else {
+        alert("Failed to remove listing from calendar")
+      }
+    },
+    [refetch]
+  )
+
   return (
     <AdminLayout>
       <AdminHeader
@@ -51,7 +65,7 @@ export default function AdminDashboardPage() {
       {loading ? (
         <AdminLoadingState />
       ) : (
-        <AdminEventList items={items} onReview={handleReview} />
+        <AdminEventList items={items} onReview={handleReview} onDelete={handleDelete} />
       )}
     </AdminLayout>
   )

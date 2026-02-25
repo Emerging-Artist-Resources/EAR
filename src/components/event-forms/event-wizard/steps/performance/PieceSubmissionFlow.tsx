@@ -8,9 +8,6 @@ import { TextField } from "@/components/forms/blocks/TextField"
 import { PieceOccurrencesPicker } from "@/components/forms/blocks/PieceOccurrencesPicker"
 import { PieceDetails } from "@/components/forms/blocks/PieceDetails"
 import { EventSearch } from "@/components/forms/blocks/EventSearch"
-import { ListingFeeSection } from "./ListingFeeSection"
-import { OrganizerMediaSocials } from "./OrganizerMediaSocials"
-import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 
 export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormData> }) {
   const parentEventMode = useWatch({
@@ -85,12 +82,6 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
           showOccurrences={false}
           occurrencesMode="CUSTOM_ONLY"
         />
-
-        <OrganizerMediaSocials form={form} />
-        <Section title="Additional Information">
-        <TextAreaField form={form} name={"notes"} label="Anything else you'd like us to know?" placeholder="Additional information" rows={4} />
-      </Section>
-      <ListingFeeSection form={form} />
     </>
   )
 }

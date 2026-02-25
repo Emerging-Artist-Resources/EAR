@@ -135,7 +135,7 @@ export function ClassOccurrencesPicker({ form, label }: ClassOccurrencesPickerPr
   useEffect(() => {
     if (!hasSelectedDates || useManualEntry) return
 
-    const currentOccurrences = (form.getValues("classOccurrences" as Path<EventFormData>) ??
+    const currentOccurrences = (form.getValues("occurrences" as Path<EventFormData>) ??
       []) as Array<{
       date: string
       times: Array<{ time: string }>
@@ -151,9 +151,9 @@ export function ClassOccurrencesPicker({ form, label }: ClassOccurrencesPickerPr
           date,
           times: [{ time: "" }],
         })),
-      ].sort((a, b) => a.date.localeCompare(b.date))
+      ].sort((a: { date: string }, b: { date: string }) => a.date.localeCompare(b.date))
 
-      form.setValue("classOccurrences" as Path<EventFormData>, newOccurrences as never)
+      form.setValue("occurrences" as Path<EventFormData>, newOccurrences as never)
     }
   }, [selectedDates, form, useManualEntry, hasSelectedDates])
 
@@ -171,7 +171,7 @@ export function ClassOccurrencesPicker({ form, label }: ClassOccurrencesPickerPr
         )}
         <DateTimeList
           form={form as unknown as UseFormReturn<Record<string, unknown>>}
-          name={"classOccurrences"}
+          name={"occurrences"}
           title="Class Dates & Times"
           note="Add all known dates and start times."
           required
@@ -226,7 +226,7 @@ export function ClassOccurrencesPicker({ form, label }: ClassOccurrencesPickerPr
             <div className="mt-4">
               <DateTimeList
                 form={form as unknown as UseFormReturn<Record<string, unknown>>}
-                name={"classOccurrences"}
+                name={"occurrences"}
                 title="Add times for selected dates"
                 note="Add start time(s) for each selected date."
                 required

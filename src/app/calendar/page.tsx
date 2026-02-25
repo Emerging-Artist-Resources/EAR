@@ -1,6 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
+import { subMonths, addMonths, startOfMonth, endOfMonth } from "date-fns"
 import { CallToAction } from "@/components/layout/call-to-action"
 import PerformanceModal from "@/components/performance-modal"
 import { useCalendar } from "@/hooks/use-calendar"
@@ -9,20 +11,83 @@ import { Calendar } from "@/components/calendar/calendar"
 import { Text } from "@/components/ui/typography"
 import { Modal } from "@/components/ui/modal"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { HorizontalScrollCards } from "@/components/shared/HorizontalScrollCards"
+import { ListingCard } from "@/components/shared/ListingCard"
+import { ListingDetailsModal } from "@/components/calendar/ListingDetailsModal"
 import Link from "next/link"
 
-export default function CalendarView() {
+function CalendarViewContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [authPromptOpen, setAuthPromptOpen] = useState(false)
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
+  const [recentListings, setRecentListings] = useState<Array<{
+    id: string
+    type: string
+    title: string
+    starts_at_utc: string | null
+    ends_at_utc: string | null
+  }>>([])
   const { isAuthed } = useAuth()
-  const { items, loading, fetchCalendar } = useCalendar()
+  const { items, deadlines, loading, fetchCalendar } = useCalendar()
+
+  // Handle listingId query parameter
+  useEffect(() => {
+    const listingId = searchParams.get("listingId")
+    if (listingId) {
+      setSelectedListingId(listingId)
+    }
+  }, [searchParams])
+
+  const handleModalClose = useCallback(() => {
+    setSelectedListingId(null)
+    // Remove listingId from URL without page reload
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete("listingId")
+    const newUrl = params.toString() ? `/calendar?${params.toString()}` : "/calendar"
+    router.replace(newUrl)
+  }, [searchParams, router])
 
   useEffect(() => {
-    fetchCalendar({ limit: 500 })
+    const now = new Date()
+    const from = startOfMonth(subMonths(now, 3)).toISOString()
+    const to = endOfMonth(addMonths(now, 3)).toISOString()
+    fetchCalendar({ 
+      from,
+      to,
+      limit: 500 
+    })
   }, [fetchCalendar])
 
+  useEffect(() => {
+    fetch("/api/calendar/recent?limit=12")
+      .then(async (res) => {
+        if (!res.ok) {
+          return []
+        }
+        const json = await res.json()
+        return json.data || []
+      })
+      .then((data) => {
+        setRecentListings(data)
+      })
+      .catch((err) => {
+        console.error("Error loading recent listings:", err)
+        setRecentListings([])
+      })
+  }, [])
+
   const handleModalSuccess = () => {
-    fetchCalendar({ limit: 500 })
+    const now = new Date()
+    const from = startOfMonth(subMonths(now, 3)).toISOString()
+    const to = endOfMonth(addMonths(now, 3)).toISOString()
+    fetchCalendar({ 
+      from,
+      to,
+      limit: 500 
+    })
   }
 
   const handleOpenSubmit = useCallback(() => {
@@ -46,7 +111,35 @@ export default function CalendarView() {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className={`px-4 py-6 sm:px-0 transition-opacity duration-200 ${isModalOpen ? 'opacity-50' : ''}`}>
           <CallToAction onSubmitPerformance={handleOpenSubmit} />
-          <Calendar items={items} />
+          <Calendar items={items} deadlines={deadlines} />
+          
+          {recentListings.length > 0 && (
+            <div className="mt-8">
+              <Card className="p-6 shadow-md">
+                <HorizontalScrollCards
+                  title="Recently Added"
+                  cardsPerView={4}
+                  onCardClick={(index) => {
+                    const listing = recentListings[index]
+                    if (listing) {
+                      setSelectedListingId(listing.id)
+                    }
+                  }}
+                >
+                  {recentListings.map((listing) => (
+                    <ListingCard
+                      key={listing.id}
+                      id={listing.id}
+                      type={listing.type}
+                      title={listing.title}
+                      starts_at_utc={listing.starts_at_utc}
+                      ends_at_utc={listing.ends_at_utc}
+                    />
+                  ))}
+                </HorizontalScrollCards>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
       <PerformanceModal
@@ -73,6 +166,24 @@ export default function CalendarView() {
           </div>
         </div>
       </Modal>
+      <ListingDetailsModal
+        isOpen={selectedListingId !== null}
+        onClose={handleModalClose}
+        listingId={selectedListingId}
+        onListingClick={setSelectedListingId}
+      />
     </div>
+  )
+}
+
+export default function CalendarView() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Text className="text-lg">Loading calendar...</Text>
+      </div>
+    }>
+      <CalendarViewContent />
+    </Suspense>
   )
 }

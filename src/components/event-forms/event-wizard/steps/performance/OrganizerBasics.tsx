@@ -12,7 +12,7 @@ export function OrganizerBasics({ form }: { form: UseFormReturn<EventFormData> }
     <Section title="Event basics">
       <Dropdown
         form={form}
-        name={"event_type"}
+        name={"eventType"}
         label="Is this a solo show, split bill, or festival?"
         required
         placeholder="Select event type..."
@@ -23,13 +23,13 @@ export function OrganizerBasics({ form }: { form: UseFormReturn<EventFormData> }
         ]}
       />
 
-      <TextField form={form} name={"event_title"} label="Show Name" required />
-      <TextField form={form} name={"event_organizer"} label="Organizer / Presenting Company" required />
+      <TextField form={form} name={"title"} label="Show Name" required />
+      <TextField form={form} name={"organizer"} label="Organizer / Presenting Company" required />
 
-      <TextField form={form} name={"event_website"} label="Website" type="url" placeholder="https://..." />
+      <TextField form={form} name={"website"} label="Website" type="url" placeholder="https://..." />
       <TextField
         form={form}
-        name={"event_ticket_link"}
+        name={"link"}
         label="Ticket Link"
         type="url"
         placeholder="https://..."
@@ -37,13 +37,13 @@ export function OrganizerBasics({ form }: { form: UseFormReturn<EventFormData> }
       />
       <TextField
         form={form}
-        name={"event_cost"}
+        name={"price"}
         label="Ticket Cost"
         placeholder="e.g., $20 / Free / Sliding scale"
         required
       />
 
-      <TextAreaField form={form} name={"event_description"} label="Short Show Description" required rows={4} />
+      <TextAreaField form={form} name={"description"} label="Short Show Description" required rows={4} />
 
     </Section>
   )

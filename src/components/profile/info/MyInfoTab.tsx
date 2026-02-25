@@ -4,6 +4,11 @@ import {  H3, Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { apiGet, apiPatch } from "@/lib/fetch-utils"
+import { useForm } from "@/lib/vendor/react-hook-form-zod"
+import { zodResolver } from "@/lib/vendor/react-hook-form-zod"
+import { updateProfileSchema, type UpdateProfileData } from "@/lib/validations/profile"
+import { TextField } from "@/components/forms/blocks/TextField"
+import { LocationField } from "@/components/forms/blocks/LocationField"
 
 interface ProfileData {
   id: string;
@@ -12,6 +17,7 @@ interface ProfileData {
   pronouns: string | null;
   website: string | null;
   organization_name: string | null;
+  location_place_id: string | null;
   location_label: string | null;
   artist_status: string | null;
 }
@@ -19,16 +25,28 @@ interface ProfileData {
 export const MyInfoTab: React.FC = () => {
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [draft, setDraft] = useState<ProfileData | null>(null)
   const [isEditing, setIsEditing] = useState(false)
-  const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+
+  const form = useForm<UpdateProfileData>({
+    resolver: zodResolver(updateProfileSchema),
+    mode: "onChange",
+    reValidateMode: "onChange",
+  })
 
   const fetchProfile = async () => {
     try {
       const data = await apiGet<ProfileData>("/api/profile")
       setProfile(data)
-      setDraft(data)
+      form.reset({
+        name: data.name || undefined,
+        email: data.email || undefined,
+        pronouns: data.pronouns,
+        website: data.website,
+        organization_name: data.organization_name,
+        location_place_id: data.location_place_id,
+        location_label: data.location_label,
+      })
     } catch (error) {
       console.error("Error fetching profile:", error)
     } finally {
@@ -40,32 +58,42 @@ export const MyInfoTab: React.FC = () => {
     fetchProfile()
   }, [])
 
-  const handleSave = async () => {
-    if (!draft) return
-
-    setSaving(true)
+  const handleSave = async (data: UpdateProfileData) => {
     setSaveError(null)
 
     try {
-      const updates: Partial<ProfileData> = {
-        name: draft.name,
-        email: draft.email,
-        pronouns: draft.pronouns,
-        website: draft.website,
-        organization_name: draft.organization_name,
-        location_label: draft.location_label,
-      }
-
-      const updatedProfile = await apiPatch<ProfileData>("/api/profile", updates)
+      const updatedProfile = await apiPatch<ProfileData>("/api/profile", data)
       setProfile(updatedProfile)
-      setDraft(updatedProfile)
+      form.reset({
+        name: updatedProfile.name || undefined,
+        email: updatedProfile.email || undefined,
+        pronouns: updatedProfile.pronouns,
+        website: updatedProfile.website,
+        organization_name: updatedProfile.organization_name,
+        location_place_id: updatedProfile.location_place_id,
+        location_label: updatedProfile.location_label,
+      })
       setIsEditing(false)
     } catch (error) {
       console.error("Error saving profile:", error)
       setSaveError(error instanceof Error ? error.message : "Failed to save profile")
-    } finally {
-      setSaving(false)
     }
+  }
+
+  const handleCancel = () => {
+    if (profile) {
+      form.reset({
+        name: profile.name || undefined,
+        email: profile.email || undefined,
+        pronouns: profile.pronouns,
+        website: profile.website,
+        organization_name: profile.organization_name,
+        location_place_id: profile.location_place_id,
+        location_label: profile.location_label,
+      })
+    }
+    setIsEditing(false)
+    setSaveError(null)
   }
 
   const Field = ({ label, value }: { label: string; value?: string | null }) => (
@@ -87,7 +115,7 @@ export const MyInfoTab: React.FC = () => {
     )
   }
 
-  if (!profile || !draft) {
+  if (!profile) {
     return (
       <section className="mt-6">
         <Card border="dashed" padding="md">
@@ -108,25 +136,21 @@ export const MyInfoTab: React.FC = () => {
         <div className="mb-4 flex items-center justify-between">
           <H3 className="text-gray-900">Personal Info</H3>
           {!isEditing ? (
-            <Button variant="secondary" onClick={() => { setDraft({ ...profile }); setIsEditing(true) }}>
+            <Button variant="secondary" onClick={() => setIsEditing(true)}>
               Edit Profile
             </Button>
           ) : (
             <div className="flex gap-2">
               <Button
-                onClick={handleSave}
-                disabled={saving}
+                onClick={form.handleSubmit(handleSave)}
+                disabled={form.formState.isSubmitting}
               >
-                {saving ? "Saving..." : "Save Changes"}
+                {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
               <Button
                 variant="ghost"
-                onClick={() => {
-                  setDraft({ ...profile })
-                  setIsEditing(false)
-                  setSaveError(null)
-                }}
-                disabled={saving}
+                onClick={handleCancel}
+                disabled={form.formState.isSubmitting}
               >
                 Cancel
               </Button>
@@ -157,36 +181,31 @@ export const MyInfoTab: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="space-y-1">
-              <Text className="font-semibold text-gray-800">Full Name</Text>
-              <Input value={draft.name || ""} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+          <form onSubmit={form.handleSubmit(handleSave)} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <TextField form={form} name="name" label="Full Name" />
+              <TextField form={form} name="pronouns" label="Pronouns" />
+              <TextField form={form} name="email" label="Email" type="email" />
+              <div className="md:col-span-2">
+                <LocationField
+                  form={form}
+                  addressName="location_label"
+                  placeIdName="location_place_id"
+                  label="Location"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <TextField form={form} name="organization_name" label="Organization" />
+              </div>
+              <div className="md:col-span-2">
+                <TextField form={form} name="website" label="Website" type="url" />
+              </div>
+              <div className="md:col-span-2 space-y-1">
+                <Text className="font-semibold text-gray-800">Emerging Artist Status</Text>
+                <Input value={formatStatus(profile.artist_status) || ""} disabled />
+              </div>
             </div>
-            <div className="space-y-1">
-              <Text className="font-semibold text-gray-800">Pronouns</Text>
-              <Input value={draft.pronouns || ""} onChange={(e) => setDraft({ ...draft, pronouns: e.target.value })} />
-            </div>
-            <div className="space-y-1">
-              <Text className="font-semibold text-gray-800">Email</Text>
-              <Input type="email" value={draft.email || ""} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
-            </div>
-            <div className="space-y-1">
-              <Text className="font-semibold text-gray-800">Location</Text>
-              <Input value={draft.location_label || ""} onChange={(e) => setDraft({ ...draft, location_label: e.target.value })} />
-            </div>
-            <div className="md:col-span-2 space-y-1">
-              <Text className="font-semibold text-gray-800">Organization</Text>
-              <Input value={draft.organization_name || ""} onChange={(e) => setDraft({ ...draft, organization_name: e.target.value })} />
-            </div>
-            <div className="md:col-span-2 space-y-1">
-              <Text className="font-semibold text-gray-800">Website</Text>
-              <Input value={draft.website || ""} onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
-            </div>
-            <div className="md:col-span-2 space-y-1">
-              <Text className="font-semibold text-gray-800">Emerging Artist Status</Text>
-              <Input value={formatStatus(draft.artist_status) || ""} disabled />
-            </div>
-          </div>
+          </form>
         )}
       </Card>
     </section>

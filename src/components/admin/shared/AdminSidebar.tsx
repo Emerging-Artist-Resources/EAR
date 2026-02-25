@@ -16,6 +16,8 @@ interface NavItem {
 const adminNavItems: NavItem[] = [
   { name: "Analytics", href: "/admin/analytics" },
   { name: "Review Listings", href: "/admin" },
+  { name: "Link Pieces", href: "/admin/pieces" },
+  { name: "Link Classes", href: "/admin/classes" },
   { name: "Review Profiles", href: "/admin/profiles" },
   { name: "Manage Announcements", href: "/admin/notifications" },
 ]

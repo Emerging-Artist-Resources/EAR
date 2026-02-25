@@ -10,9 +10,7 @@ export const performanceSchema = z.object({
   showTime: z.string().min(1, "Show time is required"), // HH:MM
 
   // Details (performance-specific)
-  submitterName: z.string().min(1, "Name is required"),
-  submitterPronouns: z.string().min(1, "Pronouns are required"),
-  contactEmail: z.string().email("Enter a valid email"),
+  // Note: User info (name, pronouns, email) is retrieved from authenticated user profile, not form data
   company: z.string().optional().or(z.literal("")),
   companyWebsite: urlString.optional().or(z.literal("")),
   ticketPrice: z.string().min(1, "Ticket price is required"),
@@ -32,7 +30,7 @@ export const performanceSchema = z.object({
   referralOther: z.string().optional().or(z.literal("")),
   joinEmailList: z.boolean().default(false),
   agreeCompTickets: z.boolean(),
-  photoUrls: z.array(urlString).min(1, "At least 1 photo URL").max(5, "Max 5 photos"),
+  promoImagePaths: z.array(z.string()).min(1, "At least 1 photo path").max(5, "Max 5 photos"),
 })
 
 export const notificationSchema = z.object({

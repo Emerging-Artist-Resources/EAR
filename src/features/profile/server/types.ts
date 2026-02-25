@@ -17,3 +17,25 @@ export interface SavedEvent {
 export interface ProfileSavedEventsFilter {
   mode: "all" | "upcoming" | "past";
 }
+
+export interface SavedListing {
+  id: string;
+  user_id: string;
+  listing_id: string;
+  attendance_status: "attended" | "missed" | null;
+  saved_at: string;
+  updated_at: string;
+}
+
+export interface ActivityOverview {
+  savedCount: number;
+  listingsCount: number;
+  attendedCount: number;
+}
+
+export interface MyListing {
+  id: string;
+  type: string;
+  status: "pending" | "approved" | "rejected";
+  submitted_at: string;
+}

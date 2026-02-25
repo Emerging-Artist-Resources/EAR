@@ -2,7 +2,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { UseFormReturn, FieldValues, useFieldArray } from "react-hook-form"
+import { UseFormReturn, FieldValues, useFieldArray, Path } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { LocationField } from "../LocationField"
@@ -113,11 +113,14 @@ export function DateCard<T extends FieldValues>({
     if (isFirst) onFirstDateTimesChange?.()
   }
 
+  // Only auto-add time if showTime is true and times array is empty
+  // This is a safety net - parent DateTimeList should initialize times correctly,
+  // but this ensures at least one time input exists if parent doesn't
   useEffect(() => {
     if (!showTime) return
     if (times.length > 0) return
     timesArray.append({ time: "" } as any)
-  }, [showTime, index, times.length])
+  }, [showTime, times.length, timesArray])
 
   return (
     <Card className="space-y-3 rounded-2xl border border-primary-200 bg-primary-50/40 p-4">
@@ -203,18 +206,17 @@ export function DateCard<T extends FieldValues>({
         <div className="mt-3">
           <LocationField
             form={form}
-            addressName={`${name}.${index}.${locationConfig.addressName}`}
-            venueName={locationConfig.venueName ? `${name}.${index}.${locationConfig.venueName}` : undefined}
-            placeIdName={locationConfig.placeIdName ? `${name}.${index}.${locationConfig.placeIdName}` : undefined}
-            latName={locationConfig.latName ? `${name}.${index}.${locationConfig.latName}` : undefined}
-            lngName={locationConfig.lngName ? `${name}.${index}.${locationConfig.lngName}` : undefined}
-            instructionsName={locationConfig.instructionsName ? `${name}.${index}.${locationConfig.instructionsName}` : undefined}
+            addressName={`${name}.${index}.${locationConfig.addressName}` as Path<T>}
+            venueName={locationConfig.venueName ? `${name}.${index}.${locationConfig.venueName}` as Path<T> : undefined}
+            placeIdName={locationConfig.placeIdName ? `${name}.${index}.${locationConfig.placeIdName}` as Path<T> : undefined}
+            latName={locationConfig.latName ? `${name}.${index}.${locationConfig.latName}` as Path<T> : undefined}
+            lngName={locationConfig.lngName ? `${name}.${index}.${locationConfig.lngName}` as Path<T> : undefined}
+            instructionsName={locationConfig.instructionsName ? `${name}.${index}.${locationConfig.instructionsName}` as Path<T> : undefined}
             label={locationConfig.label || "Location"}
             note={locationConfig.note}
             instructionsLabel={locationConfig.instructionsLabel}
             instructionsPlaceholder={locationConfig.instructionsPlaceholder}
             required={locationConfig.required}
-            errorMode={errorMode}
           />
         </div>
       )}

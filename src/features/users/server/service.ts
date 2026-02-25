@@ -1,5 +1,7 @@
 import { listProfilesRepo, upsertProfileRoleRepo, listAdminProfilesRepo, updateProfileStatusRepo, markProfileReviewedRepo, getAdminEligibilitySubmissionsRepo } from "./repository"
 import type { AdminProfileItem, ProfileStatus, ProfileType, AdminEligibilitySubmission } from "@/components/admin/profiles/profile-types"
+import { sendProfileApprovalEmail } from "@/features/profile/server/service"
+import { getSupabaseServiceClient } from "@/lib/supabase/service"
 
 export type UserSummary = { id: string; name: string | null; email: string | null; role: 'USER' | 'ADMIN'; createdAt: string }
 
@@ -51,7 +53,26 @@ export async function updateProfileStatus(userId: string, status: 'emerging' | '
 }
 
 export async function markProfileReviewed(userId: string) {
+  const supabase = getSupabaseServiceClient()
+  
+  const { data: profile, error: fetchError } = await supabase
+    .from('profiles')
+    .select('name, email')
+    .eq('id', userId)
+    .single()
+  
+  if (fetchError || !profile) {
+    throw fetchError || new Error("Profile not found")
+  }
+  
   await markProfileReviewedRepo(userId)
+  
+  try {
+    await sendProfileApprovalEmail(profile.name || null, profile.email || null, userId)
+  } catch (emailError) {
+    console.error("[EMAIL] Failed to send profile approval email:", emailError)
+  }
+  
   return { id: userId }
 }
 

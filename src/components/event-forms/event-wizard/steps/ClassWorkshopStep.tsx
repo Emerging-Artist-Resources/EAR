@@ -1,16 +1,14 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
-import { UseFormReturn, Path, useWatch } from "react-hook-form"
+import { useEffect } from "react"
+import { UseFormReturn, useWatch } from "react-hook-form"
 import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
-import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { FestivalAssociationSection } from "./class-workshop/FestivalAssociationSection"
-import { ClassWorkshopListingFeeSection } from "./class-workshop/ClassWorkshopListingFeeSection"
 import { ClassOccurrencesPicker } from "@/components/forms/blocks/ClassOccurrencesPicker"
 
 interface ClassesWorkshopsStepProps {
@@ -28,19 +26,19 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
     name: "isPartOfFestivalOrWorkshop",
   }) as "YES" | "NO" | undefined
 
-  const classOccurrences = useWatch({
-    control: form.control,
-    name: "classOccurrences" as Path<EventFormData>,
-  }) as Array<{ date: string; times: Array<{ time: string }> }> | undefined
+  // const occurrences = useWatch({
+  //   control: form.control,
+  //   name: "occurrences" as Path<EventFormData>,
+  // }) as Array<{ date: string; times: Array<{ time: string }> }> | undefined
 
   const isWorkshop = classWorkshopType === "WORKSHOP"
   const isPart = isPartOfFestivalOrWorkshop === "YES"
   const shouldUseParentDates = !isWorkshop && isPart
 
-  const occurrenceCount = useMemo(() => {
-    if (!classOccurrences || !Array.isArray(classOccurrences)) return 0
-    return classOccurrences.length
-  }, [classOccurrences])
+  // const occurrenceCount = useMemo(() => {
+  //   if (!occurrences || !Array.isArray(occurrences)) return 0
+  //   return occurrences.length
+  // }, [occurrences])
 
   useEffect(() => {
     if (!isPart) {
@@ -80,7 +78,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
       <Section title="Basic Info">
         <TextField
           form={form}
-          name={"classTitle"}
+          name={"title"}
           label={isWorkshop ? "Workshop Name" : "Class Name"}
           placeholder="e.g., Contemporary Dance Workshop, Intro to Ballet, Hip Hop Class"
           required
@@ -88,7 +86,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
 
         <TextField
           form={form}
-          name={"companyIndividualName"}
+          name={"organizer"}
           label="Company / Individuals"
           required
           placeholder="Name of the company or individual(s) running the class/workshop"
@@ -96,22 +94,24 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
 
         <TextField
           form={form}
-          name={"classPrice"}
-          label="Class Price"
+          name={"price"}
+          label={isWorkshop ? "Workshop Price" : "Class Price"}
           placeholder="e.g., $30, Free, $20-40 sliding scale"
+          required={!isWorkshop}
         />
 
         <TextField
           form={form}
-          name={"classLink"}
+          name={"link"}
           label="Registration Link"
           placeholder="Link or signup instructions"
+          required={!isWorkshop}
         />
 
         <TextAreaField
           form={form}
-          name={"shortDescription"}
-          label="Class Description"
+          name={"description"}
+          label={isWorkshop ? "Workshop Description" : "Class Description"}
           required
           rows={3}
         />
@@ -170,7 +170,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
         <Section title="Schedule">
           <DateTimeList
             form={form as unknown as UseFormReturn<Record<string, unknown>>}
-            name={"classOccurrences"}
+            name={"occurrences"}
             title={isWorkshop ? "Workshop Dates & Times" : "Class Dates & Times"}
             note="Add all known dates and start times."
             required
@@ -181,46 +181,13 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
               placeIdName: "placeId",
               latName: "lat",
               lngName: "lng",
-              instructionsName: "instructions",
+              instructionsName: "locationInstructions",
               label: "Location",
               required: true,
             }}
           />
         </Section>
       )}
-
-      <Section title="Promo Images">
-        <PhotoUploader
-          form={form}
-          name={"promoFiles"}
-          label="Promotional Images"
-          description="Images are highly encouraged for marketing! Please upload up to 5 images."
-        />
-        <TextAreaField
-          form={form}
-          name={"credits"}
-          label="Image Description / Photo Credit"
-          placeholder="Describe the images and provide photo credit"
-          rows={3}
-        />
-        <TextField form={form} name={"socialHandles"} label="Social Media Handles" placeholder="@username" />
-      </Section>
-
-      <ClassWorkshopListingFeeSection
-        form={form}
-        isWorkshop={isWorkshop}
-        occurrenceCount={occurrenceCount}
-      />
-
-      <Section title="Additional Information">
-        <TextAreaField
-          form={form}
-          name={"notes"}
-          label="Anything else you'd like us to know?"
-          placeholder="Pricing, accessibility, what to bring, etc."
-          rows={4}
-        />
-      </Section>
     </>
   )
 }

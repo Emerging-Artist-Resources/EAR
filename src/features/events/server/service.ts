@@ -1,7 +1,17 @@
-import { createEventWithDetails, listEvents, listCalendarItemsRepo, getEventPublicRepo, listMyEventsRepo, getEventForOwnerRepo, listAdminEventsRepo, getAdminEventDetailRepo } from "./repository"
+import { createListingOwnedRepo, listEvents, listCalendarItemsRepo, getEventPublicRepo, listMyEventsRepo, getEventForOwnerRepo, listAdminEventsRepo, getAdminEventDetailRepo, submitListingRepo } from "./repository"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
+import type { SupabaseClient } from "@supabase/supabase-js"
+import { sendListingEmail } from "@/lib/email/sendListingEmail"
+import { getListingTitle } from "./listing-utils"
+import type { CreateListingInput } from "./repository-types"
 
-export async function createPerformance(formData: EventFormData, createdBy: string | null) {
+export interface UserInfo {
+  name: string
+  email: string
+  pronouns?: string | null
+}
+
+export async function createPerformance(supabase: SupabaseClient, formData: EventFormData, userInfo: UserInfo) {
   const parsed = eventFormSchema.parse(formData)
   // For now we support performance path; other types will follow similarly
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York'
@@ -11,47 +21,58 @@ export async function createPerformance(formData: EventFormData, createdBy: stri
     tz,
   },
   ...(parsed.extraOccurrences ?? []).flatMap(o => 
-    o.times.map(t => ({
+    o.times?.map(t => ({
       starts_at_utc: new Date(`${o.date}T${t.time}:00Z`).toISOString(),
       ends_at_utc: null,
       tz,
     }))
   )]
 
+  // Note: This function appears to be legacy. The new system uses buildEventPayload and createListingOwnedRepo
+  // Keeping for backward compatibility but should migrate to new system
   const input = {
     type: 'performance' as const,
-    contact_name: parsed.submitterName ?? '',
-    pronouns: parsed.submitterPronouns,
-    contact_email: parsed.contactEmail ?? '',
-    org_name: parsed.company || null,
-    org_website: parsed.companyWebsite || null,
-    address: parsed.address,
-    social_handles: { handles: parsed.socialHandles },
-    notes: parsed.notes || null,
-    created_by: createdBy,
-    meta: {
-      referral_sources: ('referralSources' in parsed && parsed.referralSources) ? parsed.referralSources : [],
-      referral_other: ('referralOther' in parsed && parsed.referralOther) ? parsed.referralOther : null,
-      join_email_list: ('joinEmailList' in parsed && parsed.joinEmailList !== undefined) ? parsed.joinEmailList : null,
-      submitted_before: ('submittedBefore' in parsed && parsed.submittedBefore) ? parsed.submittedBefore : null,
+    base: {
+      contact_name: userInfo.name || "",
+      pronouns: userInfo.pronouns || null,
+      contact_email: userInfo.email || "",
+      company: parsed.company || null,
+      company_website: parsed.companyWebsite || null,
+      address: parsed.address || null,
+      social_handles: parsed.socialHandles || null,
+      notes: parsed.notes || null,
+      //borough: null,
+      meta: {
+        referral_sources: ('referralSources' in parsed && parsed.referralSources) ? parsed.referralSources : [],
+        referral_other: ('referralOther' in parsed && parsed.referralOther) ? parsed.referralOther : null,
+        join_email_list: ('joinEmailList' in parsed && parsed.joinEmailList !== undefined) ? parsed.joinEmailList : null,
+        submitted_before: ('submittedBefore' in parsed && parsed.submittedBefore) ? parsed.submittedBefore : null,
+      },
     },
-    borough: null,
-    performance: {
-      show_name: parsed.title ?? '',
-      short_description: parsed.shortDescription ?? '',
-      credit_info: parsed.credits,
-      ticket_price_cents: Number((parsed.ticketPrice ?? '0').replace(/[^0-9]/g, '')) || 0,
-      ticket_link: parsed.ticketLink ?? '',
+    details: {
+      subtype: 'ORGANIZER' as const,
+      title: parsed.title ?? '',
+      description: parsed.shortDescription ?? parsed.credits ?? '',
+      link: parsed.ticketLink ?? null,
+      price: parsed.ticketPrice ? `$${parsed.ticketPrice}` : null,
       agree_comp_tickets: Boolean(parsed.agreeCompTickets),
     },
-    photos: (parsed.photoUrls ?? []).slice(0,5).map((p, idx) => ({ path: p, sort_order: idx })),
-    occurrences,
+    occurrences: occurrences.map(occ => ({
+      starts_at_utc: occ?.starts_at_utc ?? '',
+      ends_at_utc: occ?.ends_at_utc ?? null,
+      tz: occ?.tz ?? '',
+      occurrence_type: 'event' as const,
+    })),
+    photos: (parsed.promoImagePaths ?? []).slice(0,5).map((p, idx) => ({ path: p, sort_order: idx })),
   }
 
-  return await createEventWithDetails(input)
+  // Note: This function appears to be legacy code
+  // The new system uses buildEventPayload and createListingOwnedRepo directly
+  // This function is kept for backward compatibility but should be migrated
+  return await createListingOwnedRepo(supabase, input)
 }
 
-export async function listCalendarItems(params: { fromISO: string; toISO: string; types?: Array<'performance'|'audition'|'creative'|'class'|'funding'>; borough?: string | null; limit?: number }) {
+export async function listCalendarItems(params: { fromISO: string; toISO: string; types?: Array<'performance'|'audition'|'creative'|'class'>; limit?: number }) {
   return await listCalendarItemsRepo(params)
 }
 
@@ -75,6 +96,10 @@ export async function getAdminEventDetail(eventId: string) {
   return await getAdminEventDetailRepo(eventId)
 }
 
+export async function submitListing(listingId: string) {
+  return await submitListingRepo(listingId)
+}
+
 export type ListOptions = { status?: string | null, userId?: string | null, limit?: number, cursor?: string | null }
 export async function listPerformances(params: ListOptions) {
   const effectiveStatus = params.userId ? params.status ?? undefined : 'APPROVED'
@@ -83,6 +108,53 @@ export async function listPerformances(params: ListOptions) {
     userId: params.userId ?? null,
     limit: params.limit,
     cursor: params.cursor ?? null,
+  })
+}
+
+export async function sendListingConfirmationEmail(
+  input: CreateListingInput,
+  listingId: string
+): Promise<void> {
+  const listingTitle = getListingTitle(input)
+  await sendListingEmail("listing-received", {
+    to: input.base.contact_email,
+    submitterName: input.base.contact_name,
+    listingTitle,
+    listingId,
+  })
+}
+
+export async function sendListingUpdateEmail(
+  listingId: string,
+  contactEmail: string,
+  contactName: string,
+  listingTitle: string
+): Promise<void> {
+  await sendListingEmail("listing-updated", {
+    to: contactEmail,
+    submitterName: contactName,
+    listingTitle,
+    listingId,
+  })
+}
+
+export async function sendAdminListingNotificationEmail(
+  input: CreateListingInput,
+  listingId: string
+): Promise<void> {
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL
+  if (!adminEmail) {
+    console.warn("[EMAIL] ADMIN_NOTIFICATION_EMAIL not set, skipping admin notification")
+    return
+  }
+
+  const listingTitle = getListingTitle(input)
+  await sendListingEmail("admin-listing-received", {
+    to: adminEmail,
+    submitterName: input.base.contact_name,
+    listingTitle,
+    listingId,
+    submitterEmail: input.base.contact_email,
   })
 }
 

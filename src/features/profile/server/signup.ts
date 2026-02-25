@@ -3,6 +3,7 @@
 import { signupFormSchema } from "@/lib/validations/signup"
 import { createProfileRepo, createEligibilitySubmissionRepo } from "./repository-signup"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
+import { sendNewProfileAdminEmail, sendEmailVerificationEmail } from "./service"
 
 export async function signupAction(formData: unknown) {
   try {
@@ -43,6 +44,18 @@ export async function signupAction(formData: unknown) {
     try {
       const profile = await createProfileRepo(validatedData, userId)
       await createEligibilitySubmissionRepo(validatedData, profile.id)
+
+      try {
+        await sendNewProfileAdminEmail(profile, userId)
+      } catch (emailError) {
+        console.error("[EMAIL] Failed to send admin notification email:", emailError)
+      }
+
+      try {
+        await sendEmailVerificationEmail(validatedData.email, validatedData.name)
+      } catch (emailError) {
+        console.error("[EMAIL] Failed to send email verification email:", emailError)
+      }
 
       return { success: true }
     } catch (dbError: any) {

@@ -6,8 +6,19 @@ import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
 import { Button } from "@/components/ui/button"
+import { formatTime12Hour } from "@/lib/datetime-utils"
 
-type DateTimeEntry = { date: string; times: Array<{ time: string }> }
+type DateTimeEntry = { 
+  date: string
+  times: Array<{ time: string }>
+  // Location fields (optional, added when locationConfig is provided)
+  address?: string
+  venueName?: string
+  placeId?: string
+  lat?: number
+  lng?: number
+  locationInstructions?: string
+}
 
 function isValidEntry(entry: DateTimeEntry | undefined): boolean {
   if (!entry?.date || !entry.date.trim()) return false
@@ -18,11 +29,13 @@ function filterValidEntries(entries: DateTimeEntry[]): DateTimeEntry[] {
   return entries.filter(isValidEntry)
 }
 
+// Use the utility function from datetime-utils
+
 export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormData> }) {
   // Use useWatch for better reactivity with nested form values
   const extras = (useWatch({
     control: form.control,
-    name: "extraOccurrences" as Path<EventFormData>,
+    name: "occurrences" as Path<EventFormData>,
     defaultValue: [],
   }) as DateTimeEntry[] | undefined) ?? []
   const isConfirmed = useWatch({
@@ -31,7 +44,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
   }) as boolean | undefined
   const eventType = useWatch({
     control: form.control,
-    name: "event_type" as Path<EventFormData>,
+    name: "eventType" as Path<EventFormData>,
   }) as "SOLO" | "SPLIT_BILL" | "FESTIVAL" | undefined
   
   // For SOLO events, skip confirmation - dates will be saved on submit
@@ -50,18 +63,106 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
   // This ensures values are restored even if handleEdit timing is off
   useEffect(() => {
     if (prevConfirmedRef.current === true && isConfirmed === false && confirmedEntriesRef.current.length > 0) {
-      const currentExtras = (form.getValues("extraOccurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined) ?? []
+      console.log("[OrganizerDatesTimes] useEffect - switching from confirmed to editing")
+      console.log("[OrganizerDatesTimes] useEffect - confirmedEntriesRef.current:", JSON.stringify(confirmedEntriesRef.current, null, 2))
+      
+      const currentExtras = (form.getValues("occurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined) ?? []
+      console.log("[OrganizerDatesTimes] useEffect - currentExtras:", JSON.stringify(currentExtras, null, 2))
+      
       const validCurrentEntries = filterValidEntries(currentExtras)
-      // Restore values if form is empty or invalid - use setValue() to avoid scroll jump
-      if (validCurrentEntries.length === 0 || currentExtras.length !== confirmedEntriesRef.current.length) {
-        form.setValue("extraOccurrences" as Path<EventFormData>, confirmedEntriesRef.current as unknown as never, {
-          shouldDirty: true,
-          shouldTouch: false,
-          shouldValidate: false,
-        })
-        form.setValue("eventDatesConfirmed" as Path<EventFormData>, false as unknown as never, {
-          shouldDirty: true,
-        })
+      
+      // Check if location fields are missing (compare first entry if both exist)
+      const hasLocationInConfirmed = confirmedEntriesRef.current.length > 0 && 
+                                      (confirmedEntriesRef.current[0].address || 
+                                       confirmedEntriesRef.current[0].venueName ||
+                                       confirmedEntriesRef.current[0].placeId)
+      const missingLocation = validCurrentEntries.length > 0 && 
+                              hasLocationInConfirmed &&
+                              !validCurrentEntries[0].address && 
+                              !validCurrentEntries[0].venueName &&
+                              !validCurrentEntries[0].placeId
+      
+      // Restore values if form is empty, invalid, or missing location data
+      const needsRestore = validCurrentEntries.length === 0 || 
+                          currentExtras.length !== confirmedEntriesRef.current.length ||
+                          missingLocation
+      
+      console.log("[OrganizerDatesTimes] useEffect - needsRestore:", needsRestore, {
+        validCurrentEntriesLength: validCurrentEntries.length,
+        currentExtrasLength: currentExtras.length,
+        confirmedLength: confirmedEntriesRef.current.length,
+        hasLocationInConfirmed,
+        missingLocation,
+      })
+      
+      if (needsRestore) {
+        // Deep copy to ensure all fields including location are preserved
+        const entriesToRestore = JSON.parse(JSON.stringify(confirmedEntriesRef.current))
+        console.log("[OrganizerDatesTimes] useEffect - entriesToRestore:", JSON.stringify(entriesToRestore, null, 2))
+        
+        // Use setTimeout to ensure this runs after any component remounts
+        setTimeout(() => {
+          const beforeSet = form.getValues("occurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined
+          console.log("[OrganizerDatesTimes] useEffect - form values BEFORE setValue (10ms):", JSON.stringify(beforeSet, null, 2))
+          
+          form.setValue("occurrences" as Path<EventFormData>, entriesToRestore as unknown as never, {
+            shouldDirty: true,
+            shouldTouch: false,
+            shouldValidate: false,
+          })
+          
+          const afterSet = form.getValues("occurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined
+          console.log("[OrganizerDatesTimes] useEffect - form values AFTER setValue (10ms):", JSON.stringify(afterSet, null, 2))
+          
+          // Explicitly set location fields on ALL entries to preserve different locations per occurrence
+          entriesToRestore.forEach((entry: DateTimeEntry, index: number) => {
+            if (entry.address) {
+              form.setValue(`occurrences.${index}.address` as Path<EventFormData>, entry.address as unknown as never, {
+                shouldDirty: true,
+                shouldTouch: false,
+              })
+            }
+            if (entry.venueName) {
+              form.setValue(`occurrences.${index}.venueName` as Path<EventFormData>, entry.venueName as unknown as never, {
+                shouldDirty: true,
+                shouldTouch: false,
+              })
+            }
+            if (entry.placeId) {
+              form.setValue(`occurrences.${index}.placeId` as Path<EventFormData>, entry.placeId as unknown as never, {
+                shouldDirty: true,
+                shouldTouch: false,
+              })
+            }
+            if (entry.lat !== undefined) {
+              form.setValue(`occurrences.${index}.lat` as Path<EventFormData>, entry.lat as unknown as never, {
+                shouldDirty: true,
+                shouldTouch: false,
+              })
+            }
+            if (entry.lng !== undefined) {
+              form.setValue(`occurrences.${index}.lng` as Path<EventFormData>, entry.lng as unknown as never, {
+                shouldDirty: true,
+                shouldTouch: false,
+              })
+            }
+            if (entry.locationInstructions) {
+              form.setValue(`occurrences.${index}.locationInstructions` as Path<EventFormData>, entry.locationInstructions as unknown as never, {
+                shouldDirty: true,
+                shouldTouch: false,
+              })
+            }
+          })
+          
+          console.log("[OrganizerDatesTimes] useEffect - restored location fields for all entries:", entriesToRestore.map((e: DateTimeEntry, i: number) => ({
+            index: i,
+            address: e.address,
+            venueName: e.venueName,
+          })))
+          
+          const afterLocationSet = form.getValues("occurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined
+          console.log("[OrganizerDatesTimes] useEffect - form values AFTER setting location fields:", JSON.stringify(afterLocationSet, null, 2))
+        }, 10)
       }
     }
     prevConfirmedRef.current = isConfirmed
@@ -81,15 +182,27 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
 
   const handleConfirm = () => {
     if (hasCompleteEntries) {
-      const currentExtras = (form.getValues("extraOccurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined) ?? []
-      const valid = filterValidEntries(currentExtras)
+      const currentExtras = (form.getValues("occurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined) ?? []
+      console.log("[OrganizerDatesTimes] handleConfirm - currentExtras:", JSON.stringify(currentExtras, null, 2))
       
+      const valid = filterValidEntries(currentExtras)
+      console.log("[OrganizerDatesTimes] handleConfirm - valid entries:", JSON.stringify(valid, null, 2))
+      
+      // Deep copy to preserve all fields including location fields
       confirmedEntriesRef.current = JSON.parse(JSON.stringify(valid))
-      form.setValue("extraOccurrences" as Path<EventFormData>, valid as unknown as never, {
+      console.log("[OrganizerDatesTimes] handleConfirm - saved to confirmedEntriesRef:", JSON.stringify(confirmedEntriesRef.current, null, 2))
+      
+      // Ensure we're saving the complete entries with all location fields
+      form.setValue("occurrences" as Path<EventFormData>, confirmedEntriesRef.current as unknown as never, {
         shouldDirty: true,
         shouldTouch: true,
         shouldValidate: false,
       })
+      
+      // Verify what was actually set
+      const afterSet = form.getValues("occurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined
+      console.log("[OrganizerDatesTimes] handleConfirm - after setValue:", JSON.stringify(afterSet, null, 2))
+      
       form.setValue("eventDatesConfirmed" as Path<EventFormData>, true as unknown as never, {
         shouldDirty: true,
       })
@@ -101,28 +214,76 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
 
     const scrollY = window.scrollY
     
-    const currentFormValues = form.getValues()
-    form.reset({
-      ...currentFormValues,
-      extraOccurrences: confirmedEntriesRef.current,
-      eventDatesConfirmed: false,
-    } as EventFormData, {
-      keepDirty: true,
-      keepTouched: true,
-      keepErrors: false,
+    // Deep copy to ensure all fields including location are preserved
+    const entriesToRestore = JSON.parse(JSON.stringify(confirmedEntriesRef.current))
+    
+    // Set eventDatesConfirmed to false first
+    form.setValue("eventDatesConfirmed" as Path<EventFormData>, false as unknown as never, {
+      shouldDirty: true,
     })
     
-    form.setValue("extraOccurrences" as Path<EventFormData>, confirmedEntriesRef.current as unknown as never, {
+    // Set occurrences BEFORE incrementing key, so the values are in place when DateTimeList remounts
+    // This is critical - the values must be set before the component remounts
+    form.setValue("occurrences" as Path<EventFormData>, entriesToRestore as unknown as never, {
       shouldDirty: true,
       shouldTouch: false,
       shouldValidate: false,
     })
     
+    // Increment key to force remount of DateTimeList with the restored values
     editKeyRef.current += 1
     
-    form.setValue("eventDatesConfirmed" as Path<EventFormData>, false as unknown as never, {
-      shouldDirty: true,
-    })
+    // Use multiple timeouts to ensure values persist through the remount cycle
+    // After remount, explicitly set location fields on ALL entries to preserve different locations
+    // This ensures each occurrence keeps its own location even if syncLocation is enabled
+    setTimeout(() => {
+      entriesToRestore.forEach((entry: DateTimeEntry, index: number) => {
+        console.log(`[OrganizerDatesTimes] handleEdit - restoring location for entry ${index}:`, {
+          address: entry.address,
+          venueName: entry.venueName,
+        })
+        
+        if (entry.address) {
+          form.setValue(`occurrences.${index}.address` as Path<EventFormData>, entry.address as unknown as never, {
+            shouldDirty: true,
+            shouldTouch: false,
+          })
+        }
+        if (entry.venueName) {
+          form.setValue(`occurrences.${index}.venueName` as Path<EventFormData>, entry.venueName as unknown as never, {
+            shouldDirty: true,
+            shouldTouch: false,
+          })
+        }
+        if (entry.placeId) {
+          form.setValue(`occurrences.${index}.placeId` as Path<EventFormData>, entry.placeId as unknown as never, {
+            shouldDirty: true,
+            shouldTouch: false,
+          })
+        }
+        if (entry.lat !== undefined) {
+          form.setValue(`occurrences.${index}.lat` as Path<EventFormData>, entry.lat as unknown as never, {
+            shouldDirty: true,
+            shouldTouch: false,
+          })
+        }
+        if (entry.lng !== undefined) {
+          form.setValue(`occurrences.${index}.lng` as Path<EventFormData>, entry.lng as unknown as never, {
+            shouldDirty: true,
+            shouldTouch: false,
+          })
+        }
+        if (entry.locationInstructions) {
+          form.setValue(`occurrences.${index}.locationInstructions` as Path<EventFormData>, entry.locationInstructions as unknown as never, {
+            shouldDirty: true,
+            shouldTouch: false,
+          })
+        }
+      })
+      
+      const afterLocationSet = form.getValues("occurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined
+      console.log("[OrganizerDatesTimes] handleEdit - form values AFTER setting all location fields:", JSON.stringify(afterLocationSet, null, 2))
+    }, 50)
     
     requestAnimationFrame(() => {
       if (sectionRef.current) {
@@ -140,7 +301,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
         // For SOLO events, always show the DateTimeList directly (no confirmation needed)
         <DateTimeList<EventFormData>
           form={form}
-          name={"extraOccurrences"}
+          name={"occurrences"}
           title="Event dates and times"
           required
           locationConfig={{
@@ -149,7 +310,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
             placeIdName: "placeId",
             latName: "lat",
             lngName: "lng",
-            instructionsName: "instructions",
+            instructionsName: "locationInstructions",
             label: "Location",
             required: true,
           }}
@@ -162,7 +323,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
               <DateTimeList<EventFormData>
                 key={`edit-${editKeyRef.current}`}
                 form={form}
-                name={"extraOccurrences"}
+                name={"occurrences"}
                 title="Event dates and times"
                 required
                 locationConfig={{
@@ -171,7 +332,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
                   placeIdName: "placeId",
                   latName: "lat",
                   lngName: "lng",
-                  instructionsName: "instructions",
+                  instructionsName: "locationInstructions",
                   label: "Location",
                   required: true,
                 }}
@@ -192,10 +353,13 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
                 {confirmedEntries.length > 0 ? (
                   <ul className="space-y-1 text-sm text-gray-600">
                     {confirmedEntries.map((ex, idx) => {
-                      const validTimes = ex.times?.filter(t => t?.time && t.time.trim() !== "").map(t => t.time) || []
+                      const validTimes = ex.times?.filter(t => t?.time && t.time.trim() !== "").map(t => formatTime12Hour(t.time)) || []
+                      const venueName = ex.venueName || ex.address || ""
+                      const timesDisplay = validTimes.join(", ")
+                      const locationDisplay = venueName ? ` · ${venueName}` : ""
                       return (
                         <li key={idx}>
-                          {ex.date} · {validTimes.join(", ")}
+                          {ex.date} · {timesDisplay}{locationDisplay}
                         </li>
                       )
                     })}

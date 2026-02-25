@@ -1,10 +1,14 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useRef, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { H2 } from "@/components/ui/typography"
 import { FilterBar } from "@/components/calendar/FilterBar"
+import { ListingDetailsModal } from "./ListingDetailsModal"
+import { MonthView } from "./MonthView"
+import { WeekView } from "./WeekView"
+import { DayView } from "./DayView"
 import type { CalendarItem } from "@/hooks/use-calendar"
 import {
   format,
@@ -13,93 +17,170 @@ import {
   startOfWeek,
   endOfWeek,
   eachDayOfInterval,
-  isSameMonth,
-  isSameDay,
   addMonths,
   subMonths,
   addWeeks,
   subWeeks,
   addDays,
 } from "date-fns"
+import { formatDateTimeEST as formatDateTimeESTUtil, convertUTCToEST } from "@/lib/datetime-utils"
+import { filterCalendarItems, getItemsForDate, handleMonthChange } from "./calendar-utils"
 
-interface CalendarProps { items: CalendarItem[] }
+const formatDateTimeEST = (date: Date): string => {
+  return formatDateTimeESTUtil(date.toISOString())
+}
 
-export function Calendar({ items }: CalendarProps) {
+const INITIAL_MONTH_KEY = (() => {
+  const now = new Date()
+  return `${now.getFullYear()}-${now.getMonth()}`
+})()
+
+interface CalendarProps { 
+  items: CalendarItem[]
+  deadlines?: CalendarItem[]
+  onMonthChange?: (monthStart: Date, monthEnd: Date) => void
+}
+
+export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [eventTypeFilter, setEventTypeFilter] = useState<string>('ALL')
+  const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set(['PERFORMANCE', 'CLASS', 'AUDITION', 'CREATIVE']))
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
+  const lastFetchedMonthRef = useRef<string | null>(INITIAL_MONTH_KEY)
 
-  const monthStart = startOfMonth(currentDate)
-  const monthEnd = endOfMonth(currentDate)
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd })
+  const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate])
+  const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate])
+  
+  const filteredItems = useMemo(() => {
+    return filterCalendarItems(items, selectedTypes)
+  }, [items, selectedTypes])
 
-  const firstDayOfMonth = monthStart.getDay()
-  const emptyCells = Array.from({ length: firstDayOfMonth }, () => null)
+  const itemsByDate = useMemo(() => {
+    const map = new Map<string, CalendarItem[]>()
+    const itemsByDateStr = new Map<string, CalendarItem[]>()
+    
+    let startDate: Date
+    let endDate: Date
+    
+    if (view === 'month') {
+      startDate = monthStart
+      endDate = monthEnd
+    } else if (view === 'week') {
+      startDate = startOfWeek(currentDate, { weekStartsOn: 0 })
+      endDate = endOfWeek(currentDate, { weekStartsOn: 0 })
+    } else {
+      startDate = currentDate
+      endDate = currentDate
+    }
+    
+    const startDateStr = format(startDate, 'yyyy-MM-dd')
+    const endDateStr = format(endDate, 'yyyy-MM-dd')
+    
+    filteredItems.forEach((item) => {
+      const estDate = convertUTCToEST(String(item.start))
+      const dateStr = estDate.date
+      
+      if (dateStr >= startDateStr && dateStr <= endDateStr) {
+        if (!itemsByDateStr.has(dateStr)) {
+          itemsByDateStr.set(dateStr, [])
+        }
+        itemsByDateStr.get(dateStr)!.push(item)
+      }
+    })
+    
+    itemsByDateStr.forEach((items, dateStr) => {
+      const seen = new Map<string, CalendarItem>()
+      for (const item of items) {
+        const key = `${item.listingId}-${dateStr}`
+        if (!seen.has(key)) {
+          seen.set(key, item)
+        }
+      }
+      const deduplicated = Array.from(seen.values())
+      if (deduplicated.length > 0) {
+        map.set(dateStr, deduplicated)
+      }
+    })
+    
+    return map
+  }, [filteredItems, view, currentDate, monthStart, monthEnd])
 
-  const navigate = (direction: 'prev' | 'next') => {
+  const daysInMonth = useMemo(() => {
+    return eachDayOfInterval({ start: monthStart, end: monthEnd })
+  }, [monthStart, monthEnd])
+
+  const firstDayOfMonth = useMemo(() => {
+    return monthStart.getDay()
+  }, [monthStart])
+
+  const emptyCells = useMemo(() => {
+    return Array.from({ length: firstDayOfMonth }, () => null)
+  }, [firstDayOfMonth])
+
+  const upcomingDeadlines = useMemo(() => {
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+    const now = startOfToday.getTime()
+    
+    return deadlines
+      .filter(it => new Date(String(it.start)).getTime() >= now)
+      .sort((a: { start: string | Date }, b: { start: string | Date }) => new Date(String(a.start)).getTime() - new Date(String(b.start)).getTime())
+      .slice(0, 5)
+  }, [deadlines])
+
+  const handleItemClick = useCallback((listingId: string) => {
+    setSelectedListingId(listingId)
+  }, [])
+
+  const handleModalClose = useCallback(() => {
+    setSelectedListingId(null)
+  }, [])
+
+  const navigate = useCallback((direction: 'prev' | 'next') => {
     const delta = direction === 'prev' ? -1 : 1
     if (view === 'month') {
-      setCurrentDate(delta === -1 ? subMonths(currentDate, 1) : addMonths(currentDate, 1))
+      const newDate = delta === -1 ? subMonths(currentDate, 1) : addMonths(currentDate, 1)
+      setCurrentDate(newDate)
+      handleMonthChange(newDate, onMonthChange, lastFetchedMonthRef)
     } else if (view === 'week') {
       setCurrentDate(delta === -1 ? subWeeks(currentDate, 1) : addWeeks(currentDate, 1))
     } else {
       setCurrentDate(delta === -1 ? addDays(currentDate, -1) : addDays(currentDate, 1))
     }
-  }
+  }, [view, currentDate, onMonthChange])
 
-  const filteredItems = useMemo(() => {
-    type PerfLike = CalendarItem | (CalendarItem & { [key: string]: unknown })
-
-    const asRecord = (val: unknown): Record<string, unknown> | null => {
-      return val && typeof val === 'object' && !Array.isArray(val) ? (val as Record<string, unknown>) : null
+  const handleTodayClick = useCallback(() => {
+    const today = new Date()
+    setCurrentDate(today)
+    if (view === 'month') {
+      handleMonthChange(today, onMonthChange, lastFetchedMonthRef)
     }
+  }, [view, onMonthChange])
 
-    const getFrom = (rec: Record<string, unknown> | null, key: string): unknown => {
-      return rec ? rec[key] : undefined
+  const formattedDateTitle = useMemo(() => {
+    if (view === 'month') {
+      return format(currentDate, "MMMM yyyy")
+    } else if (view === 'week') {
+      const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 })
+      const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 })
+      return `${format(weekStart, "MMM d")} – ${format(weekEnd, "MMM d, yyyy")}`
+    } else {
+      return format(currentDate, "MMMM d, yyyy")
     }
+  }, [view, currentDate])
 
-    const getEventType = (p: PerfLike): string | undefined => {
-      const prec = asRecord(p)
-      const details = asRecord(getFrom(prec, 'details'))
-      const val = getFrom(prec, 'eventType') ?? getFrom(prec, 'event_type') ?? getFrom(details, 'eventType') ?? getFrom(details, 'event_type')
-      return typeof val === 'string' ? val : undefined
-    }
+  const weekViewDays = useMemo(() => {
+    if (view !== 'week') return []
+    const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 })
+    return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+  }, [view, currentDate])
 
-    const getOpportunitySubtype = (p: PerfLike): string | undefined => {
-      const prec = asRecord(p)
-      const details = asRecord(getFrom(prec, 'details'))
-      const val = getFrom(details, 'opportunityType') ?? getFrom(prec, 'opportunityType')
-      return typeof val === 'string' ? val : undefined
-    }
-
-    return items.filter((p: PerfLike) => {
-      const type = (getEventType(p) || '').toUpperCase()
-      if (eventTypeFilter !== 'ALL') {
-        if (eventTypeFilter === 'PERFORMANCE' || eventTypeFilter === 'CLASS') {
-          if (type !== eventTypeFilter) return false
-        } else {
-          const sub = getOpportunitySubtype(p)
-          if (String(sub || '').toUpperCase() !== eventTypeFilter) return false
-        }
-      }
-
-      return true
-    })
-  }, [items, eventTypeFilter])
-
-  const getPerformancesForDate = (date: Date) => {
-    const targetIso = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-      .toISOString()
-      .slice(0, 10)
-    return filteredItems.filter((item) => {
-      const eventIso = String(item.start).slice(0, 10)
-      return eventIso === targetIso
-    })
-  }
-
-  // Need to call the API to get the upcoming deadlines -- rn upcoming deadlines might be upcoming events
-  // Need to update old api calls 
+  const dayViewData = useMemo(() => {
+    if (view !== 'day') return { deduplicated: [], all: [] }
+    const deduplicated = getItemsForDate(filteredItems, currentDate, true)
+    const all = getItemsForDate(filteredItems, currentDate, false)
+    return { deduplicated, all }
+  }, [view, currentDate, filteredItems])
 
   return (
     <>
@@ -116,18 +197,16 @@ export function Calendar({ items }: CalendarProps) {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
               </Button>
               <H2 className="text-xl sm:text-2xl">
-                {view === 'month' && format(currentDate, "MMMM yyyy")}
-                {view === 'week' && `${format(startOfWeek(currentDate, { weekStartsOn: 0 }), "MMM d")} – ${format(endOfWeek(currentDate, { weekStartsOn: 0 }), "MMM d, yyyy")}`}
-                {view === 'day' && format(currentDate, "MMMM d, yyyy")}
+                {formattedDateTitle}
               </H2>
               <Button variant="ghost" size="icon" onClick={() => navigate('next')} aria-label="Next">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </Button>
-              <Button variant="outline" size="sm" onClick={() => { setCurrentDate(new Date()); setSelectedDate(null) }}>Today</Button>
+              <Button variant="outline" size="sm" onClick={handleTodayClick}>Today</Button>
             </div>
           </div>
           <div className="pt-3 border-t border-gray-200">
-            <FilterBar eventType={eventTypeFilter} onChangeEventType={setEventTypeFilter} />
+            <FilterBar selectedTypes={selectedTypes} onChangeEventType={setSelectedTypes} />
           </div>
         </div>
       </Card>
@@ -136,121 +215,32 @@ export function Calendar({ items }: CalendarProps) {
         <div className="lg:col-span-3">
           <Card className="p-2 sm:p-3 shadow-md">
             {view === 'month' && (
-              <div className="grid grid-cols-7 gap-px bg-gray-200">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                  <div key={day} className="bg-gray-50 py-2 text-center text-xs sm:text-sm font-medium text-gray-500">
-                    <span className="hidden sm:inline">{day}</span>
-                    <span className="sm:hidden">{day.charAt(0)}</span>
-                  </div>
-                ))}
-                {emptyCells.map((__, idx) => (
-                  <div key={`empty-${idx}`} className="bg-white min-h-[80px] sm:min-h-[120px]" />
-                ))}
-                {daysInMonth.map((day) => {
-                  const dayPerformances = getPerformancesForDate(day)
-                  const isToday = isSameDay(day, new Date())
-                  const isCurrentMonth = isSameMonth(day, currentDate)
-                  return (
-                    <div
-                      key={day.toISOString()}
-                      className={`bg-white p-1 sm:p-2 min-h-[80px] sm:min-h-[120px] cursor-pointer hover:bg-gray-50 ${!isCurrentMonth ? 'text-gray-300' : ''} ${isToday ? 'bg-secondary' : ''}`}
-                      onClick={() => setSelectedDate(day)}
-                    >
-                      <div className={`text-xs sm:text-sm font-medium ${isToday ? 'text-primary' : isCurrentMonth ? 'text-gray-900' : 'text-gray-300'}`}>
-                        {format(day, 'd')}
-                      </div>
-                      <div className="mt-1 space-y-1">
-                        {dayPerformances.slice(0, 2).map((performance) => (
-                          <div key={performance.occurrenceId} className="text-xs bg-primary/10 text-primary px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate" title={performance.title || ''}>
-                            <span className="hidden sm:inline">{performance.title}</span>
-                            <span className="sm:hidden">{(performance.title || '').substring(0, 8)}...</span>
-                          </div>
-                        ))}
-                        {dayPerformances.length > 2 && <div className="text-xs text-gray-500">+{dayPerformances.length - 2} more</div>}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+              <MonthView
+                daysInMonth={daysInMonth}
+                emptyCells={emptyCells}
+                currentDate={currentDate}
+                itemsByDate={itemsByDate}
+                onItemClick={handleItemClick}
+              />
             )}
 
-            {view === 'week' && (() => {
-              const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 })
-              const daysOfWeek = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
-              return (
-                <>
-                  <div className="hidden sm:grid grid-cols-7 gap-px bg-gray-200">
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                      <div key={day} className="bg-gray-50 py-2 text-center text-xs sm:text-sm font-medium text-gray-500">
-                        <span className="hidden sm:inline">{day}</span>
-                        <span className="sm:hidden">{day.charAt(0)}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-7 gap-px bg-gray-200">
-                    {daysOfWeek.map((day) => {
-                      const dayPerformances = getPerformancesForDate(day)
-                      const isToday = isSameDay(day, new Date())
-                      return (
-                        <div key={day.toISOString()} className={`bg-white p-2 min-h-[100px] sm:min-h-[140px] ${isToday ? 'bg-secondary' : ''}`}>
-                          <div className={`text-xs sm:text-sm font-medium ${isToday ? 'text-primary' : 'text-gray-900'}`}>{format(day, 'EEE d')}</div>
-                          <div className="mt-1 space-y-1">
-                            {dayPerformances.length === 0 ? (
-                              <div className="text-xs text-gray-400">No events</div>
-                            ) : (
-                              dayPerformances.map((performance) => (
-                                <div key={performance.occurrenceId} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded truncate" title={performance.title || ''}>
-                                  {performance.title}
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </>
-              )
-            })()}
+            {view === 'week' && (
+              <WeekView
+                daysOfWeek={weekViewDays}
+                itemsByDate={itemsByDate}
+                onItemClick={handleItemClick}
+              />
+            )}
 
             {view === 'day' && (
-              <div className="p-2">
-                <div className="text-base sm:text-sm text-gray-600 mb-2">{format(currentDate, 'EEEE, MMMM d, yyyy')}</div>
-                {(() => {
-                  const dayPerformances = getPerformancesForDate(currentDate)
-                  if (dayPerformances.length === 0) {
-                    return <div className="text-sm text-gray-500">No performances scheduled for this date.</div>
-                  }
-                  return (
-                    <div className="space-y-3">
-                      {dayPerformances.map((performance) => (
-                        <Card key={performance.occurrenceId} padding="sm">
-                          <h4 className="text-base sm:text-lg font-medium text-gray-900">{performance.title}</h4>
-                        </Card>
-                      ))}
-                    </div>
-                  )
-                })()}
-              </div>
+              <DayView
+                currentDate={currentDate}
+                deduplicatedItems={dayViewData.deduplicated}
+                allItems={dayViewData.all}
+                onItemClick={handleItemClick}
+              />
             )}
           </Card>
-
-          {view === 'month' && selectedDate && (
-            <Card className="mt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Performances on {format(selectedDate, "MMMM d, yyyy")}</h3>
-              {getPerformancesForDate(selectedDate).length === 0 ? (
-                <p className="text-gray-500">No performances scheduled for this date.</p>
-              ) : (
-                <div className="space-y-4">
-                  {getPerformancesForDate(selectedDate).map((performance) => (
-                    <Card key={performance.occurrenceId} padding="sm">
-                      <h4 className="text-lg font-medium text-gray-900">{performance.title}</h4>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </Card>
-          )}
         </div>
 
         <div className="lg:col-span-1">
@@ -258,26 +248,26 @@ export function Calendar({ items }: CalendarProps) {
             <h3 className="text-lg font-semibold text-primary mb-4">Upcoming Deadlines</h3>
             
             <div className="space-y-3">
-              {items
-                .filter(it => {
-                  const d = new Date(String(it.start))
-                  return d.getTime() >= Date.now()
-                })
-                .sort((a, b) => new Date(String(a.start)).getTime() - new Date(String(b.start)).getTime())
-                .slice(0, 5)
-                .map((it) => (
-                  <div key={it.occurrenceId} className="border-l-4 border-primary/50 pl-3">
-                    <div className="font-semibold text-sm text-gray-800">{it.title || "Untitled"}</div>
-                    <div className="text-xs text-gray-600">{format(new Date(String(it.start)), "MMM d, yyyy h:mm a")}</div>
-                  </div>
-                ))}
-              {items.filter(it => new Date(String(it.start)).getTime() >= Date.now()).length === 0 && (
-                <div className="text-sm text-gray-500">No upcoming events</div>
+              {upcomingDeadlines.map((it) => (
+                <div key={it.occurrenceId} className="border-l-4 border-primary/50 pl-3">
+                  <div className="font-semibold text-sm text-gray-800">{it.title || "Untitled"}</div>
+                  <div className="text-xs text-gray-600">{formatDateTimeEST(new Date(String(it.start)))}</div>
+                </div>
+              ))}
+              {upcomingDeadlines.length === 0 && (
+                <div className="text-sm text-gray-500">No upcoming deadlines</div>
               )}
             </div>
           </Card>
         </div>
       </div>
+
+      <ListingDetailsModal
+        isOpen={selectedListingId !== null}
+        onClose={handleModalClose}
+        listingId={selectedListingId}
+        onListingClick={handleItemClick}
+      />
     </>
   )
 }

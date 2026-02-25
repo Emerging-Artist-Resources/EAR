@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
 import type { Resolver } from "react-hook-form"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
@@ -12,35 +12,70 @@ import { PerformanceDetailsStep } from "./steps/performance/PerformanceDetailsSt
 import { ClassesWorkshopsStep } from "./steps/ClassWorkshopStep"
 import { OpportunityStep } from "./steps/OpportunityStep"
 import { AuditionStep } from "./steps/AuditionStep"
+import { MediaAndAdditionalInfoStep } from "./steps/MediaAndAdditionalInfoStep"
 import { PageNumbers } from "@/components/forms/blocks/PageNumbers"
 import { validateStep2 } from "./validation-helpers"
 import { buildEventPayload, type UserInfo } from "./payload-builders"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
-import { apiPost } from "@/lib/fetch-utils"
+import { apiPost, apiGet } from "@/lib/fetch-utils"
+import { supabase } from "@/lib/supabase/client"
+import { storageService } from "@/services/storage"
 
 interface EventWizardProps {
   onSuccess: () => void
   onClose: () => void
 }
 
+interface ProfileData {
+  id: string
+  name: string | null
+  email: string | null
+  pronouns: string | null
+  website: string | null
+  organization_name: string | null
+  location_label: string | null
+  artist_status: string | null
+}
+
+
+
 export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [eventType, setEventType] = useState<EventType | null>(null)
   const [submitMessage, setSubmitMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [profilePronouns, setProfilePronouns] = useState<string | null>(null)
   const { user, userName } = useAuth()
   const { showToast } = useToast()
 
-  // Derive userInfo from auth state
+  // Fetch pronouns from profile
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return
+      try {
+        const profile = await apiGet<ProfileData>("/api/profile")
+        console.log("[EventWizard] Fetched profile:", profile)
+        setProfilePronouns(profile?.pronouns || null)
+      } catch (error) {
+        console.error("Error fetching profile for pronouns:", error)
+        setProfilePronouns(null)
+      }
+    }
+    fetchProfile()
+  }, [user])
+
+  // Derive userInfo from auth state and profile
   const userInfo = useMemo<UserInfo | null>(() => {
     if (!user || !userName || !user.email) return null
-    return {
+    const info = {
       name: userName,
       email: user.email,
-      pronouns: (user.user_metadata?.pronouns as string | undefined) || null,
+      pronouns: profilePronouns,
     }
-  }, [user, userName])
+    console.log("[EventWizard] userInfo:", info)
+    return info
+  }, [user, userName, profilePronouns])
 
 
   const resolver = zodResolver(eventFormSchema) as unknown as Resolver<EventFormData>
@@ -48,10 +83,12 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
     resolver,
     defaultValues: {
       agreeCompTickets: false,
-      photoUrls: [""],
       address: "",
-      // Seed one date card with one time for performance extras
-      extraOccurrences: [{ date: "", times: [{ time: "" }] }],
+      // Only initialize extraOccurrences for performance types (legacy field)
+      // For auditions, occurrences and deadlineOccurrences are initialized by DateTimeList
+      extraOccurrences: [],
+      occurrences: [],
+      deadlineOccurrences: [],
     } as Partial<EventFormData>,
     mode: 'onChange',
     reValidateMode: 'onChange',
@@ -60,39 +97,36 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
   })
 
   const goNext = useCallback(async () => {
+    console.log("[EventWizard] goNext called, step:", step)
     if (step === 1) {
       if (!eventType) {
+        console.log("[EventWizard] No event type selected")
         showToast("Please select an event type to continue", "warning")
         return
       }
+      console.log("[EventWizard] Moving to step 2")
       setStep(2)
       return
     }
     if (step === 2) {
       if (!eventType) {
+        console.log("[EventWizard] No event type selected")
         showToast("Please select an event type to continue", "warning")
         return
       }
-      if (eventType === 'PERFORMANCE') {
-        const validation = await validateStep2(form, eventType)
-        if (!validation.isValid) {
-          showToast(validation.message || "Please complete required fields on this step", "error")
-          return
-        }
-        setStep(3)
-        return
-      } else {
-        // For non-performance types, step 2 is the submit step
-        const validation = await validateStep2(form, eventType)
-        if (!validation.isValid) {
-          showToast(validation.message || "Please complete required fields on this step", "error")
-          return
-        }
-        // Validation passed, ready to submit
+      console.log("[EventWizard] Validating step 2 for eventType:", eventType)
+      const validation = await validateStep2(form, eventType)
+      console.log("[EventWizard] Validation result:", validation)
+      if (!validation.isValid) {
+        console.log("[EventWizard] Validation failed:", validation.message)
+        showToast(validation.message || "Please complete required fields on this step", "error")
         return
       }
+      console.log("[EventWizard] Validation passed, moving to step 3")
+      setStep(3)
+      return
     }
-    // Step 3 (Performance Media & Socials) - validation passed, ready to submit
+    // Step 3 - validation passed, ready to submit
   }, [step, eventType, form, showToast])
 
   const goBack = useCallback(() => {
@@ -118,7 +152,86 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           return
         }
 
-        const payload = buildEventPayload(data, eventType, userInfo)
+        if (!user?.id) {
+          setSubmitMessage("Please sign in to submit")
+          setIsSubmitting(false)
+          return
+        }
+
+        // Upload photos to storage before building payload
+        const photoPaths: Array<{ path: string; credit?: string | null; sort_order?: number }> = []
+        const promoFiles = data.promoFiles as File[] | undefined
+        
+        if (promoFiles && Array.isArray(promoFiles) && promoFiles.length > 0) {
+          const bucket = "event-photos"
+          const userId = user.id
+          
+          for (let i = 0; i < Math.min(promoFiles.length, 5); i++) {
+            const file = promoFiles[i]
+            if (!file || !(file instanceof File)) continue
+            
+            try {
+              // Generate unique filename: listings/{userId}/{timestamp}-{index}.jpg
+              const timestamp = Date.now()
+              const fileExt = file.name.split('.').pop() || 'jpg'
+              const fileName = `${timestamp}-${i}.${fileExt}`
+              const filePath = `listings/${userId}/${fileName}`
+              
+              // Upload file to storage
+              await storageService.uploadFile(supabase, bucket, filePath, file, {
+                cacheControl: '3600',
+                upsert: false
+              })
+              
+              // Add to photo paths array
+              photoPaths.push({
+                path: filePath,
+                credit: data.credits || null,
+                sort_order: i
+              })
+            } catch (uploadError) {
+              console.error(`Failed to upload photo ${i}:`, uploadError)
+              const errorMsg = uploadError instanceof Error ? uploadError.message : "Failed to upload photo"
+              setSubmitMessage(`Photo upload failed: ${errorMsg}`)
+              showToast(`Photo upload failed: ${errorMsg}`, "error")
+              setIsSubmitting(false)
+              return
+            }
+          }
+        }
+
+        // Debug: Log form data before building payload
+        console.group("🟢 Form Submission - Before Payload")
+        console.log("Event type:", eventType)
+        console.log("Form data:", data)
+        console.log("Photo paths:", photoPaths)
+        console.log("Location fields in form data:", {
+          address: data.address,
+          placeId: data.placeId,
+          lat: data.lat,
+          lng: data.lng,
+          venueName: data.venueName,
+          locationInstructions: data.locationInstructions,
+        })
+        console.log("Form state:", {
+          isValid: form.formState.isValid,
+          errors: form.formState.errors,
+          isDirty: form.formState.isDirty,
+        })
+        console.groupEnd()
+
+        const payload = await buildEventPayload(data, eventType, userInfo)
+        
+        // Add photos to payload
+        if (photoPaths.length > 0) {
+          payload.photos = photoPaths
+        }
+        
+        // Debug: Log payload being sent
+        console.group("🟢 Form Submission - Payload")
+        console.log("Payload:", payload)
+        console.log("Payload base (location fields):", payload.base)
+        console.groupEnd()
 
         // Additional validation for occurrences
         if (eventType === "PERFORMANCE" && payload.occurrences.length === 0) {
@@ -153,8 +266,35 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       }
     },
     (errors) => {
-      // Extract first error message for user feedback
+      // Debug: Log all validation errors
+      console.group("🔴 Form Validation Errors")
+      console.log("All errors:", errors)
+      console.log("Form values:", form.getValues())
+      console.log("Form state:", {
+        isDirty: form.formState.isDirty,
+        isValid: form.formState.isValid,
+        errors: form.formState.errors,
+      })
+      
+      // Log each field error
       const errorEntries = Object.entries(errors)
+      console.log(`Total fields with errors: ${errorEntries.length}`)
+      errorEntries.forEach(([field, error]) => {
+        console.log(`Field "${field}":`, error)
+        const fieldValue = form.getValues(field as keyof EventFormData)
+        console.log(`  Current value:`, fieldValue)
+      })
+      
+      // Log location-related fields specifically
+      const locationFields = ['address', 'placeId', 'lat', 'lng', 'venueName', 'locationInstructions']
+      console.log("Location fields:")
+      locationFields.forEach(field => {
+        const value = form.getValues(field as keyof EventFormData)
+        console.log(`  ${field}:`, value, typeof value)
+      })
+      console.groupEnd()
+      
+      // Extract first error message for user feedback
       let errorMessage = "Please check all required fields"
       
       if (errorEntries.length > 0) {
@@ -197,7 +337,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       })()} */}
       {/* Step indicators */}
       <div className="flex justify-center gap-2 text-sm">
-        <PageNumbers current={step} total={eventType === 'PERFORMANCE' ? 3 : 2} />
+        <PageNumbers current={step} total={3} />
       </div>
       {step === 1 && (
         <BasicInfoStep form={form} eventType={eventType} onChangeType={setEventType} />
@@ -215,9 +355,9 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           />
         )
       )}
-      {/*{step === 3 && eventType === 'PERFORMANCE' && (
-        <OrganizerMediaSocials form={form} />
-      )} */}
+      {step === 3 && eventType && (
+        <MediaAndAdditionalInfoStep form={form} eventType={eventType} />
+      )}
 
       {submitMessage && (
         <Alert variant={submitMessage.includes('success') ? 'success' : 'error'}>{submitMessage}</Alert>
@@ -235,12 +375,12 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           */}
         </div>
         <div className="flex gap-2">
-          {(step === 1 || (step === 2 && eventType === 'PERFORMANCE')) && (
+          {(step === 1 || step === 2) && (
             <Button type="button" onClick={goNext}>
               Next
             </Button>
           )}
-          {((step === 2 && eventType !== 'PERFORMANCE') || (step === 3 && eventType === 'PERFORMANCE')) && (
+          {step === 3 && (
             <Button
               type="button"
               onClick={() => {
