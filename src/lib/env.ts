@@ -12,6 +12,8 @@ type ServerEnvVar = {
   NEXT_PUBLIC_SUPABASE_URL: string
   NEXT_PUBLIC_SUPABASE_ANON_KEY: string
   SUPABASE_SERVICE_ROLE_KEY: string
+  STRIPE_SECRET_KEY: string
+  STRIPE_WEBHOOK_SECRET: string
   TURNSTILE_SECRET_KEY?: string
 }
 
@@ -50,6 +52,8 @@ export function getServerEnv(): ServerEnvVar {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY
+  const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET
   const turnstileSecret = process.env.TURNSTILE_SECRET_KEY
 
   if (!supabaseUrl) {
@@ -64,10 +68,20 @@ export function getServerEnv(): ServerEnvVar {
     throw new Error('Missing required environment variable: SUPABASE_SERVICE_ROLE_KEY')
   }
 
+  if (!stripeSecretKey) {
+    throw new Error('Missing required environment variable: STRIPE_SECRET_KEY')
+  }
+
+  if (!stripeWebhookSecret) {
+    throw new Error('Missing required environment variable: STRIPE_WEBHOOK_SECRET')
+  }
+
   return {
     NEXT_PUBLIC_SUPABASE_URL: supabaseUrl,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: supabaseKey,
     SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey,
+    STRIPE_SECRET_KEY: stripeSecretKey,
+    STRIPE_WEBHOOK_SECRET: stripeWebhookSecret,
     TURNSTILE_SECRET_KEY: turnstileSecret,
   }
 }

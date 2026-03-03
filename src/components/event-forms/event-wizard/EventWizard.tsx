@@ -246,7 +246,26 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
           return
         }
 
-        await apiPost("/api/events", payload)
+        const response = await apiPost<{ id: string; payment_required?: boolean }>("/api/events", payload)
+        
+        if (response?.payment_required) {
+          try {
+            const checkoutResponse = await apiPost<{ url: string }>("/api/stripe/create-checkout-session", {
+              listingId: response.id,
+            })
+            
+            if (checkoutResponse?.url) {
+              window.location.href = checkoutResponse.url
+              return
+            }
+          } catch (checkoutError) {
+            const errorMessage = checkoutError instanceof Error ? checkoutError.message : "Failed to create payment session"
+            setSubmitMessage(errorMessage)
+            showToast(errorMessage, "error")
+            setIsSubmitting(false)
+            return
+          }
+        }
         
         setSubmitMessage("Submitted successfully! Pending review.")
         showToast("Submitted successfully! Pending review.", "success")

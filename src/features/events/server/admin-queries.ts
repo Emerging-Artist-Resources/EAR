@@ -13,6 +13,12 @@ export async function listAdminListingsRepo(params: {
   limit: number
 }) {
   const svc = getSupabaseServiceClient()
+  
+  // When querying for "pending", also include "pending_payment" listings
+  const statusFilter = params.status === "pending" 
+    ? ["pending", "pending_payment"]
+    : [params.status]
+  
   const { data, error } = await svc
     .from("listings")
     .select(`
@@ -23,7 +29,7 @@ export async function listAdminListingsRepo(params: {
       class_workshop_details!class_workshop_details_listing_id_fkey (title, class_workshop_type, parent_workshop_name, parent_listing_id),
       piece_details!piece_details_listing_id_fkey (parent_event_name, parent_listing_id, piece_title, piece_company, piece_company_website)
     `)
-    .eq("status", params.status)
+    .in("status", statusFilter)
     .is("deleted_at", null)
     .order("submitted_at", { ascending: false })
     .limit(params.limit)

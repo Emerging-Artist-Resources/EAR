@@ -107,6 +107,14 @@ export async function POST(req: NextRequest) {
     const supabase = await getSupabaseServerClient()
     const created = await createEventOwnedRepo(supabase, input as unknown as CreateListingInput)
     
+    const listing = await supabase
+      .from("listings")
+      .select("payment_required")
+      .eq("id", created.id)
+      .single()
+
+    const paymentRequired = listing.data?.payment_required ?? false
+    
     try {
       await sendListingConfirmationEmail(input as unknown as CreateListingInput, created.id)
       await sendAdminListingNotificationEmail(input as unknown as CreateListingInput, created.id)
@@ -114,7 +122,7 @@ export async function POST(req: NextRequest) {
       // Email failures don't block listing creation
     }
     
-    return createSuccessResponse(created, 201)
+    return createSuccessResponse({ ...created, payment_required: paymentRequired }, 201)
   } catch (error) {
     return handleApiError(error)
   }

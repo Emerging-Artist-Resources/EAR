@@ -4,15 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { H3, H4, Text } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import { apiGet } from "@/lib/fetch-utils";
+import { useState, useEffect, useCallback } from "react";
+import { apiGet, apiPost } from "@/lib/fetch-utils";
 import type { MyListing } from "@/features/profile/server/types";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import PerformanceModal from "@/components/performance-modal";
 
 function statusToVariant(status: MyListing["status"]): "success" | "warning" | "error" | "default" {
   if (status === "approved") return "success";
-  if (status === "pending") return "warning";
+  if (status === "pending" || status === "pending_payment") return "warning";
   if (status === "rejected") return "error";
   return "default";
 }
@@ -65,6 +65,7 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -97,15 +98,44 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
     };
   }, [page]);
 
-  const handleSubmitPerformance = () => {
+  const handleSubmitPerformance = useCallback(() => {
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleModalSuccess = () => {
+  const handleModalSuccess = useCallback(() => {
     setIsModalOpen(false);
-    // Refresh listings after successful submission
     setPage(0);
-  };
+  }, []);
+
+  const handlePayNow = useCallback(async (listingId: string) => {
+    if (loadingId === listingId) return;
+    
+    try {
+      setLoadingId(listingId);
+      setError(null);
+      const response = await apiPost<{ url: string }>("/api/stripe/create-checkout-session", {
+        listingId,
+      });
+      
+      if (response?.url) {
+        window.location.href = response.url;
+      } else {
+        setError("Failed to create payment session");
+        setLoadingId(null);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to create payment session";
+      setError(errorMessage);
+      setLoadingId(null);
+    }
+  }, [loadingId]);
+
+  const shouldShowPayButton = useCallback((listing: MyListing): boolean => {
+    if (listing.status === "pending_payment") return true;
+    if (listing.payment_status === "requires_payment") return true;
+    if (listing.payment_status === "paid" || listing.payment_status === "not_required") return false;
+    return false;
+  }, []);
 
   return (
     <>
@@ -136,6 +166,9 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
                 day: "numeric",
               });
 
+              const showPayButton = shouldShowPayButton(listing);
+              const isProcessing = loadingId === listing.id;
+
               return (
                 <Card key={listing.id} className="p-4">
                   <div className="flex items-start justify-between">
@@ -144,13 +177,22 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
                       <Text className="text-sm text-gray-600">
                         Submitted on {formattedDate}
                       </Text>
-                      <div className="mt-1">
+                      <div className="mt-1 flex gap-2 flex-wrap">
                         <Button 
                           variant="link" 
                           onClick={() => onListingClick?.(listing.id)}
                         >
                           View listing
                         </Button>
+                        {showPayButton && (
+                          <Button
+                            variant="primary"
+                            onClick={() => handlePayNow(listing.id)}
+                            disabled={isProcessing}
+                          >
+                            {isProcessing ? "Loading..." : "Pay Now"}
+                          </Button>
+                        )}
                       </div>
                     </div>
                     <Badge variant={statusToVariant(listing.status)}>

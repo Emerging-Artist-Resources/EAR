@@ -36,6 +36,9 @@ export interface ActivityOverview {
 export interface MyListing {
   id: string;
   type: string;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "pending_payment";
   submitted_at: string;
+  payment_required?: boolean;
+  payment_status?: "not_required" | "requires_payment" | "paid" | "refunded" | "canceled";
+  payment_amount?: number | null;
 }
