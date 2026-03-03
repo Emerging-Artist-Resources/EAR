@@ -2,6 +2,7 @@
 
 import { format, isSameMonth, isSameDay } from "date-fns"
 import type { CalendarItem } from "@/hooks/use-calendar"
+import { getEventTypeColor } from "./event-colors"
 
 interface MonthViewProps {
   daysInMonth: Date[]
@@ -9,6 +10,7 @@ interface MonthViewProps {
   currentDate: Date
   itemsByDate: Map<string, CalendarItem[]>
   onItemClick: (listingId: string) => void
+  onShowMoreClick?: (date: Date, events: CalendarItem[]) => void
 }
 
 export function MonthView({
@@ -17,6 +19,7 @@ export function MonthView({
   currentDate,
   itemsByDate,
   onItemClick,
+  onShowMoreClick,
 }: MonthViewProps) {
   return (
     <div className="grid grid-cols-7 gap-px bg-gray-200">
@@ -44,27 +47,34 @@ export function MonthView({
               {format(day, 'd')}
             </div>
             <div className="mt-1 space-y-1">
-              {dayPerformances.slice(0, 2).map((performance) => (
-                <div 
-                  key={`${performance.listingId}-${day.toISOString()}`} 
-                  className="text-xs bg-primary/10 text-primary px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate cursor-pointer hover:bg-primary/20 transition-colors" 
-                  title={performance.title || ''}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onItemClick(performance.listingId)
-                  }}
-                >
-                  <span className="hidden sm:inline">{performance.title}</span>
-                  <span className="sm:hidden">{(performance.title || '').substring(0, 8)}...</span>
-                </div>
-              ))}
+              {dayPerformances.slice(0, 2).map((performance) => {
+                const colors = getEventTypeColor(performance.type)
+                return (
+                  <div 
+                    key={`${performance.listingId}-${day.toISOString()}`} 
+                    className="text-xs px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate cursor-pointer hover:opacity-80 transition-colors"
+                    style={{
+                      backgroundColor: colors.bg,
+                      color: colors.text,
+                    }}
+                    title={performance.title || ''}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onItemClick(performance.listingId)
+                    }}
+                  >
+                    <span className="hidden sm:inline">{performance.title}</span>
+                    <span className="sm:hidden">{(performance.title || '').substring(0, 8)}...</span>
+                  </div>
+                )
+              })}
               {dayPerformances.length > 2 && (
                 <div 
-                  className="text-xs text-gray-500 cursor-pointer hover:text-gray-700"
+                  className="text-xs text-gray-500 cursor-pointer hover:text-gray-700 hover:underline transition-colors"
                   onClick={(e) => {
                     e.stopPropagation()
-                    if (dayPerformances[2]) {
-                      onItemClick(dayPerformances[2].listingId)
+                    if (onShowMoreClick) {
+                      onShowMoreClick(day, dayPerformances)
                     }
                   }}
                 >

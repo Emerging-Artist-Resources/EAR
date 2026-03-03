@@ -16,6 +16,7 @@ export function Footer() {
             <Link className="underline text-[var(--gray-700)] hover:text-[var(--primary-700)]" href="/announcement">Announcements</Link>
             <Link className="underline text-[var(--gray-700)] hover:text-[var(--primary-700)]" href="/profile">Profile</Link>
             <Link className="underline text-[var(--gray-700)] hover:text-[var(--primary-700)]" href="/forms">Submit Listing</Link>
+            <Link className="underline text-[var(--gray-700)] hover:text-[var(--primary-700)]" href="/donate">Donate</Link>
           </nav>
         </div>
       </div>
