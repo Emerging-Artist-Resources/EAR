@@ -127,11 +127,13 @@ export async function listCalendarItemsRepo(params: {
     .select(sel)
     .eq("listings.status", "approved")
     .is("listings.deleted_at", null)
-    .eq("occurrence_type", "event")
     .gte("starts_at_utc", fromISO)
     .lte("starts_at_utc", toISO)
     .order("starts_at_utc", { ascending: true })
     .limit(Math.min(limit, 1000))
+
+  // Include both events and deadlines (deadlines only for creative should appear on calendar)
+  q = q.or("occurrence_type.eq.event,occurrence_type.eq.deadline")
 
   if (types.length) q = q.in("listings.type", types)
 
@@ -140,6 +142,11 @@ export async function listCalendarItemsRepo(params: {
 
   return (data ?? [])
     .filter((row: any) => {
+      // For deadlines, only show creative type on calendar (auditions stay on event date)
+      if (row.occurrence_type === "deadline") {
+        return row.listings?.type === "creative"
+      }
+      
       if (row.listings?.type === "performance") {
         const subtype = row.listings.performance_details?.subtype
         if (subtype === "PIECE") {
@@ -302,7 +309,7 @@ export async function listMyListingsRepo(page: number = 0, limit: number = 10) {
   // Get paginated listings
   const { data, error } = await supabase
     .from("listings")
-    .select(`id, type, status, submitted_at`)
+    .select(`id, type, status, submitted_at, payment_required, payment_status, payment_amount`)
     .eq("created_by", user.id)
     .is("deleted_at", null)
     .order("submitted_at", { ascending: false })
@@ -319,11 +326,12 @@ export async function getListingForOwnerRepo(listingId: string) {
     .select(`
       id, type, status, social_handles, notes, submitted_at,
       company, company_website, address, place_id, lat, lng, venue_name, location_instructions,
+      payment_required, payment_amount, payment_currency, payment_status,
       performance_details (*),
       audition_details (*),
       creative_details (*),
       class_workshop_details!class_workshop_details_listing_id_fkey (*),
-      piece_details (*),
+      piece_details!piece_details_listing_id_fkey (*),
       listing_occurrences!listing_occurrences_listing_id_fkey (*),
       listing_photos (*)
     `)

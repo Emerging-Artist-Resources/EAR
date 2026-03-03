@@ -5,6 +5,7 @@ import type {
   OccurrenceType,
 } from "./repository-types"
 import { detailTable } from "./repository-types"
+import { calculateListingFee } from "./fee-calculator"
 
 export async function createListingOwnedRepo(
   supabase: SupabaseClient,
@@ -188,6 +189,32 @@ export async function createListingOwnedRepo(
         })
       if (e6) throw new Error(`Failed to create relationship: ${e6.message}`)
     }
+
+    // 7) Calculate and set payment fields
+    const feeResult = await calculateListingFee({
+      listingType: input.type,
+      listingId,
+      supabase,
+    })
+
+    const paymentRequired = feeResult !== null
+    const paymentAmount = feeResult?.amount ?? null
+    const paymentCurrency = feeResult?.currency ?? "usd"
+    const paymentStatus = paymentRequired ? "requires_payment" : "not_required"
+    const listingStatus = paymentRequired ? "pending_payment" : "pending"
+
+    const { error: e7 } = await supabase
+      .from("listings")
+      .update({
+        payment_required: paymentRequired,
+        payment_amount: paymentAmount,
+        payment_currency: paymentCurrency,
+        payment_status: paymentStatus,
+        status: listingStatus,
+      })
+      .eq("id", listingId)
+
+    if (e7) throw new Error(`Failed to update payment fields: ${e7.message}`)
 
     return { id: listingId }
   } catch (error) {
