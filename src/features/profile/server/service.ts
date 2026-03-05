@@ -58,9 +58,10 @@ export async function sendNewProfileAdminEmail(
     return
   }
 
+  // Ensure name is properly extracted - handle null, undefined, and empty strings
   const userName = profile.name?.trim() || "Unknown User"
-  const userEmail = (profile.email?.trim() || "No email provided")
-  const profileType = (profile.profile_type || "unknown")
+  const userEmail = profile.email?.trim() || "No email provided"
+  const profileType = profile.profile_type || "unknown"
 
   await sendProfileEmail("admin-new-user", {
     to: adminEmail,

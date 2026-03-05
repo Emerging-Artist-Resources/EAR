@@ -46,7 +46,15 @@ export async function signupAction(formData: unknown) {
       await createEligibilitySubmissionRepo(validatedData, profile.id)
 
       try {
-        await sendNewProfileAdminEmail(profile, userId)
+        // Ensure name is available - use validatedData as fallback if profile.name is missing
+        await sendNewProfileAdminEmail(
+          {
+            name: profile.name || validatedData.name,
+            email: profile.email || validatedData.email,
+            profile_type: profile.profile_type || validatedData.profile_type,
+          },
+          userId
+        )
       } catch (emailError) {
         console.error("[EMAIL] Failed to send admin notification email:", emailError)
       }

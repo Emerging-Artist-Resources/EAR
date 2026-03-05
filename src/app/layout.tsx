@@ -5,6 +5,8 @@ import HeaderGate from "@/components/layout/header-gate"
 import FooterGate from "@/components/layout/footer-gate"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { AdminLayoutWrapper } from "@/components/admin/shared/AdminLayoutWrapper"
+import { ToastProvider } from "@/contexts/ToastContext"
+import { ToastContainer } from "@/components/ui/ToastContainer"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,13 +33,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ErrorBoundary>
-          <HeaderGate />
-          <AdminLayoutWrapper>
-            {children}
-          </AdminLayoutWrapper>
-          <FooterGate />
-        </ErrorBoundary>
+        <ToastProvider>
+          <ErrorBoundary>
+            <HeaderGate />
+            <AdminLayoutWrapper>
+              {children}
+            </AdminLayoutWrapper>
+            <FooterGate />
+            <ToastContainer />
+          </ErrorBoundary>
+        </ToastProvider>
       </body>
     </html>
   );
