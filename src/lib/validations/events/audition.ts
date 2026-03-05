@@ -69,7 +69,7 @@ export const auditionFields = z
       ctx.addIssue({
         code: "custom",
         path: ["deadlineOccurrences"],
-        message: "Add at least one deadline date & time",
+        message: "Deadline date or deadline time is required",
       })
     }
     if (!data.fee) {

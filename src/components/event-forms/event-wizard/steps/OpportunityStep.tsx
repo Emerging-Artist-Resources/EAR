@@ -49,7 +49,7 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
       </Section>
 
       <Section title="Location">
-        <LocationField form={form} addressName={"address"} venueName={"venueName"} placeIdName={"placeId"} latName={"lat"} lngName={"lng"} instructionsName={"locationInstructions"} instructionsPlaceholder="Include directions for accessing the building or studio or any other relevant information."/>
+        <LocationField form={form} addressName={"address"} venueName={"venueName"} placeIdName={"placeId"} latName={"lat"} lngName={"lng"} instructionsName={"locationInstructions"} instructionsPlaceholder="Include directions for accessing the building or studio or any other relevant information." required />
       </Section>
 
       {isFee && (

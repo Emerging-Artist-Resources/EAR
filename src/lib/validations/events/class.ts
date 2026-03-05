@@ -121,9 +121,8 @@ export const classFields = z
     if (!data.organizer || data.organizer.trim() === "") {
       ctx.addIssue({ code: "custom", path: ["organizer"], message: "Organizer is required" })
     }
-    if (!data.teachers || data.teachers.trim() === "") {
-      ctx.addIssue({ code: "custom", path: ["teachers"], message: "Teacher(s) are required" })
-    }
+    // Teachers field is not shown in the form, so it should not be required
+    // If teachers field is added to the form in the future, add validation here conditionally
     if (!data.description || data.description.trim() === "") {
       ctx.addIssue({
         code: "custom",
@@ -139,12 +138,30 @@ export const classFields = z
         ctx.addIssue({ code: "custom", path: ["link"], message: "Link is required" })
       }
     }
+    // Validate occurrences: must have at least one occurrence with valid date/time
     if (!normalizedOccurrences || normalizedOccurrences.length === 0) {
       ctx.addIssue({
         code: "custom",
         path: ["occurrences"],
         message: "Add at least one date & time",
       })
+    } else {
+      // Check if there are any occurrences with valid date/time
+      const validOccurrences = normalizedOccurrences.filter((occ) => {
+        return occ?.date && occ.date.trim() !== "" &&
+          Array.isArray(occ?.times) &&
+          occ.times.length > 0 &&
+          occ.times.some((t) => t?.time && t.time.trim() !== "")
+      })
+      
+      if (validOccurrences.length === 0) {
+        // No valid occurrences found
+        ctx.addIssue({
+          code: "custom",
+          path: ["occurrences"],
+          message: "Add at least one date & time",
+        })
+      }
     }
     // Removed global venueName requirement - classes use per-occurrence locations
 

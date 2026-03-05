@@ -13,7 +13,7 @@ export const performanceFields = z
     description: z.string().max(2000, "Description must be 2000 characters or less").optional(),
     organizer: z.string().optional(),
     website: z.string().url("Invalid URL").optional().or(z.literal("")),
-    link: z.string().optional(),
+    link: z.string().url("Invalid URL").optional().or(z.literal("")),
     price: z.string().optional(),
     participants: z.string().optional(),
 

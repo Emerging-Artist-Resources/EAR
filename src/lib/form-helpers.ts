@@ -1,4 +1,5 @@
 import type { SignupFormData } from "@/lib/validations/signup"
+import type { EventFormData } from "@/lib/validations/events"
 
 const FIELD_LABELS: Record<keyof SignupFormData, string> = {
   profile_type: "Profile Type",
@@ -28,8 +29,64 @@ const FIELD_LABELS: Record<keyof SignupFormData, string> = {
   confirmPassword: "Password confirmation",
 } as const
 
+const EVENT_FIELD_LABELS: Partial<Record<keyof EventFormData, string>> = {
+  title: "Title",
+  description: "Description",
+  organizer: "Organizer",
+  link: "Link",
+  price: "Price",
+  occurrences: "Date & Time",
+  deadlineOccurrences: "Deadline",
+  address: "Address",
+  venueName: "Venue Name",
+  placeId: "Location",
+  lat: "Latitude",
+  lng: "Longitude",
+  locationInstructions: "Location Instructions",
+  eligibility: "Eligibility",
+  instructions: "Instructions",
+  compensation: "Compensation",
+  fee: "Fee",
+  feeAmount: "Fee Amount",
+  teachers: "Teachers",
+  host: "Host",
+  dates: "Dates",
+  requirements: "Requirements",
+  company: "Company",
+  companyWebsite: "Company Website",
+  socialHandles: "Social Handles",
+  notes: "Notes",
+  credits: "Credits",
+  promoImagePaths: "Promo Images",
+  website: "Website",
+  participants: "Participants",
+  type: "Type",
+  eventType: "Event Type",
+  classWorkshopType: "Class/Workshop Type",
+  fundingLink: "Funding Link",
+  artistType: "Artist Type",
+  preAuditionClasses: "Pre-Audition Classes",
+  agreeCompTickets: "Comp Tickets Agreement",
+  eventDatesConfirmed: "Event Dates Confirmed",
+  addPiece: "Add Piece",
+  parentEventMode: "Parent Event Mode",
+  parentEventId: "Parent Event ID",
+  parentEventName: "Parent Event Name",
+  parentEventWebsite: "Parent Event Website",
+  parentEventTicketLink: "Parent Event Ticket Link",
+  parentEventContactEmail: "Parent Event Contact Email",
+  pieceScheduleMode: "Piece Schedule Mode",
+  selectedSlots: "Selected Slots",
+  extraOccurrences: "Extra Occurrences",
+  listingFeeOption: "Listing Fee Option",
+  listingFeeExplanation: "Listing Fee Explanation",
+  classArtistType: "Class Artist Type",
+  classListingFeeOption: "Class Listing Fee Option",
+  classListingFeeExplanation: "Class Listing Fee Explanation",
+} as const
+
 /**
- * Converts a field name to a user-friendly label
+ * Converts a signup form field name to a user-friendly label
  */
 export function getFieldLabel(fieldName: keyof SignupFormData | string): string {
   if (fieldName in FIELD_LABELS) {
@@ -39,5 +96,21 @@ export function getFieldLabel(fieldName: keyof SignupFormData | string): string 
   // Fallback: convert snake_case to Title Case
   return fieldName
     .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+/**
+ * Converts an event form field name to a user-friendly label
+ */
+export function getEventFieldLabel(fieldName: keyof EventFormData | string): string {
+  if (fieldName in EVENT_FIELD_LABELS && EVENT_FIELD_LABELS[fieldName as keyof EventFormData]) {
+    return EVENT_FIELD_LABELS[fieldName as keyof EventFormData]!
+  }
+
+  // Fallback: convert camelCase/snake_case to Title Case
+  return fieldName
+    .replace(/([A-Z])/g, " $1")
+    .replace(/_/g, " ")
+    .trim()
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
