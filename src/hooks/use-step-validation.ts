@@ -7,7 +7,6 @@ import {
   wrapUpSchema,
   passwordSchema,
   SIGNUP_STEPS,
-  DEFAULT_ERROR_MESSAGE,
 } from "@/lib/validations/signup"
 import { getFieldLabel } from "@/lib/form-helpers"
 import { normalizeErrorMessage } from "@/lib/validation-helpers"

@@ -8,8 +8,8 @@ import { DEFAULT_EVENT_ERROR_MESSAGE } from "@/lib/validations/events"
  * Uses hook's validateStep and getFirstError functions
  */
 export async function validateStep2(
-  form: UseFormReturn<EventFormData>,
-  eventType: EventType,
+  _form: UseFormReturn<EventFormData>,
+  _eventType: EventType,
   validateStep: () => Promise<boolean>,
   getFirstError: () => string | null
 ): Promise<{ isValid: boolean; message?: string }> {

@@ -180,10 +180,10 @@ export function LocationField<T extends Record<string, unknown>>({
     }
   }, [form, addressName, venueName, placeIdName, latName, lngName])
 
-  // ✅ THIS is what RHF validates + submits
-  const addressField = form.register(addressName, {
-    required: required ? "Location is required" : false,
-  })
+  // // ✅ THIS is what RHF validates + submits
+  // const addressField = form.register(addressName, {
+  //   required: required ? "Location is required" : false,
+  // })
 
   return (
     <div>

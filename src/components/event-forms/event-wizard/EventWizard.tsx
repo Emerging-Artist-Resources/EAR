@@ -259,7 +259,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
         setIsSubmitting(false)
       }
     },
-    (errors) => {
+    (_errors) => {
       // Simplified error handling using validation hook
       const errorMessage = validationHook.getFirstError() || DEFAULT_EVENT_ERROR_MESSAGE
       showToast(errorMessage, "error")
