@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { H2 } from "@/components/ui/typography"
 import { FilterBar } from "@/components/calendar/FilterBar"
 import { ListingDetailsModal } from "./ListingDetailsModal"
+import { DayEventsPanel } from "./DayEventsPanel"
 import { MonthView } from "./MonthView"
 import { WeekView } from "./WeekView"
 import { DayView } from "./DayView"
@@ -46,6 +47,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set(['PERFORMANCE', 'CLASS', 'AUDITION', 'CREATIVE']))
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
+  const [dayEventsPanel, setDayEventsPanel] = useState<{ date: Date; events: CalendarItem[] } | null>(null)
   const lastFetchedMonthRef = useRef<string | null>(INITIAL_MONTH_KEY)
 
   const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate])
@@ -136,6 +138,14 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
     setSelectedListingId(null)
   }, [])
 
+  const handleShowMoreClick = useCallback((date: Date, events: CalendarItem[]) => {
+    setDayEventsPanel({ date, events })
+  }, [])
+
+  const handleDayEventsPanelClose = useCallback(() => {
+    setDayEventsPanel(null)
+  }, [])
+
   const navigate = useCallback((direction: 'prev' | 'next') => {
     const delta = direction === 'prev' ? -1 : 1
     if (view === 'month') {
@@ -213,7 +223,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
 
       <div className="grid lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3">
-          <Card className="p-2 sm:p-3 shadow-md">
+          <Card className="p-2 sm:p-3 shadow-md bg-gray-100">
             {view === 'month' && (
               <MonthView
                 daysInMonth={daysInMonth}
@@ -221,6 +231,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
                 currentDate={currentDate}
                 itemsByDate={itemsByDate}
                 onItemClick={handleItemClick}
+                onShowMoreClick={handleShowMoreClick}
               />
             )}
 
@@ -267,6 +278,14 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
         onClose={handleModalClose}
         listingId={selectedListingId}
         onListingClick={handleItemClick}
+      />
+
+      <DayEventsPanel
+        isOpen={dayEventsPanel !== null}
+        onClose={handleDayEventsPanelClose}
+        date={dayEventsPanel?.date || null}
+        events={dayEventsPanel?.events || []}
+        onEventClick={handleItemClick}
       />
     </>
   )

@@ -23,12 +23,12 @@ export function TextAreaField<T extends Record<string, unknown>>({
   rows = 4,
   required,
   showAsterisk = true,
-  //errorMode = "touched",
+  errorMode = "touched",
   className,
 }: TextAreaFieldProps<T>) {
   const { register } = form
-  //const state = form.getFieldState(name as unknown as never)
-  //const showError = Boolean(state.error) && (errorMode === "always" || state.isTouched || form.formState.isSubmitted || form.formState.submitCount > 0)
+  const state = form.getFieldState(name as unknown as never)
+  const showError = Boolean(state.error) && (errorMode === "always" || state.isTouched || form.formState.isSubmitted || form.formState.submitCount > 0)
   return (
     <div className={className}>
       <div className="mb-1">
@@ -43,8 +43,12 @@ export function TextAreaField<T extends Record<string, unknown>>({
         {...register(name as unknown as never)}
         rows={rows}
         placeholder={placeholder}
-        //error={showError}
       />
+      {showError && state.error?.message && (
+        <p className="mt-1 text-xs text-error-600">
+          {state.error.message}
+        </p>
+      )}
     </div>
   )
 }

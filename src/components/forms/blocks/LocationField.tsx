@@ -180,10 +180,10 @@ export function LocationField<T extends Record<string, unknown>>({
     }
   }, [form, addressName, venueName, placeIdName, latName, lngName])
 
-  // ✅ THIS is what RHF validates + submits
-  const addressField = form.register(addressName, {
-    required: required ? "Address is required" : false,
-  })
+  // // ✅ THIS is what RHF validates + submits
+  // const addressField = form.register(addressName, {
+  //   required: required ? "Location is required" : false,
+  // })
 
   return (
     <div>
@@ -197,17 +197,17 @@ export function LocationField<T extends Record<string, unknown>>({
       {apiError ? <div className="text-xs text-error-600 mb-2">{apiError}</div> : null}
 
       {/* RHF-controlled input (typing ALWAYS updates address) */}
-      <Input 
+      {/* <Input 
         {...addressField} 
         placeholder="Start typing an address…"
         ref={(e) => {
           addressField.ref(e)
           inputRef.current = e
         }}
-      />
+      /> */}
 
       {/* Place picker UI (selection fills placeId/lat/lng/venue) */}
-      <div className="mt-2" ref={containerRef} />
+      <div className="mt-2 border-2" ref={containerRef} />
 
       {instructionsName ? (
         <div className="mt-2">

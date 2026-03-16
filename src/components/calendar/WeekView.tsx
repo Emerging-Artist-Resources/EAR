@@ -2,6 +2,7 @@
 
 import { format, isSameDay } from "date-fns"
 import type { CalendarItem } from "@/hooks/use-calendar"
+import { getEventTypeColor } from "./event-colors"
 
 interface WeekViewProps {
   daysOfWeek: Date[]
@@ -36,18 +37,25 @@ export function WeekView({
                 {dayPerformances.length === 0 ? (
                   <div className="text-xs text-gray-400">No events</div>
                 ) : (
-                  dayPerformances.map((performance) => (
-                    <div 
-                      key={`${performance.listingId}-${day.toISOString()}`} 
-                      className="text-xs bg-primary/10 text-primary px-2 py-1 rounded truncate cursor-pointer hover:bg-primary/20 transition-colors" 
-                      title={performance.title || ''}
-                      onClick={() => {
-                        onItemClick(performance.listingId)
-                      }}
-                    >
-                      {performance.title}
-                    </div>
-                  ))
+                  dayPerformances.map((performance) => {
+                    const colors = getEventTypeColor(performance.type)
+                    return (
+                      <div 
+                        key={`${performance.listingId}-${day.toISOString()}`} 
+                        className="text-xs px-2 py-1 rounded truncate cursor-pointer hover:opacity-80 transition-colors"
+                        style={{
+                          backgroundColor: colors.bg,
+                          color: colors.text,
+                        }}
+                        title={performance.title || ''}
+                        onClick={() => {
+                          onItemClick(performance.listingId)
+                        }}
+                      >
+                        {performance.title}
+                      </div>
+                    )
+                  })
                 )}
               </div>
             </div>

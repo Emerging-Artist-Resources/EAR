@@ -65,6 +65,9 @@ export function SelectBlock<T extends Record<string, unknown>>({
       )}
     */}
 
+  const state = form.getFieldState(name as unknown as never)
+  const showError = Boolean(state.error) && (errorMode === "always" || state.isTouched || form.formState.isSubmitted || form.formState.submitCount > 0)
+
   return (
     <div className={className}>
       {label && (
@@ -166,7 +169,12 @@ export function SelectBlock<T extends Record<string, unknown>>({
             )
           }}
         />
-      </div>
+      {showError && state.error?.message && (
+        <p className="mt-1 text-xs text-error-600">
+          {state.error.message}
+        </p>
+      )}
+    </div>
   )
 }
 

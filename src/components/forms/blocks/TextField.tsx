@@ -52,6 +52,11 @@ export function TextField<T extends Record<string, unknown>>({
           className={prefix ? "pl-7" : undefined}
         />
       </div>
+      {showError && state.error?.message && (
+        <p className="mt-1 text-xs text-error-600">
+          {state.error.message}
+        </p>
+      )}
     </div>
   )
 }

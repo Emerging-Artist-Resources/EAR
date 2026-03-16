@@ -31,7 +31,7 @@ export async function createProfileRepo(data: SignupFormData, userId: string) {
   const { data: profile, error } = await supabase
     .from("profiles")
     .upsert(profileData, { onConflict: "id" })
-    .select()
+    .select("id, name, email, profile_type")
     .single()
 
   if (error) throw error

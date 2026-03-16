@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { H4 } from "../ui/typography"
+import { getFilterTypeColor } from "./event-colors"
 
 interface FilterBarProps {
   selectedTypes: Set<string>
@@ -46,22 +47,31 @@ export function FilterBar({ selectedTypes, onChangeEventType }: FilterBarProps) 
           <Button
             size="sm"
             className="rounded-full"
-            variant={isAllSelected ? "primary" : "secondary"}
+            variant={isAllSelected ? "outline" : "secondary"}
             onClick={handleSelectAll}
           >
             All
           </Button>
-          {TYPES.map(t => (
-            <Button
-              key={t}
-              size="sm"
-              className="rounded-full"
-              variant={!isAllSelected && selectedTypes.has(t) ? "primary" : "secondary"}
-              onClick={() => handleToggle(t)}
-            >
-              {TYPE_LABELS[t]}
-            </Button>
-          ))}
+          {TYPES.map(t => {
+            const isSelected = !isAllSelected && selectedTypes.has(t)
+            const colors = getFilterTypeColor(t)
+            return (
+              <Button
+                key={t}
+                size="sm"
+                className="rounded-full"
+                variant={isSelected ? "none" : "secondary"}
+                onClick={() => handleToggle(t)}
+                style={isSelected ? {
+                  backgroundColor: colors.bg,
+                  color: colors.text,
+                  borderColor: colors.bg,
+                } : undefined}
+              >
+                {TYPE_LABELS[t]}
+              </Button>
+            )
+          })}
         </div>
       </div>
     </div>

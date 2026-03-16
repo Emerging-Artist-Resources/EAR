@@ -100,14 +100,14 @@ function CalendarViewContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Text className="text-lg">Loading calendar...</Text>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className={`px-4 py-6 sm:px-0 transition-opacity duration-200 ${isModalOpen ? 'opacity-50' : ''}`}>
           <CallToAction onSubmitPerformance={handleOpenSubmit} />
@@ -179,7 +179,7 @@ function CalendarViewContent() {
 export default function CalendarView() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Text className="text-lg">Loading calendar...</Text>
       </div>
     }>
