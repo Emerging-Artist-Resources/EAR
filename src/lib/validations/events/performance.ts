@@ -102,8 +102,30 @@ export const performanceFields = z
     listingFeeOption: z.enum(["PAY_FEE", "PROVIDE", "EXPLAIN"]).optional(),
     listingFeeExplanation: z.string().optional(),
     complementaryTicketInfo: z.string().optional(),
+
+    /**
+     * Piece detail fields (for PIECE type)
+     * These fields are used when submitting a piece within a larger event
+     */
+    piece_company: z.string().optional(),
+    piece_companyWebsite: z.string().url("Invalid URL").optional().or(z.literal("")),
+    piece_title: z.string().optional(),
+    piece_choreographer: z.string().optional(),
+    piece_description: z.string().optional(),
+    piece_credits: z.string().optional(),
   })
   .superRefine((data, ctx) => {
+    // Require type field for performance submissions
+    // This catches cases where user hasn't selected ORGANIZER or PIECE
+    if (!data.type || (data.type !== "ORGANIZER" && data.type !== "PIECE")) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["type"],
+        message: "Please select what you are submitting",
+      })
+      return // Don't continue with other validations if type is missing
+    }
+
     // Helper: normalize occurrences from either field
     // Check if occurrences has valid data (date and time)
     const hasValidOccurrences = Array.isArray(data.occurrences) &&
@@ -137,6 +159,14 @@ export const performanceFields = z
     // If this is a performance submission, ensure schedule is present in the right way.
     // (You can loosen this if you truly want to allow drafts.)
     if (data.type === "ORGANIZER") {
+      // Event type is required for organizer submissions
+      if (!data.eventType) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["eventType"],
+          message: "Event type is required",
+        })
+      }
       if (!data.title || data.title.trim() === "") {
         ctx.addIssue({
           code: "custom",
@@ -185,7 +215,7 @@ export const performanceFields = z
       const parentMode = data.parentEventMode ?? "SELECT"
       const scheduleMode = data.pieceScheduleMode ?? "FROM_PARENT"
 
-      // Parent event requirement depends on mode
+      // 1. Parent event requirement depends on mode
       if (parentMode === "SELECT") {
         if (!data.parentEventId) {
           ctx.addIssue({
@@ -195,7 +225,8 @@ export const performanceFields = z
           })
         }
       } else {
-        if (!data.parentEventName) {
+        // MANUAL mode - require parent event name
+        if (!data.parentEventName || data.parentEventName.trim() === "") {
           ctx.addIssue({
             code: "custom",
             path: ["parentEventName"],
@@ -204,6 +235,7 @@ export const performanceFields = z
         }
       }
 
+      // 2. Piece schedule validation
       // Check if user has custom occurrences (they can add custom dates even when selecting from parent)
       const hasCustomOccurrences = Array.isArray(data.extraOccurrences) &&
         data.extraOccurrences.length > 0 &&
@@ -218,24 +250,110 @@ export const performanceFields = z
       // Check if selectedSlots has data
       const hasSelectedSlots = Array.isArray(data.selectedSlots) && data.selectedSlots.length > 0
       
-      // Users can now have both selectedSlots AND extraOccurrences simultaneously
-      // Require at least one of them
+      // Determine what schedule options are available based on parentEventMode and parentEventId
+      // selectedSlots can only be used if parentEventMode is SELECT AND parentEventId exists
+      const canUseSelectedSlots = parentMode === "SELECT" && !!data.parentEventId
+      
+      // Require at least one schedule option
       if (!hasSelectedSlots && !hasCustomOccurrences) {
-        // If in FROM_PARENT mode and parent occurrences are available, suggest selecting from parent
-        if (scheduleMode === "FROM_PARENT") {
+        if (canUseSelectedSlots && scheduleMode === "FROM_PARENT") {
+          // Can select from parent, suggest that
           ctx.addIssue({
             code: "custom",
             path: ["selectedSlots"],
             message: "Select at least one date/time from the event schedule, or add custom dates/times",
           })
         } else {
-          // CUSTOM mode - require custom occurrences
+          // Must use custom occurrences (MANUAL mode, CUSTOM schedule mode, or no parentEventId)
           ctx.addIssue({
             code: "custom",
             path: ["extraOccurrences"],
             message: "Add at least one date & time for your piece",
           })
         }
+      }
+      
+      // Additional validation: if MANUAL mode, ensure custom occurrences are provided
+      // (selectedSlots can't be used without a parentEventId)
+      if (parentMode === "MANUAL" && !hasCustomOccurrences) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["extraOccurrences"],
+          message: "Add at least one date & time for your piece (manual entry mode requires custom dates)",
+        })
+      }
+      
+      // Additional validation: if SELECT mode but no parentEventId, can't use selectedSlots
+      if (parentMode === "SELECT" && !data.parentEventId && scheduleMode === "FROM_PARENT" && !hasCustomOccurrences) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["parentEventId"],
+          message: "Select an event/festival to choose dates from its schedule, or add custom dates/times",
+        })
+      }
+
+      // 2b. Validate location for custom occurrences (required for MANUAL mode, optional but validated for SELECT mode)
+      // When using custom occurrences, location must be provided (can't inherit from parent)
+      if (hasCustomOccurrences && Array.isArray(data.extraOccurrences)) {
+        const occurrencesWithMissingLocation = data.extraOccurrences
+          .map((occ, index) => ({ occ, index }))
+          .filter(({ occ }) => {
+            // Check if this occurrence has valid date/time
+            const hasValidDateTime = occ?.date && occ.date.trim() !== "" &&
+              Array.isArray(occ?.times) &&
+              occ.times.length > 0 &&
+              occ.times.some((t) => t?.time && t.time.trim() !== "")
+            
+            if (!hasValidDateTime) return false
+            
+            // Check if location is provided (at least one of: address, venueName, or placeId)
+            const hasLocation = (occ?.address && occ.address.trim() !== "") ||
+              (occ?.venueName && occ.venueName.trim() !== "") ||
+              (occ?.placeId && occ.placeId.trim() !== "")
+            
+            return !hasLocation
+          })
+        
+        if (occurrencesWithMissingLocation.length > 0) {
+          // Report error for each occurrence missing location
+          occurrencesWithMissingLocation.forEach(({ index }) => {
+            ctx.addIssue({
+              code: "custom",
+              path: ["extraOccurrences", index, "address"],
+              message: "Location is required for each date & time",
+            })
+          })
+        }
+      }
+
+      // 3. Piece detail fields (Piece Details section)
+      if (!data.piece_company || data.piece_company.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["piece_company"],
+          message: "Company / Artist Name is required",
+        })
+      }
+      if (!data.piece_title || data.piece_title.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["piece_title"],
+          message: "Piece Title is required",
+        })
+      }
+      if (!data.piece_description || data.piece_description.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["piece_description"],
+          message: "Piece Description is required",
+        })
+      }
+      if (!data.piece_credits || data.piece_credits.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["piece_credits"],
+          message: "Credits / Performers is required",
+        })
       }
     }
   })

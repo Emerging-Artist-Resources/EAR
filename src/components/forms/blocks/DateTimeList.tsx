@@ -261,7 +261,7 @@ export function DateTimeList<T extends Record<string, unknown>>({
         prevFormValuesRef.current = signature
       }
     }
-  }, [normalizedWatchedValues, name, showTime, startWithOne, replace, append, getValues, locationConfig, syncLocation, firstDateField, dateFields.length, createSignature, isEmptyInitialState, maxDates])
+  }, [normalizedWatchedValues, name, showTime, startWithOne, replace, getValues, locationConfig, syncLocation, firstDateField, dateFields.length, createSignature, isEmptyInitialState, maxDates])
 
   const canAddDate = !maxDates || dateFields.length < maxDates
 
@@ -382,7 +382,7 @@ export function DateTimeList<T extends Record<string, unknown>>({
     if (!allSame && syncLocation) {
       setSyncLocation(false)
     }
-  }, [dateFields.length, locationConfig, name, getValues, syncLocation])
+  }, [dateFields.length, locationConfig, name, getValues, setSyncLocation, syncLocation])
 
   // When first location changes and sync is on -> apply to all
   // But only if locations are actually the same (don't overwrite different locations)
@@ -402,7 +402,7 @@ export function DateTimeList<T extends Record<string, unknown>>({
     if (allSame) {
       applyFirstLocationToAll()
     }
-  }, [firstLocationAddress, applyFirstLocationToAll, syncLocation, dateFields.length, locationConfig, name, getValues])
+  }, [firstLocationAddress, applyFirstLocationToAll, syncLocation, dateFields.length, locationConfig, name, getValues, setSyncLocation])
 
   const handleAddDate = () => {
     if (maxDates && dateFields.length >= maxDates) return

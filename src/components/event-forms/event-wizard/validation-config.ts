@@ -20,17 +20,22 @@ export const eventTypeValidationFields: Record<
   PERFORMANCE: [
     "type", // First field in PerformanceDetailsStep - "What are you submitting?" section
     // ORGANIZER fields (if type === "ORGANIZER")
-    "title", // First field in OrganizerBasics
-    "organizer", // Second field in OrganizerBasics
-    "link", // Third field in OrganizerBasics
-    "price", // Fourth field in OrganizerBasics
-    "description", // Fifth field in OrganizerBasics
+    "eventType", // First field in OrganizerBasics - "Is this a solo show, split bill, or festival?"
+    "title", // Second field in OrganizerBasics
+    "organizer", // Third field in OrganizerBasics
+    "link", // Fourth field in OrganizerBasics
+    "price", // Fifth field in OrganizerBasics
+    "description", // Sixth field in OrganizerBasics
     "occurrences", // In OrganizerSoloForm or OrganizerMultiProgramForm
     // PIECE fields (if type === "PIECE")
     "parentEventId", // In PieceSubmissionFlow - "Find Your Event" section (if parentEventMode === "SELECT")
     "parentEventName", // In PieceSubmissionFlow - "Basic event info" section (if parentEventMode === "MANUAL")
-    "selectedSlots", // In PieceSubmissionFlow - "Piece Details" section (if pieceScheduleMode === "FROM_PARENT")
-    "extraOccurrences", // In PieceSubmissionFlow - "Piece Details" section (if pieceScheduleMode === "CUSTOM")
+    "selectedSlots", // In PieceSubmissionFlow - "Piece Details" section (if pieceScheduleMode === "FROM_PARENT" and parentEventId exists)
+    "extraOccurrences", // In PieceSubmissionFlow - "Piece Details" section (if pieceScheduleMode === "CUSTOM" or parentEventMode === "MANUAL")
+    "piece_company", // In PieceSubmissionFlow - Piece Details section
+    "piece_title", // In PieceSubmissionFlow - Piece Details section
+    "piece_description", // In PieceSubmissionFlow - Piece Details section
+    "piece_credits", // In PieceSubmissionFlow - Piece Details section
   ],
   AUDITION: [
     "title", // First field in AuditionStep - Audition Details section
@@ -58,13 +63,16 @@ export const eventTypeValidationFields: Record<
     "address", // In Location section
   ],
   CLASS: [
-    "classWorkshopType", // First field in ClassesWorkshopsStep - What are you submitting? section
+    "classWorkshopType", // First field - What are you submitting? section
     "title", // First field in Basic Info section
     "organizer", // Second field in Basic Info
-    "price", // Third field in Basic Info (required for CLASS, optional for WORKSHOP)
-    "link", // Fourth field in Basic Info (required for CLASS, optional for WORKSHOP)
+    "price", // Third field in Basic Info (required for CLASS only, optional for WORKSHOP)
+    "link", // Fourth field in Basic Info (required for CLASS only, optional for WORKSHOP)
     "description", // Fifth field in Basic Info
-    "occurrences", // In Schedule section
+    "isPartOfFestivalOrWorkshop", // In Festival or Workshop Association section (required for CLASS only)
+    "parentEventId", // In FestivalAssociationSection (required if YES and not creating placeholder, CLASS only)
+    "placeholderTitle", // In FestivalAssociationSection (required if YES and creating placeholder, CLASS only)
+    "occurrences", // In Schedule section (required for both CLASS and WORKSHOP)
   ],
   FUNDING: ["fundingLink"],
 }

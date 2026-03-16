@@ -13,7 +13,6 @@ import { OpportunityStep } from "./steps/OpportunityStep"
 import { AuditionStep } from "./steps/AuditionStep"
 import { MediaAndAdditionalInfoStep } from "./steps/MediaAndAdditionalInfoStep"
 import { PageNumbers } from "@/components/forms/blocks/PageNumbers"
-import { validateStep2 } from "./validation-helpers"
 import { useEventStepValidation } from "@/hooks/use-event-step-validation"
 import { DEFAULT_EVENT_ERROR_MESSAGE } from "@/lib/validations/events"
 import { buildEventPayload, type UserInfo } from "./payload-builders"
@@ -49,18 +48,31 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
   const { user, userName } = useAuth()
   const { showToast } = useToast()
 
-  // Fetch pronouns from profile
+  // Fetch pronouns from profile - fetch once on mount if user exists
   useEffect(() => {
+    if (!user) {
+      setProfilePronouns(null)
+      return
+    }
+    
+    let cancelled = false
     const fetchProfile = async () => {
-      if (!user) return
       try {
         const profile = await apiGet<ProfileData>("/api/profile")
-        setProfilePronouns(profile?.pronouns || null)
+        if (!cancelled) {
+          setProfilePronouns(profile?.pronouns || null)
+        }
       } catch (error) {
-        setProfilePronouns(null)
+        if (!cancelled) {
+          setProfilePronouns(null)
+        }
       }
     }
     fetchProfile()
+    
+    return () => {
+      cancelled = true
+    }
   }, [user])
 
   // Derive userInfo from auth state and profile
@@ -86,7 +98,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       occurrences: [],
       deadlineOccurrences: [],
     } as Partial<EventFormData>,
-    mode: 'onChange',
+    mode: 'onBlur',
     reValidateMode: 'onChange',
     shouldUnregister: false,
     shouldFocusError: false, // prevents scroll-to-first-error / focus jumps
@@ -94,7 +106,8 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
 
   // Hook must be called unconditionally - use PERFORMANCE as default
   // Must be called after form initialization
-  const validationHook = useEventStepValidation(form, eventType || "PERFORMANCE")
+  // Use nullish coalescing to avoid unnecessary re-initialization when eventType is null
+  const validationHook = useEventStepValidation(form, eventType ?? "PERFORMANCE")
 
   const goNext = useCallback(async () => {
     if (step === 1) {
@@ -110,21 +123,17 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
         showToast("Please select an event type to continue", "warning")
         return
       }
-      // Use validation hook - it's already memoized based on eventType
-      const validation = await validateStep2(
-        form,
-        eventType,
-        validationHook.validateStep,
-        validationHook.getFirstError
-      )
-      if (!validation.isValid) {
-        showToast(validation.message || DEFAULT_EVENT_ERROR_MESSAGE, "error")
+      // Use validation hook directly - it's already memoized based on eventType
+      const isValid = await validationHook.validateStep()
+      if (!isValid) {
+        const errorMessage = validationHook.getFirstError() || DEFAULT_EVENT_ERROR_MESSAGE
+        showToast(errorMessage, "error")
         return
       }
       setStep(3)
       return
     }
-  }, [step, eventType, form, showToast, validationHook])
+  }, [step, eventType, showToast, validationHook.validateStep, validationHook.getFirstError])
 
   const goBack = useCallback(() => {
     if (step === 1) return
@@ -251,26 +260,8 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       }
     },
     (errors) => {
-      // Extract first error message for user feedback
-      let errorMessage = DEFAULT_EVENT_ERROR_MESSAGE
-      
-      const errorEntries = Object.entries(errors)
-      if (errorEntries.length > 0) {
-        const firstErrorEntry = errorEntries[0]
-        const firstError = firstErrorEntry[1]
-        
-        if (firstError) {
-          if (typeof firstError === 'object' && 'message' in firstError) {
-            errorMessage = firstError.message as string
-          } else if (Array.isArray(firstError) && firstError.length > 0) {
-            const nestedError = firstError[0]
-            if (nestedError && typeof nestedError === 'object' && 'message' in nestedError) {
-              errorMessage = nestedError.message as string
-            }
-          }
-        }
-      }
-      
+      // Simplified error handling using validation hook
+      const errorMessage = validationHook.getFirstError() || DEFAULT_EVENT_ERROR_MESSAGE
       showToast(errorMessage, "error")
       setIsSubmitting(false)
     }

@@ -103,28 +103,31 @@ export const eventFormSchema = baseSchema
           message: "Artist type is required",
         })
       }
-      if (!data.listingFeeOption) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["listingFeeOption"],
-          message: "Listing fee option is required",
-        })
-      }
-      // If listing fee option is EXPLAIN, require explanation
-      if (data.listingFeeOption === "EXPLAIN" && (!data.listingFeeExplanation || data.listingFeeExplanation.trim() === "")) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["listingFeeExplanation"],
-          message: "Please explain your alternative arrangement",
-        })
-      }
-      // If listing fee option is PROVIDE, require complementary ticket info
-      if (data.listingFeeOption === "PROVIDE" && (!data.complementaryTicketInfo || data.complementaryTicketInfo.trim() === "")) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["complementaryTicketInfo"],
-          message: "Please provide complementary ticket information",
-        })
+      // Only validate listingFeeOption for EMERGING artists
+      // ESTABLISHED artists don't see this field (it's auto-set)
+      if (data.artistType === "EMERGING") {
+        if (!data.listingFeeOption) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["listingFeeOption"],
+            message: "Listing fee option is required",
+          })
+        }
+        // Conditional validations only apply to EMERGING artists
+        if (data.listingFeeOption === "EXPLAIN" && (!data.listingFeeExplanation || data.listingFeeExplanation.trim() === "")) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["listingFeeExplanation"],
+            message: "Please explain your alternative arrangement",
+          })
+        }
+        if (data.listingFeeOption === "PROVIDE" && (!data.complementaryTicketInfo || data.complementaryTicketInfo.trim() === "")) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["complementaryTicketInfo"],
+            message: "Please provide complementary ticket information",
+          })
+        }
       }
     }
     
@@ -170,10 +173,18 @@ export const performanceStep2Schema = baseSchema
     occurrences: true,
     extraOccurrences: true,
     type: true,
+    eventType: true, // Required for ORGANIZER flow
+    parentEventMode: true, // Required for PIECE flow to determine validation logic
     pieceScheduleMode: true,
     selectedSlots: true,
     parentEventId: true,
     parentEventName: true,
+    piece_company: true,
+    piece_companyWebsite: true,
+    piece_title: true,
+    piece_choreographer: true,
+    piece_description: true,
+    piece_credits: true,
     address: true,
     venueName: true,
     placeId: true,
@@ -195,6 +206,8 @@ export const performanceStep2Schema = baseSchema
     
     // Preserve performance-specific validation logic
     if (data.type === "ORGANIZER") {
+      // Note: eventType validation is handled in the main schema
+      // Step 2 focuses on fields shown in step 2 (eventType is in step 2, but validation happens at full form level)
       if (!data.title || data.title.trim() === "") {
         ctx.addIssue({
           code: "custom",
@@ -278,12 +291,13 @@ export const performanceStep2Schema = baseSchema
           })
         
         if (occurrencesWithMissingLocation.length > 0) {
-          // Report error on first occurrence missing location
-          const firstMissing = occurrencesWithMissingLocation[0]
-          ctx.addIssue({
-            code: "custom",
-            path: ["occurrences", firstMissing.index, "address"],
-            message: "Location is required for each date & time",
+          // Report error for each occurrence missing location
+          occurrencesWithMissingLocation.forEach(({ index }) => {
+            ctx.addIssue({
+              code: "custom",
+              path: ["occurrences", index, "address"],
+              message: "Location is required for each date & time",
+            })
           })
         }
       }
@@ -323,20 +337,111 @@ export const performanceStep2Schema = baseSchema
             d.times.some((t) => t?.time && t.time.trim() !== "")
         )
       const hasSelectedSlots = Array.isArray(data.selectedSlots) && data.selectedSlots.length > 0
+      
+      // Determine what schedule options are available based on parentEventMode and parentEventId
+      // selectedSlots can only be used if parentEventMode is SELECT AND parentEventId exists
+      const canUseSelectedSlots = parentMode === "SELECT" && !!data.parentEventId
+      
+      // Require at least one schedule option
       if (!hasSelectedSlots && !hasCustomOccurrences) {
-        if (scheduleMode === "FROM_PARENT") {
+        if (canUseSelectedSlots && scheduleMode === "FROM_PARENT") {
+          // Can select from parent, suggest that
           ctx.addIssue({
             code: "custom",
             path: ["selectedSlots"],
             message: "Select at least one date/time from the event schedule, or add custom dates/times",
           })
         } else {
+          // Must use custom occurrences (MANUAL mode, CUSTOM schedule mode, or no parentEventId)
           ctx.addIssue({
             code: "custom",
             path: ["extraOccurrences"],
             message: "Add at least one date & time for your piece",
           })
         }
+      }
+      
+      // Additional validation: if MANUAL mode, ensure custom occurrences are provided
+      // (selectedSlots can't be used without a parentEventId)
+      if (parentMode === "MANUAL" && !hasCustomOccurrences) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["extraOccurrences"],
+          message: "Add at least one date & time for your piece (manual entry mode requires custom dates)",
+        })
+      }
+      
+      // Additional validation: if SELECT mode but no parentEventId, can't use selectedSlots
+      if (parentMode === "SELECT" && !data.parentEventId && scheduleMode === "FROM_PARENT" && !hasCustomOccurrences) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["parentEventId"],
+          message: "Select an event/festival to choose dates from its schedule, or add custom dates/times",
+        })
+      }
+
+      // 2b. Validate location for custom occurrences (required for MANUAL mode, optional but validated for SELECT mode)
+      // When using custom occurrences, location must be provided (can't inherit from parent)
+      if (hasCustomOccurrences && Array.isArray(data.extraOccurrences)) {
+        const occurrencesWithMissingLocation = data.extraOccurrences
+          .map((occ, index) => ({ occ, index }))
+          .filter(({ occ }) => {
+            // Check if this occurrence has valid date/time
+            const hasValidDateTime = occ?.date && occ.date.trim() !== "" &&
+              Array.isArray(occ?.times) &&
+              occ.times.length > 0 &&
+              occ.times.some((t) => t?.time && t.time.trim() !== "")
+            
+            if (!hasValidDateTime) return false
+            
+            // Check if location is provided (at least one of: address, venueName, or placeId)
+            const hasLocation = (occ?.address && occ.address.trim() !== "") ||
+              (occ?.venueName && occ.venueName.trim() !== "") ||
+              (occ?.placeId && occ.placeId.trim() !== "")
+            
+            return !hasLocation
+          })
+        
+        if (occurrencesWithMissingLocation.length > 0) {
+          // Report error for each occurrence missing location
+          occurrencesWithMissingLocation.forEach(({ index }) => {
+            ctx.addIssue({
+              code: "custom",
+              path: ["extraOccurrences", index, "address"],
+              message: "Location is required for each date & time",
+            })
+          })
+        }
+      }
+
+      // 3. Piece detail fields (Piece Details section)
+      if (!data.piece_company || data.piece_company.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["piece_company"],
+          message: "Company / Artist Name is required",
+        })
+      }
+      if (!data.piece_title || data.piece_title.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["piece_title"],
+          message: "Piece Title is required",
+        })
+      }
+      if (!data.piece_description || data.piece_description.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["piece_description"],
+          message: "Piece Description is required",
+        })
+      }
+      if (!data.piece_credits || data.piece_credits.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["piece_credits"],
+          message: "Credits / Performers is required",
+        })
       }
     }
   })
@@ -563,6 +668,12 @@ export const classStep2Schema = baseSchema
     teachers: true,
     occurrences: true,
     classWorkshopType: true,
+    isPartOfFestivalOrWorkshop: true,
+    parentEventId: true,
+    placeholderTitle: true,
+    placeholderOrganizerName: true,
+    placeholderContactEmail: true,
+    placeholderWebsiteOrSocial: true,
     address: true,
     venueName: true,
     placeId: true,
@@ -572,7 +683,6 @@ export const classStep2Schema = baseSchema
   })
   .passthrough()
   .superRefine((data, ctx) => {
-    // Preserve class-specific validation logic
     // Validation order matches form field order
     // First, require type to be selected
     if (!data.classWorkshopType || (data.classWorkshopType !== "CLASS" && data.classWorkshopType !== "WORKSHOP")) {
@@ -584,27 +694,14 @@ export const classStep2Schema = baseSchema
       return // Don't continue validation if type is missing
     }
 
-    const isClassOrWorkshop =
-      data.classWorkshopType === "CLASS" || data.classWorkshopType === "WORKSHOP"
-    if (!isClassOrWorkshop) return
+    const isClass = data.classWorkshopType === "CLASS"
 
-    const normalizedOccurrences = data.occurrences && data.occurrences.length > 0
-      ? data.occurrences
-      : undefined
-
+    // Basic Info section - required for both CLASS and WORKSHOP
     if (!data.title || data.title.trim() === "") {
       ctx.addIssue({ code: "custom", path: ["title"], message: "Title is required" })
     }
     if (!data.organizer || data.organizer.trim() === "") {
       ctx.addIssue({ code: "custom", path: ["organizer"], message: "Organizer is required" })
-    }
-    if (data.classWorkshopType === "CLASS") {
-      if (!data.price || data.price.trim() === "") {
-        ctx.addIssue({ code: "custom", path: ["price"], message: "Price is required" })
-      }
-      if (!data.link || data.link.trim() === "") {
-        ctx.addIssue({ code: "custom", path: ["link"], message: "Link is required" })
-      }
     }
     if (!data.description || data.description.trim() === "") {
       ctx.addIssue({
@@ -613,10 +710,45 @@ export const classStep2Schema = baseSchema
         message: "Description is required",
       })
     }
-    // Teachers field is not shown in the form, so it should not be required
-    // If teachers field is added to the form in the future, add validation here conditionally
-    
-    // Validate occurrences: must have at least one occurrence with valid date/time
+
+    // CLASS-specific fields (price and link are optional for WORKSHOP)
+    if (isClass) {
+      if (!data.price || data.price.trim() === "") {
+        ctx.addIssue({ code: "custom", path: ["price"], message: "Price is required" })
+      }
+      if (!data.link || data.link.trim() === "") {
+        ctx.addIssue({ code: "custom", path: ["link"], message: "Link is required" })
+      }
+      
+      // Festival or Workshop Association (only for CLASS)
+      if (!data.isPartOfFestivalOrWorkshop || (data.isPartOfFestivalOrWorkshop !== "YES" && data.isPartOfFestivalOrWorkshop !== "NO")) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["isPartOfFestivalOrWorkshop"],
+          message: "Festival or Workshop Association is required",
+        })
+      } else if (data.isPartOfFestivalOrWorkshop === "YES") {
+        // If YES, must either select existing festival or create placeholder
+        const hasParentId = !!data.parentEventId && data.parentEventId.trim() !== ""
+        
+        if (!hasParentId) {
+          // If no parent ID selected, must create placeholder with title
+          if (!data.placeholderTitle || data.placeholderTitle.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              path: ["placeholderTitle"],
+              message: "Festival / Workshop Title is required",
+            })
+          }
+        }
+      }
+    }
+
+    // Occurrences validation (required for both CLASS and WORKSHOP)
+    const normalizedOccurrences = data.occurrences && data.occurrences.length > 0
+      ? data.occurrences
+      : undefined
+
     if (!normalizedOccurrences || normalizedOccurrences.length === 0) {
       ctx.addIssue({
         code: "custom",
@@ -661,12 +793,13 @@ export const classStep2Schema = baseSchema
           })
         
         if (occurrencesWithMissingLocation.length > 0) {
-          // Report error on first occurrence missing location
-          const firstMissing = occurrencesWithMissingLocation[0]
-          ctx.addIssue({
-            code: "custom",
-            path: ["occurrences", firstMissing.index, "address"],
-            message: "Location is required for each date & time",
+          // Report error for each occurrence missing location
+          occurrencesWithMissingLocation.forEach(({ index }) => {
+            ctx.addIssue({
+              code: "custom",
+              path: ["occurrences", index, "address"],
+              message: "Location is required for each date & time",
+            })
           })
         }
       }

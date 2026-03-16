@@ -1,14 +1,7 @@
 import { useCallback, useMemo } from "react"
 import { UseFormReturn } from "react-hook-form"
 import type { EventFormData } from "@/lib/validations/events"
-import {
-  performanceStep2Schema,
-  auditionStep2Schema,
-  creativeStep2Schema,
-  classStep2Schema,
-  fundingStep2Schema,
-  DEFAULT_EVENT_ERROR_MESSAGE,
-} from "@/lib/validations/events"
+import { getStep2Schema } from "@/lib/validations/events/step-schemas"
 import { eventTypeValidationFields } from "@/components/event-forms/event-wizard/validation-config"
 import { getEventFieldLabel } from "@/lib/form-helpers"
 import { normalizeErrorMessage } from "@/lib/validation-helpers"
@@ -22,78 +15,79 @@ export function useEventStepValidation(
   form: UseFormReturn<EventFormData>,
   eventType: EventType
 ) {
-  // Memoize schema based on event type
-  const schema = useMemo(() => {
-    switch (eventType) {
-      case "PERFORMANCE":
-        return performanceStep2Schema
-      case "AUDITION":
-        return auditionStep2Schema
-      case "CREATIVE":
-        return creativeStep2Schema
-      case "CLASS":
-        return classStep2Schema
-      case "FUNDING":
-        return fundingStep2Schema
-      default:
-        return performanceStep2Schema
-    }
-  }, [eventType])
-
   // Memoize fields to validate based on event type
   const fields = useMemo((): (keyof EventFormData)[] => {
     return eventTypeValidationFields[eventType] || []
   }, [eventType])
 
+  // Use existing step-specific schema (handles multi-flow forms)
+  const step2Schema = useMemo(() => {
+    return getStep2Schema(eventType)
+  }, [eventType])
+
   const validateStep = useCallback(async (): Promise<boolean> => {
-    // Always run schema validation to catch required field errors
-    // form.trigger() validates against the full schema where fields might be optional,
-    // but step-specific schemas have required fields via superRefine
+    // Explicit check for PERFORMANCE type field before schema validation
+    // This ensures the error is caught early and set on form state immediately
+    if (eventType === "PERFORMANCE") {
+      const formData = form.getValues()
+      const typeValue = formData.type
+      if (!typeValue || (typeValue !== "ORGANIZER" && typeValue !== "PIECE")) {
+        form.setError("type", {
+          type: "manual",
+          message: "Please select what you are submitting",
+        })
+        return false
+      }
+    }
+
+    // Use step-specific schema instead of full schema + filtering
     const formData = form.getValues()
-    const result = schema.safeParse(formData)
+    const result = step2Schema.safeParse(formData)
     
     if (!result.success) {
-      // If schema validation fails, trigger form validation to populate errors
-      await form.trigger(fields)
+      // Map schema errors to form errors
+      result.error.issues.forEach((error) => {
+        // Handle nested paths (e.g., ['occurrences', 0, 'address'])
+        // Convert to React Hook Form path format
+        const pathParts = error.path.map((p) => String(p))
+        const path = pathParts.join('.') as any
+        form.setError(path, {
+          type: 'manual',
+          message: error.message,
+        })
+      })
       return false
     }
-    
-    // Also trigger form validation to ensure field-level errors are shown
-    await form.trigger(fields)
+
     return true
-  }, [form, fields, schema])
+  }, [form, eventType, step2Schema])
 
   const getFirstError = useCallback((): string | null => {
-    // Check schema validation first to ensure errors are in the correct order
-    // Schema validation runs checks in the order they're written (matching form order)
+    // Use step-specific schema instead of full schema
     const formData = form.getValues()
-    const result = schema.safeParse(formData)
-
+    const result = step2Schema.safeParse(formData)
+    
     if (!result.success && result.error?.issues) {
-      // Find the first error that matches a field in our ordered fields array
-      // This ensures errors appear in the same order as the form fields
+      // Find first error in field order
       for (const field of fields) {
-        const matchingIssue = result.error.issues.find(
-          (issue) => issue.path[0] === field
-        )
+        const matchingIssue = result.error.issues.find((issue) => {
+          const issuePath = issue.path[0]
+          const fieldStr = String(field)
+          const issuePathStr = String(issuePath)
+          return issuePathStr === fieldStr || issuePathStr.startsWith(fieldStr)
+        })
         if (matchingIssue) {
           const fieldLabel = getEventFieldLabel(field)
           const errorMessage = matchingIssue.message || ""
-          return normalizeErrorMessage(errorMessage, fieldLabel) || `${fieldLabel} is required`
+          return normalizeErrorMessage(errorMessage, fieldLabel) || 
+                 `${fieldLabel} is required`
         }
-      }
-      
-      // If no matching field found in ordered array, return first error as fallback
-      const firstError = result.error.issues[0]
-      const fieldPath = firstError.path[0]
-      if (fieldPath) {
-        const fieldLabel = getEventFieldLabel(fieldPath as string)
-        const errorMessage = firstError.message || ""
-        return normalizeErrorMessage(errorMessage, fieldLabel) || `${fieldLabel} is required`
       }
     }
 
-    // Fallback to form errors (react-hook-form validation) in field order
+    // Fallback to form state errors if schema validation passed
+    // Use RHF's error state directly - zodResolver already mapped errors correctly
+    // Check errors in field order to match form field order
     const errors = form.formState.errors
     for (const field of fields) {
       const error = errors[field]
@@ -109,8 +103,25 @@ export function useEventStepValidation(
       }
     }
 
+    // Check for nested array errors (e.g., occurrences.0.address)
+    // These are stored in form.formState.errors but may not match top-level field names
+    const errorKeys = Object.keys(errors)
+    for (const field of fields) {
+      // Check if any error key starts with this field (for nested errors)
+      const matchingErrorKey = errorKeys.find(key => key.startsWith(field as string))
+      if (matchingErrorKey) {
+        const error = errors[matchingErrorKey as keyof typeof errors]
+        if (error && typeof error === "object" && "message" in error) {
+          const message = error.message as string
+          if (message) {
+            return normalizeErrorMessage(message, getEventFieldLabel(field))
+          }
+        }
+      }
+    }
+
     return null
-  }, [form, fields, schema])
+  }, [form.formState.errors, form, fields, step2Schema])
 
   return {
     validateStep,

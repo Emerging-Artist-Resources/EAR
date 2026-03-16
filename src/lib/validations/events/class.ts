@@ -104,25 +104,26 @@ export const classFields = z
     classListingFeeExplanation: z.string().optional(), // Legacy
   })
   .superRefine((data, ctx) => {
-    const isClassOrWorkshop =
-      data.classWorkshopType === "CLASS" || data.classWorkshopType === "WORKSHOP"
+    // Validation order matches form field order
+    // First, require type to be selected
+    if (!data.classWorkshopType || (data.classWorkshopType !== "CLASS" && data.classWorkshopType !== "WORKSHOP")) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["classWorkshopType"],
+        message: "Submission type is required",
+      })
+      return // Don't continue validation if type is missing
+    }
 
-    if (!isClassOrWorkshop) return
+    const isClass = data.classWorkshopType === "CLASS"
 
-    // Helper: normalize occurrences
-    const normalizedOccurrences = data.occurrences && data.occurrences.length > 0
-      ? data.occurrences
-      : undefined
-
-    // Required essentials (only when this is the active listing type)
+    // Basic Info section - required for both CLASS and WORKSHOP
     if (!data.title || data.title.trim() === "") {
       ctx.addIssue({ code: "custom", path: ["title"], message: "Title is required" })
     }
     if (!data.organizer || data.organizer.trim() === "") {
       ctx.addIssue({ code: "custom", path: ["organizer"], message: "Organizer is required" })
     }
-    // Teachers field is not shown in the form, so it should not be required
-    // If teachers field is added to the form in the future, add validation here conditionally
     if (!data.description || data.description.trim() === "") {
       ctx.addIssue({
         code: "custom",
@@ -130,43 +131,17 @@ export const classFields = z
         message: "Description is required",
       })
     }
-    if (data.classWorkshopType === "CLASS") {
+
+    // CLASS-specific fields (price and link are optional for WORKSHOP)
+    if (isClass) {
       if (!data.price || data.price.trim() === "") {
         ctx.addIssue({ code: "custom", path: ["price"], message: "Price is required" })
       }
       if (!data.link || data.link.trim() === "") {
         ctx.addIssue({ code: "custom", path: ["link"], message: "Link is required" })
       }
-    }
-    // Validate occurrences: must have at least one occurrence with valid date/time
-    if (!normalizedOccurrences || normalizedOccurrences.length === 0) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["occurrences"],
-        message: "Add at least one date & time",
-      })
-    } else {
-      // Check if there are any occurrences with valid date/time
-      const validOccurrences = normalizedOccurrences.filter((occ) => {
-        return occ?.date && occ.date.trim() !== "" &&
-          Array.isArray(occ?.times) &&
-          occ.times.length > 0 &&
-          occ.times.some((t) => t?.time && t.time.trim() !== "")
-      })
       
-      if (validOccurrences.length === 0) {
-        // No valid occurrences found
-        ctx.addIssue({
-          code: "custom",
-          path: ["occurrences"],
-          message: "Add at least one date & time",
-        })
-      }
-    }
-    // Removed global venueName requirement - classes use per-occurrence locations
-
-    // Association logic (only for CLASS; workshops can stand alone)
-    if (data.classWorkshopType === "CLASS") {
+      // Festival or Workshop Association (only for CLASS)
       const assoc = data.isPartOfFestivalOrWorkshop ?? "NO"
       if (assoc === "YES") {
         const hasParentId = !!data.parentEventId
@@ -209,6 +184,67 @@ export const classFields = z
               message: "End date is required",
             })
           }
+        }
+      }
+    }
+
+    // Occurrences validation (required for both CLASS and WORKSHOP)
+    const normalizedOccurrences = data.occurrences && data.occurrences.length > 0
+      ? data.occurrences
+      : undefined
+
+    if (!normalizedOccurrences || normalizedOccurrences.length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["occurrences"],
+        message: "Add at least one date & time",
+      })
+    } else {
+      // Check if there are any occurrences with valid date/time
+      const validOccurrences = normalizedOccurrences.filter((occ) => {
+        return occ?.date && occ.date.trim() !== "" &&
+          Array.isArray(occ?.times) &&
+          occ.times.length > 0 &&
+          occ.times.some((t) => t?.time && t.time.trim() !== "")
+      })
+      
+      if (validOccurrences.length === 0) {
+        // No valid occurrences found
+        ctx.addIssue({
+          code: "custom",
+          path: ["occurrences"],
+          message: "Add at least one date & time",
+        })
+      } else {
+        // Validate that each occurrence with valid date/time has location data
+        const occurrencesWithMissingLocation = normalizedOccurrences
+          .map((occ, index) => ({ occ, index }))
+          .filter(({ occ }) => {
+            // Check if this occurrence has valid date/time
+            const hasValidDateTime = occ?.date && occ.date.trim() !== "" &&
+              Array.isArray(occ?.times) &&
+              occ.times.length > 0 &&
+              occ.times.some((t) => t?.time && t.time.trim() !== "")
+            
+            if (!hasValidDateTime) return false
+            
+            // Check if location is provided (at least one of: address, venueName, or placeId)
+            const hasLocation = (occ?.address && occ.address.trim() !== "") ||
+              (occ?.venueName && occ.venueName.trim() !== "") ||
+              (occ?.placeId && occ.placeId.trim() !== "")
+            
+            return !hasLocation
+          })
+        
+        if (occurrencesWithMissingLocation.length > 0) {
+          // Report error for each occurrence missing location
+          occurrencesWithMissingLocation.forEach(({ index }) => {
+            ctx.addIssue({
+              code: "custom",
+              path: ["occurrences", index, "address"],
+              message: "Location is required for each date & time",
+            })
+          })
         }
       }
     }
