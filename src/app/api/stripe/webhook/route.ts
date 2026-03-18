@@ -3,6 +3,9 @@ import Stripe from "stripe"
 import { getServerEnv } from "@/lib/env"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 
+// Ensure webhook runs in the Node.js runtime (not edge)
+export const runtime = "nodejs"
+
 export async function POST(req: NextRequest) {
   const env = getServerEnv()
   const supabase = getSupabaseServiceClient()
@@ -29,6 +32,7 @@ export async function POST(req: NextRequest) {
   const eventId = event.id
   const eventType = event.type
 
+  // Idempotency check
   const existingEvent = await supabase
     .from("stripe_webhook_events")
     .select("id")
@@ -40,6 +44,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true }, { status: 200 })
   }
 
+  // Extract metadata early for logging and insert
   let listingId: string | null = null
   let donationId: string | null = null
 
@@ -65,9 +70,14 @@ export async function POST(req: NextRequest) {
 
   if (insertResult.error && insertResult.error.code !== "23505") {
     console.error("Failed to insert webhook event:", insertResult.error)
+    // Continue – event may have been inserted concurrently
   }
 
-  console.log(`Processing webhook event: ${eventType} (${eventId}), listingId: ${listingId || "N/A"}, donationId: ${donationId || "N/A"}`)
+  console.log(
+    `Processing webhook event: ${eventType} (${eventId}), listingId: ${listingId || "N/A"}, donationId: ${
+      donationId || "N/A"
+    }`,
+  )
 
   try {
     switch (eventType) {
@@ -83,9 +93,14 @@ export async function POST(req: NextRequest) {
         const entityId = session.metadata?.entity_id
 
         if (!entityType || !entityId) {
-          console.error("No entity_type or entity_id in session metadata")
+          console.error("No entity_type or entity_id in session metadata", {
+            sessionId: session.id,
+            metadata: session.metadata,
+          })
           return NextResponse.json({ received: true }, { status: 200 })
         }
+
+        const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : null
 
         if (entityType === "listing") {
           const listing = await supabase
@@ -95,7 +110,10 @@ export async function POST(req: NextRequest) {
             .single()
 
           if (listing.error || !listing.data) {
-            console.error(`Listing ${entityId} not found`)
+            console.error(`Listing ${entityId} not found`, {
+              error: listing.error,
+              sessionId: session.id,
+            })
             return NextResponse.json({ received: true }, { status: 200 })
           }
 
@@ -103,8 +121,6 @@ export async function POST(req: NextRequest) {
             console.log(`Listing ${entityId} already marked as paid`)
             return NextResponse.json({ received: true }, { status: 200 })
           }
-
-          const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : null
 
           const { error } = await supabase
             .from("listings")
@@ -116,8 +132,15 @@ export async function POST(req: NextRequest) {
             .eq("id", entityId)
 
           if (error) {
-            console.error(`Failed to update listing ${entityId}:`, error)
-            return NextResponse.json({ received: true }, { status: 200 })
+            console.error(`Failed to update listing ${entityId}:`, {
+              error,
+              sessionId: session.id,
+              paymentIntentId,
+            })
+            return NextResponse.json(
+              { error: "Failed to update listing", details: error.message },
+              { status: 500 },
+            )
           }
 
           console.log(`Updated listing ${entityId} to paid`)
@@ -129,7 +152,10 @@ export async function POST(req: NextRequest) {
             .single()
 
           if (donation.error || !donation.data) {
-            console.error(`Donation ${entityId} not found`)
+            console.error(`Donation ${entityId} not found`, {
+              error: donation.error,
+              sessionId: session.id,
+            })
             return NextResponse.json({ received: true }, { status: 200 })
           }
 
@@ -149,8 +175,15 @@ export async function POST(req: NextRequest) {
             .eq("id", entityId)
 
           if (error) {
-            console.error(`Failed to update donation ${entityId}:`, error)
-            return NextResponse.json({ received: true }, { status: 200 })
+            console.error(`Failed to update donation ${entityId}:`, {
+              error,
+              sessionId: session.id,
+              paymentIntentId,
+            })
+            return NextResponse.json(
+              { error: "Failed to update donation", details: error.message },
+              { status: 500 },
+            )
           }
 
           console.log(`Updated donation ${entityId} to paid`)

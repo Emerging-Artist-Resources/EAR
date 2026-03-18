@@ -3,6 +3,13 @@ import { createServerClient } from "@supabase/ssr"
 import { getUserRole } from "@/lib/authz"
 
 export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl
+
+  // Allow Stripe webhooks to bypass auth and redirects
+  if (pathname === "/api/stripe/webhook") {
+    return NextResponse.next()
+  }
+
   const res = NextResponse.next()
 
   const supabase = createServerClient(
@@ -28,7 +35,6 @@ export async function middleware(req: NextRequest) {
 
   await supabase.auth.getSession()
 
-  const { pathname } = req.nextUrl
   if (pathname.startsWith("/admin")) {
     const role = getUserRole(user)
     if (role !== "ADMIN") {
