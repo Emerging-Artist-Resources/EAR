@@ -98,7 +98,7 @@ export async function sendEmailVerificationEmail(
 ): Promise<void> {
   const supabase = getSupabaseServiceClient()
   
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://ear-two.vercel.app"
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.eararts.org"
   const redirectTo = `${baseUrl}/auth/callback`
 
   const { data, error } = await supabase.auth.admin.generateLink({

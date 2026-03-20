@@ -40,7 +40,7 @@ export function useAdminAuth() {
         if (role !== "ADMIN") {
           setAuthLoading(false)
           setIsAuthorized(false)
-          router.push("/dashboard")
+          router.push("/calendar")
           return
         }
 

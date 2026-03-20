@@ -50,7 +50,7 @@ export async function sendProfileEmail(
     )
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://ear-two.vercel.app"
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.eararts.org"
   if (!process.env.POSTMARK_FROM_NAME || !process.env.POSTMARK_FROM_EMAIL) {
     const missing = []
     if (!process.env.POSTMARK_FROM_NAME) missing.push("POSTMARK_FROM_NAME")
@@ -79,7 +79,7 @@ export async function sendProfileEmail(
     templateModel = {
       first_name: approvedArgs.firstName,
       user_name: approvedArgs.userName,
-      cta_url: `${baseUrl}/dashboard`,
+      cta_url: `${baseUrl}/profile`,
     }
   } else {
     const confirmationArgs = args as SendEmailConfirmationArgs

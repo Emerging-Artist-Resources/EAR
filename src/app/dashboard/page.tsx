@@ -1,125 +1,125 @@
-"use client"
+// "use client"
 
-import { useRouter } from "next/navigation"
-import { useEffect, useState, useCallback } from "react"
-import { formatDateTime } from "@/lib/constants"
-import { supabase } from "@/lib/supabase/client"
-import Link from "next/link"
-import { H2, Text } from "@/components/ui/typography"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+// import { useRouter } from "next/navigation"
+// import { useEffect, useState, useCallback } from "react"
+// import { formatDateTime } from "@/lib/constants"
+// import { supabase } from "@/lib/supabase/client"
+// import Link from "next/link"
+// import { H2, Text } from "@/components/ui/typography"
+// import { Card } from "@/components/ui/card"
+// import { Badge } from "@/components/ui/badge"
 
-interface Performance {
-  id: string
-  title: string
-  description: string | null
-  date: string
-  time: string | null
-  location: string | null
-  performer: string
-  status: string
-  createdAt: string
-}
+// interface Performance {
+//   id: string
+//   title: string
+//   description: string | null
+//   date: string
+//   time: string | null
+//   location: string | null
+//   performer: string
+//   status: string
+//   createdAt: string
+// }
 
-export default function Dashboard() {
-  const router = useRouter()
-  const [performances, setPerformances] = useState<Performance[]>([])
-  const [loading, setLoading] = useState(true)
-  const [authLoading, setAuthLoading] = useState(true)
-  const [userId, setUserId] = useState<string | null>(null)
+// export default function Dashboard() {
+//   const router = useRouter()
+//   const [performances, setPerformances] = useState<Performance[]>([])
+//   const [loading, setLoading] = useState(true)
+//   const [authLoading, setAuthLoading] = useState(true)
+//   const [userId, setUserId] = useState<string | null>(null)
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const user = data?.user || null
-      if (!user) {
-        router.push("/auth/signin")
-        return
-      }
-      setUserId(user.id)
-      setAuthLoading(false)
-    })
-  }, [router])
+//   useEffect(() => {
+//     supabase.auth.getUser().then(({ data }) => {
+//       const user = data?.user || null
+//       if (!user) {
+//         router.push("/auth/signin")
+//         return
+//       }
+//       setUserId(user.id)
+//       setAuthLoading(false)
+//     })
+//   }, [router])
 
-  const fetchUserPerformances = useCallback(async () => {
-    if (!userId) return
-    try {
-      const { apiGet } = await import("@/lib/fetch-utils")
-      const data = await apiGet<Performance[]>("/api/me/performances")
-      setPerformances(Array.isArray(data) ? data : [])
-    } catch (error) {
-      console.error("Error fetching performances:", error)
-    } finally {
-      setLoading(false)
-    }
-  }, [userId])
+//   const fetchUserPerformances = useCallback(async () => {
+//     if (!userId) return
+//     try {
+//       const { apiGet } = await import("@/lib/fetch-utils")
+//       const data = await apiGet<Performance[]>("/api/me/performances")
+//       setPerformances(Array.isArray(data) ? data : [])
+//     } catch (error) {
+//       console.error("Error fetching performances:", error)
+//     } finally {
+//       setLoading(false)
+//     }
+//   }, [userId])
 
-  useEffect(() => {
-    if (authLoading) return
-    fetchUserPerformances()
-  }, [authLoading, fetchUserPerformances])
+//   useEffect(() => {
+//     if (authLoading) return
+//     fetchUserPerformances()
+//   }, [authLoading, fetchUserPerformances])
 
-  if (authLoading || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Text className="text-lg">Loading...</Text>
-      </div>
-    )
-  }
+//   if (authLoading || loading) {
+//     return (
+//       <div className="min-h-screen flex items-center justify-center">
+//         <Text className="text-lg">Loading...</Text>
+//       </div>
+//     )
+//   }
 
-  if (!userId) {
-    return null
-  }
+//   if (!userId) {
+//     return null
+//   }
 
-  return (
-    <div className="min-h-screen">
+//   return (
+//     <div className="min-h-screen">
 
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="mb-6">
-            <H2 className="mb-2">Your Submitted Performances</H2>
-            <Text>
-              To submit a new performance, please visit the{" "}
-              <Link href="/calendar" className="text-primary hover:opacity-80">Calendar page</Link>{" "}
-              and use the submission form.
-            </Text>
-          </div>
+//       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+//         <div className="px-4 py-6 sm:px-0">
+//           <div className="mb-6">
+//             <H2 className="mb-2">Your Submitted Performances</H2>
+//             <Text>
+//               To submit a new performance, please visit the{" "}
+//               <Link href="/calendar" className="text-primary hover:opacity-80">Calendar page</Link>{" "}
+//               and use the submission form.
+//             </Text>
+//           </div>
 
-          <Card className="">
-            {performances.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">No performances submitted yet.</div>
-            ) : (
-              <div className="divide-y divide-gray-200">
-                {performances.map((performance) => (
-                  <div key={performance.id} className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <Text className="text-lg font-medium text-gray-900">
-                          {performance.title}
-                        </Text>
-                        <Text className="text-sm text-gray-600">
-                          {performance.performer} • {formatDateTime(performance.date, performance.time)}
-                        </Text>
-                        {performance.description && (
-                          <Text className="text-sm text-gray-500 mt-1">
-                            {performance.description}
-                          </Text>
-                        )}
-                      </div>
-                      <Badge variant={
-                        performance.status === "APPROVED" ? "success" :
-                        performance.status === "REJECTED" ? "error" :
-                        "warning"
-                      } size="sm">
-                        {performance.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-        </div>
-      </div>
-    </div>
-  )
-}
+//           <Card className="">
+//             {performances.length === 0 ? (
+//               <div className="p-6 text-center text-gray-500">No performances submitted yet.</div>
+//             ) : (
+//               <div className="divide-y divide-gray-200">
+//                 {performances.map((performance) => (
+//                   <div key={performance.id} className="p-6">
+//                     <div className="flex items-center justify-between">
+//                       <div className="flex-1">
+//                         <Text className="text-lg font-medium text-gray-900">
+//                           {performance.title}
+//                         </Text>
+//                         <Text className="text-sm text-gray-600">
+//                           {performance.performer} • {formatDateTime(performance.date, performance.time)}
+//                         </Text>
+//                         {performance.description && (
+//                           <Text className="text-sm text-gray-500 mt-1">
+//                             {performance.description}
+//                           </Text>
+//                         )}
+//                       </div>
+//                       <Badge variant={
+//                         performance.status === "APPROVED" ? "success" :
+//                         performance.status === "REJECTED" ? "error" :
+//                         "warning"
+//                       } size="sm">
+//                         {performance.status}
+//                       </Badge>
+//                     </div>
+//                   </div>
+//                 ))}
+//               </div>
+//             )}
+//           </Card>
+//         </div>
+//       </div>
+//     </div>
+//   )
+// }

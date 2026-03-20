@@ -41,7 +41,7 @@ export async function sendListingEmail(
     )
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://ear-two.vercel.app"
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.eararts.org"
   if (!process.env.POSTMARK_FROM_NAME || !process.env.POSTMARK_FROM_EMAIL) {
     const missing = []
     if (!process.env.POSTMARK_FROM_NAME) missing.push("POSTMARK_FROM_NAME")
@@ -55,10 +55,15 @@ export async function sendListingEmail(
   
   const fromAddress = `${process.env.POSTMARK_FROM_NAME} <${process.env.POSTMARK_FROM_EMAIL}>`
 
+  const ctaUrl =
+    type === "admin-listing-received"
+      ? `${baseUrl}/admin`
+      : `${baseUrl}/calendar?listingId=${encodeURIComponent(listingId)}`
+
   const templateModel: Record<string, string> = {
     submitter_name: submitterName,
     listing_title: listingTitle,
-    cta_url: `${baseUrl}/dashboard/listings/${listingId}`,
+    cta_url: ctaUrl,
   }
 
   if (submitterEmail) {

@@ -14,7 +14,6 @@ interface MobileNavProps {
 
 const isProtectedRoute = (pathname: string): boolean => {
   return pathname.startsWith("/admin") || 
-         pathname.startsWith("/dashboard") || 
          pathname.startsWith("/profile") || 
          pathname.startsWith("/forms")
 }

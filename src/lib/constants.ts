@@ -24,7 +24,7 @@ export const NOTIFICATION_TYPE = {
 export const ROUTES = {
   HOME: "/",
   CALENDAR: "/calendar",
-  DASHBOARD: "/dashboard",
+  PROFILE: "/profile",
   ADMIN: "/admin",
   NOTIFICATIONS: "/notifications",
   ADMIN_NOTIFICATIONS: "/admin/notifications",
