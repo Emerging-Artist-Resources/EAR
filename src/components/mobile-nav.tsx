@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { VscAccount } from "react-icons/vsc"
 import { useAuth } from "@/hooks/use-auth"
+import { servicesNavItems } from "@/lib/services-nav"
 
 interface MobileNavProps {
   onSubmitPerformance?: () => void
@@ -76,6 +77,23 @@ export default function MobileNav({ onSubmitPerformance }: MobileNavProps) {
                 onClick={() => setIsOpen(false)}
               >
                 <Button variant="ghost" className="w-full justify-start text-base">{item.name}</Button>
+              </Link>
+            ))}
+
+            <div className="border-t border-gray-200 my-2" />
+            <div className="px-2 py-1">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Services</p>
+            </div>
+            {servicesNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="block"
+                onClick={() => setIsOpen(false)}
+              >
+                <Button variant="ghost" className="w-full justify-start text-base">
+                  {item.label}
+                </Button>
               </Link>
             ))}
             

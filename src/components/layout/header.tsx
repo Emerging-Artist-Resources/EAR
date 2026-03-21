@@ -8,6 +8,7 @@ import MobileNav from "@/components/mobile-nav"
 import { useAuth } from "@/hooks/use-auth"
 import { H3 } from "@/components/ui/typography"
 import { WavyLine } from "@/components/ui/wavy-line"
+import { ServicesNav } from "@/components/layout/services-nav"
 
 export interface HeaderProps {
   showSubmitButton?: boolean
@@ -53,7 +54,8 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Public Navigation */}
             <NavLink href="/calendar">Calendar</NavLink>
             <NavLink href="/announcement">Announcements</NavLink>
-            
+            <ServicesNav />
+
             {!isLoading && isAuthed ? (
               <>
                 {showSubmitButton && onSubmitPerformance && (
