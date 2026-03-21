@@ -80,6 +80,12 @@ export default function MobileNav({ onSubmitPerformance }: MobileNavProps) {
               </Link>
             ))}
 
+            <Link href="/donate" className="block" onClick={() => setIsOpen(false)}>
+              <Button variant="default" className="mt-1 w-full justify-start text-base">
+                Donate
+              </Button>
+            </Link>
+
             <div className="border-t border-gray-200 my-2" />
             <div className="px-2 py-1">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Services</p>

@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { H3 } from "@/components/ui/typography"
 import { WavyLine } from "@/components/ui/wavy-line"
 import { ServicesNav } from "@/components/layout/services-nav"
+import { Heart } from "lucide-react"
 
 export interface HeaderProps {
   showSubmitButton?: boolean
@@ -55,6 +56,11 @@ export const Header: React.FC<HeaderProps> = ({
             <NavLink href="/calendar">Calendar</NavLink>
             <NavLink href="/announcement">Announcements</NavLink>
             <ServicesNav />
+
+            <Button className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:scale-[1.03] hover:shadow-md transition-all duration-200">
+              <Heart className="mr-2 h-4 w-4 text-white" />
+              <Link href="/donate">Support Artists</Link>
+            </Button>
 
             {!isLoading && isAuthed ? (
               <>

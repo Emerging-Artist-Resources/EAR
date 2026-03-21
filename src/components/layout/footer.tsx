@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Instagram, Linkedin, Youtube } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -28,13 +29,13 @@ export function Footer() {
             © {new Date().getFullYear()} Emerging Artist Resources
           </p>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-            {/* <nav className="flex flex-wrap items-center gap-4 text-sm" aria-label="Footer">
+            <nav className="flex flex-wrap items-center gap-4 text-sm" aria-label="Footer">
               <Link className="underline text-[var(--gray-700)] hover:text-[var(--primary-700)]" href="/calendar">Calendar</Link>
               <Link className="underline text-[var(--gray-700)] hover:text-[var(--primary-700)]" href="/announcement">Announcements</Link>
               <Link className="underline text-[var(--gray-700)] hover:text-[var(--primary-700)]" href="/profile">Profile</Link>
               <Link className="underline text-[var(--gray-700)] hover:text-[var(--primary-700)]" href="/forms">Submit Listing</Link>
               <Link className="underline text-[var(--gray-700)] hover:text-[var(--primary-700)]" href="/donate">Donate</Link>
-            </nav> */}
+            </nav>
             {(instagramUrl || youtubeUrl || linkedinUrl) && (
               <nav className="flex items-center gap-4" aria-label="Social media">
                 {instagramUrl && (
