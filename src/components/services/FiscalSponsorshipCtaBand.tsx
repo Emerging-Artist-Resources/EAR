@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Text } from "@/components/ui/typography"
 import { cn } from "@/lib/utils"
@@ -31,14 +32,8 @@ export function FiscalSponsorshipCtaBand({
             <Text className="text-base leading-relaxed text-background/85">{body}</Text>
           </div>
           <div className="flex lg:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              disabled
-              aria-disabled="true"
-              className={cn(inquireOnDarkClass, "w-full sm:w-auto")}
-            >
-              Inquire here
+            <Button asChild variant="outline" className={cn(inquireOnDarkClass, "w-full sm:w-auto")}>
+              <Link href="/services/fiscal-sponsorship/inquiry">Inquire here</Link>
             </Button>
           </div>
         </div>

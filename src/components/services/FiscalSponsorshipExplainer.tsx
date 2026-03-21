@@ -1,3 +1,5 @@
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import { Text } from "@/components/ui/typography"
 import { cn } from "@/lib/utils"
 
@@ -33,6 +35,15 @@ export function FiscalSponsorshipExplainer({ title, paragraphs, className }: Fis
                   {p}
                 </Text>
               ))}
+            </div>
+            <div>
+              <Button
+                asChild
+                variant="default"
+                className="h-auto w-full rounded-full px-8 py-6 text-xs font-semibold uppercase tracking-widest sm:w-auto"
+              >
+                <Link href="/services/fiscal-sponsorship/inquiry">Inquire here</Link>
+              </Button>
             </div>
           </div>
         </div>

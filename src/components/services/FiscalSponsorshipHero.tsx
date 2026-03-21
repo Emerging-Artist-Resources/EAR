@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { H1 } from "@/components/ui/typography"
 import { cn } from "@/lib/utils"
@@ -29,14 +30,8 @@ export function FiscalSponsorshipHero({ title, subline, className }: FiscalSpons
             {subline}
           </p>
           <div>
-            <Button
-              type="button"
-              variant="outline"
-              disabled
-              aria-disabled="true"
-              className={cn(inquireOnDarkClass, "w-full sm:w-auto")}
-            >
-              Inquire here
+            <Button asChild variant="outline" className={cn(inquireOnDarkClass, "w-full sm:w-auto")}>
+              <Link href="/services/fiscal-sponsorship/inquiry">Inquire here</Link>
             </Button>
           </div>
         </div>
