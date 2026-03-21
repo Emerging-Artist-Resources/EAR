@@ -18,6 +18,9 @@ export const createDonationRequestSchema = z.object({
   donor_name: z.string().max(255).optional().nullable(),
   donor_email: z.string().email().optional().nullable().or(z.literal("")),
   message: z.string().max(2000).optional().nullable(),
+  recipient_user_id: z.string().uuid().optional().nullable(),
+  recipient_slug: z.string().min(1).max(80).optional().nullable(),
+  recipient_name: z.string().max(255).optional().nullable(),
 })
 
 export type CreateDonationRequest = z.infer<typeof createDonationRequestSchema>

@@ -6,12 +6,29 @@ import { getSupabaseServiceClient } from "@/lib/supabase/service"
 // Ensure webhook runs in the Node.js runtime (not edge)
 export const runtime = "nodejs"
 
-export async function POST(req: NextRequest) {
-  const env = getServerEnv()
-  const supabase = getSupabaseServiceClient()
+function constructWebhookEvent(body: string, signature: string, env: ReturnType<typeof getServerEnv>): Stripe.Event {
   const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
     apiVersion: "2026-02-25.clover",
   })
+  try {
+    return stripe.webhooks.constructEvent(body, signature, env.STRIPE_WEBHOOK_SECRET)
+  } catch (primaryErr) {
+    if (env.STRIPE_SPONSOR_WEBHOOK_SECRET) {
+      try {
+        return stripe.webhooks.constructEvent(body, signature, env.STRIPE_SPONSOR_WEBHOOK_SECRET)
+      } catch {
+        // fall through to rethrow primary
+      }
+    }
+    const error = primaryErr as Error
+    console.error("Webhook signature verification failed:", error.message)
+    throw error
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const env = getServerEnv()
+  const supabase = getSupabaseServiceClient()
 
   const signature = req.headers.get("stripe-signature")
   if (!signature) {
@@ -22,10 +39,9 @@ export async function POST(req: NextRequest) {
   let event: Stripe.Event
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature, env.STRIPE_WEBHOOK_SECRET)
+    event = constructWebhookEvent(body, signature, env)
   } catch (err) {
     const error = err as Error
-    console.error("Webhook signature verification failed:", error.message)
     return NextResponse.json({ error: `Webhook Error: ${error.message}` }, { status: 400 })
   }
 
@@ -92,8 +108,8 @@ export async function POST(req: NextRequest) {
         const entityType = session.metadata?.entity_type
         const entityId = session.metadata?.entity_id
 
-        if (!entityType || !entityId) {
-          console.error("No entity_type or entity_id in session metadata", {
+        if (!entityType) {
+          console.error("No entity_type in session metadata", {
             sessionId: session.id,
             metadata: session.metadata,
           })
@@ -103,6 +119,13 @@ export async function POST(req: NextRequest) {
         const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : null
 
         if (entityType === "listing") {
+          if (!entityId) {
+            console.error("No entity_id in session metadata for listing", {
+              sessionId: session.id,
+              metadata: session.metadata,
+            })
+            return NextResponse.json({ received: true }, { status: 200 })
+          }
           const listing = await supabase
             .from("listings")
             .select("id, payment_status")
@@ -145,14 +168,53 @@ export async function POST(req: NextRequest) {
 
           console.log(`Updated listing ${entityId} to paid`)
         } else if (entityType === "donation") {
+          const bySession = await supabase
+            .from("donations")
+            .select("id, payment_status")
+            .eq("stripe_checkout_session_id", session.id)
+            .maybeSingle()
+
+          let resolvedDonationId: string | null = bySession.data?.id ?? null
+
+          if (!resolvedDonationId && entityId) {
+            const fallback = await supabase
+              .from("donations")
+              .select("id, payment_status")
+              .eq("id", entityId)
+              .maybeSingle()
+            resolvedDonationId = fallback.data?.id ?? null
+            if (!bySession.data && fallback.data) {
+              console.warn("Donation resolved via metadata fallback (no stripe_checkout_session_id match)", {
+                sessionId: session.id,
+                donationId: entityId,
+              })
+            }
+          }
+
+          if (entityId && resolvedDonationId && entityId !== resolvedDonationId) {
+            console.warn("Donation session id and metadata entity_id disagree; using session-linked row", {
+              sessionId: session.id,
+              fromSession: resolvedDonationId,
+              fromMetadata: entityId,
+            })
+          }
+
+          if (!resolvedDonationId) {
+            console.error("Donation not found for checkout session", {
+              sessionId: session.id,
+              metadataEntityId: entityId,
+            })
+            return NextResponse.json({ received: true }, { status: 200 })
+          }
+
           const donation = await supabase
             .from("donations")
             .select("id, payment_status")
-            .eq("id", entityId)
+            .eq("id", resolvedDonationId)
             .single()
 
           if (donation.error || !donation.data) {
-            console.error(`Donation ${entityId} not found`, {
+            console.error(`Donation ${resolvedDonationId} not found`, {
               error: donation.error,
               sessionId: session.id,
             })
@@ -160,7 +222,7 @@ export async function POST(req: NextRequest) {
           }
 
           if (donation.data.payment_status === "paid") {
-            console.log(`Donation ${entityId} already marked as paid`)
+            console.log(`Donation ${resolvedDonationId} already marked as paid`)
             return NextResponse.json({ received: true }, { status: 200 })
           }
 
@@ -172,10 +234,10 @@ export async function POST(req: NextRequest) {
               payment_status: "paid",
               stripe_payment_intent_id: paymentIntentId,
             })
-            .eq("id", entityId)
+            .eq("id", resolvedDonationId)
 
           if (error) {
-            console.error(`Failed to update donation ${entityId}:`, {
+            console.error(`Failed to update donation ${resolvedDonationId}:`, {
               error,
               sessionId: session.id,
               paymentIntentId,
@@ -186,7 +248,7 @@ export async function POST(req: NextRequest) {
             )
           }
 
-          console.log(`Updated donation ${entityId} to paid`)
+          console.log(`Updated donation ${resolvedDonationId} to paid`)
         }
 
         break

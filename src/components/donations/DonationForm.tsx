@@ -21,7 +21,18 @@ interface ProfileData {
   email: string | null
 }
 
-export function DonationForm() {
+export type DonationLockedRecipient = {
+  userId: string
+  displayName: string | null
+  slug: string
+}
+
+interface DonationFormProps {
+  lockedRecipient?: DonationLockedRecipient
+  statusMessage?: "canceled" | null
+}
+
+export function DonationForm({ lockedRecipient, statusMessage }: DonationFormProps) {
   const { user, userName } = useAuth()
   const { showToast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -85,15 +96,30 @@ export function DonationForm() {
         donor_name: data.donor_name?.trim() || null,
         donor_email: data.donor_email?.trim() || null,
         message: data.message?.trim() || null,
+        ...(lockedRecipient
+          ? {
+              recipient_user_id: lockedRecipient.userId,
+              recipient_slug: lockedRecipient.slug,
+            }
+          : {}),
       })
 
       if (!donationResponse?.id) {
         throw new Error("Failed to create donation")
       }
 
-      const checkoutResponse = await apiPost<{ url: string }>("/api/stripe/create-donation-session", {
-        donationId: donationResponse.id,
-      })
+      const checkoutResponse = await apiPost<{ url?: string; already_paid?: boolean }>(
+        "/api/stripe/create-donation-session",
+        {
+          donationId: donationResponse.id,
+        },
+      )
+
+      if (checkoutResponse?.already_paid) {
+        showToast("This donation was already completed.", "success")
+        setIsSubmitting(false)
+        return
+      }
 
       if (!checkoutResponse?.url) {
         throw new Error("Failed to create payment session")
@@ -111,14 +137,34 @@ export function DonationForm() {
   const amountValue = form.watch("amount")
   const amountInDollars = amountValue ? amountValue / 100 : 0
 
+  const recipientLabel =
+    lockedRecipient?.displayName?.trim() || "this artist"
+
   return (
     <Card className="max-w-2xl mx-auto p-6">
       <div className="mb-6">
-        <H2 className="text-2xl font-bold text-gray-900 mb-2">Make a Donation</H2>
+        <H2 className="text-2xl font-bold text-gray-900 mb-2">
+          {lockedRecipient ? `Support ${recipientLabel}` : "Make a Donation"}
+        </H2>
         <Text className="text-gray-600">
-          Your support helps us continue providing resources for emerging artists.
+          {lockedRecipient
+            ? "Your gift is a fiscally sponsored donation to support this artist."
+            : "Your support helps us continue providing resources for emerging artists."}
         </Text>
       </div>
+
+      {statusMessage === "canceled" && (
+        <Alert variant="error" className="mb-6">
+          Checkout was canceled. You can adjust your amount and try again when you are ready.
+        </Alert>
+      )}
+
+      {lockedRecipient && (
+        <Alert variant="default" className="mb-6">
+          Donating to <span className="font-semibold">{recipientLabel}</span>. Recipient cannot be changed on
+          this page.
+        </Alert>
+      )}
 
       {error && (
         <Alert variant="error" className="mb-6">

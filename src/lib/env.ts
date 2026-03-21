@@ -14,6 +14,10 @@ type ServerEnvVar = {
   SUPABASE_SERVICE_ROLE_KEY: string
   STRIPE_SECRET_KEY: string
   STRIPE_WEBHOOK_SECRET: string
+  /** Optional: fiscal sponsor Stripe account for artist-tagged donations */
+  STRIPE_SPONSOR_SECRET_KEY?: string
+  /** Optional: webhook signing secret for sponsor Stripe dashboard (same URL as main webhook) */
+  STRIPE_SPONSOR_WEBHOOK_SECRET?: string
   TURNSTILE_SECRET_KEY?: string
 }
 
@@ -54,6 +58,8 @@ export function getServerEnv(): ServerEnvVar {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY
   const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+  const stripeSponsorSecret = process.env.STRIPE_SPONSOR_SECRET_KEY
+  const stripeSponsorWebhookSecret = process.env.STRIPE_SPONSOR_WEBHOOK_SECRET
   const turnstileSecret = process.env.TURNSTILE_SECRET_KEY
 
   if (!supabaseUrl) {
@@ -82,6 +88,8 @@ export function getServerEnv(): ServerEnvVar {
     SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey,
     STRIPE_SECRET_KEY: stripeSecretKey,
     STRIPE_WEBHOOK_SECRET: stripeWebhookSecret,
+    STRIPE_SPONSOR_SECRET_KEY: stripeSponsorSecret,
+    STRIPE_SPONSOR_WEBHOOK_SECRET: stripeSponsorWebhookSecret,
     TURNSTILE_SECRET_KEY: turnstileSecret,
   }
 }

@@ -1,5 +1,11 @@
 import { z } from "zod"
 
+const profileSlugSchema = z
+  .string()
+  .min(2, "Slug must be at least 2 characters")
+  .max(80, "Slug must be at most 80 characters")
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug may only use lowercase letters, numbers, and hyphens")
+
 export const updateProfileSchema = z.object({
   name: z.string().min(1, "Name cannot be empty").optional(),
   email: z.string().email("Invalid email address").optional(),
@@ -8,6 +14,8 @@ export const updateProfileSchema = z.object({
   organization_name: z.string().optional().nullable(),
   location_place_id: z.string().optional().nullable(),
   location_label: z.string().optional().nullable(),
+  /** Set only while slug is null; server rejects changes after first set. */
+  slug: profileSlugSchema.optional(),
 })
 
 export type UpdateProfileData = z.infer<typeof updateProfileSchema>

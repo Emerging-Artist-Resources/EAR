@@ -1,11 +1,15 @@
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import type { SignupFormData } from "@/lib/validations/signup"
+import { pickUniqueProfileSlug, profileSlugBaseFromName } from "@/lib/profile-slug"
 
 export async function createProfileRepo(data: SignupFormData, userId: string) {
   const supabase = getSupabaseServiceClient()
   
   const suggestedStatus = calculateSuggestedStatus(data)
   const artistStatus = suggestedStatus || "emerging"
+
+  const slugBase = profileSlugBaseFromName(data.name, userId)
+  const slug = await pickUniqueProfileSlug(supabase, slugBase)
   
   const profileData = {
     id: userId,
@@ -26,6 +30,7 @@ export async function createProfileRepo(data: SignupFormData, userId: string) {
     artist_status_reviewed_at: null,
     artist_status_reviewed_by: null,
     eligibility_resubmission_required_at: null,
+    slug,
   }
 
   const { data: profile, error } = await supabase

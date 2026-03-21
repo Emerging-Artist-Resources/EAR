@@ -12,7 +12,7 @@ export async function GET(
 
     const { data, error } = await supabase
       .from("donations")
-      .select("id, amount, payment_status, donor_name, message, created_at")
+      .select("id, amount, payment_status, donor_name, message, created_at, recipient_user_id")
       .eq("id", id)
       .single()
 

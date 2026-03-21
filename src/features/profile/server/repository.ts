@@ -322,6 +322,13 @@ export interface ProfileData {
   location_place_id: string | null;
   location_label: string | null;
   artist_status: string | null;
+  slug: string | null;
+}
+
+export interface PublicDonationProfile {
+  id: string;
+  name: string | null;
+  slug: string;
 }
 
 export interface EligibilitySubmission {
@@ -340,7 +347,7 @@ export async function getProfileRepo(userId: string): Promise<ProfileData | null
   
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status")
+    .select("id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug")
     .eq("id", userId)
     .single();
 
@@ -352,6 +359,30 @@ export async function getProfileRepo(userId: string): Promise<ProfileData | null
   }
 
   return data;
+}
+
+export async function getProfileBySlugForDonationRepo(slug: string): Promise<PublicDonationProfile | null> {
+  const supabase = await getSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, name, slug")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data?.slug) {
+    return null;
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    slug: data.slug,
+  };
 }
 
 export async function updateProfileRepo(
@@ -369,12 +400,13 @@ export async function updateProfileRepo(
   if (updates.organization_name !== undefined) updateData.organization_name = updates.organization_name || null;
   if (updates.location_place_id !== undefined) updateData.location_place_id = updates.location_place_id && typeof updates.location_place_id === "string" && updates.location_place_id.trim() !== "" ? updates.location_place_id.trim() : null;
   if (updates.location_label !== undefined) updateData.location_label = updates.location_label || null;
+  if (updates.slug !== undefined) updateData.slug = updates.slug || null;
 
   const { data, error } = await supabase
     .from("profiles")
     .update(updateData)
     .eq("id", userId)
-    .select("id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status")
+    .select("id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug")
     .single();
 
   if (error) {
