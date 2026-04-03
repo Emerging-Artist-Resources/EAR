@@ -6,10 +6,10 @@ import { getAuthenticatedUser } from "@/lib/auth-helpers"
 import { getUserRoleFromProfile } from "@/lib/authz"
 import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api-utils"
 import { createDonationSessionRequestSchema } from "@/lib/validations/donations"
+import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
+import { donationStripeAccountForRecipient } from "@/lib/payments/donationStripeAccount"
 
 const STRIPE_API_VERSION = "2026-02-25.clover" as const
-const CARD_FEE_RATE = 0.03
-const FISCAL_FEE_RATE = 0.055
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const { data: donationRow, error: donationError } = await supabase
       .from("donations")
       .select(
-        "id, amount, currency, payment_status, donor_id, donor_email, recipient_user_id, recipient_name, stripe_checkout_session_id, cover_card_fee, cover_fiscal_fee",
+        "id, amount, base_gift_cents, stripe_account, currency, payment_status, donor_id, donor_email, recipient_user_id, recipient_name, stripe_checkout_session_id, cover_card_fee, cover_fiscal_fee",
       )
       .eq("id", donationId)
       .single()
@@ -59,9 +59,30 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (!donationRow.amount || !donationRow.currency) {
+    if (!donationRow.currency) {
       return NextResponse.json(
-        { error: { code: "BAD_REQUEST", message: "Payment amount not set for this donation" } },
+        { error: { code: "BAD_REQUEST", message: "Payment currency not set for this donation" } },
+        { status: 400 },
+      )
+    }
+
+    const baseGiftCents = donationRow.base_gift_cents
+    if (baseGiftCents == null || baseGiftCents < 100) {
+      return NextResponse.json(
+        { error: { code: "BAD_REQUEST", message: "Invalid donation base amount" } },
+        { status: 400 },
+      )
+    }
+
+    const expectedStripeAccount = donationStripeAccountForRecipient(donationRow.recipient_user_id)
+    if (donationRow.stripe_account !== expectedStripeAccount) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "BAD_REQUEST",
+            message: "Donation Stripe account does not match recipient; refresh and try again",
+          },
+        },
         { status: 400 },
       )
     }
@@ -141,15 +162,15 @@ export async function POST(req: NextRequest) {
         ? `Donation — ${donationRow.recipient_name}`
         : "Donation"
 
-    let unitAmount = donationRow.amount
-    const coversFiscalFee = Boolean(donationRow.cover_fiscal_fee) && useSponsorStripe
-    const coversCardFee = Boolean(donationRow.cover_card_fee) && useSponsorStripe
-
-    if (coversFiscalFee) {
-      unitAmount = Math.round(unitAmount * (1 + FISCAL_FEE_RATE))
-    }
-    if (coversCardFee) {
-      unitAmount = Math.round(unitAmount * (1 + CARD_FEE_RATE))
+    let unitAmount: number
+    if (!useSponsorStripe) {
+      unitAmount = baseGiftCents
+    } else {
+      unitAmount = computeGrossChargeCents(
+        baseGiftCents,
+        Boolean(donationRow.cover_fiscal_fee),
+        Boolean(donationRow.cover_card_fee),
+      )
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -173,6 +194,7 @@ export async function POST(req: NextRequest) {
       metadata: {
         entity_type: "donation",
         entity_id: donationId,
+        stripe_account: expectedStripeAccount,
         donor_id: auth?.user.id || "",
         ...(donationRow.recipient_user_id
           ? { recipient_user_id: donationRow.recipient_user_id }

@@ -244,11 +244,13 @@ export async function POST(req: NextRequest) {
           const paymentIntentIdForDonation =
             typeof session.payment_intent === "string" ? session.payment_intent : null
 
+          const stripeTotal = session.amount_total
           const { error } = await supabase
             .from("donations")
             .update({
               payment_status: "paid",
               stripe_payment_intent_id: paymentIntentIdForDonation,
+              ...(stripeTotal != null ? { amount: stripeTotal } : {}),
             })
             .eq("id", resolvedDonationId)
 

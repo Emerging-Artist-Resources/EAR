@@ -15,11 +15,10 @@ import { apiPost, apiGet } from "@/lib/fetch-utils"
 import { H2, Text } from "@/components/ui/typography"
 import { Card } from "@/components/ui/card"
 import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnelTrustHeader"
+import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
 import { Lock } from "lucide-react"
 
 const PRESET_AMOUNTS = [25, 50, 100, 250, 500]
-const CARD_FEE_RATE = 0.03
-const FISCAL_FEE_RATE = 0.055
 
 interface ProfileData {
   name: string | null
@@ -144,18 +143,20 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
   })
 
   const amountValue = form.watch("amount")
-  const amountInDollars = amountValue ? amountValue / 100 : 0
+  const baseGiftCents = amountValue || 0
+  const amountInDollars = baseGiftCents / 100
   const coverCardFee = form.watch("cover_card_fee")
   const coverFiscalFee = form.watch("cover_fiscal_fee")
   const isArtistDonation = Boolean(lockedRecipient)
 
-  const fiscalFeeAmount = isArtistDonation && coverFiscalFee ? amountInDollars * FISCAL_FEE_RATE : 0
-  const afterFiscalAmount = amountInDollars + fiscalFeeAmount
-  const cardFeeAmount =
-    isArtistDonation && coverCardFee
-      ? (coverFiscalFee ? afterFiscalAmount : amountInDollars) * CARD_FEE_RATE
-      : 0
-  const totalCharged = amountInDollars + fiscalFeeAmount + cardFeeAmount
+  const totalChargedCents = isArtistDonation
+    ? computeGrossChargeCents(baseGiftCents, Boolean(coverFiscalFee), Boolean(coverCardFee))
+    : baseGiftCents
+  const totalChargedDollars = totalChargedCents / 100
+  const feesCoveredCents = Math.max(0, totalChargedCents - baseGiftCents)
+  const feesCoveredDollars = feesCoveredCents / 100
+  const showFeeBreakdown =
+    isArtistDonation && baseGiftCents > 0 && (Boolean(coverFiscalFee) || Boolean(coverCardFee))
 
   const recipientLabel =
     lockedRecipient?.displayName?.trim() || "this artist"
@@ -246,7 +247,7 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
             )}
             {amountInDollars > 0 && (
               <p className="mt-1 text-sm text-gray-600">
-                ${amountInDollars.toFixed(2)} will be charged
+                ${totalChargedDollars.toFixed(2)} will be charged
               </p>
             )}
           </div>
@@ -266,7 +267,7 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
                   })
                 }}
               />
-              <span>Cover the 5.5% fiscal sponsorship fee</span>
+              <span>Cover fiscal sponsorship fee (5.5%)</span>
             </label>
             <label className="flex items-start gap-2 text-sm text-gray-800">
               <Checkbox
@@ -277,20 +278,21 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
                   })
                 }}
               />
-              <span>Cover the 3% credit card processing fee</span>
+              <span>Cover processing fees (2.9% + $0.30)</span>
             </label>
 
             {amountInDollars > 0 && (
               <div className="rounded-md bg-white p-3 text-sm text-gray-700 space-y-1">
-                <p>Donation amount: ${amountInDollars.toFixed(2)}</p>
-                {coverFiscalFee && <p>+ Fiscal sponsorship fee (5.5%): ${fiscalFeeAmount.toFixed(2)}</p>}
-                {coverCardFee && (
+                <p>
+                  <span className="font-medium text-gray-900">Donation:</span> ${amountInDollars.toFixed(2)}
+                </p>
+                {showFeeBreakdown && (
                   <p>
-                    + Processing fee (3%): ${cardFeeAmount.toFixed(2)}
-                    {coverFiscalFee ? " (applied after fiscal fee)" : ""}
+                    <span className="font-medium text-gray-900">Fees covered:</span> $
+                    {feesCoveredDollars.toFixed(2)}
                   </p>
                 )}
-                <p className="font-semibold text-gray-900">Total charged: ${totalCharged.toFixed(2)}</p>
+                <p className="font-semibold text-gray-900">Total charged: ${totalChargedDollars.toFixed(2)}</p>
               </div>
             )}
           </div>

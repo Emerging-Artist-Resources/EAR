@@ -1,11 +1,15 @@
 import type Stripe from "stripe"
+import type { DonationStripeAccount } from "@/lib/payments/donationStripeAccount"
 
 export type DonationAmountRow = {
   donor_name: string | null
   donor_email: string | null
   message: string | null
   recipient_name: string | null
+  /** Total charged (cents) when fee_model_version is 2; Stripe session wins when present. */
   amount: number
+  base_gift_cents?: number | null
+  stripe_account?: DonationStripeAccount | null
   payment_status: string
 }
 
@@ -25,6 +29,7 @@ export function resolveRecipientEmail(
   return donation.donor_email?.trim() || ""
 }
 
+/** Total charged in cents; prefers Stripe session/PI, then stored `amount`. */
 export function resolveAmountCents(
   session: Stripe.Checkout.Session | undefined,
   paymentIntent: Stripe.PaymentIntent | undefined,

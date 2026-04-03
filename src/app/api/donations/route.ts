@@ -9,6 +9,8 @@ import {
   ErrorCodes,
 } from "@/lib/api-utils"
 import { createDonationRequestSchema } from "@/lib/validations/donations"
+import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
+import { donationStripeAccountForRecipient } from "@/lib/payments/donationStripeAccount"
 
 export async function POST(req: NextRequest) {
   try {
@@ -71,10 +73,21 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const baseGiftCents = donationData.amount
+    const coverCard = recipientUserId ? Boolean(donationData.cover_card_fee) : false
+    const coverFiscal = recipientUserId ? Boolean(donationData.cover_fiscal_fee) : false
+    const chargedCents = recipientUserId
+      ? computeGrossChargeCents(baseGiftCents, coverFiscal, coverCard)
+      : baseGiftCents
+    const stripeAccount = donationStripeAccountForRecipient(recipientUserId)
+
     const { data, error } = await supabase
       .from("donations")
       .insert({
-        amount: donationData.amount,
+        base_gift_cents: baseGiftCents,
+        amount: chargedCents,
+        fee_model_version: 2,
+        stripe_account: stripeAccount,
         currency: "usd",
         payment_status: "requires_payment",
         donor_id: auth?.user.id ?? null,
@@ -83,8 +96,8 @@ export async function POST(req: NextRequest) {
         message: donationData.message?.trim() || null,
         recipient_user_id: recipientUserId,
         recipient_name: recipientName,
-        cover_card_fee: recipientUserId ? Boolean(donationData.cover_card_fee) : false,
-        cover_fiscal_fee: recipientUserId ? Boolean(donationData.cover_fiscal_fee) : false,
+        cover_card_fee: coverCard,
+        cover_fiscal_fee: coverFiscal,
       })
       .select("id")
       .single()

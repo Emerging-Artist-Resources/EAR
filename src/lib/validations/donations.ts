@@ -8,6 +8,7 @@ export const donorEmailSchema = z
   .email("Invalid email address")
 
 export const donationFormSchema = z.object({
+  /** Base gift in cents (maps to DB `base_gift_cents`; not the Stripe gross charge). */
   amount: z
     .number()
     .int("Amount must be a whole number")
@@ -23,6 +24,7 @@ export const donationFormSchema = z.object({
 export type DonationFormData = z.infer<typeof donationFormSchema>
 
 export const createDonationRequestSchema = z.object({
+  /** Base gift in cents (stored as `base_gift_cents`). */
   amount: z.number().int().min(100).max(10000000),
   donor_name: z.string().max(255).optional().nullable(),
   donor_email: donorEmailSchema,

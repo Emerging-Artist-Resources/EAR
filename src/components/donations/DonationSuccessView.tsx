@@ -11,6 +11,10 @@ import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnel
 export type DonationPollPayload = {
   payment_status?: string
   recipient_user_id?: string | null
+  amount?: number
+  base_gift_cents?: number
+  fee_model_version?: number
+  stripe_account?: "ear" | "sponsor"
 }
 
 const maxPolls = 20
