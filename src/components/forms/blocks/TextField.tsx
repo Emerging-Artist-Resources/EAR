@@ -48,6 +48,8 @@ export function TextField<T extends Record<string, unknown>>({
           {...register(name as unknown as never)}
           type={type}
           placeholder={placeholder}
+          required={required}
+          aria-required={required ? true : undefined}
           error={showError}
           className={prefix ? "pl-7" : undefined}
         />

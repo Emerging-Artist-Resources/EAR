@@ -8,10 +8,10 @@
  * @see EMAIL_SYSTEM.md for setup and configuration
  */
 
-import Postmark from "postmark"
+import { ServerClient } from "postmark"
 
 const postmarkToken = process.env.POSTMARK_TRANSACTIONAL_TOKEN
 
-export const postmarkClient: Postmark.ServerClient | null = postmarkToken
-  ? new Postmark.ServerClient(postmarkToken)
+export const postmarkClient: ServerClient | null = postmarkToken
+  ? new ServerClient(postmarkToken)
   : null

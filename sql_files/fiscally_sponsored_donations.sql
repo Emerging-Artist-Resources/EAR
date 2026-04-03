@@ -119,3 +119,43 @@ BEGIN
       USING (slug IS NOT NULL);
   END IF;
 END $$;
+
+-- -----------------------------------------------------------------------------
+-- 5. Fiscal sponsorship approval gate on profiles
+-- -----------------------------------------------------------------------------
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'fiscal_sponsorship_status') THEN
+    CREATE TYPE fiscal_sponsorship_status AS ENUM (
+      'none',
+      'pending',
+      'approved',
+      'paused',
+      'revoked'
+    );
+  END IF;
+END $$;
+
+ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS fiscal_sponsorship_status fiscal_sponsorship_status;
+
+UPDATE profiles
+SET fiscal_sponsorship_status = 'none'
+WHERE fiscal_sponsorship_status IS NULL;
+
+ALTER TABLE profiles
+  ALTER COLUMN fiscal_sponsorship_status SET DEFAULT 'none',
+  ALTER COLUMN fiscal_sponsorship_status SET NOT NULL;
+
+ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS fiscal_sponsorship_approved_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS fiscal_sponsorship_approved_by UUID REFERENCES profiles (id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS fiscal_sponsorship_note TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_profiles_fiscal_sponsorship_status
+  ON profiles (fiscal_sponsorship_status);
+
+COMMENT ON COLUMN profiles.fiscal_sponsorship_status IS 'Eligibility for artist donation pages and recipient donations';
+COMMENT ON COLUMN profiles.fiscal_sponsorship_approved_at IS 'Latest approval timestamp when status was set to approved';
+COMMENT ON COLUMN profiles.fiscal_sponsorship_approved_by IS 'Latest admin approver for approved status';
+COMMENT ON COLUMN profiles.fiscal_sponsorship_note IS 'Admin note for fiscal sponsorship status changes';

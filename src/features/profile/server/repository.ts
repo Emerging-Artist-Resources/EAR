@@ -323,12 +323,17 @@ export interface ProfileData {
   location_label: string | null;
   artist_status: string | null;
   slug: string | null;
+  fiscal_sponsorship_status: "none" | "pending" | "approved" | "paused" | "revoked";
+  fiscal_sponsorship_approved_at: string | null;
+  fiscal_sponsorship_approved_by: string | null;
+  fiscal_sponsorship_note: string | null;
 }
 
 export interface PublicDonationProfile {
   id: string;
   name: string | null;
   slug: string;
+  fiscal_sponsorship_status: "none" | "pending" | "approved" | "paused" | "revoked";
 }
 
 export interface EligibilitySubmission {
@@ -347,7 +352,9 @@ export async function getProfileRepo(userId: string): Promise<ProfileData | null
   
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug")
+    .select(
+      "id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug, fiscal_sponsorship_status, fiscal_sponsorship_approved_at, fiscal_sponsorship_approved_by, fiscal_sponsorship_note",
+    )
     .eq("id", userId)
     .single();
 
@@ -366,8 +373,9 @@ export async function getProfileBySlugForDonationRepo(slug: string): Promise<Pub
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, name, slug")
+    .select("id, name, slug, fiscal_sponsorship_status")
     .eq("slug", slug)
+    .eq("fiscal_sponsorship_status", "approved")
     .maybeSingle();
 
   if (error) {
@@ -382,7 +390,39 @@ export async function getProfileBySlugForDonationRepo(slug: string): Promise<Pub
     id: data.id,
     name: data.name,
     slug: data.slug,
+    fiscal_sponsorship_status: data.fiscal_sponsorship_status as PublicDonationProfile["fiscal_sponsorship_status"],
   };
+}
+
+/**
+ * Success-page lookup: do not gate on current fiscal eligibility.
+ * We only need the slug/profile to render confirmation and to run mismatch checks.
+ */
+export async function getProfileBySlugForDonationSuccessRepo(
+  slug: string,
+): Promise<PublicDonationProfile | null> {
+  const supabase = await getSupabaseServerClient()
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, name, slug, fiscal_sponsorship_status")
+    .eq("slug", slug)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  if (!data?.slug) {
+    return null
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    slug: data.slug,
+    fiscal_sponsorship_status: data.fiscal_sponsorship_status as PublicDonationProfile["fiscal_sponsorship_status"],
+  }
 }
 
 export async function updateProfileRepo(
@@ -406,7 +446,9 @@ export async function updateProfileRepo(
     .from("profiles")
     .update(updateData)
     .eq("id", userId)
-    .select("id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug")
+    .select(
+      "id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug, fiscal_sponsorship_status, fiscal_sponsorship_approved_at, fiscal_sponsorship_approved_by, fiscal_sponsorship_note",
+    )
     .single();
 
   if (error) {

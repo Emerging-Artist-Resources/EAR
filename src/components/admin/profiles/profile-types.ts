@@ -1,5 +1,6 @@
 export type ProfileStatus = "emerging" | "established"
 export type ProfileType = "individual" | "company" | "festival" | "other"
+export type FiscalSponsorshipStatus = "none" | "pending" | "approved" | "paused" | "revoked"
 
 export interface AdminProfileItem {
   id: string
@@ -10,11 +11,23 @@ export interface AdminProfileItem {
   createdAt: string
   updatedAt?: string
   reviewedAt?: string | null
+  fiscalSponsorshipStatus: FiscalSponsorshipStatus
+  fiscalSponsorshipApprovedAt?: string | null
+  fiscalSponsorshipApprovedBy?: string | null
+  fiscalSponsorshipNote?: string | null
 }
 
 export const STATUS_BADGE: Record<ProfileStatus, string> = {
   emerging: "bg-[var(--warning-50)] text-[var(--warning-600)]",
   established: "bg-[var(--success-50)] text-[var(--success-600)]",
+}
+
+export const FISCAL_STATUS_BADGE: Record<FiscalSponsorshipStatus, string> = {
+  none: "bg-[var(--gray-100)] text-[var(--gray-700)]",
+  pending: "bg-[var(--warning-50)] text-[var(--warning-700)]",
+  approved: "bg-[var(--success-50)] text-[var(--success-700)]",
+  paused: "bg-[var(--warning-50)] text-[var(--warning-700)]",
+  revoked: "bg-[var(--error-50)] text-[var(--error-700)]",
 }
 
 // Helper function to check if a profile is new (created within last 72 hours)

@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     if (recipientUserId) {
       const { data: recipientProfile, error: recipientError } = await supabase
         .from("profiles")
-        .select("id, name, slug")
+        .select("id, name, slug, fiscal_sponsorship_status")
         .eq("id", recipientUserId)
         .maybeSingle()
 
@@ -38,6 +38,15 @@ export async function POST(req: NextRequest) {
 
       if (!recipientProfile) {
         return createErrorResponse(ErrorCodes.BAD_REQUEST, "Recipient not found", undefined, 400)
+      }
+
+      if (recipientProfile.fiscal_sponsorship_status !== "approved") {
+        return createErrorResponse(
+          ErrorCodes.FORBIDDEN,
+          "This artist is not currently eligible to receive donations",
+          undefined,
+          403,
+        )
       }
 
       if (donationData.recipient_slug) {
@@ -70,10 +79,12 @@ export async function POST(req: NextRequest) {
         payment_status: "requires_payment",
         donor_id: auth?.user.id ?? null,
         donor_name: donationData.donor_name?.trim() || null,
-        donor_email: donationData.donor_email?.trim() || null,
+        donor_email: donationData.donor_email,
         message: donationData.message?.trim() || null,
         recipient_user_id: recipientUserId,
         recipient_name: recipientName,
+        cover_card_fee: recipientUserId ? Boolean(donationData.cover_card_fee) : false,
+        cover_fiscal_fee: recipientUserId ? Boolean(donationData.cover_fiscal_fee) : false,
       })
       .select("id")
       .single()

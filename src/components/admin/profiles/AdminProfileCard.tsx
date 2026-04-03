@@ -1,7 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { AdminProfileItem, needsReview, AdminEligibilitySubmission } from "./profile-types"
+import {
+  AdminProfileItem,
+  needsReview,
+  AdminEligibilitySubmission,
+  FISCAL_STATUS_BADGE,
+  FiscalSponsorshipStatus,
+} from "./profile-types"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Modal } from "@/components/ui/modal"
@@ -13,12 +19,21 @@ export function AdminProfileCard({
   onMarkReviewed,
 }: {
   profile: AdminProfileItem
-  onUpdate: (id: string, status: "emerging" | "established") => Promise<void>
+  onUpdate: (
+    id: string,
+    updates:
+      | { status: "emerging" | "established" }
+      | { fiscalSponsorshipStatus: FiscalSponsorshipStatus; fiscalSponsorshipNote?: string },
+  ) => Promise<void>
   onMarkReviewed?: (id: string) => Promise<void>
 }) {
   const [open, setOpen] = useState(false)
   const [updating, setUpdating] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<"emerging" | "established">(profile.status)
+  const [selectedFiscalStatus, setSelectedFiscalStatus] = useState<FiscalSponsorshipStatus>(
+    profile.fiscalSponsorshipStatus,
+  )
+  const [fiscalNote, setFiscalNote] = useState(profile.fiscalSponsorshipNote || "")
   const [eligibilitySubmissions, setEligibilitySubmissions] = useState<AdminEligibilitySubmission[]>([])
   const [loadingEligibility, setLoadingEligibility] = useState(false)
   const [selectedSubmissionIndex, setSelectedSubmissionIndex] = useState(0)
@@ -45,13 +60,29 @@ export function AdminProfileCard({
   }, [open, profile.id])
 
   const handleUpdate = async () => {
-    if (selectedStatus === profile.status) {
+    const artistStatusChanged = selectedStatus !== profile.status
+    const fiscalStatusChanged = selectedFiscalStatus !== profile.fiscalSponsorshipStatus
+    const fiscalNoteRequired = selectedFiscalStatus === "paused" || selectedFiscalStatus === "revoked"
+
+    if (!artistStatusChanged && !fiscalStatusChanged) {
       setOpen(false)
+      return
+    }
+    if (fiscalStatusChanged && fiscalNoteRequired && !fiscalNote.trim()) {
+      alert("Fiscal sponsorship note is required when status is paused or revoked.")
       return
     }
     setUpdating(true)
     try {
-      await onUpdate(profile.id, selectedStatus)
+      if (artistStatusChanged) {
+        await onUpdate(profile.id, { status: selectedStatus })
+      }
+      if (fiscalStatusChanged) {
+        await onUpdate(profile.id, {
+          fiscalSponsorshipStatus: selectedFiscalStatus,
+          fiscalSponsorshipNote: fiscalNote.trim() || undefined,
+        })
+      }
       setOpen(false)
     } catch (error) {
       console.error("Failed to update profile:", error)
@@ -94,6 +125,8 @@ export function AdminProfileCard({
         variant="outline"
         onClick={() => {
           setSelectedStatus(profile.status)
+          setSelectedFiscalStatus(profile.fiscalSponsorshipStatus)
+          setFiscalNote(profile.fiscalSponsorshipNote || "")
           setOpen(true)
         }}
       >
@@ -133,6 +166,26 @@ export function AdminProfileCard({
                   {profile.status}
                 </Badge>
               </div>
+              <div className="flex items-center gap-2">
+                <Text className="text-sm text-[var(--gray-600)]">Fiscal Sponsorship:</Text>
+                <Badge size="sm" className={FISCAL_STATUS_BADGE[profile.fiscalSponsorshipStatus]}>
+                  {profile.fiscalSponsorshipStatus}
+                </Badge>
+              </div>
+              {profile.fiscalSponsorshipApprovedAt && (
+                <div className="flex items-center gap-2">
+                  <Text className="text-sm text-[var(--gray-600)]">Last Approved:</Text>
+                  <Text className="text-sm font-medium">
+                    {new Date(profile.fiscalSponsorshipApprovedAt).toLocaleString()}
+                  </Text>
+                </div>
+              )}
+              {profile.fiscalSponsorshipNote && (
+                <div className="flex items-start gap-2">
+                  <Text className="text-sm text-[var(--gray-600)]">Fiscal Note:</Text>
+                  <Text className="text-sm font-medium">{profile.fiscalSponsorshipNote}</Text>
+                </div>
+              )}
               {profile.reviewedAt && (
                 <div className="flex items-center gap-2">
                   <Text className="text-sm text-[var(--gray-600)]">Reviewed:</Text>
@@ -278,10 +331,45 @@ export function AdminProfileCard({
             </div>
           </div>
 
+          <div>
+            <Text className="text-sm font-medium text-[var(--gray-700)] mb-2">Fiscal Sponsorship Status</Text>
+            <div className="space-y-2">
+              {(["none", "pending", "approved", "paused", "revoked"] as const).map((status) => (
+                <label key={status} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="fiscalStatus"
+                    value={status}
+                    checked={selectedFiscalStatus === status}
+                    onChange={() => setSelectedFiscalStatus(status)}
+                    className="w-4 h-4 text-[var(--primary-600)]"
+                  />
+                  <Text className="capitalize">{status}</Text>
+                </label>
+              ))}
+            </div>
+            <div className="mt-3">
+              <Text className="text-sm font-medium text-[var(--gray-700)] mb-2">
+                Fiscal sponsorship note
+                {(selectedFiscalStatus === "paused" || selectedFiscalStatus === "revoked") && " (required)"}
+              </Text>
+              <textarea
+                value={fiscalNote}
+                onChange={(e) => setFiscalNote(e.target.value)}
+                rows={3}
+                className="w-full rounded-md border border-[var(--gray-300)] px-3 py-2 text-sm"
+                placeholder="Add context for this fiscal sponsorship status change"
+              />
+            </div>
+          </div>
+
           <div className="flex gap-3 pt-4 border-t border-[var(--gray-200)]">
             <Button
               onClick={handleUpdate}
-              disabled={updating || selectedStatus === profile.status}
+              disabled={
+                updating ||
+                (selectedStatus === profile.status && selectedFiscalStatus === profile.fiscalSponsorshipStatus)
+              }
               variant="primary"
             >
               {updating ? "Updating…" : "Update Status"}

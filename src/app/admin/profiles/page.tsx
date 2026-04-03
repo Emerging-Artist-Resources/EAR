@@ -5,12 +5,18 @@ import { AdminLayout } from "@/components/admin/shared/AdminLayout"
 import { AdminProfileHeader } from "@/components/admin/profiles/AdminProfileHeader"
 import { AdminProfileList } from "@/components/admin/profiles/AdminProfileList"
 import { AdminLoadingState } from "@/components/admin/shared/AdminLoadingState"
-import { AdminProfileItem, ProfileType, needsReview } from "@/components/admin/profiles/profile-types"
+import {
+  AdminProfileItem,
+  FiscalSponsorshipStatus,
+  ProfileType,
+  needsReview,
+} from "@/components/admin/profiles/profile-types"
 import { ProfileFilter } from "@/components/admin/profiles/AdminProfileHeader"
 
 export default function AdminProfilesPage() {
   const [filter, setFilter] = useState<ProfileFilter>("all")
   const [profileTypeFilter, setProfileTypeFilter] = useState<ProfileType | "all">("all")
+  const [fiscalFilter, setFiscalFilter] = useState<FiscalSponsorshipStatus | "all">("all")
   const [items, setItems] = useState<AdminProfileItem[]>([])
   const [counts, setCounts] = useState<Record<"emerging" | "established", number>>({
     emerging: 0,
@@ -49,24 +55,33 @@ export default function AdminProfilesPage() {
         filtered = filtered.filter((p) => p.profileType === profileTypeFilter)
       }
 
+      if (fiscalFilter !== "all") {
+        filtered = filtered.filter((p) => p.fiscalSponsorshipStatus === fiscalFilter)
+      }
+
       setItems(filtered)
     } catch (e) {
       console.error("Admin profiles fetch error:", e)
     } finally {
       setLoading(false)
     }
-  }, [filter, profileTypeFilter])
+  }, [filter, profileTypeFilter, fiscalFilter])
 
   useEffect(() => {
     fetchProfiles()
   }, [fetchProfiles])
 
-  const onUpdate = useCallback(async (id: string, status: "emerging" | "established") => {
+  const onUpdate = useCallback(async (
+    id: string,
+    updates:
+      | { status: "emerging" | "established" }
+      | { fiscalSponsorshipStatus: FiscalSponsorshipStatus; fiscalSponsorshipNote?: string },
+  ) => {
     try {
       const res = await fetch("/api/admin/profiles", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: id, status }),
+        body: JSON.stringify({ userId: id, ...updates }),
       })
       if (!res.ok) {
         throw new Error("Failed to update profile")
@@ -104,6 +119,8 @@ export default function AdminProfilesPage() {
         newCount={newCount}
         onChange={setFilter}
         onProfileTypeChange={setProfileTypeFilter}
+        fiscalFilter={fiscalFilter}
+        onFiscalFilterChange={setFiscalFilter}
       />
       {loading ? (
         <AdminLoadingState />

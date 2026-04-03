@@ -8,6 +8,8 @@ import { handleApiError, createSuccessResponse, validateRequestBody } from "@/li
 import { createDonationSessionRequestSchema } from "@/lib/validations/donations"
 
 const STRIPE_API_VERSION = "2026-02-25.clover" as const
+const CARD_FEE_RATE = 0.03
+const FISCAL_FEE_RATE = 0.055
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,7 +22,7 @@ export async function POST(req: NextRequest) {
     const { data: donationRow, error: donationError } = await supabase
       .from("donations")
       .select(
-        "id, amount, currency, payment_status, donor_id, recipient_user_id, recipient_name, stripe_checkout_session_id",
+        "id, amount, currency, payment_status, donor_id, donor_email, recipient_user_id, recipient_name, stripe_checkout_session_id, cover_card_fee, cover_fiscal_fee",
       )
       .eq("id", donationId)
       .single()
@@ -64,6 +66,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const donorEmail = donationRow.donor_email?.trim()
+    if (!donorEmail) {
+      return NextResponse.json(
+        { error: "Cannot create checkout without donor email." },
+        { status: 400 },
+      )
+    }
+
     const sponsorKey = env.STRIPE_SPONSOR_SECRET_KEY
     const useSponsorStripe = Boolean(donationRow.recipient_user_id)
 
@@ -83,7 +93,7 @@ export async function POST(req: NextRequest) {
     if (donationRow.recipient_user_id) {
       const { data: recipientProfile, error: recipientError } = await supabase
         .from("profiles")
-        .select("id, slug")
+        .select("id, slug, fiscal_sponsorship_status")
         .eq("id", donationRow.recipient_user_id)
         .maybeSingle()
 
@@ -91,6 +101,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           { error: { code: "BAD_REQUEST", message: "Recipient is no longer available for donations" } },
           { status: 400 },
+        )
+      }
+      if (recipientProfile.fiscal_sponsorship_status !== "approved") {
+        return NextResponse.json(
+          { error: { code: "FORBIDDEN", message: "This artist is not currently eligible to receive donations" } },
+          { status: 403 },
         )
       }
       recipientSlug = recipientProfile.slug
@@ -125,6 +141,17 @@ export async function POST(req: NextRequest) {
         ? `Donation — ${donationRow.recipient_name}`
         : "Donation"
 
+    let unitAmount = donationRow.amount
+    const coversFiscalFee = Boolean(donationRow.cover_fiscal_fee) && useSponsorStripe
+    const coversCardFee = Boolean(donationRow.cover_card_fee) && useSponsorStripe
+
+    if (coversFiscalFee) {
+      unitAmount = Math.round(unitAmount * (1 + FISCAL_FEE_RATE))
+    }
+    if (coversCardFee) {
+      unitAmount = Math.round(unitAmount * (1 + CARD_FEE_RATE))
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -134,12 +161,13 @@ export async function POST(req: NextRequest) {
             product_data: {
               name: productLabel,
             },
-            unit_amount: donationRow.amount,
+            unit_amount: unitAmount,
           },
           quantity: 1,
         },
       ],
       mode: "payment",
+      customer_email: donorEmail,
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {
