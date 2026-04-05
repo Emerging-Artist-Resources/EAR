@@ -18,9 +18,42 @@ This runbook is for launching artist-specific donation links at `/donate/{slug}`
 - Production deploy includes donation routes and webhook handler.
 - DB verification checks already pass for:
   - `profiles.slug`
+  - `profiles.donation_page_message` and `profiles.donation_page_image_path` (optional hero on `/donate/{slug}`; see below)
   - `donations` recipient columns and indexes
   - `stripe_webhook_events.donation_id`
 - Artist slugs exist and are unique.
+
+## Optional: Donation page hero (message + image)
+
+Applies the SQL in `sql_files/add_donation_page_content.sql` so each profile can have optional copy and a hero image on `/donate/{slug}` without changing default headline text.
+
+### Storage bucket (Supabase Dashboard)
+
+1. Create bucket **`donation-page-photos`** (name must match `DONATION_PAGE_PHOTOS_BUCKET` in `src/lib/storage/donationPagePhotos.ts`).
+2. Set the bucket to **Public** (or add a storage policy that allows **anonymous** read on objects). Logged-out donors must be able to load the image URL; authenticated-only read will break the hero for most visitors.
+3. Upload an image to a path such as `profiles/<profile_uuid>/donation-hero.jpg` (use the artist’s `profiles.id`).
+
+### Link the profile row
+
+Set the **storage path only** (not the full URL), for example:
+
+```sql
+UPDATE public.profiles
+SET
+  donation_page_message = 'Thank you for supporting my work.',
+  donation_page_image_path = 'profiles/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/donation-hero.jpg'
+WHERE id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+```
+
+Clear optional fields:
+
+```sql
+UPDATE public.profiles
+SET donation_page_message = NULL, donation_page_image_path = NULL
+WHERE id = '<profile_uuid>';
+```
+
+Verify in an **incognito / logged-out** window that `/donate/{slug}` shows the image (no 401/403 on the image request).
 
 ## Environment Variables
 

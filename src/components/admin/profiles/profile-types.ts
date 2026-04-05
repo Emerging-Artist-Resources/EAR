@@ -1,6 +1,8 @@
+import type { FiscalSponsorshipStatus } from "@/lib/types/fiscal-sponsorship"
+
 export type ProfileStatus = "emerging" | "established"
 export type ProfileType = "individual" | "company" | "festival" | "other"
-export type FiscalSponsorshipStatus = "none" | "pending" | "approved" | "paused" | "revoked"
+export type { FiscalSponsorshipStatus }
 
 export interface AdminProfileItem {
   id: string

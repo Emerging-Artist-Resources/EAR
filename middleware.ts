@@ -5,11 +5,6 @@ import { getUserRole } from "@/lib/authz"
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Allow Stripe webhooks to bypass auth and redirects
-  if (pathname === "/api/stripe/webhook") {
-    return NextResponse.next()
-  }
-
   const res = NextResponse.next()
 
   const supabase = createServerClient(
@@ -47,7 +42,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/admin/:path*",
-    "/api/:path*"
+    "/admin/:path*"
   ],
 }

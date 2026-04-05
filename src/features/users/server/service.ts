@@ -12,8 +12,8 @@ import type {
   ProfileStatus,
   ProfileType,
   AdminEligibilitySubmission,
-  FiscalSponsorshipStatus,
 } from "@/components/admin/profiles/profile-types"
+import type { FiscalSponsorshipStatus } from "@/lib/types/fiscal-sponsorship"
 import { sendProfileApprovalEmail } from "@/features/profile/server/service"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 

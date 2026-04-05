@@ -1,9 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useLayoutEffect, useMemo } from "react"
 import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
 import type { Resolver } from "react-hook-form"
-import { donationFormSchema, type DonationFormData } from "@/lib/validations/donations"
+import {
+  donationArtistFormSchema,
+  donationFormSchema,
+  type DonationFormData,
+} from "@/lib/validations/donations"
 import { Button } from "@/components/ui/button"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
@@ -17,6 +21,7 @@ import { Card } from "@/components/ui/card"
 import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnelTrustHeader"
 import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
 import { Lock } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const PRESET_AMOUNTS = [25, 50, 100, 250, 500]
 
@@ -29,6 +34,9 @@ export type DonationLockedRecipient = {
   userId: string
   displayName: string | null
   slug: string
+  /** Optional hero from profile; only used on /donate/[slug]. */
+  donationPageMessage?: string | null
+  donationPageImageUrl?: string | null
 }
 
 interface DonationFormProps {
@@ -42,6 +50,23 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
+
+  const artistMessageText = lockedRecipient?.donationPageMessage?.trim() ?? ""
+  const [artistMessageExpanded, setArtistMessageExpanded] = useState(false)
+  const [artistMessageOverflows, setArtistMessageOverflows] = useState(false)
+  const artistMessageRef = useRef<HTMLParagraphElement>(null)
+
+  useEffect(() => {
+    setArtistMessageExpanded(false)
+  }, [artistMessageText])
+
+  useLayoutEffect(() => {
+    if (!artistMessageText) return
+    const el = artistMessageRef.current
+    if (!el) return
+    if (artistMessageExpanded) return
+    setArtistMessageOverflows(el.scrollHeight > el.clientHeight + 1)
+  }, [artistMessageText, artistMessageExpanded])
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -59,7 +84,14 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
     fetchProfile()
   }, [user])
 
-  const resolver = zodResolver(donationFormSchema) as unknown as Resolver<DonationFormData>
+  const validationSchema = useMemo(
+    () => (lockedRecipient ? donationArtistFormSchema : donationFormSchema),
+    [lockedRecipient],
+  )
+  const resolver = useMemo(
+    () => zodResolver(validationSchema) as unknown as Resolver<DonationFormData>,
+    [validationSchema],
+  )
   const form = useForm<DonationFormData>({
     resolver,
     defaultValues: {
@@ -99,7 +131,7 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
 
       const donationResponse = await apiPost<{ id: string }>("/api/donations", {
         amount: data.amount,
-        donor_name: data.donor_name?.trim() || null,
+        donor_name: data.donor_name?.trim() ? data.donor_name.trim() : null,
         donor_email: data.donor_email,
         message: data.message?.trim() || null,
         cover_card_fee: Boolean(data.cover_card_fee) && Boolean(lockedRecipient),
@@ -158,39 +190,71 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
   const showFeeBreakdown =
     isArtistDonation && baseGiftCents > 0 && (Boolean(coverFiscalFee) || Boolean(coverCardFee))
 
-  const recipientLabel =
-    lockedRecipient?.displayName?.trim() || "this artist"
+  const recipientLabel = lockedRecipient?.displayName?.trim() || "this artist"
+  const heroImageAlt =
+    lockedRecipient && lockedRecipient.donationPageImageUrl
+      ? `Image from ${recipientLabel}`
+      : ""
 
   return (
     <>
       <DonationFunnelTrustHeader
         variant={lockedRecipient ? "artist" : "generic"}
-        className="mb-6 max-w-2xl mx-auto px-2"
+        className="mb-4 max-w-3xl mx-auto gap-1.5 px-2"
       />
-    <Card className="max-w-2xl mx-auto p-6">
-      <div className="mb-6">
-        <H2 className="text-2xl font-bold text-gray-900 mb-2">
+    <Card className="max-w-3xl mx-auto px-6 py-5">
+      {lockedRecipient?.donationPageImageUrl ? (
+        <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+          {/* eslint-disable-next-line @next/next/no-img-element -- public Supabase URL; avoid next/image remote config */}
+          <img
+            src={lockedRecipient.donationPageImageUrl}
+            alt={heroImageAlt}
+            className="w-full max-h-64 object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = "none"
+            }}
+          />
+        </div>
+      ) : null}
+      <div className="mb-4">
+        <H2 className="text-2xl font-bold text-gray-900 mb-1">
           {lockedRecipient ? `Support ${recipientLabel}` : "Make a Donation"}
         </H2>
         <Text className="text-gray-600">
           {lockedRecipient
-            ? "Your gift is a fiscally sponsored donation to support this artist."
+            ? "Your gift is a fiscally sponsored donation to help bring their creative vision to life."
             : "Your support helps us continue providing resources for emerging artists."}
         </Text>
       </div>
+      {artistMessageText ? (
+        <div className="mb-4">
+          <p
+            ref={artistMessageRef}
+            className={cn(
+              "text-sm leading-6 text-gray-700 whitespace-pre-wrap",
+              !artistMessageExpanded && "line-clamp-2",
+            )}
+          >
+            {artistMessageText}
+          </p>
+          {(artistMessageOverflows || artistMessageExpanded) && (
+            <button
+              type="button"
+              className="mt-2 text-sm font-medium text-primary hover:underline"
+              aria-expanded={artistMessageExpanded}
+              onClick={() => setArtistMessageExpanded((v) => !v)}
+            >
+              {artistMessageExpanded ? "Read less" : "Read more"}
+            </button>
+          )}
+        </div>
+      ) : null}
 
       {statusMessage === "canceled" && (
         <Alert variant="error" className="mb-6">
           Checkout was canceled. You can adjust your amount and try again when you are ready.
         </Alert>
       )}
-
-      {/* {lockedRecipient && (
-        <Alert variant="default" className="mb-6">
-          Donating to <span className="font-semibold">{recipientLabel}</span>. Recipient cannot be changed on
-          this page.
-        </Alert>
-      )} */}
 
       {error && (
         <Alert variant="error" className="mb-6">
@@ -302,7 +366,8 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
           form={form}
           name="donor_name"
           label="Name"
-          placeholder="Your name (optional)"
+          placeholder={isArtistDonation ? "Your name" : "Your name (optional)"}
+          required={isArtistDonation}
         />
 
         <TextField
@@ -337,6 +402,16 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
               {isSubmitting ? "Processing..." : "Continue to Payment"}
             </Button>
           </div>
+          <p className="text-center text-xs text-gray-500">
+            Questions? Contact us at{" "}
+            <a
+              href="mailto:info@eararts.org"
+              className="text-gray-600 underline underline-offset-2 hover:text-gray-900"
+            >
+              info@eararts.org
+            </a>
+            .
+          </p>
         </div>
       </form>
     </Card>

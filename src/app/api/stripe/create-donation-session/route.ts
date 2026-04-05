@@ -8,6 +8,10 @@ import { handleApiError, createSuccessResponse, validateRequestBody } from "@/li
 import { createDonationSessionRequestSchema } from "@/lib/validations/donations"
 import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
 import { donationStripeAccountForRecipient } from "@/lib/payments/donationStripeAccount"
+import {
+  getDonationRecipientByUserId,
+  isApprovedRecipient,
+} from "@/features/profile/server/artistDonationRecipient"
 
 const STRIPE_API_VERSION = "2026-02-25.clover" as const
 
@@ -22,7 +26,7 @@ export async function POST(req: NextRequest) {
     const { data: donationRow, error: donationError } = await supabase
       .from("donations")
       .select(
-        "id, amount, base_gift_cents, stripe_account, currency, payment_status, donor_id, donor_email, recipient_user_id, recipient_name, stripe_checkout_session_id, cover_card_fee, cover_fiscal_fee",
+        "id, amount, base_gift_cents, stripe_account, currency, payment_status, donor_id, donor_email, recipient_user_id, recipient_name, message, stripe_checkout_session_id, cover_card_fee, cover_fiscal_fee",
       )
       .eq("id", donationId)
       .single()
@@ -112,19 +116,15 @@ export async function POST(req: NextRequest) {
 
     let recipientSlug: string | null = null
     if (donationRow.recipient_user_id) {
-      const { data: recipientProfile, error: recipientError } = await supabase
-        .from("profiles")
-        .select("id, slug, fiscal_sponsorship_status")
-        .eq("id", donationRow.recipient_user_id)
-        .maybeSingle()
+      const recipientProfile = await getDonationRecipientByUserId(donationRow.recipient_user_id)
 
-      if (recipientError || !recipientProfile?.slug) {
+      if (!recipientProfile?.slug) {
         return NextResponse.json(
           { error: { code: "BAD_REQUEST", message: "Recipient is no longer available for donations" } },
           { status: 400 },
         )
       }
-      if (recipientProfile.fiscal_sponsorship_status !== "approved") {
+      if (!isApprovedRecipient(recipientProfile)) {
         return NextResponse.json(
           { error: { code: "FORBIDDEN", message: "This artist is not currently eligible to receive donations" } },
           { status: 403 },
@@ -196,6 +196,8 @@ export async function POST(req: NextRequest) {
         entity_id: donationId,
         stripe_account: expectedStripeAccount,
         donor_id: auth?.user.id || "",
+        // Copied onto Payment Intent; webhook can fall back if needed (Stripe metadata value max 500 chars).
+        donor_message: (donationRow.message ?? "").trim().slice(0, 450),
         ...(donationRow.recipient_user_id
           ? { recipient_user_id: donationRow.recipient_user_id }
           : {}),

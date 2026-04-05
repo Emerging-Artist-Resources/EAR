@@ -125,7 +125,7 @@ For each email type, create a template in Postmark with the corresponding alias:
 #### Template: `donation-notification-artist`
 - **Alias**: `donation-notification-artist`
 - **Subject**: (configured in Postmark, e.g. new donation notice to the artist)
-- **Attachment**: PDF summary generated server-side (`donation-summary.pdf`)
+- **Attachment**: PDF summary generated server-side (`Donation-{artist}-{YYYY-MM-DD}.pdf`, sanitized artist segment)
 - **Template Variables**:
   - `{{artist_name}}` - Recipient display name (snapshot) or fallback
   - `{{donor_name}}` - Donor display name

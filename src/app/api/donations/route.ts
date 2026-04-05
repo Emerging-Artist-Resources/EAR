@@ -11,6 +11,10 @@ import {
 import { createDonationRequestSchema } from "@/lib/validations/donations"
 import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
 import { donationStripeAccountForRecipient } from "@/lib/payments/donationStripeAccount"
+import {
+  getDonationRecipientByUserId,
+  isApprovedRecipient,
+} from "@/features/profile/server/artistDonationRecipient"
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,25 +28,13 @@ export async function POST(req: NextRequest) {
     let recipientName: string | null = null
 
     if (recipientUserId) {
-      const { data: recipientProfile, error: recipientError } = await supabase
-        .from("profiles")
-        .select("id, name, slug, fiscal_sponsorship_status")
-        .eq("id", recipientUserId)
-        .maybeSingle()
-
-      if (recipientError) {
-        console.error("Recipient profile lookup failed:", recipientError)
-        return NextResponse.json(
-          { error: { code: "INTERNAL_ERROR", message: "Failed to validate recipient" } },
-          { status: 500 },
-        )
-      }
+      const recipientProfile = await getDonationRecipientByUserId(recipientUserId)
 
       if (!recipientProfile) {
         return createErrorResponse(ErrorCodes.BAD_REQUEST, "Recipient not found", undefined, 400)
       }
 
-      if (recipientProfile.fiscal_sponsorship_status !== "approved") {
+      if (!isApprovedRecipient(recipientProfile)) {
         return createErrorResponse(
           ErrorCodes.FORBIDDEN,
           "This artist is not currently eligible to receive donations",

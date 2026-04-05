@@ -2,6 +2,8 @@ import { SavedEvent, ProfileSavedEventsFilter, SavedListing, ActivityOverview } 
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getListingTitle } from "@/features/events/server/listing-utils";
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections";
+import type { FiscalSponsorshipStatus } from "@/lib/types/fiscal-sponsorship";
+import { donationPageImagePublicUrl } from "@/lib/storage/donationPagePhotos";
 
 export async function fetchSavedEventsFromDb(
   userId: string,
@@ -323,17 +325,22 @@ export interface ProfileData {
   location_label: string | null;
   artist_status: string | null;
   slug: string | null;
-  fiscal_sponsorship_status: "none" | "pending" | "approved" | "paused" | "revoked";
+  fiscal_sponsorship_status: FiscalSponsorshipStatus;
   fiscal_sponsorship_approved_at: string | null;
   fiscal_sponsorship_approved_by: string | null;
   fiscal_sponsorship_note: string | null;
+  donation_page_message: string | null;
+  donation_page_image_path: string | null;
 }
 
 export interface PublicDonationProfile {
   id: string;
   name: string | null;
   slug: string;
-  fiscal_sponsorship_status: "none" | "pending" | "approved" | "paused" | "revoked";
+  fiscal_sponsorship_status: FiscalSponsorshipStatus;
+  donation_page_message: string | null;
+  /** Resolved public URL; null when no path or path-only in DB. */
+  donation_page_image_url: string | null;
 }
 
 export interface EligibilitySubmission {
@@ -353,7 +360,7 @@ export async function getProfileRepo(userId: string): Promise<ProfileData | null
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug, fiscal_sponsorship_status, fiscal_sponsorship_approved_at, fiscal_sponsorship_approved_by, fiscal_sponsorship_note",
+      "id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug, fiscal_sponsorship_status, fiscal_sponsorship_approved_at, fiscal_sponsorship_approved_by, fiscal_sponsorship_note, donation_page_message, donation_page_image_path",
     )
     .eq("id", userId)
     .single();
@@ -373,7 +380,7 @@ export async function getProfileBySlugForDonationRepo(slug: string): Promise<Pub
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, name, slug, fiscal_sponsorship_status")
+    .select("id, name, slug, fiscal_sponsorship_status, donation_page_message, donation_page_image_path")
     .eq("slug", slug)
     .eq("fiscal_sponsorship_status", "approved")
     .maybeSingle();
@@ -386,11 +393,17 @@ export async function getProfileBySlugForDonationRepo(slug: string): Promise<Pub
     return null;
   }
 
+  const donation_page_image_url = data.donation_page_image_path
+    ? await donationPageImagePublicUrl(data.donation_page_image_path)
+    : null;
+
   return {
     id: data.id,
     name: data.name,
     slug: data.slug,
-    fiscal_sponsorship_status: data.fiscal_sponsorship_status as PublicDonationProfile["fiscal_sponsorship_status"],
+    fiscal_sponsorship_status: data.fiscal_sponsorship_status as FiscalSponsorshipStatus,
+    donation_page_message: data.donation_page_message ?? null,
+    donation_page_image_url,
   };
 }
 
@@ -421,7 +434,9 @@ export async function getProfileBySlugForDonationSuccessRepo(
     id: data.id,
     name: data.name,
     slug: data.slug,
-    fiscal_sponsorship_status: data.fiscal_sponsorship_status as PublicDonationProfile["fiscal_sponsorship_status"],
+    fiscal_sponsorship_status: data.fiscal_sponsorship_status as FiscalSponsorshipStatus,
+    donation_page_message: null,
+    donation_page_image_url: null,
   }
 }
 
@@ -447,7 +462,7 @@ export async function updateProfileRepo(
     .update(updateData)
     .eq("id", userId)
     .select(
-      "id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug, fiscal_sponsorship_status, fiscal_sponsorship_approved_at, fiscal_sponsorship_approved_by, fiscal_sponsorship_note",
+      "id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug, fiscal_sponsorship_status, fiscal_sponsorship_approved_at, fiscal_sponsorship_approved_by, fiscal_sponsorship_note, donation_page_message, donation_page_image_path",
     )
     .single();
 

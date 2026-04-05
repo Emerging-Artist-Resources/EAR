@@ -10,6 +10,7 @@ import {
   resolveRecipientEmail,
 } from "@/lib/stripe/donationHelpers"
 import {
+  buildDonationPdfAttachmentName,
   DONATION_TEMPLATE_ADMIN,
   DONATION_TEMPLATE_ARTIST,
   sendInternalDonationTemplatedEmail,
@@ -18,6 +19,8 @@ import {
 type DonationRow = DonationAmountRow & {
   recipient_user_id: string | null
   internal_notification_sent_at: string | null
+  cover_card_fee: boolean | null
+  cover_fiscal_fee: boolean | null
 }
 
 function maskEmailForLog(email: string): string {
@@ -32,6 +35,15 @@ function maskEmailForLog(email: string): string {
 
 function logPrefix(donationId: string): string {
   return `[donationId=${donationId}]`
+}
+
+/** Escape for HTML; used with Postmark triple-stache so line breaks render in HTML bodies. */
+function escapeHtmlForEmail(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
 }
 
 export async function trySendInternalDonationNotifications({
@@ -53,7 +65,7 @@ export async function trySendInternalDonationNotifications({
   const { data: donation, error: fetchError } = await supabase
     .from("donations")
     .select(
-      "id, donor_name, donor_email, message, recipient_name, recipient_user_id, amount, payment_status, internal_notification_sent_at",
+      "id, donor_name, donor_email, message, recipient_name, recipient_user_id, amount, payment_status, internal_notification_sent_at, cover_card_fee, cover_fiscal_fee",
     )
     .eq("id", donationId)
     .single()
@@ -147,16 +159,41 @@ export async function trySendInternalDonationNotifications({
   const artistDisplayForTemplates = row.recipient_name?.trim() || "the artist"
   const adminTemplateArtistName = row.recipient_user_id ? artistDisplayForTemplates : "EAR"
 
-  const msg = row.message?.trim()
+  // Prefer DB; Stripe session/PI metadata is a fallback if the row was missing data at read time.
+  const msg =
+    row.message?.trim() ||
+    session?.metadata?.donor_message?.trim() ||
+    (typeof paymentIntent?.metadata?.donor_message === "string" ? paymentIntent.metadata.donor_message.trim() : "") ||
+    ""
+
+  // Postmark Mustachio: do not use {{#message}}...{{message}}... when `message` is a string — the inner
+  // {{message}} resolves inside the string scope and renders blank. Prefer:
+  // - {{donor_message}} or {{message}} at root (no # section), or
+  // - {{#donor_message_section}}{{text}}{{/donor_message_section}}, or {{#message}}{{.}}{{/message}}, or
+  // - {{{donor_message_html}}} for pre-escaped HTML with <br /> for newlines (HTML templates only).
+  const hasDonorMessage = msg.length > 0
+  const donorMessageHtml = hasDonorMessage
+    ? escapeHtmlForEmail(msg).replace(/\r\n|\r|\n/g, "<br />")
+    : ""
+
+  const sharedTemplateFields: Record<string, unknown> = {
+    message: msg,
+    donor_message: msg,
+    has_donor_message: hasDonorMessage,
+    // Nested object so templates can use {{#donor_message_section}}{{text}}{{/donor_message_section}}
+    donor_message_section: hasDonorMessage ? { text: msg } : null,
+    // Triple-mustache in Postmark: {{{donor_message_html}}} — content is escaped except <br /> we insert
+    donor_message_html: donorMessageHtml,
+    // Some Mustache setups treat non-empty strings more reliably than booleans for {{#…}} sections
+    donor_message_present: hasDonorMessage ? "yes" : "",
+  }
 
   const artistTemplateModel: Record<string, unknown> = {
     artist_name: artistDisplayForTemplates,
     donor_name: donorName,
     amount: amountStr,
     date: dateStr,
-  }
-  if (msg) {
-    artistTemplateModel.message = msg
+    ...sharedTemplateFields,
   }
 
   const adminTemplateModel: Record<string, unknown> = {
@@ -165,18 +202,26 @@ export async function trySendInternalDonationNotifications({
     donor_email: donorEmailResolved || "",
     amount: amountStr,
     date: dateStr,
-  }
-  if (msg) {
-    adminTemplateModel.message = msg
+    ...sharedTemplateFields,
   }
 
   const pdfBytes = await generateDonationPdf({
     donorName,
+    donorEmail: donorEmailResolved || undefined,
     artistDisplayName: artistDisplayForTemplates,
     amountCents,
     dateLabel: dateStr,
     donationId,
+    donorMessage: msg,
+    feeCoverage: row.recipient_user_id
+      ? {
+          coverFiscalFee: Boolean(row.cover_fiscal_fee),
+          coverCardFee: Boolean(row.cover_card_fee),
+        }
+      : undefined,
   })
+
+  const pdfFileName = buildDonationPdfAttachmentName(artistDisplayForTemplates, createdUnix)
 
   try {
     if (hasArtist) {
@@ -185,6 +230,7 @@ export async function trySendInternalDonationNotifications({
         templateAlias: DONATION_TEMPLATE_ARTIST,
         templateModel: artistTemplateModel,
         pdfBytes,
+        pdfFileName,
       })
       console.log(
         `${logPrefix(donationId)} Sent artist internal notification`,
@@ -198,6 +244,7 @@ export async function trySendInternalDonationNotifications({
         templateAlias: DONATION_TEMPLATE_ADMIN,
         templateModel: adminTemplateModel,
         pdfBytes,
+        pdfFileName,
       })
       console.log(`${logPrefix(donationId)} Sent admin internal notification`, {
         recipient: maskEmailForLog(adminEmail),
