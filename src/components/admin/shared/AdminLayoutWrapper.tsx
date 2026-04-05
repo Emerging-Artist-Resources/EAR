@@ -25,6 +25,10 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
     return <>{children}</>
   }
 
+  if (pathname?.startsWith("/donate")) {
+    return <>{children}</>
+  }
+
   const isAdminPage = pathname?.startsWith("/admin")
 
   return (

@@ -1,18 +1,27 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useLayoutEffect, useMemo } from "react"
 import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
 import type { Resolver } from "react-hook-form"
-import { donationFormSchema, type DonationFormData } from "@/lib/validations/donations"
+import {
+  donationArtistFormSchema,
+  donationFormSchema,
+  type DonationFormData,
+} from "@/lib/validations/donations"
 import { Button } from "@/components/ui/button"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { Alert } from "@/components/ui/alert"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from "@/hooks/use-auth"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/contexts/ToastContext"
 import { apiPost, apiGet } from "@/lib/fetch-utils"
 import { H2, Text } from "@/components/ui/typography"
 import { Card } from "@/components/ui/card"
+import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnelTrustHeader"
+import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
+import { Lock } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const PRESET_AMOUNTS = [25, 50, 100, 250, 500]
 
@@ -25,6 +34,9 @@ export type DonationLockedRecipient = {
   userId: string
   displayName: string | null
   slug: string
+  /** Optional hero from profile; only used on /donate/[slug]. */
+  donationPageMessage?: string | null
+  donationPageImageUrl?: string | null
 }
 
 interface DonationFormProps {
@@ -38,6 +50,23 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
+
+  const artistMessageText = lockedRecipient?.donationPageMessage?.trim() ?? ""
+  const [artistMessageExpanded, setArtistMessageExpanded] = useState(false)
+  const [artistMessageOverflows, setArtistMessageOverflows] = useState(false)
+  const artistMessageRef = useRef<HTMLParagraphElement>(null)
+
+  useEffect(() => {
+    setArtistMessageExpanded(false)
+  }, [artistMessageText])
+
+  useLayoutEffect(() => {
+    if (!artistMessageText) return
+    const el = artistMessageRef.current
+    if (!el) return
+    if (artistMessageExpanded) return
+    setArtistMessageOverflows(el.scrollHeight > el.clientHeight + 1)
+  }, [artistMessageText, artistMessageExpanded])
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -55,7 +84,14 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
     fetchProfile()
   }, [user])
 
-  const resolver = zodResolver(donationFormSchema) as unknown as Resolver<DonationFormData>
+  const validationSchema = useMemo(
+    () => (lockedRecipient ? donationArtistFormSchema : donationFormSchema),
+    [lockedRecipient],
+  )
+  const resolver = useMemo(
+    () => zodResolver(validationSchema) as unknown as Resolver<DonationFormData>,
+    [validationSchema],
+  )
   const form = useForm<DonationFormData>({
     resolver,
     defaultValues: {
@@ -63,6 +99,8 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
       donor_name: profileData?.name || userName || "",
       donor_email: profileData?.email || user?.email || "",
       message: "",
+      cover_card_fee: false,
+      cover_fiscal_fee: false,
     },
     mode: "onChange",
     reValidateMode: "onChange",
@@ -93,9 +131,11 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
 
       const donationResponse = await apiPost<{ id: string }>("/api/donations", {
         amount: data.amount,
-        donor_name: data.donor_name?.trim() || null,
-        donor_email: data.donor_email?.trim() || null,
+        donor_name: data.donor_name?.trim() ? data.donor_name.trim() : null,
+        donor_email: data.donor_email,
         message: data.message?.trim() || null,
+        cover_card_fee: Boolean(data.cover_card_fee) && Boolean(lockedRecipient),
+        cover_fiscal_fee: Boolean(data.cover_fiscal_fee) && Boolean(lockedRecipient),
         ...(lockedRecipient
           ? {
               recipient_user_id: lockedRecipient.userId,
@@ -135,34 +175,84 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
   })
 
   const amountValue = form.watch("amount")
-  const amountInDollars = amountValue ? amountValue / 100 : 0
+  const baseGiftCents = amountValue || 0
+  const amountInDollars = baseGiftCents / 100
+  const coverCardFee = form.watch("cover_card_fee")
+  const coverFiscalFee = form.watch("cover_fiscal_fee")
+  const isArtistDonation = Boolean(lockedRecipient)
 
-  const recipientLabel =
-    lockedRecipient?.displayName?.trim() || "this artist"
+  const totalChargedCents = isArtistDonation
+    ? computeGrossChargeCents(baseGiftCents, Boolean(coverFiscalFee), Boolean(coverCardFee))
+    : baseGiftCents
+  const totalChargedDollars = totalChargedCents / 100
+  const feesCoveredCents = Math.max(0, totalChargedCents - baseGiftCents)
+  const feesCoveredDollars = feesCoveredCents / 100
+  const showFeeBreakdown =
+    isArtistDonation && baseGiftCents > 0 && (Boolean(coverFiscalFee) || Boolean(coverCardFee))
+
+  const recipientLabel = lockedRecipient?.displayName?.trim() || "this artist"
+  const heroImageAlt =
+    lockedRecipient && lockedRecipient.donationPageImageUrl
+      ? `Image from ${recipientLabel}`
+      : ""
 
   return (
-    <Card className="max-w-2xl mx-auto p-6">
-      <div className="mb-6">
-        <H2 className="text-2xl font-bold text-gray-900 mb-2">
+    <>
+      <DonationFunnelTrustHeader
+        variant={lockedRecipient ? "artist" : "generic"}
+        className="mb-4 max-w-3xl mx-auto gap-1.5 px-2"
+      />
+    <Card className="max-w-3xl mx-auto px-6 py-5">
+      {lockedRecipient?.donationPageImageUrl ? (
+        <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+          {/* eslint-disable-next-line @next/next/no-img-element -- public Supabase URL; avoid next/image remote config */}
+          <img
+            src={lockedRecipient.donationPageImageUrl}
+            alt={heroImageAlt}
+            className="w-full max-h-64 object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = "none"
+            }}
+          />
+        </div>
+      ) : null}
+      <div className="mb-4">
+        <H2 className="text-2xl font-bold text-gray-900 mb-1">
           {lockedRecipient ? `Support ${recipientLabel}` : "Make a Donation"}
         </H2>
         <Text className="text-gray-600">
           {lockedRecipient
-            ? "Your gift is a fiscally sponsored donation to support this artist."
+            ? "Your gift is a fiscally sponsored donation to help bring their creative vision to life."
             : "Your support helps us continue providing resources for emerging artists."}
         </Text>
       </div>
+      {artistMessageText ? (
+        <div className="mb-4">
+          <p
+            ref={artistMessageRef}
+            className={cn(
+              "text-sm leading-6 text-gray-700 whitespace-pre-wrap",
+              !artistMessageExpanded && "line-clamp-2",
+            )}
+          >
+            {artistMessageText}
+          </p>
+          {(artistMessageOverflows || artistMessageExpanded) && (
+            <button
+              type="button"
+              className="mt-2 text-sm font-medium text-primary hover:underline"
+              aria-expanded={artistMessageExpanded}
+              onClick={() => setArtistMessageExpanded((v) => !v)}
+            >
+              {artistMessageExpanded ? "Read less" : "Read more"}
+            </button>
+          )}
+        </div>
+      ) : null}
 
       {statusMessage === "canceled" && (
         <Alert variant="error" className="mb-6">
           Checkout was canceled. You can adjust your amount and try again when you are ready.
-        </Alert>
-      )}
-
-      {lockedRecipient && (
-        <Alert variant="default" className="mb-6">
-          Donating to <span className="font-semibold">{recipientLabel}</span>. Recipient cannot be changed on
-          this page.
         </Alert>
       )}
 
@@ -221,17 +311,63 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
             )}
             {amountInDollars > 0 && (
               <p className="mt-1 text-sm text-gray-600">
-                ${amountInDollars.toFixed(2)} will be charged
+                ${totalChargedDollars.toFixed(2)} will be charged
               </p>
             )}
           </div>
         </div>
 
+        {isArtistDonation && (
+          <div className="space-y-3 rounded-md border border-gray-200 bg-gray-50 p-4">
+            <p className="text-sm text-gray-700">
+              Add these optional fees so the artist receives the full amount of your donation.
+            </p>
+            <label className="flex items-start gap-2 text-sm text-gray-800">
+              <Checkbox
+                checked={Boolean(coverFiscalFee)}
+                onChange={(e) => {
+                  form.setValue("cover_fiscal_fee", (e.target as HTMLInputElement).checked, {
+                    shouldValidate: false,
+                  })
+                }}
+              />
+              <span>Cover fiscal sponsorship fee (5.5%)</span>
+            </label>
+            <label className="flex items-start gap-2 text-sm text-gray-800">
+              <Checkbox
+                checked={Boolean(coverCardFee)}
+                onChange={(e) => {
+                  form.setValue("cover_card_fee", (e.target as HTMLInputElement).checked, {
+                    shouldValidate: false,
+                  })
+                }}
+              />
+              <span>Cover processing fees (2.9% + $0.30)</span>
+            </label>
+
+            {amountInDollars > 0 && (
+              <div className="rounded-md bg-white p-3 text-sm text-gray-700 space-y-1">
+                <p>
+                  <span className="font-medium text-gray-900">Donation:</span> ${amountInDollars.toFixed(2)}
+                </p>
+                {showFeeBreakdown && (
+                  <p>
+                    <span className="font-medium text-gray-900">Fees covered:</span> $
+                    {feesCoveredDollars.toFixed(2)}
+                  </p>
+                )}
+                <p className="font-semibold text-gray-900">Total charged: ${totalChargedDollars.toFixed(2)}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         <TextField
           form={form}
           name="donor_name"
           label="Name"
-          placeholder="Your name (optional)"
+          placeholder={isArtistDonation ? "Your name" : "Your name (optional)"}
+          required={isArtistDonation}
         />
 
         <TextField
@@ -239,7 +375,8 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
           name="donor_email"
           label="Email"
           type="email"
-          placeholder="your.email@example.com (optional)"
+          placeholder="your.email@example.com"
+          required
         />
 
         <TextAreaField
@@ -250,17 +387,34 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
           rows={4}
         />
 
-        <div className="flex gap-4">
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={isSubmitting}
-            className="flex-1"
-          >
-            {isSubmitting ? "Processing..." : "Continue to Payment"}
-          </Button>
+        <div className="space-y-3">
+          <p className="flex items-center justify-center gap-2 text-xs text-gray-500">
+            <Lock className="size-3.5 shrink-0 text-gray-400" aria-hidden />
+            <span>Payments are securely processed by Stripe.</span>
+          </p>
+          <div className="flex gap-4">
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={isSubmitting}
+              className="flex-1"
+            >
+              {isSubmitting ? "Processing..." : "Continue to Payment"}
+            </Button>
+          </div>
+          <p className="text-center text-xs text-gray-500">
+            Questions? Contact us at{" "}
+            <a
+              href="mailto:info@eararts.org"
+              className="text-gray-600 underline underline-offset-2 hover:text-gray-900"
+            >
+              info@eararts.org
+            </a>
+            .
+          </p>
         </div>
       </form>
     </Card>
+    </>
   )
 }

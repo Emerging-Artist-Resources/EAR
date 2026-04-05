@@ -87,7 +87,7 @@ COMMENT ON COLUMN donations.stripe_payment_intent_id IS 'Stripe Payment Intent I
 COMMENT ON COLUMN donations.stripe_charge_id IS 'Stripe Charge ID (set from payment_intent.succeeded webhook for easier refund mapping)';
 COMMENT ON COLUMN donations.donor_id IS 'Profile ID of authenticated donor (nullable for anonymous donations)';
 COMMENT ON COLUMN donations.donor_name IS 'Donor name (optional, may be provided for anonymous donations)';
-COMMENT ON COLUMN donations.donor_email IS 'Donor email (optional, may be provided for anonymous donations)';
+COMMENT ON COLUMN donations.donor_email IS 'Donor email — required for new donations at the app layer (receipts/Stripe); column nullable for legacy rows';
 COMMENT ON COLUMN donations.message IS 'Optional message from donor';
 COMMENT ON COLUMN donations.created_at IS 'Timestamp when donation record was created';
 

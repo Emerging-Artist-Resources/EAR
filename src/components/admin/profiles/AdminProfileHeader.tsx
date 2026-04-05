@@ -1,6 +1,6 @@
 "use client"
 
-import { ProfileStatus, ProfileType } from "./profile-types"
+import { FiscalSponsorshipStatus, ProfileStatus, ProfileType } from "./profile-types"
 import { Button } from "@/components/ui/button"
 import { H2 } from "@/components/ui/typography"
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +15,8 @@ export function AdminProfileHeader({
   newCount,
   onChange,
   onProfileTypeChange,
+  fiscalFilter,
+  onFiscalFilterChange,
 }: {
   filter: ProfileFilter
   profileTypeFilter: ProfileType | "all"
@@ -22,6 +24,8 @@ export function AdminProfileHeader({
   newCount: number
   onChange: (f: ProfileFilter) => void
   onProfileTypeChange: (t: ProfileType | "all") => void
+  fiscalFilter: FiscalSponsorshipStatus | "all"
+  onFiscalFilterChange: (s: FiscalSponsorshipStatus | "all") => void
 }) {
   const tabBtn = (state: ProfileFilter, label: string, count?: number) => {
     const active = filter === state
@@ -67,6 +71,21 @@ export function AdminProfileHeader({
             <option value="company">Company</option>
             <option value="festival">Festival</option>
             <option value="other">Other</option>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-[var(--gray-600)] whitespace-nowrap">Fiscal Status:</label>
+          <Select
+            value={fiscalFilter}
+            onChange={(e) => onFiscalFilterChange(e.target.value as FiscalSponsorshipStatus | "all")}
+            className="min-w-[180px]"
+          >
+            <option value="all">All Fiscal Statuses</option>
+            <option value="none">None</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="paused">Paused</option>
+            <option value="revoked">Revoked</option>
           </Select>
         </div>
       </div>

@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Text, H2 } from "@/components/ui/typography"
 import { apiGet } from "@/lib/fetch-utils"
+import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnelTrustHeader"
 
+/** Matches GET /api/donations/[id] — only fields needed for success polling. */
 export type DonationPollPayload = {
   payment_status?: string
   recipient_user_id?: string | null
@@ -15,10 +17,10 @@ export type DonationPollPayload = {
 const maxPolls = 20
 const pollInterval = 2000
 
-function earMarketingUrl() {
-  const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://www.eararts.org"
-  return base
-}
+// function earMarketingUrl() {
+//   const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://www.eararts.org"
+//   return base
+// }
 
 export type DonationSuccessViewProps = {
   donationId: string
@@ -28,6 +30,7 @@ export type DonationSuccessViewProps = {
     slug: string
     profileId: string
     displayName: string
+    fiscalStatus: "none" | "pending" | "approved" | "paused" | "revoked"
   }
 }
 
@@ -38,8 +41,14 @@ export function DonationSuccessView({ donationId, variant, artist }: DonationSuc
   const statusRef = useRef(paymentStatus)
   const countRef = useRef(pollCount)
 
-  const backToDonateHref = variant === "artist" && artist ? `/donate/${encodeURIComponent(artist.slug)}` : "/donate"
-  const earUrl = earMarketingUrl()
+  const backToDonateHref =
+    variant === "artist" && artist
+      ? artist.fiscalStatus === "approved"
+        ? `/donate/${encodeURIComponent(artist.slug)}`
+        : "/donate"
+      : "/donate"
+  // TODO: Uncomment when website is live
+  // const earUrl = earMarketingUrl()
 
   useEffect(() => {
     statusRef.current = paymentStatus
@@ -121,6 +130,7 @@ export function DonationSuccessView({ donationId, variant, artist }: DonationSuc
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center space-y-4">
+          <DonationFunnelTrustHeader variant={variant === "artist" ? "artist" : "generic"} className="mb-2" />
           <Text className="text-gray-600">Missing donation reference. Return to the donation page to try again.</Text>
           <Button variant="primary" onClick={() => router.push("/donate")}>
             Go to donate
@@ -133,6 +143,7 @@ export function DonationSuccessView({ donationId, variant, artist }: DonationSuc
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+        <DonationFunnelTrustHeader variant={variant === "artist" ? "artist" : "generic"} className="mb-6" />
         <div className="mb-6">
           <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
             <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,11 +183,11 @@ export function DonationSuccessView({ donationId, variant, artist }: DonationSuc
               <Button variant="outline" asChild>
                 <Link href={backToDonateHref}>Back to donation</Link>
               </Button>
-              <Button variant="primary" asChild>
+              {/* <Button variant="primary" asChild>
                 <a href={earUrl} target="_blank" rel="noopener noreferrer">
                   Visit EAR
                 </a>
-              </Button>
+              </Button> */}
             </div>
           </div>
         )}
@@ -186,13 +197,17 @@ export function DonationSuccessView({ donationId, variant, artist }: DonationSuc
             <Text className="text-gray-600">Your donation has been confirmed.</Text>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button variant="outline" asChild>
-                <Link href={backToDonateHref}>Make another donation</Link>
+                <Link href={backToDonateHref}>
+                  {variant === "artist" && artist && artist.fiscalStatus !== "approved"
+                    ? "Support other artists"
+                    : "Make another donation"}
+                </Link>
               </Button>
-              <Button variant="primary" asChild>
+              {/* <Button variant="primary" asChild>
                 <a href={earUrl} target="_blank" rel="noopener noreferrer">
                   Visit EAR website
                 </a>
-              </Button>
+              </Button> */}
             </div>
           </div>
         )}
@@ -206,11 +221,11 @@ export function DonationSuccessView({ donationId, variant, artist }: DonationSuc
               <Button variant="outline" asChild>
                 <Link href={backToDonateHref}>Back to donation</Link>
               </Button>
-              <Button variant="primary" asChild>
+              {/* <Button variant="primary" asChild>
                 <a href={earUrl} target="_blank" rel="noopener noreferrer">
                   Visit EAR website
                 </a>
-              </Button>
+              </Button> */}
             </div>
           </div>
         )}

@@ -25,6 +25,8 @@ export default async function DonateToArtistPage({ params, searchParams }: PageP
           userId: profile.id,
           displayName: profile.name,
           slug: profile.slug,
+          donationPageMessage: profile.donation_page_message,
+          donationPageImageUrl: profile.donation_page_image_url,
         }}
         statusMessage={statusMessage}
       />

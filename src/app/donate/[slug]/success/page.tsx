@@ -1,6 +1,6 @@
 import { redirect, notFound } from "next/navigation"
 import { DonationSuccessView } from "@/components/donations/DonationSuccessView"
-import { getProfileBySlugForDonationRepo } from "@/features/profile/server/repository"
+import { getProfileBySlugForDonationSuccessRepo } from "@/features/profile/server/repository"
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -12,7 +12,8 @@ export default async function ArtistDonationSuccessPage({ params, searchParams }
   const q = await searchParams
   const donationId = q.donation_id ?? ""
 
-  const profile = await getProfileBySlugForDonationRepo(slug)
+  // Success should not depend on current fiscal eligibility; payment is reconciled via webhooks.
+  const profile = await getProfileBySlugForDonationSuccessRepo(slug)
   if (!profile) {
     notFound()
   }
@@ -29,6 +30,7 @@ export default async function ArtistDonationSuccessPage({ params, searchParams }
         slug: profile.slug,
         profileId: profile.id,
         displayName: profile.name?.trim() || "this artist",
+        fiscalStatus: profile.fiscal_sponsorship_status,
       }}
     />
   )

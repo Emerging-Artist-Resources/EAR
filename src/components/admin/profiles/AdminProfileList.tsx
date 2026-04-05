@@ -13,7 +13,15 @@ export function AdminProfileList({
   onMarkReviewed,
 }: {
   items: AdminProfileItem[]
-  onUpdate: (id: string, status: "emerging" | "established") => Promise<void>
+  onUpdate: (
+    id: string,
+    updates:
+      | { status: "emerging" | "established" }
+      | {
+          fiscalSponsorshipStatus: "none" | "pending" | "approved" | "paused" | "revoked"
+          fiscalSponsorshipNote?: string
+        },
+  ) => Promise<void>
   onMarkReviewed: (id: string) => Promise<void>
 }) {
   if (!items.length) {
@@ -33,6 +41,7 @@ export function AdminProfileList({
             <th className="px-3 py-2 text-left">Email</th>
             <th className="px-3 py-2 text-left">Type</th>
             <th className="px-3 py-2 text-left">Status</th>
+            <th className="px-3 py-2 text-left">Fiscal Sponsorship</th>
             <th className="px-3 py-2 text-left">Created</th>
             <th className="px-3 py-2" />
           </tr>
@@ -64,6 +73,7 @@ export function AdminProfileList({
                 <td className="px-3 py-2">{profile.email || "—"}</td>
                 <td className="px-3 py-2 capitalize">{profile.profileType || "—"}</td>
                 <td className="px-3 py-2 capitalize">{profile.status}</td>
+                <td className="px-3 py-2 capitalize">{profile.fiscalSponsorshipStatus}</td>
                 <td className="px-3 py-2">{created}</td>
                 <td className="px-3 py-2 text-right">
                   <div className="flex items-center justify-end gap-2">

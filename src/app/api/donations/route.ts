@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getAuthenticatedUser } from "@/lib/auth-helpers"
 import {
   handleApiError,
@@ -9,6 +8,13 @@ import {
   ErrorCodes,
 } from "@/lib/api-utils"
 import { createDonationRequestSchema } from "@/lib/validations/donations"
+import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
+import { donationStripeAccountForRecipient } from "@/lib/payments/donationStripeAccount"
+import {
+  getDonationRecipientByUserId,
+  isApprovedRecipient,
+} from "@/features/profile/server/artistDonationRecipient"
+import { getSupabaseServiceClient } from "@/lib/supabase/service"
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,28 +22,26 @@ export async function POST(req: NextRequest) {
     const donationData = validateRequestBody(body, createDonationRequestSchema)
 
     const auth = await getAuthenticatedUser()
-    const supabase = await getSupabaseServerClient()
+    /** Service role: RLS is not applied on this insert. `donor_id` is set from the session when present. */
+    const supabase = getSupabaseServiceClient()
 
     let recipientUserId: string | null = donationData.recipient_user_id ?? null
     let recipientName: string | null = null
 
     if (recipientUserId) {
-      const { data: recipientProfile, error: recipientError } = await supabase
-        .from("profiles")
-        .select("id, name, slug")
-        .eq("id", recipientUserId)
-        .maybeSingle()
-
-      if (recipientError) {
-        console.error("Recipient profile lookup failed:", recipientError)
-        return NextResponse.json(
-          { error: { code: "INTERNAL_ERROR", message: "Failed to validate recipient" } },
-          { status: 500 },
-        )
-      }
+      const recipientProfile = await getDonationRecipientByUserId(recipientUserId)
 
       if (!recipientProfile) {
         return createErrorResponse(ErrorCodes.BAD_REQUEST, "Recipient not found", undefined, 400)
+      }
+
+      if (!isApprovedRecipient(recipientProfile)) {
+        return createErrorResponse(
+          ErrorCodes.FORBIDDEN,
+          "This artist is not currently eligible to receive donations",
+          undefined,
+          403,
+        )
       }
 
       if (donationData.recipient_slug) {
@@ -62,18 +66,31 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const baseGiftCents = donationData.amount
+    const coverCard = recipientUserId ? Boolean(donationData.cover_card_fee) : false
+    const coverFiscal = recipientUserId ? Boolean(donationData.cover_fiscal_fee) : false
+    const chargedCents = recipientUserId
+      ? computeGrossChargeCents(baseGiftCents, coverFiscal, coverCard)
+      : baseGiftCents
+    const stripeAccount = donationStripeAccountForRecipient(recipientUserId)
+
     const { data, error } = await supabase
       .from("donations")
       .insert({
-        amount: donationData.amount,
+        base_gift_cents: baseGiftCents,
+        amount: chargedCents,
+        fee_model_version: 2,
+        stripe_account: stripeAccount,
         currency: "usd",
         payment_status: "requires_payment",
         donor_id: auth?.user.id ?? null,
         donor_name: donationData.donor_name?.trim() || null,
-        donor_email: donationData.donor_email?.trim() || null,
+        donor_email: donationData.donor_email,
         message: donationData.message?.trim() || null,
         recipient_user_id: recipientUserId,
         recipient_name: recipientName,
+        cover_card_fee: coverCard,
+        cover_fiscal_fee: coverFiscal,
       })
       .select("id")
       .single()

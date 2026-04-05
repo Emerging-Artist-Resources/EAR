@@ -1,5 +1,19 @@
-import { listProfilesRepo, upsertProfileRoleRepo, listAdminProfilesRepo, updateProfileStatusRepo, markProfileReviewedRepo, getAdminEligibilitySubmissionsRepo } from "./repository"
-import type { AdminProfileItem, ProfileStatus, ProfileType, AdminEligibilitySubmission } from "@/components/admin/profiles/profile-types"
+import {
+  listProfilesRepo,
+  upsertProfileRoleRepo,
+  listAdminProfilesRepo,
+  updateProfileStatusRepo,
+  markProfileReviewedRepo,
+  getAdminEligibilitySubmissionsRepo,
+  updateFiscalSponsorshipStatusRepo,
+} from "./repository"
+import type {
+  AdminProfileItem,
+  ProfileStatus,
+  ProfileType,
+  AdminEligibilitySubmission,
+} from "@/components/admin/profiles/profile-types"
+import type { FiscalSponsorshipStatus } from "@/lib/types/fiscal-sponsorship"
 import { sendProfileApprovalEmail } from "@/features/profile/server/service"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 
@@ -30,6 +44,10 @@ type DbProfileRow = {
   artist_status: string | null
   created_at: string
   artist_status_reviewed_at: string | null
+  fiscal_sponsorship_status: FiscalSponsorshipStatus | null
+  fiscal_sponsorship_approved_at: string | null
+  fiscal_sponsorship_approved_by: string | null
+  fiscal_sponsorship_note: string | null
 }
 
 export async function listAdminProfiles(): Promise<AdminProfileItem[]> {
@@ -44,6 +62,10 @@ export async function listAdminProfiles(): Promise<AdminProfileItem[]> {
       : undefined) as ProfileType | undefined,
     createdAt: p.created_at,
     reviewedAt: p.artist_status_reviewed_at,
+    fiscalSponsorshipStatus: p.fiscal_sponsorship_status ?? "none",
+    fiscalSponsorshipApprovedAt: p.fiscal_sponsorship_approved_at,
+    fiscalSponsorshipApprovedBy: p.fiscal_sponsorship_approved_by,
+    fiscalSponsorshipNote: p.fiscal_sponsorship_note,
   }))
 }
 
@@ -74,6 +96,21 @@ export async function markProfileReviewed(userId: string) {
   }
   
   return { id: userId }
+}
+
+export async function updateFiscalSponsorshipStatus(
+  userId: string,
+  status: FiscalSponsorshipStatus,
+  adminUserId: string,
+  note?: string,
+) {
+  await updateFiscalSponsorshipStatusRepo(userId, {
+    status,
+    approvedAt: status === "approved" ? new Date().toISOString() : undefined,
+    approvedBy: status === "approved" ? adminUserId : undefined,
+    note: note?.trim() || null,
+  })
+  return { id: userId, fiscalSponsorshipStatus: status }
 }
 
 type DbEligibilityRow = {

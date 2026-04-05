@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { getServerEnv } from "@/lib/env"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
+import { trySendInternalDonationNotifications } from "@/lib/email/trySendInternalDonationNotifications"
 
 // Ensure webhook runs in the Node.js runtime (not edge)
 export const runtime = "nodejs"
@@ -48,14 +49,19 @@ export async function POST(req: NextRequest) {
   const eventId = event.id
   const eventType = event.type
 
-  // Idempotency check
-  const existingEvent = await supabase
+  // Idempotency check (maybeSingle: no row is normal on first delivery)
+  const { data: existingEventRow, error: existingEventError } = await supabase
     .from("stripe_webhook_events")
     .select("id")
     .eq("id", eventId)
-    .single()
+    .maybeSingle()
 
-  if (existingEvent.data) {
+  if (existingEventError) {
+    console.error("Webhook idempotency lookup failed:", existingEventError)
+    return NextResponse.json({ error: "Idempotency check failed" }, { status: 500 })
+  }
+
+  if (existingEventRow) {
     console.log(`Event ${eventId} already processed, skipping`)
     return NextResponse.json({ received: true }, { status: 200 })
   }
@@ -223,16 +229,28 @@ export async function POST(req: NextRequest) {
 
           if (donation.data.payment_status === "paid") {
             console.log(`Donation ${resolvedDonationId} already marked as paid`)
-            return NextResponse.json({ received: true }, { status: 200 })
+            console.log("Internal donation notification: invoking helper", {
+              donationId: resolvedDonationId,
+              source: "checkout.session.completed",
+            })
+            await trySendInternalDonationNotifications({
+              supabase,
+              donationId: resolvedDonationId,
+              session,
+            })
+            break
           }
 
-          const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : null
+          const paymentIntentIdForDonation =
+            typeof session.payment_intent === "string" ? session.payment_intent : null
 
+          const stripeTotal = session.amount_total
           const { error } = await supabase
             .from("donations")
             .update({
               payment_status: "paid",
-              stripe_payment_intent_id: paymentIntentId,
+              stripe_payment_intent_id: paymentIntentIdForDonation,
+              ...(stripeTotal != null ? { amount: stripeTotal } : {}),
             })
             .eq("id", resolvedDonationId)
 
@@ -240,7 +258,7 @@ export async function POST(req: NextRequest) {
             console.error(`Failed to update donation ${resolvedDonationId}:`, {
               error,
               sessionId: session.id,
-              paymentIntentId,
+              paymentIntentId: paymentIntentIdForDonation,
             })
             return NextResponse.json(
               { error: "Failed to update donation", details: error.message },
@@ -249,6 +267,15 @@ export async function POST(req: NextRequest) {
           }
 
           console.log(`Updated donation ${resolvedDonationId} to paid`)
+          console.log("Internal donation notification: invoking helper", {
+            donationId: resolvedDonationId,
+            source: "checkout.session.completed",
+          })
+          await trySendInternalDonationNotifications({
+            supabase,
+            donationId: resolvedDonationId,
+            session,
+          })
         }
 
         break
@@ -297,6 +324,15 @@ export async function POST(req: NextRequest) {
               console.error(`Failed to update donation ${donation.data.id} with charge_id:`, error)
             } else {
               console.log(`Updated donation ${donation.data.id} with charge_id ${chargeId}`)
+              console.log("Internal donation notification: invoking helper", {
+                donationId: donation.data.id,
+                source: "payment_intent.succeeded",
+              })
+              await trySendInternalDonationNotifications({
+                supabase,
+                donationId: donation.data.id,
+                paymentIntent,
+              })
             }
           } else {
             console.log(`No listing or donation found for payment_intent ${paymentIntent.id}`)
@@ -386,7 +422,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true }, { status: 200 })
   } catch (error) {
+    // 500: Stripe retries. Caveat: `stripe_webhook_events` may already be inserted before this try; retries can hit idempotency and skip re-processing.
     console.error("Error processing webhook:", error)
-    return NextResponse.json({ received: true }, { status: 200 })
+    return new NextResponse("Webhook processing failed", { status: 500 })
   }
 }

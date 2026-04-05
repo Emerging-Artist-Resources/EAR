@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { getServerEnv } from "@/lib/env"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { getAuthenticatedUser } from "@/lib/auth-helpers"
 import { getUserRoleFromProfile } from "@/lib/authz"
 import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api-utils"
 import { createDonationSessionRequestSchema } from "@/lib/validations/donations"
+import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
+import { donationStripeAccountForRecipient } from "@/lib/payments/donationStripeAccount"
+import {
+  getDonationRecipientByUserId,
+  isApprovedRecipient,
+} from "@/features/profile/server/artistDonationRecipient"
 
 const STRIPE_API_VERSION = "2026-02-25.clover" as const
 
@@ -15,12 +22,13 @@ export async function POST(req: NextRequest) {
     const { donationId } = validateRequestBody(body, createDonationSessionRequestSchema)
 
     const supabase = await getSupabaseServerClient()
+    const supabaseService = getSupabaseServiceClient()
     const env = getServerEnv()
 
-    const { data: donationRow, error: donationError } = await supabase
+    const { data: donationRow, error: donationError } = await supabaseService
       .from("donations")
       .select(
-        "id, amount, currency, payment_status, donor_id, recipient_user_id, recipient_name, stripe_checkout_session_id",
+        "id, amount, base_gift_cents, stripe_account, currency, payment_status, donor_id, donor_email, recipient_user_id, recipient_name, message, stripe_checkout_session_id, cover_card_fee, cover_fiscal_fee",
       )
       .eq("id", donationId)
       .single()
@@ -57,9 +65,38 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (!donationRow.amount || !donationRow.currency) {
+    if (!donationRow.currency) {
       return NextResponse.json(
-        { error: { code: "BAD_REQUEST", message: "Payment amount not set for this donation" } },
+        { error: { code: "BAD_REQUEST", message: "Payment currency not set for this donation" } },
+        { status: 400 },
+      )
+    }
+
+    const baseGiftCents = donationRow.base_gift_cents
+    if (baseGiftCents == null || baseGiftCents < 100) {
+      return NextResponse.json(
+        { error: { code: "BAD_REQUEST", message: "Invalid donation base amount" } },
+        { status: 400 },
+      )
+    }
+
+    const expectedStripeAccount = donationStripeAccountForRecipient(donationRow.recipient_user_id)
+    if (donationRow.stripe_account !== expectedStripeAccount) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "BAD_REQUEST",
+            message: "Donation Stripe account does not match recipient; refresh and try again",
+          },
+        },
+        { status: 400 },
+      )
+    }
+
+    const donorEmail = donationRow.donor_email?.trim()
+    if (!donorEmail) {
+      return NextResponse.json(
+        { error: "Cannot create checkout without donor email." },
         { status: 400 },
       )
     }
@@ -81,16 +118,18 @@ export async function POST(req: NextRequest) {
 
     let recipientSlug: string | null = null
     if (donationRow.recipient_user_id) {
-      const { data: recipientProfile, error: recipientError } = await supabase
-        .from("profiles")
-        .select("id, slug")
-        .eq("id", donationRow.recipient_user_id)
-        .maybeSingle()
+      const recipientProfile = await getDonationRecipientByUserId(donationRow.recipient_user_id)
 
-      if (recipientError || !recipientProfile?.slug) {
+      if (!recipientProfile?.slug) {
         return NextResponse.json(
           { error: { code: "BAD_REQUEST", message: "Recipient is no longer available for donations" } },
           { status: 400 },
+        )
+      }
+      if (!isApprovedRecipient(recipientProfile)) {
+        return NextResponse.json(
+          { error: { code: "FORBIDDEN", message: "This artist is not currently eligible to receive donations" } },
+          { status: 403 },
         )
       }
       recipientSlug = recipientProfile.slug
@@ -125,6 +164,17 @@ export async function POST(req: NextRequest) {
         ? `Donation — ${donationRow.recipient_name}`
         : "Donation"
 
+    let unitAmount: number
+    if (!useSponsorStripe) {
+      unitAmount = baseGiftCents
+    } else {
+      unitAmount = computeGrossChargeCents(
+        baseGiftCents,
+        Boolean(donationRow.cover_fiscal_fee),
+        Boolean(donationRow.cover_card_fee),
+      )
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -134,25 +184,29 @@ export async function POST(req: NextRequest) {
             product_data: {
               name: productLabel,
             },
-            unit_amount: donationRow.amount,
+            unit_amount: unitAmount,
           },
           quantity: 1,
         },
       ],
       mode: "payment",
+      customer_email: donorEmail,
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {
         entity_type: "donation",
         entity_id: donationId,
+        stripe_account: expectedStripeAccount,
         donor_id: auth?.user.id || "",
+        // Copied onto Payment Intent; webhook can fall back if needed (Stripe metadata value max 500 chars).
+        donor_message: (donationRow.message ?? "").trim().slice(0, 450),
         ...(donationRow.recipient_user_id
           ? { recipient_user_id: donationRow.recipient_user_id }
           : {}),
       },
     })
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseService
       .from("donations")
       .update({ stripe_checkout_session_id: session.id })
       .eq("id", donationId)

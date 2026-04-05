@@ -1,6 +1,8 @@
 /**
  * Environment variable validation and access utilities
  * Ensures all required environment variables are present at runtime
+ *
+ * Optional (footer): NEXT_PUBLIC_INSTAGRAM_URL, NEXT_PUBLIC_YOUTUBE_URL, NEXT_PUBLIC_LINKEDIN_URL
  */
 
 type ClientEnvVar = {
