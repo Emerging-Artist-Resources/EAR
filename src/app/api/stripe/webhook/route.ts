@@ -422,7 +422,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true }, { status: 200 })
   } catch (error) {
+    // 500: Stripe retries. Caveat: `stripe_webhook_events` may already be inserted before this try; retries can hit idempotency and skip re-processing.
     console.error("Error processing webhook:", error)
-    return NextResponse.json({ received: true }, { status: 200 })
+    return new NextResponse("Webhook processing failed", { status: 500 })
   }
 }

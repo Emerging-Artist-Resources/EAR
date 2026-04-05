@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { getSupabaseServerClientAnon } from "@/lib/supabase/serverAnon"
 import { getAuthenticatedUser } from "@/lib/auth-helpers"
 import {
   handleApiError,
@@ -24,9 +22,7 @@ export async function POST(req: NextRequest) {
     const donationData = validateRequestBody(body, createDonationRequestSchema)
 
     const auth = await getAuthenticatedUser()
-    /** RLS: policies are `TO anon` / `TO authenticated`. Server-side `createClient` must send
-     *  `Authorization: Bearer <anon_key>` (see getSupabaseServerClientAnon) or PostgREST sees no JWT
-     *  role. Anonymous donors: anon client; logged-in: cookie client so `donor_id = auth.uid()`. */
+    /** Service role: RLS is not applied on this insert. `donor_id` is set from the session when present. */
     const supabase = getSupabaseServiceClient()
 
     let recipientUserId: string | null = donationData.recipient_user_id ?? null
