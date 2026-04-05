@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type Stripe from "stripe"
-import { generateDonationPdf } from "@/lib/pdf/generateDonationPdf"
+import { generateDonationPdf, generateMinimalDonationPdfFallback } from "@/lib/pdf/generateDonationPdf"
 import {
   type DonationAmountRow,
   formatCurrencyFromCents,
@@ -191,6 +191,7 @@ export async function trySendInternalDonationNotifications({
   const artistTemplateModel: Record<string, unknown> = {
     artist_name: artistDisplayForTemplates,
     donor_name: donorName,
+    donor_email: donorEmailResolved || "",
     amount: amountStr,
     date: dateStr,
     ...sharedTemplateFields,
@@ -205,21 +206,34 @@ export async function trySendInternalDonationNotifications({
     ...sharedTemplateFields,
   }
 
-  const pdfBytes = await generateDonationPdf({
-    donorName,
-    donorEmail: donorEmailResolved || undefined,
-    artistDisplayName: artistDisplayForTemplates,
-    amountCents,
-    dateLabel: dateStr,
-    donationId,
-    donorMessage: msg,
-    feeCoverage: row.recipient_user_id
-      ? {
-          coverFiscalFee: Boolean(row.cover_fiscal_fee),
-          coverCardFee: Boolean(row.cover_card_fee),
-        }
-      : undefined,
-  })
+  let pdfBytes: Uint8Array
+  try {
+    pdfBytes = await generateDonationPdf({
+      donorName,
+      donorEmail: donorEmailResolved || undefined,
+      artistDisplayName: artistDisplayForTemplates,
+      amountCents,
+      dateLabel: dateStr,
+      donationId,
+      donorMessage: msg,
+      feeCoverage: row.recipient_user_id
+        ? {
+            coverFiscalFee: Boolean(row.cover_fiscal_fee),
+            coverCardFee: Boolean(row.cover_card_fee),
+          }
+        : undefined,
+    })
+  } catch (pdfErr) {
+    console.error(
+      `${logPrefix(donationId)} Donation PDF failed (Noto + Helvetica with sanitized input); using minimal fallback`,
+      { error: pdfErr },
+    )
+    pdfBytes = await generateMinimalDonationPdfFallback({
+      amountCents,
+      dateLabel: dateStr,
+      donationId,
+    })
+  }
 
   const pdfFileName = buildDonationPdfAttachmentName(artistDisplayForTemplates, createdUnix)
 

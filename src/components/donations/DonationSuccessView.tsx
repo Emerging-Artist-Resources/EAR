@@ -8,13 +8,10 @@ import { Text, H2 } from "@/components/ui/typography"
 import { apiGet } from "@/lib/fetch-utils"
 import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnelTrustHeader"
 
+/** Matches GET /api/donations/[id] — only fields needed for success polling. */
 export type DonationPollPayload = {
   payment_status?: string
   recipient_user_id?: string | null
-  amount?: number
-  base_gift_cents?: number
-  fee_model_version?: number
-  stripe_account?: "ear" | "sponsor"
 }
 
 const maxPolls = 20

@@ -103,6 +103,13 @@ Standard shape is defined in `src/lib/api-utils.ts`:
 2. Use the **service** client only with clear justification; keep those code paths small and auditable.
 3. `getServiceEnv()` accepts `SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_URL` and `SERVICE_ROLE_KEY` or `SUPABASE_SERVICE_ROLE_KEY`—keep deployment env vars consistent with comments in `env.ts`.
 
+**Donations and Stripe webhook idempotency**
+
+- Schema: [`sql_files/rls_donations_and_stripe_webhook_events.sql`](../sql_files/rls_donations_and_stripe_webhook_events.sql) enables RLS on `donations` and `stripe_webhook_events`.
+- **`stripe_webhook_events`:** RLS on, **no** policies for `anon` / `authenticated`—only the service role (e.g. `POST /api/stripe/webhook`) can read/write.
+- **`donations`:** INSERT policies allow a constrained “pending” row for `anon` and `authenticated`; SELECT for donor, recipient, or admin; **no** user `UPDATE` / `DELETE` policies—payment fields change only through the **service role** (Stripe webhook, checkout session persistence).
+- **`POST /api/donations`** uses **`getSupabaseServerClientAnon()`** when the donor is anonymous (sends `Authorization: Bearer <anon_key>` so PostgREST JWT role is `anon` and `donations_insert_anon` applies) and **`getSupabaseServerClient()`** when logged in (`donor_id = auth.uid()`). **`POST /api/stripe/create-donation-session`**, **`GET /api/donations/[id]`** (success polling), and the webhook use **`getSupabaseServiceClient()`** for `donations` so RLS does not block those paths and financial updates stay server-side.
+
 ---
 
 ## 6. Environment variables

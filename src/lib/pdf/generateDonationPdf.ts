@@ -1,5 +1,6 @@
 import { readFile } from "fs/promises"
 import path from "path"
+import fontkit from "@pdf-lib/fontkit"
 import type { PDFFont } from "pdf-lib"
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib"
 
@@ -82,15 +83,60 @@ async function tryLoadEarLogoPng(): Promise<Uint8Array | null> {
   }
 }
 
+async function embedReceiptFonts(
+  doc: PDFDocument,
+  mode: "noto" | "standard",
+): Promise<{ regular: PDFFont; bold: PDFFont }> {
+  if (mode === "noto") {
+    const regPath = path.join(process.cwd(), "public", "fonts", "NotoSans-Regular.ttf")
+    const boldPath = path.join(process.cwd(), "public", "fonts", "NotoSans-Bold.ttf")
+    const [regBytes, boldBytes] = await Promise.all([readFile(regPath), readFile(boldPath)])
+    const regular = await doc.embedFont(regBytes, { subset: true })
+    const bold = await doc.embedFont(boldBytes, { subset: true })
+    return { regular, bold }
+  }
+  return {
+    regular: await doc.embedFont(StandardFonts.Helvetica),
+    bold: await doc.embedFont(StandardFonts.HelveticaBold),
+  }
+}
+
 /**
- * One-page donation receipt for internal email attachment.
- * y is PDF baseline coordinate from bottom (pdf-lib convention).
+ * Strip emoji and reduce to printable ASCII (+ newlines/tabs) for StandardFonts / WinAnsi.
+ * Used when Noto embed or draw fails and we re-render with Helvetica.
  */
-export async function generateDonationPdf(input: GenerateDonationPdfInput): Promise<Uint8Array> {
+export function sanitizeDonationPdfInput(input: GenerateDonationPdfInput): GenerateDonationPdfInput {
+  const strip = (s: string) => {
+    let t = s
+      .replace(/\p{Extended_Pictographic}/gu, "")
+      .replace(/\uFE0F/g, "")
+      .replace(/\u200D/g, "")
+      .normalize("NFKC")
+      .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+      .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+      .replace(/[\u2013\u2014\u2015]/g, "-")
+      .replace(/\u2026/g, "...")
+    return t.replace(/[^\n\r\t\x20-\x7E]/g, "")
+  }
+
+  const donorMessage = input.donorMessage?.trim()
+  return {
+    ...input,
+    donorName: strip(input.donorName || ""),
+    donorEmail: input.donorEmail ? strip(input.donorEmail) : undefined,
+    artistDisplayName: strip(input.artistDisplayName || ""),
+    dateLabel: strip(input.dateLabel),
+    donationId: input.donationId ? strip(input.donationId) : undefined,
+    donorMessage: donorMessage ? strip(donorMessage) : undefined,
+    feeCoverage: input.feeCoverage,
+  }
+}
+
+async function buildDonationPdf(input: GenerateDonationPdfInput, fontMode: "noto" | "standard"): Promise<Uint8Array> {
   const doc = await PDFDocument.create()
+  doc.registerFontkit(fontkit)
   const page = doc.addPage([PAGE_W, PAGE_H])
-  const regular = await doc.embedFont(StandardFonts.Helvetica)
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold)
+  const { regular, bold } = await embedReceiptFonts(doc, fontMode)
 
   const amount = (input.amountCents / 100).toFixed(2)
 
@@ -283,6 +329,135 @@ export async function generateDonationPdf(input: GenerateDonationPdfInput): Prom
   page.drawText("This document summarizes the donation details included with your notification.", {
     x: LABEL_X,
     y: MARGIN + 10,
+    size: 8,
+    font: regular,
+    color: color.faint,
+  })
+
+  return doc.save()
+}
+
+/**
+ * Full-layout donation receipt: try embedded Noto Sans first (emoji / wide Unicode),
+ * then same layout with Helvetica + {@link sanitizeDonationPdfInput}.
+ */
+export async function generateDonationPdf(input: GenerateDonationPdfInput): Promise<Uint8Array> {
+  try {
+    return await buildDonationPdf(input, "noto")
+  } catch (notoErr) {
+    console.warn("Donation PDF: Noto path failed, using Helvetica + sanitized input", { error: notoErr })
+    return await buildDonationPdf(sanitizeDonationPdfInput(input), "standard")
+  }
+}
+
+/** Keep only printable ASCII — safe for StandardFonts / WinAnsi in pdf-lib. */
+function toAsciiPrintable(s: string): string {
+  return s.replace(/[^\x20-\x7E]/g, "")
+}
+
+export type MinimalDonationPdfFallbackInput = {
+  amountCents: number
+  /** Shown as-is after ASCII sanitization (e.g. formatted date). */
+  dateLabel: string
+  donationId?: string
+}
+
+/**
+ * Small one-page PDF when {@link generateDonationPdf} fails entirely.
+ * Uses only Helvetica + ASCII-safe dynamic text so encoding cannot throw.
+ */
+export async function generateMinimalDonationPdfFallback(
+  input: MinimalDonationPdfFallbackInput,
+): Promise<Uint8Array> {
+  const doc = await PDFDocument.create()
+  const page = doc.addPage([PAGE_W, PAGE_H])
+  const regular = await doc.embedFont(StandardFonts.Helvetica)
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold)
+
+  const amount = (input.amountCents / 100).toFixed(2)
+  const dateSafe = toAsciiPrintable(input.dateLabel) || "-"
+  const refSafe = input.donationId ? toAsciiPrintable(input.donationId) : ""
+
+  let y = PAGE_H - MARGIN
+
+  page.drawText("Donation receipt (summary)", {
+    x: LABEL_X,
+    y,
+    size: 18,
+    font: bold,
+    color: color.text,
+  })
+  y -= 28
+
+  const notice =
+    "The full receipt PDF could not be generated (for example, unsupported characters in the message). " +
+    "Amount and reference below match this notification; see the email for full details."
+  const noticeLines = wrapMessageLines(notice, regular, 10, PAGE_W - 2 * MARGIN)
+  for (const line of noticeLines) {
+    page.drawText(line, {
+      x: LABEL_X,
+      y,
+      size: 10,
+      font: regular,
+      color: color.muted,
+    })
+    y -= 13
+  }
+  y -= 10
+
+  page.drawText("Amount", {
+    x: LABEL_X,
+    y,
+    size: 9,
+    font: regular,
+    color: color.muted,
+  })
+  page.drawText(`$${amount}`, {
+    x: VALUE_X,
+    y,
+    size: 20,
+    font: bold,
+    color: color.text,
+  })
+  y -= 28
+
+  page.drawText("Date", {
+    x: LABEL_X,
+    y,
+    size: 9,
+    font: regular,
+    color: color.muted,
+  })
+  page.drawText(dateSafe, {
+    x: VALUE_X,
+    y,
+    size: 11,
+    font: regular,
+    color: color.text,
+  })
+  y -= 22
+
+  if (refSafe) {
+    page.drawText("Reference", {
+      x: LABEL_X,
+      y,
+      size: 9,
+      font: regular,
+      color: color.muted,
+    })
+    page.drawText(refSafe, {
+      x: VALUE_X,
+      y,
+      size: 10,
+      font: regular,
+      color: color.text,
+    })
+    y -= 22
+  }
+
+  page.drawText("Emerging Artist Resources", {
+    x: LABEL_X,
+    y: MARGIN + 14,
     size: 8,
     font: regular,
     color: color.faint,

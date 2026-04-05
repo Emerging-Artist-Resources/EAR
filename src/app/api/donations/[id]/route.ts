@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { handleApiError, createSuccessResponse } from "@/lib/api-utils"
 
+/** Success polling must see fresh `payment_status`; do not statically cache this route. */
+export const dynamic = "force-dynamic"
+
 /**
  * Success page polls this by donation id (from the Stripe redirect URL). Donors are often
  * unauthenticated; RLS would hide rows from the anon server client. Service role is used only
- * to load the row by primary key (unguessable UUID); returned fields stay minimal.
+ * to load the row by primary key (unguessable UUID).
+ *
+ * Only `payment_status` and `recipient_user_id` are returned — enough to confirm payment and
+ * (for artist pages) detect donation/recipient mismatch; no donor message or PII in the payload.
  */
 export async function GET(
   _req: NextRequest,
@@ -17,9 +23,7 @@ export async function GET(
 
     const { data, error } = await supabase
       .from("donations")
-      .select(
-        "id, amount, base_gift_cents, fee_model_version, stripe_account, payment_status, donor_name, message, created_at, recipient_user_id",
-      )
+      .select("payment_status, recipient_user_id")
       .eq("id", id)
       .single()
 

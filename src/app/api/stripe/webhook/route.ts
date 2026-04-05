@@ -324,6 +324,15 @@ export async function POST(req: NextRequest) {
               console.error(`Failed to update donation ${donation.data.id} with charge_id:`, error)
             } else {
               console.log(`Updated donation ${donation.data.id} with charge_id ${chargeId}`)
+              console.log("Internal donation notification: invoking helper", {
+                donationId: donation.data.id,
+                source: "payment_intent.succeeded",
+              })
+              await trySendInternalDonationNotifications({
+                supabase,
+                donationId: donation.data.id,
+                paymentIntent,
+              })
             }
           } else {
             console.log(`No listing or donation found for payment_intent ${paymentIntent.id}`)

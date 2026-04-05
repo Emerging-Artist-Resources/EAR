@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { getServerEnv } from "@/lib/env"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { getAuthenticatedUser } from "@/lib/auth-helpers"
 import { getUserRoleFromProfile } from "@/lib/authz"
 import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api-utils"
@@ -21,9 +22,10 @@ export async function POST(req: NextRequest) {
     const { donationId } = validateRequestBody(body, createDonationSessionRequestSchema)
 
     const supabase = await getSupabaseServerClient()
+    const supabaseService = getSupabaseServiceClient()
     const env = getServerEnv()
 
-    const { data: donationRow, error: donationError } = await supabase
+    const { data: donationRow, error: donationError } = await supabaseService
       .from("donations")
       .select(
         "id, amount, base_gift_cents, stripe_account, currency, payment_status, donor_id, donor_email, recipient_user_id, recipient_name, message, stripe_checkout_session_id, cover_card_fee, cover_fiscal_fee",
@@ -204,7 +206,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseService
       .from("donations")
       .update({ stripe_checkout_session_id: session.id })
       .eq("id", donationId)
