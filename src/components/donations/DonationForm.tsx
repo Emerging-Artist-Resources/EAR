@@ -222,7 +222,7 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
         </H2>
         <Text className="text-gray-600">
           {lockedRecipient
-            ? "Your gift is a fiscally sponsored donation to help bring their creative vision to life."
+            ? "Your gift is tax-deductible to the extent permitted by law."
             : "Your support helps us continue providing resources for emerging artists."}
         </Text>
       </div>
