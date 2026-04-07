@@ -1,12 +1,19 @@
 import { 
-  fetchSavedEventsFromDb, 
-  saveListingRepo, 
-  unsaveListingRepo, 
+  fetchSavedEventsFromDb,
+  saveListingRepo,
+  unsaveListingRepo,
   updateAttendanceStatusRepo,
   checkListingSavedRepo,
-  getActivityOverviewRepo
+  getActivityOverviewRepo,
+  fetchServiceInquiriesForUser,
 } from "./repository";
-import { ProfileSavedEventsFilter, SavedEvent, SavedListing, ActivityOverview } from "./types";
+import {
+  ProfileSavedEventsFilter,
+  SavedEvent,
+  SavedListing,
+  ActivityOverview,
+  ServiceInquirySummary,
+} from "./types";
 import { sendProfileEmail } from "@/lib/email/sendProfileEmail";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
 
@@ -40,6 +47,10 @@ export async function checkListingSaved(userId: string, listingId: string): Prom
 
 export async function getActivityOverview(userId: string): Promise<ActivityOverview> {
   return await getActivityOverviewRepo(userId);
+}
+
+export async function getServiceInquiries(userId: string): Promise<ServiceInquirySummary[]> {
+  return await fetchServiceInquiriesForUser(userId);
 }
 
 function extractFirstName(fullName: string | null | undefined): string {

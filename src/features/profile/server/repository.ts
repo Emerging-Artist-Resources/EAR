@@ -1,4 +1,10 @@
-import { SavedEvent, ProfileSavedEventsFilter, SavedListing, ActivityOverview } from "./types";
+import {
+  SavedEvent,
+  ProfileSavedEventsFilter,
+  SavedListing,
+  ActivityOverview,
+  ServiceInquirySummary,
+} from "./types";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getListingTitle } from "@/features/events/server/listing-utils";
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections";
@@ -518,4 +524,46 @@ export async function getEligibilitySubmissionsRepo(userId: string): Promise<Eli
     console.error("Error in getEligibilitySubmissionsRepo:", err);
     throw err;
   }
+}
+
+export async function fetchServiceInquiriesForUser(userId: string): Promise<ServiceInquirySummary[]> {
+  const supabase = await getSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("service_inquiries")
+    .select(
+      `
+      id,
+      created_at,
+      status,
+      service_slug,
+      services ( title )
+    `,
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("fetchServiceInquiriesForUser", error);
+    throw error;
+  }
+
+  if (!data?.length) return [];
+
+  return data.map((row) => {
+    const svc = row.services
+    const title =
+      Array.isArray(svc) && svc[0]?.title != null
+        ? String(svc[0].title)
+        : !Array.isArray(svc) && svc && typeof svc === "object" && "title" in svc
+          ? String((svc as { title: string }).title)
+          : null
+    return {
+      id: row.id as string,
+      created_at: row.created_at as string,
+      status: row.status as string,
+      service_slug: row.service_slug as string,
+      service_title: title,
+    }
+  })
 }

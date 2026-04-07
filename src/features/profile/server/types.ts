@@ -33,6 +33,14 @@ export interface ActivityOverview {
   attendedCount: number;
 }
 
+export interface ServiceInquirySummary {
+  id: string;
+  created_at: string;
+  status: string;
+  service_slug: string;
+  service_title: string | null;
+}
+
 export interface MyListing {
   id: string;
   type: string;
