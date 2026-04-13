@@ -3,6 +3,7 @@
 import React, { useState } from "react"
 import { MyListings } from "./MyListings"
 import { MyOverview } from "./MyOverview"
+import { ServiceInquiriesSection } from "./ServiceInquiriesSection"
 import { ListingDetailsModal } from "@/components/calendar/ListingDetailsModal"
 
 export const ActivityTab: React.FC = () => {
@@ -12,6 +13,7 @@ export const ActivityTab: React.FC = () => {
     <>
       <section className="mt-6 space-y-6">
         <MyListings onListingClick={setSelectedListingId} />
+        <ServiceInquiriesSection />
         <MyOverview />
       </section>
       <ListingDetailsModal

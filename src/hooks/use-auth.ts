@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
-import { getUserRole, extractUserName } from "@/lib/authz"
+import { extractUserName, fetchUserRoleWithFallback } from "@/lib/authz"
 
 export interface AuthState {
   user: User | null
@@ -31,7 +31,7 @@ const fetchProfileName = async (userId: string): Promise<string | null> => {
 
 const updateState = async (session: { user: User } | null, setState: (state: AuthState) => void) => {
   if (session?.user) {
-    const role = getUserRole(session.user)
+    const role = await fetchUserRoleWithFallback(session.user, supabase)
     const fallbackName = extractUserName(session.user)
     
     const profileName = await fetchProfileName(session.user.id)
