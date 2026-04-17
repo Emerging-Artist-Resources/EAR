@@ -2,7 +2,7 @@
 export type DonationStripeAccount = "ear" | "sponsor"
 
 export function donationStripeAccountForRecipient(
-  recipientUserId: string | null | undefined
+  _recipientUserId: string | null | undefined
 ): DonationStripeAccount {
-  return recipientUserId ? "sponsor" : "ear"
+  return "sponsor"
 }

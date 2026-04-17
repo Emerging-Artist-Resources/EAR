@@ -134,8 +134,8 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
         donor_name: data.donor_name?.trim() ? data.donor_name.trim() : null,
         donor_email: data.donor_email,
         message: data.message?.trim() || null,
-        cover_card_fee: Boolean(data.cover_card_fee) && Boolean(lockedRecipient),
-        cover_fiscal_fee: Boolean(data.cover_fiscal_fee) && Boolean(lockedRecipient),
+        cover_card_fee: Boolean(data.cover_card_fee),
+        cover_fiscal_fee: isArtistDonation ? Boolean(data.cover_fiscal_fee) : false,
         ...(lockedRecipient
           ? {
               recipient_user_id: lockedRecipient.userId,
@@ -181,14 +181,10 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
   const coverFiscalFee = form.watch("cover_fiscal_fee")
   const isArtistDonation = Boolean(lockedRecipient)
 
-  const totalChargedCents = isArtistDonation
-    ? computeGrossChargeCents(baseGiftCents, Boolean(coverFiscalFee), Boolean(coverCardFee))
-    : baseGiftCents
+  const totalChargedCents = computeGrossChargeCents(baseGiftCents, Boolean(coverFiscalFee), Boolean(coverCardFee))
   const totalChargedDollars = totalChargedCents / 100
   const feesCoveredCents = Math.max(0, totalChargedCents - baseGiftCents)
   const feesCoveredDollars = feesCoveredCents / 100
-  const showFeeBreakdown =
-    isArtistDonation && baseGiftCents > 0 && (Boolean(coverFiscalFee) || Boolean(coverCardFee))
 
   const recipientLabel = lockedRecipient?.displayName?.trim() || "this artist"
   const heroImageAlt =
@@ -317,11 +313,13 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
           </div>
         </div>
 
-        {isArtistDonation && (
-          <div className="space-y-3 rounded-md border border-gray-200 bg-gray-50 p-4">
-            <p className="text-sm text-gray-700">
-              Add these optional fees so the artist receives the full amount of your donation.
-            </p>
+        <div className="space-y-3 rounded-md border border-gray-200 bg-gray-50 p-4">
+          <p className="text-sm text-gray-700">
+            {isArtistDonation
+              ? "Add these optional fees so the artist receives the full amount of your donation."
+              : "Add these optional fees so EAR receives the full amount of your donation."}
+          </p>
+          {isArtistDonation && (
             <label className="flex items-start gap-2 text-sm text-gray-800">
               <Checkbox
                 checked={Boolean(coverFiscalFee)}
@@ -333,34 +331,31 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
               />
               <span>Cover fiscal sponsorship fee (5.5%)</span>
             </label>
-            <label className="flex items-start gap-2 text-sm text-gray-800">
-              <Checkbox
-                checked={Boolean(coverCardFee)}
-                onChange={(e) => {
-                  form.setValue("cover_card_fee", (e.target as HTMLInputElement).checked, {
-                    shouldValidate: false,
-                  })
-                }}
-              />
-              <span>Cover processing fees (2.9% + $0.30)</span>
-            </label>
+          )}
+          <label className="flex items-start gap-2 text-sm text-gray-800">
+            <Checkbox
+              checked={Boolean(coverCardFee)}
+              onChange={(e) => {
+                form.setValue("cover_card_fee", (e.target as HTMLInputElement).checked, {
+                  shouldValidate: false,
+                })
+              }}
+            />
+            <span>Cover processing fees (2.9% + $0.30)</span>
+          </label>
 
-            {amountInDollars > 0 && (
-              <div className="rounded-md bg-white p-3 text-sm text-gray-700 space-y-1">
-                <p>
-                  <span className="font-medium text-gray-900">Donation:</span> ${amountInDollars.toFixed(2)}
-                </p>
-                {showFeeBreakdown && (
-                  <p>
-                    <span className="font-medium text-gray-900">Fees covered:</span> $
-                    {feesCoveredDollars.toFixed(2)}
-                  </p>
-                )}
-                <p className="font-semibold text-gray-900">Total charged: ${totalChargedDollars.toFixed(2)}</p>
-              </div>
-            )}
-          </div>
-        )}
+          {amountInDollars > 0 && (
+            <div className="rounded-md bg-white p-3 text-sm text-gray-700 space-y-1">
+              <p>
+                <span className="font-medium text-gray-900">Donation:</span> ${amountInDollars.toFixed(2)}
+              </p>
+              <p>
+                <span className="font-medium text-gray-900">Fees covered:</span> ${feesCoveredDollars.toFixed(2)}
+              </p>
+              <p className="font-semibold text-gray-900">Total charged: ${totalChargedDollars.toFixed(2)}</p>
+            </div>
+          )}
+        </div>
 
         <TextField
           form={form}

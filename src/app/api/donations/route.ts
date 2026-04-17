@@ -67,11 +67,9 @@ export async function POST(req: NextRequest) {
     }
 
     const baseGiftCents = donationData.amount
-    const coverCard = recipientUserId ? Boolean(donationData.cover_card_fee) : false
+    const coverCard = Boolean(donationData.cover_card_fee)
     const coverFiscal = recipientUserId ? Boolean(donationData.cover_fiscal_fee) : false
-    const chargedCents = recipientUserId
-      ? computeGrossChargeCents(baseGiftCents, coverFiscal, coverCard)
-      : baseGiftCents
+    const chargedCents = computeGrossChargeCents(baseGiftCents, coverFiscal, coverCard)
     const stripeAccount = donationStripeAccountForRecipient(recipientUserId)
 
     const { data, error } = await supabase
