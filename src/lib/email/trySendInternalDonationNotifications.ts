@@ -223,7 +223,9 @@ export async function trySendInternalDonationNotifications({
             coverFiscalFee: Boolean(row.cover_fiscal_fee),
             coverCardFee: Boolean(row.cover_card_fee),
           }
-        : undefined,
+        : {
+            coverCardFee: Boolean(row.cover_card_fee),
+          },
     })
   } catch (pdfErr) {
     console.error(

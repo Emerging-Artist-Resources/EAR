@@ -23,7 +23,7 @@ import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
 import { Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const PRESET_AMOUNTS = [25, 50, 100, 250, 500]
+const PRESET_AMOUNTS = [25, 50, 100, 250, 500, 1000]
 
 interface ProfileData {
   name: string | null
@@ -39,26 +39,68 @@ export type DonationLockedRecipient = {
   donationPageImageUrl?: string | null
 }
 
+/** Hardcoded org hero for /donate only; ignored when `lockedRecipient` is set. */
+export type OrgDonationHero = {
+  /** Public path (e.g. /donate-ear-hero.JPG). Omit or leave empty to show message only. */
+  imageSrc?: string
+  message: string
+  alt?: string
+}
+
 interface DonationFormProps {
   lockedRecipient?: DonationLockedRecipient
   statusMessage?: "canceled" | null
+  orgDonationHero?: OrgDonationHero
 }
 
-export function DonationForm({ lockedRecipient, statusMessage }: DonationFormProps) {
+export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }: DonationFormProps) {
   const { user, userName } = useAuth()
   const { showToast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
 
+  const effectiveOrgHero = !lockedRecipient ? orgDonationHero : undefined
+  const orgHeroMessageText = effectiveOrgHero?.message?.trim() ?? ""
+  const orgHeroImageSrc = effectiveOrgHero?.imageSrc?.trim() || undefined
+  /** Only show org hero image after preload succeeds — avoids broken-image icon flash on 404. */
+  const [orgHeroImageReady, setOrgHeroImageReady] = useState(false)
+
+  useEffect(() => {
+    setOrgHeroImageReady(false)
+    if (!orgHeroImageSrc) return
+
+    let cancelled = false
+    const img = new Image()
+    img.onload = () => {
+      if (!cancelled) setOrgHeroImageReady(true)
+    }
+    img.onerror = () => {
+      if (!cancelled) setOrgHeroImageReady(false)
+    }
+    img.src = orgHeroImageSrc
+
+    return () => {
+      cancelled = true
+    }
+  }, [orgHeroImageSrc])
+
   const artistMessageText = lockedRecipient?.donationPageMessage?.trim() ?? ""
   const [artistMessageExpanded, setArtistMessageExpanded] = useState(false)
   const [artistMessageOverflows, setArtistMessageOverflows] = useState(false)
   const artistMessageRef = useRef<HTMLParagraphElement>(null)
 
+  const [orgMessageExpanded, setOrgMessageExpanded] = useState(false)
+  const [orgMessageOverflows, setOrgMessageOverflows] = useState(false)
+  const orgMessageRef = useRef<HTMLParagraphElement>(null)
+
   useEffect(() => {
     setArtistMessageExpanded(false)
   }, [artistMessageText])
+
+  useEffect(() => {
+    setOrgMessageExpanded(false)
+  }, [orgHeroMessageText])
 
   useLayoutEffect(() => {
     if (!artistMessageText) return
@@ -67,6 +109,14 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
     if (artistMessageExpanded) return
     setArtistMessageOverflows(el.scrollHeight > el.clientHeight + 1)
   }, [artistMessageText, artistMessageExpanded])
+
+  useLayoutEffect(() => {
+    if (!orgHeroMessageText) return
+    const el = orgMessageRef.current
+    if (!el) return
+    if (orgMessageExpanded) return
+    setOrgMessageOverflows(el.scrollHeight > el.clientHeight + 1)
+  }, [orgHeroMessageText, orgMessageExpanded])
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -211,16 +261,28 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
             }}
           />
         </div>
+      ) : effectiveOrgHero && orgHeroImageSrc && orgHeroImageReady ? (
+        <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+          {/* eslint-disable-next-line @next/next/no-img-element -- public/ static asset; shown only after preload */}
+          <img
+            src={orgHeroImageSrc}
+            alt={effectiveOrgHero.alt ?? "Emerging Artist Resources"}
+            className="w-full max-h-64 object-cover"
+            onError={() => setOrgHeroImageReady(false)}
+          />
+        </div>
       ) : null}
       <div className="mb-4">
         <H2 className="text-2xl font-bold text-gray-900 mb-1">
           {lockedRecipient ? `Support ${recipientLabel}` : "Make a Donation"}
         </H2>
-        <Text className="text-gray-600">
-          {lockedRecipient
-            ? "Your gift is tax-deductible to the extent permitted by law."
-            : "Your support helps us continue providing resources for emerging artists."}
-        </Text>
+        {lockedRecipient || effectiveOrgHero ? (
+          <Text className="text-gray-600">Your gift is tax-deductible to the extent permitted by law.</Text>
+        ) : (
+          <Text className="text-gray-600">
+            Your support helps us continue providing resources for emerging artists.
+          </Text>
+        )}
       </div>
       {artistMessageText ? (
         <div className="mb-4">
@@ -241,6 +303,28 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
               onClick={() => setArtistMessageExpanded((v) => !v)}
             >
               {artistMessageExpanded ? "Read less" : "Read more"}
+            </button>
+          )}
+        </div>
+      ) : orgHeroMessageText ? (
+        <div className="mb-4">
+          <p
+            ref={orgMessageRef}
+            className={cn(
+              "text-sm leading-6 text-gray-700 whitespace-pre-wrap",
+              !orgMessageExpanded && "line-clamp-2",
+            )}
+          >
+            {orgHeroMessageText}
+          </p>
+          {(orgMessageOverflows || orgMessageExpanded) && (
+            <button
+              type="button"
+              className="mt-2 text-sm font-medium text-primary hover:underline"
+              aria-expanded={orgMessageExpanded}
+              onClick={() => setOrgMessageExpanded((v) => !v)}
+            >
+              {orgMessageExpanded ? "Read less" : "Read more"}
             </button>
           )}
         </div>

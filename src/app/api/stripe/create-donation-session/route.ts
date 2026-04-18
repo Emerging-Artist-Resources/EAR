@@ -156,9 +156,11 @@ export async function POST(req: NextRequest) {
       : `${origin}/donations/success?session_id={CHECKOUT_SESSION_ID}&donation_id=${donationId}`
     const cancelUrl = recipientSlug
       ? `${origin}/donate/${encodeURIComponent(recipientSlug)}?canceled=true`
-      : `${origin}/donations/cancel?donation_id=${donationId}`
+      : `${origin}/donate?canceled=true`
 
-    const productLabel = donationRow.recipient_name ? `Donation — ${donationRow.recipient_name}` : "Donation"
+    const productLabel = donationRow.recipient_name
+      ? `Donation — ${donationRow.recipient_name}`
+      : "Donation — EAR"
 
     const coverFiscalFee = donationRow.recipient_user_id ? Boolean(donationRow.cover_fiscal_fee) : false
     const unitAmount = computeGrossChargeCents(
