@@ -13,8 +13,8 @@ export type GenerateDonationPdfInput = {
   donationId?: string
   /** Optional donor note; empty / whitespace shows as "—". */
   donorMessage?: string
-  /** Artist-bound donations only: whether the donor opted to cover fiscal / card fees. */
-  feeCoverage?: { coverFiscalFee: boolean; coverCardFee: boolean }
+  /** Optional fee rows on the receipt. Artist donations typically set both; org (EAR) donations only card. */
+  feeCoverage?: { coverFiscalFee?: boolean; coverCardFee?: boolean }
 }
 
 const PAGE_W = 612
@@ -239,8 +239,12 @@ async function buildDonationPdf(input: GenerateDonationPdfInput, fontMode: "noto
     drawRow("Reference", input.donationId, 10)
   }
   if (input.feeCoverage) {
-    drawRowWrappedLabel("Cover fiscal sponsorship fee", input.feeCoverage.coverFiscalFee ? "Yes" : "No")
-    drawRowWrappedLabel("Cover card processing fee", input.feeCoverage.coverCardFee ? "Yes" : "No")
+    if (input.feeCoverage.coverFiscalFee !== undefined) {
+      drawRowWrappedLabel("Cover fiscal sponsorship fee", input.feeCoverage.coverFiscalFee ? "Yes" : "No")
+    }
+    if (input.feeCoverage.coverCardFee !== undefined) {
+      drawRowWrappedLabel("Cover card processing fee", input.feeCoverage.coverCardFee ? "Yes" : "No")
+    }
   }
 
   const messageRaw = input.donorMessage?.trim() ?? ""

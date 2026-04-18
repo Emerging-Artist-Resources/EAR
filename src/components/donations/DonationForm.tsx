@@ -23,7 +23,7 @@ import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
 import { Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const PRESET_AMOUNTS = [25, 50, 100, 250, 500]
+const PRESET_AMOUNTS = [25, 50, 100, 250, 500, 1000]
 
 interface ProfileData {
   name: string | null
@@ -39,26 +39,68 @@ export type DonationLockedRecipient = {
   donationPageImageUrl?: string | null
 }
 
+/** Hardcoded org hero for /donate only; ignored when `lockedRecipient` is set. */
+export type OrgDonationHero = {
+  /** Public path (e.g. /donate-ear-hero.JPG). Omit or leave empty to show message only. */
+  imageSrc?: string
+  message: string
+  alt?: string
+}
+
 interface DonationFormProps {
   lockedRecipient?: DonationLockedRecipient
   statusMessage?: "canceled" | null
+  orgDonationHero?: OrgDonationHero
 }
 
-export function DonationForm({ lockedRecipient, statusMessage }: DonationFormProps) {
+export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }: DonationFormProps) {
   const { user, userName } = useAuth()
   const { showToast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
 
+  const effectiveOrgHero = !lockedRecipient ? orgDonationHero : undefined
+  const orgHeroMessageText = effectiveOrgHero?.message?.trim() ?? ""
+  const orgHeroImageSrc = effectiveOrgHero?.imageSrc?.trim() || undefined
+  /** Only show org hero image after preload succeeds — avoids broken-image icon flash on 404. */
+  const [orgHeroImageReady, setOrgHeroImageReady] = useState(false)
+
+  useEffect(() => {
+    setOrgHeroImageReady(false)
+    if (!orgHeroImageSrc) return
+
+    let cancelled = false
+    const img = new Image()
+    img.onload = () => {
+      if (!cancelled) setOrgHeroImageReady(true)
+    }
+    img.onerror = () => {
+      if (!cancelled) setOrgHeroImageReady(false)
+    }
+    img.src = orgHeroImageSrc
+
+    return () => {
+      cancelled = true
+    }
+  }, [orgHeroImageSrc])
+
   const artistMessageText = lockedRecipient?.donationPageMessage?.trim() ?? ""
   const [artistMessageExpanded, setArtistMessageExpanded] = useState(false)
   const [artistMessageOverflows, setArtistMessageOverflows] = useState(false)
   const artistMessageRef = useRef<HTMLParagraphElement>(null)
 
+  const [orgMessageExpanded, setOrgMessageExpanded] = useState(false)
+  const [orgMessageOverflows, setOrgMessageOverflows] = useState(false)
+  const orgMessageRef = useRef<HTMLParagraphElement>(null)
+
   useEffect(() => {
     setArtistMessageExpanded(false)
   }, [artistMessageText])
+
+  useEffect(() => {
+    setOrgMessageExpanded(false)
+  }, [orgHeroMessageText])
 
   useLayoutEffect(() => {
     if (!artistMessageText) return
@@ -67,6 +109,14 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
     if (artistMessageExpanded) return
     setArtistMessageOverflows(el.scrollHeight > el.clientHeight + 1)
   }, [artistMessageText, artistMessageExpanded])
+
+  useLayoutEffect(() => {
+    if (!orgHeroMessageText) return
+    const el = orgMessageRef.current
+    if (!el) return
+    if (orgMessageExpanded) return
+    setOrgMessageOverflows(el.scrollHeight > el.clientHeight + 1)
+  }, [orgHeroMessageText, orgMessageExpanded])
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -134,8 +184,8 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
         donor_name: data.donor_name?.trim() ? data.donor_name.trim() : null,
         donor_email: data.donor_email,
         message: data.message?.trim() || null,
-        cover_card_fee: Boolean(data.cover_card_fee) && Boolean(lockedRecipient),
-        cover_fiscal_fee: Boolean(data.cover_fiscal_fee) && Boolean(lockedRecipient),
+        cover_card_fee: Boolean(data.cover_card_fee),
+        cover_fiscal_fee: isArtistDonation ? Boolean(data.cover_fiscal_fee) : false,
         ...(lockedRecipient
           ? {
               recipient_user_id: lockedRecipient.userId,
@@ -181,14 +231,10 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
   const coverFiscalFee = form.watch("cover_fiscal_fee")
   const isArtistDonation = Boolean(lockedRecipient)
 
-  const totalChargedCents = isArtistDonation
-    ? computeGrossChargeCents(baseGiftCents, Boolean(coverFiscalFee), Boolean(coverCardFee))
-    : baseGiftCents
+  const totalChargedCents = computeGrossChargeCents(baseGiftCents, Boolean(coverFiscalFee), Boolean(coverCardFee))
   const totalChargedDollars = totalChargedCents / 100
   const feesCoveredCents = Math.max(0, totalChargedCents - baseGiftCents)
   const feesCoveredDollars = feesCoveredCents / 100
-  const showFeeBreakdown =
-    isArtistDonation && baseGiftCents > 0 && (Boolean(coverFiscalFee) || Boolean(coverCardFee))
 
   const recipientLabel = lockedRecipient?.displayName?.trim() || "this artist"
   const heroImageAlt =
@@ -215,16 +261,28 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
             }}
           />
         </div>
+      ) : effectiveOrgHero && orgHeroImageSrc && orgHeroImageReady ? (
+        <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+          {/* eslint-disable-next-line @next/next/no-img-element -- public/ static asset; shown only after preload */}
+          <img
+            src={orgHeroImageSrc}
+            alt={effectiveOrgHero.alt ?? "Emerging Artist Resources"}
+            className="w-full max-h-64 object-cover"
+            onError={() => setOrgHeroImageReady(false)}
+          />
+        </div>
       ) : null}
       <div className="mb-4">
         <H2 className="text-2xl font-bold text-gray-900 mb-1">
           {lockedRecipient ? `Support ${recipientLabel}` : "Make a Donation"}
         </H2>
-        <Text className="text-gray-600">
-          {lockedRecipient
-            ? "Your gift is tax-deductible to the extent permitted by law."
-            : "Your support helps us continue providing resources for emerging artists."}
-        </Text>
+        {lockedRecipient || effectiveOrgHero ? (
+          <Text className="text-gray-600">Your gift is tax-deductible to the extent permitted by law.</Text>
+        ) : (
+          <Text className="text-gray-600">
+            Your support helps us continue providing resources for emerging artists.
+          </Text>
+        )}
       </div>
       {artistMessageText ? (
         <div className="mb-4">
@@ -245,6 +303,28 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
               onClick={() => setArtistMessageExpanded((v) => !v)}
             >
               {artistMessageExpanded ? "Read less" : "Read more"}
+            </button>
+          )}
+        </div>
+      ) : orgHeroMessageText ? (
+        <div className="mb-4">
+          <p
+            ref={orgMessageRef}
+            className={cn(
+              "text-sm leading-6 text-gray-700 whitespace-pre-wrap",
+              !orgMessageExpanded && "line-clamp-2",
+            )}
+          >
+            {orgHeroMessageText}
+          </p>
+          {(orgMessageOverflows || orgMessageExpanded) && (
+            <button
+              type="button"
+              className="mt-2 text-sm font-medium text-primary hover:underline"
+              aria-expanded={orgMessageExpanded}
+              onClick={() => setOrgMessageExpanded((v) => !v)}
+            >
+              {orgMessageExpanded ? "Read less" : "Read more"}
             </button>
           )}
         </div>
@@ -317,11 +397,13 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
           </div>
         </div>
 
-        {isArtistDonation && (
-          <div className="space-y-3 rounded-md border border-gray-200 bg-gray-50 p-4">
-            <p className="text-sm text-gray-700">
-              Add these optional fees so the artist receives the full amount of your donation.
-            </p>
+        <div className="space-y-3 rounded-md border border-gray-200 bg-gray-50 p-4">
+          <p className="text-sm text-gray-700">
+            {isArtistDonation
+              ? "Add these optional fees so the artist receives the full amount of your donation."
+              : "Add these optional fees so EAR receives the full amount of your donation."}
+          </p>
+          {isArtistDonation && (
             <label className="flex items-start gap-2 text-sm text-gray-800">
               <Checkbox
                 checked={Boolean(coverFiscalFee)}
@@ -333,34 +415,31 @@ export function DonationForm({ lockedRecipient, statusMessage }: DonationFormPro
               />
               <span>Cover fiscal sponsorship fee (5.5%)</span>
             </label>
-            <label className="flex items-start gap-2 text-sm text-gray-800">
-              <Checkbox
-                checked={Boolean(coverCardFee)}
-                onChange={(e) => {
-                  form.setValue("cover_card_fee", (e.target as HTMLInputElement).checked, {
-                    shouldValidate: false,
-                  })
-                }}
-              />
-              <span>Cover processing fees (2.9% + $0.30)</span>
-            </label>
+          )}
+          <label className="flex items-start gap-2 text-sm text-gray-800">
+            <Checkbox
+              checked={Boolean(coverCardFee)}
+              onChange={(e) => {
+                form.setValue("cover_card_fee", (e.target as HTMLInputElement).checked, {
+                  shouldValidate: false,
+                })
+              }}
+            />
+            <span>Cover processing fees (2.9% + $0.30)</span>
+          </label>
 
-            {amountInDollars > 0 && (
-              <div className="rounded-md bg-white p-3 text-sm text-gray-700 space-y-1">
-                <p>
-                  <span className="font-medium text-gray-900">Donation:</span> ${amountInDollars.toFixed(2)}
-                </p>
-                {showFeeBreakdown && (
-                  <p>
-                    <span className="font-medium text-gray-900">Fees covered:</span> $
-                    {feesCoveredDollars.toFixed(2)}
-                  </p>
-                )}
-                <p className="font-semibold text-gray-900">Total charged: ${totalChargedDollars.toFixed(2)}</p>
-              </div>
-            )}
-          </div>
-        )}
+          {amountInDollars > 0 && (
+            <div className="rounded-md bg-white p-3 text-sm text-gray-700 space-y-1">
+              <p>
+                <span className="font-medium text-gray-900">Donation:</span> ${amountInDollars.toFixed(2)}
+              </p>
+              <p>
+                <span className="font-medium text-gray-900">Fees covered:</span> ${feesCoveredDollars.toFixed(2)}
+              </p>
+              <p className="font-semibold text-gray-900">Total charged: ${totalChargedDollars.toFixed(2)}</p>
+            </div>
+          )}
+        </div>
 
         <TextField
           form={form}

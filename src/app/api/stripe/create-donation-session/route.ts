@@ -8,7 +8,6 @@ import { getUserRoleFromProfile } from "@/lib/authz"
 import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api-utils"
 import { createDonationSessionRequestSchema } from "@/lib/validations/donations"
 import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
-import { donationStripeAccountForRecipient } from "@/lib/payments/donationStripeAccount"
 import {
   getDonationRecipientByUserId,
   isApprovedRecipient,
@@ -80,18 +79,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const expectedStripeAccount = donationStripeAccountForRecipient(donationRow.recipient_user_id)
-    if (donationRow.stripe_account !== expectedStripeAccount) {
+    if (donationRow.stripe_account !== "sponsor" && donationRow.stripe_account !== "ear") {
       return NextResponse.json(
         {
           error: {
             code: "BAD_REQUEST",
-            message: "Donation Stripe account does not match recipient; refresh and try again",
+            message: "Donation Stripe account is invalid; refresh and try again",
           },
         },
         { status: 400 },
       )
     }
+    const stripeAccount = donationRow.stripe_account
 
     const donorEmail = donationRow.donor_email?.trim()
     if (!donorEmail) {
@@ -102,14 +101,14 @@ export async function POST(req: NextRequest) {
     }
 
     const sponsorKey = env.STRIPE_SPONSOR_SECRET_KEY
-    const useSponsorStripe = Boolean(donationRow.recipient_user_id)
+    const useSponsorStripe = stripeAccount === "sponsor"
 
     if (useSponsorStripe && !sponsorKey) {
       return NextResponse.json(
         {
           error: {
             code: "SERVICE_UNAVAILABLE",
-            message: "Artist donations are temporarily unavailable",
+            message: "Donations are temporarily unavailable",
           },
         },
         { status: 503 },
@@ -157,23 +156,18 @@ export async function POST(req: NextRequest) {
       : `${origin}/donations/success?session_id={CHECKOUT_SESSION_ID}&donation_id=${donationId}`
     const cancelUrl = recipientSlug
       ? `${origin}/donate/${encodeURIComponent(recipientSlug)}?canceled=true`
-      : `${origin}/donations/cancel?donation_id=${donationId}`
+      : `${origin}/donate?canceled=true`
 
-    const productLabel =
-      useSponsorStripe && donationRow.recipient_name
-        ? `Donation — ${donationRow.recipient_name}`
-        : "Donation"
+    const productLabel = donationRow.recipient_name
+      ? `Donation — ${donationRow.recipient_name}`
+      : "Donation — EAR"
 
-    let unitAmount: number
-    if (!useSponsorStripe) {
-      unitAmount = baseGiftCents
-    } else {
-      unitAmount = computeGrossChargeCents(
-        baseGiftCents,
-        Boolean(donationRow.cover_fiscal_fee),
-        Boolean(donationRow.cover_card_fee),
-      )
-    }
+    const coverFiscalFee = donationRow.recipient_user_id ? Boolean(donationRow.cover_fiscal_fee) : false
+    const unitAmount = computeGrossChargeCents(
+      baseGiftCents,
+      coverFiscalFee,
+      Boolean(donationRow.cover_card_fee),
+    )
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -196,7 +190,7 @@ export async function POST(req: NextRequest) {
       metadata: {
         entity_type: "donation",
         entity_id: donationId,
-        stripe_account: expectedStripeAccount,
+        stripe_account: stripeAccount,
         donor_id: auth?.user.id || "",
         // Copied onto Payment Intent; webhook can fall back if needed (Stripe metadata value max 500 chars).
         donor_message: (donationRow.message ?? "").trim().slice(0, 450),

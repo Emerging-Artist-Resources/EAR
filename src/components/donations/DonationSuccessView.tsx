@@ -17,11 +17,6 @@ export type DonationPollPayload = {
 const maxPolls = 20
 const pollInterval = 2000
 
-// function earMarketingUrl() {
-//   const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://www.eararts.org"
-//   return base
-// }
-
 export type DonationSuccessViewProps = {
   donationId: string
   variant: "generic" | "artist"
@@ -47,8 +42,6 @@ export function DonationSuccessView({ donationId, variant, artist }: DonationSuc
         ? `/donate/${encodeURIComponent(artist.slug)}`
         : "/donate"
       : "/donate"
-  // TODO: Uncomment when website is live
-  // const earUrl = earMarketingUrl()
 
   useEffect(() => {
     statusRef.current = paymentStatus
@@ -183,11 +176,6 @@ export function DonationSuccessView({ donationId, variant, artist }: DonationSuc
               <Button variant="outline" asChild>
                 <Link href={backToDonateHref}>Back to donation</Link>
               </Button>
-              {/* <Button variant="primary" asChild>
-                <a href={earUrl} target="_blank" rel="noopener noreferrer">
-                  Visit EAR
-                </a>
-              </Button> */}
             </div>
           </div>
         )}
@@ -203,11 +191,6 @@ export function DonationSuccessView({ donationId, variant, artist }: DonationSuc
                     : "Make another donation"}
                 </Link>
               </Button>
-              {/* <Button variant="primary" asChild>
-                <a href={earUrl} target="_blank" rel="noopener noreferrer">
-                  Visit EAR website
-                </a>
-              </Button> */}
             </div>
           </div>
         )}
@@ -221,11 +204,6 @@ export function DonationSuccessView({ donationId, variant, artist }: DonationSuc
               <Button variant="outline" asChild>
                 <Link href={backToDonateHref}>Back to donation</Link>
               </Button>
-              {/* <Button variant="primary" asChild>
-                <a href={earUrl} target="_blank" rel="noopener noreferrer">
-                  Visit EAR website
-                </a>
-              </Button> */}
             </div>
           </div>
         )}

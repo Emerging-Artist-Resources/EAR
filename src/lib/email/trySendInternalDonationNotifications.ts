@@ -93,7 +93,9 @@ export async function trySendInternalDonationNotifications({
   const adminEmail = adminEmailRaw.trim()
   const hasAdmin = adminEmail.length > 0
   if (!hasAdmin) {
-    console.warn(`${logPrefix(donationId)} Internal notification: missing admin email (ADMIN_EMAIL / ADMIN_NOTIFICATION_EMAIL)`)
+    console.error(
+      `${logPrefix(donationId)} Internal notification: missing admin email (ADMIN_EMAIL / ADMIN_NOTIFICATION_EMAIL)`,
+    )
   }
 
   let artistEmail = ""
@@ -156,7 +158,7 @@ export async function trySendInternalDonationNotifications({
     donorEmailResolved.split("@")[0] ||
     "there"
 
-  const artistDisplayForTemplates = row.recipient_name?.trim() || "the artist"
+  const artistDisplayForTemplates = row.recipient_name?.trim() || (row.recipient_user_id ? "the artist" : "EAR")
   const adminTemplateArtistName = row.recipient_user_id ? artistDisplayForTemplates : "EAR"
 
   // Prefer DB; Stripe session/PI metadata is a fallback if the row was missing data at read time.
@@ -221,7 +223,9 @@ export async function trySendInternalDonationNotifications({
             coverFiscalFee: Boolean(row.cover_fiscal_fee),
             coverCardFee: Boolean(row.cover_card_fee),
           }
-        : undefined,
+        : {
+            coverCardFee: Boolean(row.cover_card_fee),
+          },
     })
   } catch (pdfErr) {
     console.error(

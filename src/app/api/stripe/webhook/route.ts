@@ -20,6 +20,10 @@ function constructWebhookEvent(body: string, signature: string, env: ReturnType<
       } catch {
         // fall through to rethrow primary
       }
+    } else {
+      console.error(
+        "STRIPE_SPONSOR_WEBHOOK_SECRET is not configured; sponsor-account webhook signatures cannot be verified.",
+      )
     }
     const error = primaryErr as Error
     console.error("Webhook signature verification failed:", error.message)
