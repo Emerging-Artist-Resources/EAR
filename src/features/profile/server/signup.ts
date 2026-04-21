@@ -1,18 +1,29 @@
 "use server"
 
-import { signupFormSchema } from "@/lib/validations/signup"
+import { z } from "zod"
+import { signupFormSchema, getSignupErrorStepForPath, type SignupErrorStep } from "@/lib/validations/signup"
 import { createProfileRepo, createEligibilitySubmissionRepo } from "./repository-signup"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { sendNewProfileAdminEmail, sendEmailVerificationEmail } from "./service"
 
-export async function signupAction(formData: unknown) {
+export type SignupActionResult =
+  | { success: true }
+  | {
+      error: string
+      code?: "ACCOUNT_EXISTS"
+      step?: SignupErrorStep
+    }
+
+const ACCOUNT_EXISTS_MESSAGE = "An account with this email already exists. Please sign in instead."
+
+export async function signupAction(formData: unknown): Promise<SignupActionResult> {
   try {
     const validatedData = signupFormSchema.parse(formData)
-    
+
     const supabase = getSupabaseServiceClient()
 
     const { data: existingUsers } = await supabase.auth.admin.listUsers()
-    const existingUser = existingUsers?.users.find(u => u.email === validatedData.email)
+    const existingUser = existingUsers?.users.find((u) => u.email === validatedData.email)
 
     if (existingUser) {
       const { data: existingProfile } = await supabase
@@ -22,7 +33,7 @@ export async function signupAction(formData: unknown) {
         .single()
 
       if (existingProfile) {
-        return { error: "An account with this email already exists. Please sign in instead." }
+        return { error: ACCOUNT_EXISTS_MESSAGE, code: "ACCOUNT_EXISTS" }
       }
     }
 
@@ -34,7 +45,7 @@ export async function signupAction(formData: unknown) {
 
     if (authError || !authData.user) {
       if (authError?.message?.includes("already registered")) {
-        return { error: "An account with this email already exists. Please sign in instead." }
+        return { error: ACCOUNT_EXISTS_MESSAGE, code: "ACCOUNT_EXISTS" }
       }
       return { error: authError?.message || "Failed to create user account" }
     }
@@ -46,12 +57,12 @@ export async function signupAction(formData: unknown) {
       await createEligibilitySubmissionRepo(validatedData, profile.id)
 
       try {
-        // Ensure name is available - use validatedData as fallback if profile.name is missing
         await sendNewProfileAdminEmail(
           {
-            name: profile.name || validatedData.name,
-            email: profile.email || validatedData.email,
-            profile_type: profile.profile_type || validatedData.profile_type,
+            name: validatedData.name,
+            email: validatedData.email,
+            profile_type: validatedData.profile_type,
+            organization_name: validatedData.organization_name ?? null,
           },
           userId
         )
@@ -66,19 +77,27 @@ export async function signupAction(formData: unknown) {
       }
 
       return { success: true }
-    } catch (dbError: any) {
-      if (dbError?.code === "23505" || dbError?.message?.includes("duplicate key")) {
+    } catch (dbError: unknown) {
+      const dbe = dbError as { code?: string; message?: string }
+      if (dbe?.code === "23505" || dbe?.message?.includes("duplicate key")) {
         await supabase.auth.admin.deleteUser(userId)
-        return { error: "An account with this email already exists. Please sign in instead." }
+        return { error: ACCOUNT_EXISTS_MESSAGE, code: "ACCOUNT_EXISTS" }
       }
       await supabase.auth.admin.deleteUser(userId)
-      return { error: dbError?.message || "Failed to create profile" }
+      return { error: dbe?.message || "Failed to create profile" }
     }
-  } catch (error: any) {
-    if (error.errors) {
-      return { error: "Validation failed: " + error.errors.map((e: any) => e.message).join(", ") }
+  } catch (error: unknown) {
+    if (error instanceof z.ZodError) {
+      const first = error.issues[0]
+      const step = getSignupErrorStepForPath(first?.path ?? [])
+      const msg = first?.message ?? "Validation failed"
+      return { error: msg, step }
     }
-    return { error: error?.message || "An unexpected error occurred" }
+    const err = error as { errors?: { message: string }[] }
+    if (err.errors) {
+      return { error: "Validation failed: " + err.errors.map((e) => e.message).join(", ") }
+    }
+    const e = error as { message?: string }
+    return { error: e?.message || "An unexpected error occurred" }
   }
 }
-

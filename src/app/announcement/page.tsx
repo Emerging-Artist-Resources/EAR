@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { H1, H3, Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { ROUTES } from "@/lib/constants"
 import { supabase } from "@/lib/supabase/client"
 import PerformanceModal from "@/components/performance-modal"
 import { Modal } from "@/components/ui/modal"
@@ -194,7 +195,7 @@ export default function AnnouncementsPage() {
             <Link href="/auth/signin?returnTo=/announcement">
               <Button variant="primary">Sign in</Button>
             </Link>
-            <Link href="/auth/signup">
+            <Link href={ROUTES.SIGN_UP}>
               <Button variant="outline">Create account</Button>
             </Link>
           </div>
