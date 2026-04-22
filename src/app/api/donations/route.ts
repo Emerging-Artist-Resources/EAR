@@ -15,6 +15,11 @@ import {
   isApprovedRecipient,
 } from "@/features/profile/server/artistDonationRecipient"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
+import {
+  DESIGNATION_STALE_OPTION_MESSAGE,
+  parseActiveDonationDesignationConfig,
+} from "@/lib/donations/donationDesignationConfig"
+import { resolveDonationRecipientDisplayName } from "@/lib/profile/donationRecipientDisplayName"
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,6 +32,10 @@ export async function POST(req: NextRequest) {
 
     let recipientUserId: string | null = donationData.recipient_user_id ?? null
     let recipientName: string | null = null
+    let designationOptionId: string | null = null
+    let designationLabelSnapshot: string | null = null
+
+    const designationInput = donationData.designation_option_id?.trim() ?? ""
 
     if (recipientUserId) {
       const recipientProfile = await getDonationRecipientByUserId(recipientUserId)
@@ -56,7 +65,28 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      recipientName = recipientProfile.name?.trim() || null
+      recipientName = resolveDonationRecipientDisplayName({
+        name: recipientProfile.name,
+        organization_name: recipientProfile.organization_name,
+        profile_type: recipientProfile.profile_type,
+      })
+
+      const activeConfig = parseActiveDonationDesignationConfig(recipientProfile.donation_designation_config)
+      if (!activeConfig) {
+        if (designationInput) {
+          return createErrorResponse(ErrorCodes.BAD_REQUEST, "Invalid designation.", undefined, 400)
+        }
+      } else {
+        if (!designationInput) {
+          return createErrorResponse(ErrorCodes.BAD_REQUEST, "Please choose a designation.", undefined, 400)
+        }
+        const match = activeConfig.options.find((o) => o.id === designationInput)
+        if (!match) {
+          return createErrorResponse(ErrorCodes.BAD_REQUEST, DESIGNATION_STALE_OPTION_MESSAGE, undefined, 400)
+        }
+        designationOptionId = match.id
+        designationLabelSnapshot = match.label
+      }
     } else if (donationData.recipient_slug || donationData.recipient_name) {
       return createErrorResponse(
         ErrorCodes.BAD_REQUEST,
@@ -64,6 +94,8 @@ export async function POST(req: NextRequest) {
         undefined,
         400,
       )
+    } else if (designationInput) {
+      return createErrorResponse(ErrorCodes.BAD_REQUEST, "Invalid designation.", undefined, 400)
     }
 
     const baseGiftCents = donationData.amount
@@ -89,6 +121,8 @@ export async function POST(req: NextRequest) {
         recipient_name: recipientName,
         cover_card_fee: coverCard,
         cover_fiscal_fee: coverFiscal,
+        designation_option_id: designationOptionId,
+        designation_label_snapshot: designationLabelSnapshot,
       })
       .select("id")
       .single()

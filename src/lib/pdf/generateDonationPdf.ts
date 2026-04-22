@@ -13,6 +13,8 @@ export type GenerateDonationPdfInput = {
   donationId?: string
   /** Optional donor note; empty / whitespace shows as "—". */
   donorMessage?: string
+  /** Full designation label when donor chose a charity / no-preference option. */
+  designationLabel?: string
   /** Optional fee rows on the receipt. Artist donations typically set both; org (EAR) donations only card. */
   feeCoverage?: { coverFiscalFee?: boolean; coverCardFee?: boolean }
 }
@@ -120,6 +122,7 @@ export function sanitizeDonationPdfInput(input: GenerateDonationPdfInput): Gener
   }
 
   const donorMessage = input.donorMessage?.trim()
+  const designationLabel = input.designationLabel?.trim()
   return {
     ...input,
     donorName: strip(input.donorName || ""),
@@ -128,6 +131,7 @@ export function sanitizeDonationPdfInput(input: GenerateDonationPdfInput): Gener
     dateLabel: strip(input.dateLabel),
     donationId: input.donationId ? strip(input.donationId) : undefined,
     donorMessage: donorMessage ? strip(donorMessage) : undefined,
+    designationLabel: designationLabel ? strip(designationLabel) : undefined,
     feeCoverage: input.feeCoverage,
   }
 }
@@ -234,6 +238,10 @@ async function buildDonationPdf(input: GenerateDonationPdfInput, fontMode: "noto
   drawRow("Donor", input.donorName || "—")
   drawRow("Email", input.donorEmail?.trim() || "—")
   drawRow("Artist / recipient", input.artistDisplayName || "—")
+  const designationRaw = input.designationLabel?.trim() ?? ""
+  if (designationRaw) {
+    drawRowWrappedLabel("Designation", designationRaw)
+  }
   drawRow("Date", input.dateLabel)
   if (input.donationId) {
     drawRow("Reference", input.donationId, 10)
@@ -364,6 +372,8 @@ export type MinimalDonationPdfFallbackInput = {
   /** Shown as-is after ASCII sanitization (e.g. formatted date). */
   dateLabel: string
   donationId?: string
+  /** Optional designation line (ASCII-sanitized in builder). */
+  designationLabel?: string
 }
 
 /**
@@ -381,6 +391,9 @@ export async function generateMinimalDonationPdfFallback(
   const amount = (input.amountCents / 100).toFixed(2)
   const dateSafe = toAsciiPrintable(input.dateLabel) || "-"
   const refSafe = input.donationId ? toAsciiPrintable(input.donationId) : ""
+  const designationSafe = input.designationLabel?.trim()
+    ? toAsciiPrintable(input.designationLabel.trim())
+    : ""
 
   let y = PAGE_H - MARGIN
 
@@ -457,6 +470,29 @@ export async function generateMinimalDonationPdfFallback(
       color: color.text,
     })
     y -= 22
+  }
+
+  if (designationSafe) {
+    page.drawText("Designation", {
+      x: LABEL_X,
+      y,
+      size: 9,
+      font: regular,
+      color: color.muted,
+    })
+    const desigLines = wrapMessageLines(designationSafe, regular, 10, PAGE_W - MARGIN - VALUE_X)
+    let lineY = y
+    for (const line of desigLines.slice(0, 8)) {
+      page.drawText(line, {
+        x: VALUE_X,
+        y: lineY,
+        size: 10,
+        font: regular,
+        color: color.text,
+      })
+      lineY -= 13
+    }
+    y = lineY - 6
   }
 
   page.drawText("Emerging Artist Resources", {

@@ -29,7 +29,7 @@ export default async function ArtistDonationSuccessPage({ params, searchParams }
       artist={{
         slug: profile.slug,
         profileId: profile.id,
-        displayName: profile.name?.trim() || "this artist",
+        displayName: profile.donation_recipient_display_name?.trim() || "this artist",
         fiscalStatus: profile.fiscal_sponsorship_status,
       }}
     />
