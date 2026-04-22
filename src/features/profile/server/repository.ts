@@ -10,6 +10,11 @@ import { getListingTitle } from "@/features/events/server/listing-utils";
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections";
 import type { FiscalSponsorshipStatus } from "@/lib/types/fiscal-sponsorship";
 import { donationPageImagePublicUrl } from "@/lib/storage/donationPagePhotos";
+import {
+  type DonationDesignationConfigParsed,
+  parseActiveDonationDesignationConfig,
+} from "@/lib/donations/donationDesignationConfig";
+import { resolveDonationRecipientDisplayName } from "@/lib/profile/donationRecipientDisplayName";
 
 export async function fetchSavedEventsFromDb(
   userId: string,
@@ -347,6 +352,13 @@ export interface PublicDonationProfile {
   donation_page_message: string | null;
   /** Resolved public URL; null when no path or path-only in DB. */
   donation_page_image_url: string | null;
+  /** Parsed active config for designation dropdown; null when feature off. */
+  donation_designation: DonationDesignationConfigParsed | null;
+  /**
+   * Name to show on donation pages (e.g. "Support …").
+   * For company/festival, prefers organization_name when set; otherwise profile name.
+   */
+  donation_recipient_display_name: string | null;
 }
 
 export interface EligibilitySubmission {
@@ -386,7 +398,9 @@ export async function getProfileBySlugForDonationRepo(slug: string): Promise<Pub
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, name, slug, fiscal_sponsorship_status, donation_page_message, donation_page_image_path")
+    .select(
+      "id, name, slug, fiscal_sponsorship_status, donation_page_message, donation_page_image_path, donation_designation_config, profile_type, organization_name",
+    )
     .eq("slug", slug)
     .eq("fiscal_sponsorship_status", "approved")
     .maybeSingle();
@@ -403,13 +417,31 @@ export async function getProfileBySlugForDonationRepo(slug: string): Promise<Pub
     ? await donationPageImagePublicUrl(data.donation_page_image_path)
     : null;
 
+  const row = data as {
+    id: string;
+    name: string | null;
+    slug: string;
+    fiscal_sponsorship_status: string;
+    donation_page_message: string | null;
+    donation_page_image_path: string | null;
+    donation_designation_config?: unknown;
+    profile_type: string | null;
+    organization_name: string | null;
+  };
+
   return {
-    id: data.id,
-    name: data.name,
-    slug: data.slug,
-    fiscal_sponsorship_status: data.fiscal_sponsorship_status as FiscalSponsorshipStatus,
-    donation_page_message: data.donation_page_message ?? null,
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    fiscal_sponsorship_status: row.fiscal_sponsorship_status as FiscalSponsorshipStatus,
+    donation_page_message: row.donation_page_message ?? null,
     donation_page_image_url,
+    donation_designation: parseActiveDonationDesignationConfig(row.donation_designation_config),
+    donation_recipient_display_name: resolveDonationRecipientDisplayName({
+      name: row.name,
+      organization_name: row.organization_name,
+      profile_type: row.profile_type,
+    }),
   };
 }
 
@@ -424,7 +456,7 @@ export async function getProfileBySlugForDonationSuccessRepo(
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, name, slug, fiscal_sponsorship_status")
+    .select("id, name, slug, fiscal_sponsorship_status, profile_type, organization_name")
     .eq("slug", slug)
     .maybeSingle()
 
@@ -436,13 +468,28 @@ export async function getProfileBySlugForDonationSuccessRepo(
     return null
   }
 
+  const row = data as {
+    id: string
+    name: string | null
+    slug: string
+    fiscal_sponsorship_status: string
+    profile_type: string | null
+    organization_name: string | null
+  }
+
   return {
-    id: data.id,
-    name: data.name,
-    slug: data.slug,
-    fiscal_sponsorship_status: data.fiscal_sponsorship_status as FiscalSponsorshipStatus,
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    fiscal_sponsorship_status: row.fiscal_sponsorship_status as FiscalSponsorshipStatus,
     donation_page_message: null,
     donation_page_image_url: null,
+    donation_designation: null,
+    donation_recipient_display_name: resolveDonationRecipientDisplayName({
+      name: row.name,
+      organization_name: row.organization_name,
+      profile_type: row.profile_type,
+    }),
   }
 }
 

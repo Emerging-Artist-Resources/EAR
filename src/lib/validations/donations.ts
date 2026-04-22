@@ -27,11 +27,18 @@ export const donationFormSchema = z.object({
   message: z.string().max(2000, "Message must be less than 2000 characters").optional(),
   cover_card_fee: z.boolean().optional().default(false),
   cover_fiscal_fee: z.boolean().optional().default(false),
+  /** Set when artist has designation config; omitted or unused for generic donate. */
+  designation_option_id: z.string().max(120).optional(),
 })
 
 /** Same as {@link donationFormSchema} but donor name is required (artist /donate/[slug] flow). */
 export const donationArtistFormSchema = donationFormSchema.extend({
   donor_name: donorNameRequiredField,
+})
+
+/** Artist page when `donation_designation` config is active — designation required. */
+export const donationArtistWithDesignationFormSchema = donationArtistFormSchema.extend({
+  designation_option_id: z.string().trim().min(1, "Please choose a designation"),
 })
 
 export type DonationFormData = z.infer<typeof donationFormSchema>
@@ -46,6 +53,8 @@ export const createDonationRequestSchema = z
     recipient_user_id: z.string().uuid().optional().nullable(),
     recipient_slug: z.string().min(1).max(80).optional().nullable(),
     recipient_name: z.string().max(255).optional().nullable(),
+    /** Stable id from profile designation config (e.g. `split`, charity id); server validates against DB. */
+    designation_option_id: z.string().max(120).optional().nullable(),
     cover_card_fee: z.boolean().optional().default(false),
     cover_fiscal_fee: z.boolean().optional().default(false),
   })

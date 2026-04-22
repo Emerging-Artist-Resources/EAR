@@ -23,10 +23,11 @@ export default async function DonateToArtistPage({ params, searchParams }: PageP
       <DonationForm
         lockedRecipient={{
           userId: profile.id,
-          displayName: profile.name,
+          displayName: profile.donation_recipient_display_name,
           slug: profile.slug,
           donationPageMessage: profile.donation_page_message,
           donationPageImageUrl: profile.donation_page_image_url,
+          donationDesignation: profile.donation_designation,
         }}
         statusMessage={statusMessage}
       />
