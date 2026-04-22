@@ -496,8 +496,8 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
           form={form}
           name="donor_name"
           label="Name"
-          placeholder={isArtistDonation ? "Your name" : "Your name (optional)"}
-          required={isArtistDonation}
+          placeholder="Your name"
+          required
         />
 
         <TextField
