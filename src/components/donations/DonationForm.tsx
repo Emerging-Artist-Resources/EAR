@@ -5,9 +5,11 @@ import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
 import type { Resolver } from "react-hook-form"
 import {
   donationArtistFormSchema,
+  donationArtistWithDesignationFormSchema,
   donationFormSchema,
   type DonationFormData,
 } from "@/lib/validations/donations"
+import type { DonationDesignationConfigParsed } from "@/lib/donations/donationDesignationConfig"
 import { Button } from "@/components/ui/button"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
@@ -37,6 +39,8 @@ export type DonationLockedRecipient = {
   /** Optional hero from profile; only used on /donate/[slug]. */
   donationPageMessage?: string | null
   donationPageImageUrl?: string | null
+  /** When set, designation dropdown is shown (options in array order). */
+  donationDesignation?: DonationDesignationConfigParsed | null
 }
 
 /** Hardcoded org hero for /donate only; ignored when `lockedRecipient` is set. */
@@ -134,14 +138,23 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
     fetchProfile()
   }, [user])
 
-  const validationSchema = useMemo(
-    () => (lockedRecipient ? donationArtistFormSchema : donationFormSchema),
-    [lockedRecipient],
-  )
+  const validationSchema = useMemo(() => {
+    if (lockedRecipient?.donationDesignation) {
+      return donationArtistWithDesignationFormSchema
+    }
+    if (lockedRecipient) {
+      return donationArtistFormSchema
+    }
+    return donationFormSchema
+  }, [lockedRecipient])
+
   const resolver = useMemo(
     () => zodResolver(validationSchema) as unknown as Resolver<DonationFormData>,
     [validationSchema],
   )
+
+  const defaultDesignationId = lockedRecipient?.donationDesignation?.options[0]?.id ?? ""
+
   const form = useForm<DonationFormData>({
     resolver,
     defaultValues: {
@@ -151,6 +164,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
       message: "",
       cover_card_fee: false,
       cover_fiscal_fee: false,
+      designation_option_id: defaultDesignationId,
     },
     mode: "onChange",
     reValidateMode: "onChange",
@@ -162,6 +176,13 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
       form.setValue("donor_email", profileData.email || user?.email || "")
     }
   }, [profileData, userName, user, form])
+
+  useEffect(() => {
+    const first = lockedRecipient?.donationDesignation?.options[0]?.id
+    if (first) {
+      form.setValue("designation_option_id", first)
+    }
+  }, [lockedRecipient?.donationDesignation, form])
 
   const setPresetAmount = (amount: number) => {
     form.setValue("amount", amount * 100)
@@ -191,6 +212,9 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
               recipient_user_id: lockedRecipient.userId,
               recipient_slug: lockedRecipient.slug,
             }
+          : {}),
+        ...(lockedRecipient?.donationDesignation && data.designation_option_id?.trim()
+          ? { designation_option_id: data.designation_option_id.trim() }
           : {}),
       })
 
@@ -441,12 +465,39 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
           )}
         </div>
 
+        {lockedRecipient?.donationDesignation ? (
+          <div>
+            <label
+              htmlFor="donation-designation-option"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              {lockedRecipient.donationDesignation.fieldLabel}
+            </label>
+            <select
+              id="donation-designation-option"
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              {...form.register("designation_option_id")}
+            >
+              {lockedRecipient.donationDesignation.options.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            {form.formState.errors.designation_option_id && (
+              <p className="mt-1 text-sm text-error-600">
+                {form.formState.errors.designation_option_id.message}
+              </p>
+            )}
+          </div>
+        ) : null}
+
         <TextField
           form={form}
           name="donor_name"
           label="Name"
-          placeholder={isArtistDonation ? "Your name" : "Your name (optional)"}
-          required={isArtistDonation}
+          placeholder="Your name"
+          required
         />
 
         <TextField

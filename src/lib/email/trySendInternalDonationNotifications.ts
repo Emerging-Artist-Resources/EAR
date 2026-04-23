@@ -21,6 +21,8 @@ type DonationRow = DonationAmountRow & {
   internal_notification_sent_at: string | null
   cover_card_fee: boolean | null
   cover_fiscal_fee: boolean | null
+  designation_option_id: string | null
+  designation_label_snapshot: string | null
 }
 
 function maskEmailForLog(email: string): string {
@@ -65,7 +67,7 @@ export async function trySendInternalDonationNotifications({
   const { data: donation, error: fetchError } = await supabase
     .from("donations")
     .select(
-      "id, donor_name, donor_email, message, recipient_name, recipient_user_id, amount, payment_status, internal_notification_sent_at, cover_card_fee, cover_fiscal_fee",
+      "id, donor_name, donor_email, message, recipient_name, recipient_user_id, amount, payment_status, internal_notification_sent_at, cover_card_fee, cover_fiscal_fee, designation_option_id, designation_label_snapshot",
     )
     .eq("id", donationId)
     .single()
@@ -178,6 +180,19 @@ export async function trySendInternalDonationNotifications({
     ? escapeHtmlForEmail(msg).replace(/\r\n|\r|\n/g, "<br />")
     : ""
 
+  const designationOptionId = row.designation_option_id?.trim() ?? ""
+  const snapshotLabel = row.designation_label_snapshot?.trim() ?? ""
+  /** Prefer DB snapshot; fall back so designation lines never render blank if id exists. */
+  const designationLabel =
+    snapshotLabel ||
+    (designationOptionId === "split" ? "No preference" : designationOptionId) ||
+    ""
+  const hasDesignation = Boolean(designationOptionId)
+  const designationHtml = hasDesignation && designationLabel ? escapeHtmlForEmail(designationLabel) : ""
+
+  // Postmark Mustache: do NOT use {{#has_designation}}...{{designation_label}} when has_designation is a
+  // non-empty string (e.g. "yes") — the section context becomes that string, so {{designation_label}} is blank
+  // (same pitfall as {{#message}} documented above). Use boolean has_designation, or {{#designation_section}}{{label}}.
   const sharedTemplateFields: Record<string, unknown> = {
     message: msg,
     donor_message: msg,
@@ -188,6 +203,13 @@ export async function trySendInternalDonationNotifications({
     donor_message_html: donorMessageHtml,
     // Some Mustache setups treat non-empty strings more reliably than booleans for {{#…}} sections
     donor_message_present: hasDonorMessage ? "yes" : "",
+    designation_label: designationLabel,
+    /** Renders the block with parent context so {{designation_label}} works inside {{#has_designation}}... */
+    has_designation: hasDesignation,
+    designation_html: designationHtml,
+    // Nested object (preferred): {{#designation_section}}<strong>Designation:</strong> {{label}}{{/designation_section}}
+    designation_section:
+      hasDesignation && designationLabel ? { label: designationLabel, label_html: designationHtml } : null,
   }
 
   const artistTemplateModel: Record<string, unknown> = {
@@ -218,6 +240,7 @@ export async function trySendInternalDonationNotifications({
       dateLabel: dateStr,
       donationId,
       donorMessage: msg,
+      designationLabel: hasDesignation ? designationLabel : undefined,
       feeCoverage: row.recipient_user_id
         ? {
             coverFiscalFee: Boolean(row.cover_fiscal_fee),
@@ -236,6 +259,7 @@ export async function trySendInternalDonationNotifications({
       amountCents,
       dateLabel: dateStr,
       donationId,
+      designationLabel: hasDesignation ? designationLabel : undefined,
     })
   }
 

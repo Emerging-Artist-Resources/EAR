@@ -15,6 +15,12 @@ import {
 
 const STRIPE_API_VERSION = "2026-02-25.clover" as const
 
+function designationLabelForStripeMetadata(label: string, maxLen: number): string {
+  const t = label.trim()
+  if (t.length <= maxLen) return t
+  return t.slice(0, Math.max(0, maxLen - 1)) + "…"
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -27,7 +33,7 @@ export async function POST(req: NextRequest) {
     const { data: donationRow, error: donationError } = await supabaseService
       .from("donations")
       .select(
-        "id, amount, base_gift_cents, stripe_account, currency, payment_status, donor_id, donor_email, recipient_user_id, recipient_name, message, stripe_checkout_session_id, cover_card_fee, cover_fiscal_fee",
+        "id, amount, base_gift_cents, stripe_account, currency, payment_status, donor_id, donor_email, recipient_user_id, recipient_name, message, stripe_checkout_session_id, cover_card_fee, cover_fiscal_fee, designation_option_id, designation_label_snapshot",
       )
       .eq("id", donationId)
       .single()
@@ -169,6 +175,13 @@ export async function POST(req: NextRequest) {
       Boolean(donationRow.cover_card_fee),
     )
 
+    const designationIdRaw = (
+      donationRow as { designation_option_id?: string | null }
+    ).designation_option_id?.trim()
+    const designationSnapshotRaw = (
+      donationRow as { designation_label_snapshot?: string | null }
+    ).designation_label_snapshot?.trim()
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -196,6 +209,16 @@ export async function POST(req: NextRequest) {
         donor_message: (donationRow.message ?? "").trim().slice(0, 450),
         ...(donationRow.recipient_user_id
           ? { recipient_user_id: donationRow.recipient_user_id }
+          : {}),
+        ...(designationIdRaw
+          ? {
+              designation_id: designationIdRaw.slice(0, 120),
+              ...(designationSnapshotRaw
+                ? {
+                    designation_label_short: designationLabelForStripeMetadata(designationSnapshotRaw, 100),
+                  }
+                : {}),
+            }
           : {}),
       },
     })
