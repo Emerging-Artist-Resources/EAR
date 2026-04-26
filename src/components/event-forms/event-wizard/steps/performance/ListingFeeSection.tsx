@@ -12,6 +12,7 @@ export function ListingFeeSection({ form }: { form: UseFormReturn<EventFormData>
       feeOptionFieldName={"listingFeeOption" as Path<EventFormData>}
       explanationFieldName={"listingFeeExplanation" as Path<EventFormData>}
       complementaryFieldName={"complementaryTicketInfo" as Path<EventFormData>}
+      emergingListingWaived
     />
   )
 }

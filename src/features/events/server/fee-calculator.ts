@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { EAR_AUDITION_CREATIVE_LISTING_FEE_USD } from "@/lib/listing-fee-amounts"
 
 export const ESTABLISHED_BASE_FEE = 50
 export const EMERGING_BASE_FEE = 35
@@ -126,10 +127,8 @@ export async function calculateListingFee(
       return null
     }
 
-    const baseFee = auditionDetails.artist_type === "ESTABLISHED" ? ESTABLISHED_BASE_FEE : EMERGING_BASE_FEE
-
     return {
-      amount: baseFee * 100,
+      amount: EAR_AUDITION_CREATIVE_LISTING_FEE_USD * 100,
       currency: "usd",
     }
   }
@@ -153,10 +152,8 @@ export async function calculateListingFee(
       return null
     }
 
-    const baseFee = creativeDetails.artist_type === "ESTABLISHED" ? ESTABLISHED_BASE_FEE : EMERGING_BASE_FEE
-
     return {
-      amount: baseFee * 100,
+      amount: EAR_AUDITION_CREATIVE_LISTING_FEE_USD * 100,
       currency: "usd",
     }
   }

@@ -179,6 +179,11 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
   const title = listing ? getListingTitle(listing) : "Listing Details"
   const typeLabel = listing ? getTypeLabel(listing.type) : ""
 
+  const creativeOpportunityDates =
+    listing?.type === "creative" && listing.creative_details?.dates?.trim()
+      ? listing.creative_details.dates.trim()
+      : null
+
   const { hasSingleLocation, singleLocation } = useMemo(() => {
     if (!listing?.listing_occurrences || listing.listing_occurrences.length === 0) {
       return { hasSingleLocation: false, singleLocation: null }
@@ -308,10 +313,16 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
 
             {/* Dates Card - Location and Dates/Times */}
             {(hasSingleLocation && singleLocation && (singleLocation.address || singleLocation.venue_name)) || 
-             (listing.listing_occurrences && listing.listing_occurrences.length > 0) ? (
+             (listing.listing_occurrences && listing.listing_occurrences.length > 0) ||
+             creativeOpportunityDates ? (
               <Card className="p-4">
                 <h3 className="text-base font-semibold text-gray-900 mb-3">Dates</h3>
                 <div className="space-y-0">
+                  {creativeOpportunityDates && (
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-0 mb-4">
+                      <FieldRow label="Opportunity Dates" value={creativeOpportunityDates} />
+                    </div>
+                  )}
                   {/* Location - Single Location */}
                   {hasSingleLocation && singleLocation && (singleLocation.address || singleLocation.venue_name) && (
                     <div className="grid grid-cols-2 gap-x-6 gap-y-0">

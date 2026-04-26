@@ -1,6 +1,7 @@
 "use client"
 
 import { UseFormReturn, Path, useWatch } from "react-hook-form"
+import { SimpleFeeDisplay } from "@/components/event-forms/event-wizard/shared/SimpleFeeDisplay"
 import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { TextField } from "@/components/forms/blocks/TextField"
@@ -10,7 +11,6 @@ import { LocationField } from "@/components/forms/blocks/LocationField"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { Button } from "@/components/ui/button"
 import { useCallback, useEffect } from "react"
-//import { SimpleFeeDisplay } from "@/components/event-forms/event-wizard/shared/SimpleFeeDisplay"
 
 interface AuditionStepProps {
   form: UseFormReturn<EventFormData>
@@ -139,7 +139,14 @@ export function AuditionStep({ form }: AuditionStepProps) {
   instructionsName={"locationInstructions"}
   required
 />      </Section>
-    
+
+      {isFee && (
+        <SimpleFeeDisplay
+          form={form}
+          artistTypeFieldName={"artistType" as Path<EventFormData>}
+          feeVariant="audition"
+        />
+      )}
     </>
   )
 }

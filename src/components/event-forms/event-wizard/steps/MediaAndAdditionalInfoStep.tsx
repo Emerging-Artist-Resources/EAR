@@ -8,7 +8,6 @@ import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { ListingFeeSection } from "./performance/ListingFeeSection"
 import { ClassWorkshopListingFeeSection } from "./class-workshop/ClassWorkshopListingFeeSection"
-import { SimpleFeeDisplay } from "@/components/event-forms/event-wizard/shared/SimpleFeeDisplay"
 import { type EventType } from "../EventTypeSelector"
 import { useMemo } from "react"
 
@@ -28,20 +27,13 @@ export function MediaAndAdditionalInfoStep({ form, eventType }: MediaAndAddition
     name: "classWorkshopType",
   }) as "CLASS" | "WORKSHOP" | undefined
 
-  const fee = useWatch({
-    control: form.control,
-    name: "fee",
-  }) as string | undefined
-
   const occurrenceCount = useMemo(() => {
     if (!occurrences || !Array.isArray(occurrences)) return 0
     return occurrences.length
   }, [occurrences])
 
   const isWorkshop = classWorkshopType === "WORKSHOP"
-  const isFee = fee === "FEE"
   const showListingFee = eventType === "PERFORMANCE" || eventType === "CLASS"
-  const showConditionalListingFee = (eventType === "AUDITION" || eventType === "CREATIVE") && isFee
 
   return (
     <>
@@ -78,13 +70,6 @@ export function MediaAndAdditionalInfoStep({ form, eventType }: MediaAndAddition
             />
           )}
         </>
-      )}
-
-      {showConditionalListingFee && (
-        <SimpleFeeDisplay
-          form={form}
-          artistTypeFieldName={"artistType" as Path<EventFormData>}
-        />
       )}
 
       <Section title="Additional Information">

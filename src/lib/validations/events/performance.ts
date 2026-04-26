@@ -95,9 +95,9 @@ export const performanceFields = z
     selectedSlots: z.array(z.string()).optional(), // keys like "YYYY-MM-DD|HH:mm" for now
 
     /**
-     * Listing fee fields
-     * Established artists: $50 fee (automatic)
-     * Emerging artists: choose between $35 fee, provide ticket, or explain
+     * Platform listing fee fields (ORGANIZER)
+     * Established: fee path via PAY_FEE / automatic display.
+     * Emerging: waived; server forces these to null for EMERGING.
      */
     artistType: z.enum(["ESTABLISHED", "EMERGING"]).optional(),
     listingFeeOption: z.enum(["PAY_FEE", "PROVIDE", "EXPLAIN"]).optional(),

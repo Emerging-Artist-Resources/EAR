@@ -108,32 +108,7 @@ export const eventFormSchema = baseSchema
           message: "Artist type is required",
         })
       }
-      // Only validate listingFeeOption for EMERGING artists
-      // ESTABLISHED artists don't see this field (it's auto-set)
-      if (data.artistType === "EMERGING") {
-        if (!data.listingFeeOption) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["listingFeeOption"],
-            message: "Listing fee option is required",
-          })
-        }
-        // Conditional validations only apply to EMERGING artists
-        if (data.listingFeeOption === "EXPLAIN" && (!data.listingFeeExplanation || data.listingFeeExplanation.trim() === "")) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["listingFeeExplanation"],
-            message: "Please explain your alternative arrangement",
-          })
-        }
-        if (data.listingFeeOption === "PROVIDE" && (!data.complementaryTicketInfo || data.complementaryTicketInfo.trim() === "")) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["complementaryTicketInfo"],
-            message: "Please provide complementary ticket information",
-          })
-        }
-      }
+      // Emerging artists: platform listing fee waived (no listingFeeOption / comp / waiver).
     }
     
     // Validate URL format for link field when it's required

@@ -91,9 +91,8 @@ export const classFields = z
 
     /**
      * Class/Workshop listing fee fields (shared field names)
-     * Established artists: $50 fee (automatic)
-     * Emerging artists: choose between $35 fee, provide guest spot, or explain
-     * For CLASS type with multiple dates: additional fees may apply
+     * Established: platform listing fee (automatic).
+     * Emerging: waived server-side; these fields stay null for EMERGING profiles.
      */
     artistType: z.enum(["ESTABLISHED", "EMERGING"]).optional(),
     listingFeeOption: z.enum(["PAY_FEE", "PROVIDE", "EXPLAIN"]).optional(),

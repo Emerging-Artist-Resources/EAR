@@ -58,6 +58,7 @@ export type PublicListingDetail = {
     title?: string
     description?: string
     host?: string
+    dates?: string | null
     compensation?: string
     requirements?: string
     link?: string
@@ -316,21 +317,7 @@ export function CreativeDetails({ details }: { details: NonNullable<PublicListin
       <FieldRow label="Host" value={details.host} />
       <FieldRow label="Compensation" value={details.compensation} />
       <FieldRow label="Requirements" value={details.requirements} />
-      <FieldRow 
-        label="Link" 
-        value={
-          details.link ? (
-            <a 
-              className="text-primary-600 hover:text-primary-700 underline" 
-              href={details.link} 
-              target="_blank" 
-              rel="noopener noreferrer"
-            >
-              {details.link}
-            </a>
-          ) : undefined
-        } 
-      />
+      <FieldRow label="Instructions" value={details.link} />
     </>
   )
 }
