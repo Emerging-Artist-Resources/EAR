@@ -1,0 +1,96 @@
+/**
+ * Shared rules for one occurrence / showtime row: location + (optional) time gating
+ * for organizer list UI and Zod superRefine, so copy stays in sync.
+ */
+
+export const ORGANIZER_OCCURRENCE_USER_MESSAGES = {
+  /** addIssue on occurrences when nothing usable yet */
+  needSchedule: "Add at least one showtime with a date, a time, and a location.",
+  /** addIssue on occurrences.n.address when location missing */
+  locationOnSubmit: "Select a location for this showtime — use search to pick a venue or address on the map.",
+  /** setError in UI when user adds another showtime without finishing the row above */
+  addAnotherNeedDate: "Add a date for this showtime before you add another.",
+  addAnotherNeedTime: "Add a time for every slot in this showtime before you add another.",
+  addAnotherNeedLocation: "Choose a location before you add another showtime — search the map or type a venue or address.",
+} as const
+
+export type OccurrenceLike = {
+  date?: string
+  times?: { time?: string }[]
+  address?: string
+  venueName?: string
+  placeId?: string
+}
+
+export function hasPerOccurrenceLocation(entry: OccurrenceLike | undefined): boolean {
+  if (!entry) return false
+  const a = (entry.address ?? "").trim()
+  const v = (entry.venueName ?? "").trim()
+  const p = (entry.placeId ?? "").trim()
+  return a !== "" || v !== "" || p !== ""
+}
+
+/** Matches Zod: at least one time row, and every listed time is non-empty. */
+export function occurrenceRowHasAllTimesFilled(entry: OccurrenceLike | undefined, requireTime: boolean): boolean {
+  if (!requireTime) return true
+  if (!Array.isArray(entry?.times) || entry.times.length === 0) return false
+  return entry.times.every((t) => (t?.time ?? "").trim() !== "")
+}
+
+/** A row is “in use” for location rules when date is set and all times (if any) are valid per schema. */
+export function occurrenceRowDateAndTimesSatisfied(
+  entry: OccurrenceLike | undefined,
+  requireTime: boolean,
+): boolean {
+  if (!entry?.date?.trim()) return false
+  if (!requireTime) return true
+  return occurrenceRowHasAllTimesFilled(entry, true)
+}
+
+/**
+ * Organizer per-row completion: date, (optional) all times, and optionally a location identifier.
+ * Used to gate “Confirm showtimes”, “+ Add another showtime”, and align with zod for submit.
+ * When `requireLocation` is false (e.g. audition / deadline-only rows), location is not checked.
+ */
+export function isOrganizerOccurrenceRowComplete(
+  entry: OccurrenceLike | undefined,
+  options: { requireTime: boolean; requireLocation?: boolean },
+): boolean {
+  if (!occurrenceRowDateAndTimesSatisfied(entry, options.requireTime)) return false
+  if (options.requireLocation === false) return true
+  return hasPerOccurrenceLocation(entry)
+}
+
+/** True when the array is non-empty and every row is complete. */
+export function isEveryOrganizerOccurrenceRowComplete(
+  entries: OccurrenceLike[] | undefined,
+  requireTime: boolean,
+  requireLocation?: boolean,
+): boolean {
+  if (!entries || entries.length === 0) return false
+  return entries.every((e) => isOrganizerOccurrenceRowComplete(e, { requireTime, requireLocation }))
+}
+
+/** Rows that are “started” in the sense the server cares about, but still missing address/venue/place. */
+export function indexOfOrganizerRowsMissingLocation(
+  entries: OccurrenceLike[] | undefined,
+  requireTime: boolean,
+): number[] {
+  if (!entries) return []
+  return entries
+    .map((occ, index) => ({ occ, index }))
+    .filter(
+      ({ occ }) => occurrenceRowDateAndTimesSatisfied(occ, requireTime) && !hasPerOccurrenceLocation(occ),
+    )
+    .map(({ index }) => index)
+}
+
+/** At least one row is fully valid for the coarse “add something” check. */
+export function hasSomeCompleteOrganizerOccurrence(
+  entries: OccurrenceLike[] | undefined,
+  requireTime: boolean,
+  requireLocation?: boolean,
+): boolean {
+  if (!entries?.length) return false
+  return entries.some((e) => isOrganizerOccurrenceRowComplete(e, { requireTime, requireLocation }))
+}

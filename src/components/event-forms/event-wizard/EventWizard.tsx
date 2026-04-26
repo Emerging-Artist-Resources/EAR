@@ -93,7 +93,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       agreeCompTickets: false,
       address: "",
       // Only initialize extraOccurrences for performance types (legacy field)
-      // For auditions, occurrences and deadlineOccurrences are initialized by DateTimeList
+      // For auditions, occurrences and deadlineOccurrences are initialized by ShowtimesList
       extraOccurrences: [],
       occurrences: [],
       deadlineOccurrences: [],

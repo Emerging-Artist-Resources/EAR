@@ -1,0 +1,318 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client"
+
+import { useEffect, forwardRef } from "react"
+import { UseFormReturn, FieldValues, useFieldArray, Path } from "react-hook-form"
+import { Input } from "@/components/ui/input"
+import { Card } from "@/components/ui/card"
+import { LocationField, LocationFieldInstructions } from "./LocationField"
+import type { LocationConfigFull } from "./DateTime/types"
+
+function getTodayDateString(): string {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, "0")
+  const day = String(today.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+function shouldShowFieldError(
+  form: UseFormReturn<any>,
+  fieldName: string,
+  errorMode: "touched" | "always",
+) {
+  const state = form.getFieldState(fieldName as any, form.formState)
+  if (!state?.error) return false
+  if (errorMode === "always") return true
+  // Inline actions (e.g. “+ Add another time”) use setError(..., { type: "manual" }) — show immediately.
+  if (state.error.type === "manual") return true
+  return (
+    state.isTouched ||
+    form.formState.isSubmitted ||
+    form.formState.submitCount > 0
+  )
+}
+
+function getErrorMessage(form: UseFormReturn<any>, fieldName: string) {
+  const state = form.getFieldState(fieldName as any, form.formState)
+  return state?.error?.message as string | undefined
+}
+
+export interface ShowtimeRowProps<T extends FieldValues> {
+  form: UseFormReturn<T>
+  name: string
+  index: number
+  showTime: boolean
+  errorMode: "touched" | "always"
+  labelIndex: number
+  /** When omitted, the row is date / time only (e.g. deadlines, auditions). */
+  locationConfig?: LocationConfigFull
+  /** Per-card heading prefix (e.g. "Showtime", "Class date", "Deadline"). */
+  rowLabel?: string
+  /** When false, heading is only `rowLabel` (e.g. single-slot lists with `maxDates={1}`). */
+  showLabelIndex?: boolean
+  onRemove: (index: number) => void
+  canRemove: boolean
+  maxTimesPerDate?: number
+  dateInputId: string
+}
+
+export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
+  function ShowtimeRow(
+    {
+      form,
+      name,
+      index,
+      showTime,
+      errorMode,
+      labelIndex,
+      locationConfig,
+      rowLabel = "Showtime",
+      showLabelIndex = true,
+      onRemove,
+      canRemove,
+      maxTimesPerDate,
+      dateInputId,
+    },
+    ref,
+  ) {
+    const { control, register, getValues, setError } = form
+    // Subscribe to validation + touch state so field errors update after Zod / setError (same pattern as LocationField).
+    void form.formState.errors
+    void form.formState.touchedFields
+    void form.formState.isSubmitted
+    void form.formState.submitCount
+
+    const { fields: times, append: appendTime, remove: removeTime } = useFieldArray({
+      control,
+      name: `${name}.${index}.times` as any,
+    })
+    const dateFieldName = `${name}.${index}.date`
+
+    const showDateErr = shouldShowFieldError(form, dateFieldName, errorMode)
+    const dateErrMsg = showDateErr ? getErrorMessage(form, dateFieldName) : undefined
+
+    const canAddTime = showTime && (!maxTimesPerDate || times.length < maxTimesPerDate)
+
+    const handleAddTime = () => {
+      if (!showTime) return
+      if (maxTimesPerDate && times.length >= maxTimesPerDate) return
+
+      const date = getValues(dateFieldName as any) as string | undefined
+      if (!String(date ?? "").trim()) {
+        setError(dateFieldName as any, { type: "manual", message: "Date is required" }, { shouldFocus: true })
+        return
+      }
+
+      const lastIdx = times.length - 1
+      const lastTime =
+        times.length > 0
+          ? ((getValues(`${name}.${index}.times.${lastIdx}.time` as any) as string | undefined) ?? "")
+          : ""
+
+      if (times.length > 0 && !String(lastTime).trim()) {
+        setError(
+          `${name}.${index}.times.${lastIdx}.time` as any,
+          { type: "manual", message: "Time is required" },
+          { shouldFocus: true },
+        )
+        return
+      }
+
+      appendTime({ time: "" } as any)
+    }
+
+    const handleRemoveTime = (timeIndex: number) => {
+      removeTime(timeIndex)
+    }
+
+    // Ensure a first time row exists when the section shows time fields (RHF v7+ stable `append` ref).
+    useEffect(() => {
+      if (!showTime) return
+      if (times.length > 0) return
+      appendTime({ time: "" } as any)
+    }, [showTime, times.length, appendTime])
+
+    const firstTimeFieldName = `${name}.${index}.times.0.time`
+    const showFirstTimeErr = showTime ? shouldShowFieldError(form, firstTimeFieldName, errorMode) : false
+    const firstTimeErrMsg = showFirstTimeErr ? getErrorMessage(form, firstTimeFieldName) : undefined
+
+    const hasTime = showTime && times.length > 0
+    const hasLocation = Boolean(locationConfig)
+    const hasInstructionsField = Boolean(locationConfig?.instructionsName)
+    const gridColsClass =
+      hasTime && hasLocation ? "md:grid-cols-3" : hasTime || hasLocation ? "md:grid-cols-2" : "md:grid-cols-1"
+
+    return (
+      <Card
+        ref={ref}
+        className="space-y-3 rounded-2xl border border-primary-200/90 bg-gradient-to-b from-primary-50/50 to-white p-4 shadow-sm"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <h4 className="text-sm font-semibold text-gray-900">
+            {showLabelIndex ? `${rowLabel} ${labelIndex}` : rowLabel}
+          </h4>
+          {canRemove && (
+            <button
+              type="button"
+              onClick={() => onRemove(index)}
+              className="shrink-0 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-800"
+            >
+              Remove
+            </button>
+          )}
+        </div>
+
+        {/*
+          Row 1: date | (time) | place only — address row is isolated from row 2 so
+          opening instructions does not move date / time / location.
+        */}
+        <div className={`grid grid-cols-1 items-start gap-x-3 gap-y-2 ${gridColsClass}`}>
+            <div className="w-full min-w-0 sm:max-w-[12.5rem] md:max-w-none">
+              <label htmlFor={dateInputId} className="mb-1 block text-sm font-medium text-gray-700">
+                Date <span className="text-error-600">*</span>
+              </label>
+              <Input
+                id={dateInputId}
+                type="date"
+                min={getTodayDateString()}
+                error={showDateErr}
+                className="w-full"
+                {...register(dateFieldName as any)}
+              />
+              {dateErrMsg && <p className="mt-1 text-xs text-red-600">{dateErrMsg}</p>}
+            </div>
+
+            {hasTime && (
+              <div className="w-full min-w-0 sm:max-w-[9.5rem] md:max-w-none">
+                <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor={`${dateInputId}-time-0`}>
+                  Time <span className="text-error-600">*</span>
+                </label>
+                <Input
+                  id={`${dateInputId}-time-0`}
+                  type="time"
+                  error={showFirstTimeErr}
+                  className="w-full"
+                  {...register(firstTimeFieldName as any)}
+                />
+                {firstTimeErrMsg && <p className="mt-1 text-xs text-red-600">{firstTimeErrMsg}</p>}
+              </div>
+            )}
+
+            {hasLocation && locationConfig && (
+              <>
+                <div
+                  className={
+                    hasTime
+                      ? "min-h-0 min-w-0 md:row-start-1 md:col-start-3"
+                      : "min-h-0 min-w-0 md:row-start-1 md:col-start-2"
+                  }
+                >
+                  <LocationField
+                    form={form}
+                    addressName={`${name}.${index}.${locationConfig.addressName}` as Path<FieldValues>}
+                    venueName={locationConfig.venueName ? (`${name}.${index}.${locationConfig.venueName}` as Path<FieldValues>) : undefined}
+                    placeIdName={locationConfig.placeIdName ? (`${name}.${index}.${locationConfig.placeIdName}` as Path<FieldValues>) : undefined}
+                    latName={locationConfig.latName ? (`${name}.${index}.${locationConfig.latName}` as Path<FieldValues>) : undefined}
+                    lngName={locationConfig.lngName ? (`${name}.${index}.${locationConfig.lngName}` as Path<FieldValues>) : undefined}
+                    instructionsName={locationConfig.instructionsName ? (`${name}.${index}.${locationConfig.instructionsName}` as Path<FieldValues>) : undefined}
+                    includeInstructionsInPlace={false}
+                    label={locationConfig.label || "Location"}
+                    note={locationConfig.note}
+                    required={locationConfig.required ?? true}
+                    compact
+                    className="w-full"
+                    errorMode={errorMode}
+                  />
+                </div>
+
+                {hasInstructionsField && (
+                  <div
+                    className={
+                      hasTime
+                        ? "hidden h-0 overflow-hidden p-0 md:col-span-2 md:col-start-1 md:row-start-2 md:block"
+                        : "hidden h-0 overflow-hidden p-0 md:col-start-1 md:row-start-2 md:block"
+                    }
+                    aria-hidden
+                  />
+                )}
+
+                {hasInstructionsField && (
+                  <div
+                    className={
+                      hasTime
+                        ? "min-w-0 md:row-start-2 md:col-start-3"
+                        : "min-w-0 md:row-start-2 md:col-start-2"
+                    }
+                  >
+                    <LocationFieldInstructions
+                      form={form}
+                      instructionsName={
+                        `${name}.${index}.${locationConfig.instructionsName}` as Path<FieldValues>
+                      }
+                      instructionsLabel={locationConfig.instructionsLabel ?? "Location instructions"}
+                      instructionsPlaceholder={locationConfig.instructionsPlaceholder}
+                      instructionsCollapsible
+                      addButtonTightTop
+                      errorMode={errorMode}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+        </div>
+
+        {showTime && times.length > 1 && (
+          <div className="space-y-2 border-t border-primary-200/50 pt-3">
+            {times.slice(1).map((timeField, sliceIndex) => {
+              const timeIndex = sliceIndex + 1
+              const timeFieldName = `${name}.${index}.times.${timeIndex}.time`
+              const showTimeErr = shouldShowFieldError(form, timeFieldName, errorMode)
+              const timeErrMsgLocal = showTimeErr ? getErrorMessage(form, timeFieldName) : undefined
+
+              return (
+                <div key={timeField.id} className="flex flex-wrap items-end gap-2 sm:gap-3">
+                  <div className="min-w-0 sm:max-w-[9.5rem] sm:flex-1">
+                    <label
+                      className="mb-1 block text-sm font-medium text-gray-700"
+                      htmlFor={`${dateInputId}-time-${timeIndex}`}
+                    >
+                      Additional time <span className="text-error-600">*</span>
+                    </label>
+                    <Input
+                      id={`${dateInputId}-time-${timeIndex}`}
+                      type="time"
+                      error={showTimeErr}
+                      className="w-full"
+                      {...register(timeFieldName as any)}
+                    />
+                    {timeErrMsgLocal && <p className="mt-1 text-xs text-red-600">{timeErrMsgLocal}</p>}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTime(timeIndex)}
+                    className="rounded border border-gray-300 px-2.5 py-2 text-xs hover:bg-gray-50"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {showTime && canAddTime && (
+          <button
+            type="button"
+            onClick={handleAddTime}
+            className="w-full text-left text-sm font-medium text-gray-800 hover:underline sm:w-auto"
+          >
+            + Add another time
+          </button>
+        )}
+      </Card>
+    )
+  },
+)
+
+ShowtimeRow.displayName = "ShowtimeRow"

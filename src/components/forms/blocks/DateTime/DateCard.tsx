@@ -49,6 +49,8 @@ interface DateCardProps<T extends FieldValues> {
   maxTimesPerDate?: number
   locationConfig?: LocationConfigFull
   syncLocation?: boolean
+  /** When greater than 1, header shows "N of total" for scanability */
+  totalOccurrences?: number
 }
 
 export function DateCard<T extends FieldValues>({
@@ -64,6 +66,7 @@ export function DateCard<T extends FieldValues>({
   maxTimesPerDate,
   locationConfig,
   syncLocation = true,
+  totalOccurrences,
 }: DateCardProps<T>) {
   const { control, register, getValues, setError } = form
 
@@ -122,23 +125,32 @@ export function DateCard<T extends FieldValues>({
     timesArray.append({ time: "" } as any)
   }, [showTime, times.length, timesArray])
 
+  const showOccurrenceCount = typeof totalOccurrences === "number" && totalOccurrences > 1
+
   return (
-    <Card className="space-y-3 rounded-2xl border border-primary-200 bg-primary-50/40 p-4">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium">Date {index + 1}</h4>
+    <Card className="space-y-4 rounded-2xl border border-primary-200/90 bg-gradient-to-b from-primary-50/50 to-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h4 className="text-sm font-semibold text-gray-900">Occurrence {index + 1}</h4>
+          {showOccurrenceCount && (
+            <p className="mt-0.5 text-xs text-gray-500">
+              {index + 1} of {totalOccurrences} — calendar date and start time(s)
+            </p>
+          )}
+        </div>
         {!disableRemove && (
           <button
             type="button"
             onClick={() => removeDate(index)}
-            className="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+            className="shrink-0 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-800"
           >
-            Remove date
+            Remove
           </button>
         )}
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Date *</label>
+        <label className="mb-1 block text-sm font-medium text-gray-700">Calendar date *</label>
         <Input
           type="date"
           min={getTodayDateString()}
@@ -149,7 +161,8 @@ export function DateCard<T extends FieldValues>({
       </div>
 
       {showTime && (
-        <div className="space-y-2">
+        <div className="space-y-2 border-t border-primary-200/60 pt-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Start time(s)</p>
           {times.map((timeField, timeIndex) => {
             const timeFieldName = `${name}.${index}.times.${timeIndex}.time`
             const showTimeErr = shouldShowFieldError(form, timeFieldName, errorMode)
@@ -203,7 +216,8 @@ export function DateCard<T extends FieldValues>({
       )}
 
       {locationConfig && !syncLocation && (
-        <div className="mt-3">
+        <div className="mt-1 border-t border-primary-200/60 pt-4">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">Venue for this day</p>
           <LocationField
             form={form}
             addressName={`${name}.${index}.${locationConfig.addressName}` as Path<T>}

@@ -1,5 +1,10 @@
 import { z } from "zod"
 import { baseSchema, occurrenceSchema, occurrencesSchema, extraDateSchema, extraTimeSchema } from "./base"
+import {
+  hasSomeCompleteOrganizerOccurrence,
+  indexOfOrganizerRowsMissingLocation,
+  ORGANIZER_OCCURRENCE_USER_MESSAGES,
+} from "./occurrence-row"
 import { performanceFields } from "./performance"
 import { auditionFields } from "./audition"
 import { creativeFields } from "./creative"
@@ -254,50 +259,31 @@ export const performanceStep2Schema = baseSchema
           message: "Price is required",
         })
       }
-      const hasValidOccurrences = Array.isArray(data.occurrences) &&
-        data.occurrences.length > 0 &&
-        data.occurrences.some(
-          (d) =>
-            d?.date && d.date.trim() !== "" &&
-            Array.isArray(d?.times) &&
-            d.times.length > 0 &&
-            d.times.some((t) => t?.time && t.time.trim() !== "")
-        )
-      if (!hasValidOccurrences) {
+      const occs = data.occurrences
+      if (!Array.isArray(occs) || occs.length === 0) {
         ctx.addIssue({
           code: "custom",
           path: ["occurrences"],
-          message: "Add at least one date & time",
+          message: ORGANIZER_OCCURRENCE_USER_MESSAGES.needSchedule,
         })
-      } else if (Array.isArray(data.occurrences)) {
-        // Validate that each occurrence has location data
-        const occurrencesWithMissingLocation = data.occurrences
-          .map((occ, index) => ({ occ, index }))
-          .filter(({ occ }) => {
-            // Check if this occurrence has valid date/time
-            const hasValidDateTime = occ?.date && occ.date.trim() !== "" &&
-              Array.isArray(occ?.times) &&
-              occ.times.length > 0 &&
-              occ.times.some((t) => t?.time && t.time.trim() !== "")
-            
-            if (!hasValidDateTime) return false
-            
-            // Check if location is provided (at least one of: address, venueName, or placeId)
-            const hasLocation = (occ?.address && occ.address.trim() !== "") ||
-              (occ?.venueName && occ.venueName.trim() !== "") ||
-              (occ?.placeId && occ.placeId.trim() !== "")
-            
-            return !hasLocation
+      } else {
+        const requireTime = true
+        const missingLocationIndexes = indexOfOrganizerRowsMissingLocation(occs, requireTime)
+        for (const index of missingLocationIndexes) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["occurrences", index, "address"],
+            message: ORGANIZER_OCCURRENCE_USER_MESSAGES.locationOnSubmit,
           })
-        
-        if (occurrencesWithMissingLocation.length > 0) {
-          // Report error for each occurrence missing location
-          occurrencesWithMissingLocation.forEach(({ index }) => {
-            ctx.addIssue({
-              code: "custom",
-              path: ["occurrences", index, "address"],
-              message: "Location is required for each date & time",
-            })
+        }
+        if (
+          !hasSomeCompleteOrganizerOccurrence(occs, requireTime) &&
+          missingLocationIndexes.length === 0
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["occurrences"],
+            message: ORGANIZER_OCCURRENCE_USER_MESSAGES.needSchedule,
           })
         }
       }

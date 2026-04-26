@@ -3,7 +3,7 @@
 import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { useMemo, useState, useEffect } from "react"
 import { Section } from "@/components/forms/blocks/Section"
-import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
+import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { EventFormData } from "@/lib/validations/events"
 import { apiGet } from "@/lib/fetch-utils"
@@ -169,12 +169,13 @@ export function ClassOccurrencesPicker({ form, label }: ClassOccurrencesPickerPr
             ← Select dates from festival/workshop
           </button>
         )}
-        <DateTimeList
+        <ShowtimesList
           form={form as unknown as UseFormReturn<Record<string, unknown>>}
           name={"occurrences"}
           title="Class Dates & Times"
           note="Add all known dates and start times."
           required
+          rowLabel="Class date"
           maxTimesPerDate={1}
           locationConfig={{
             addressName: "address",
@@ -224,12 +225,13 @@ export function ClassOccurrencesPicker({ form, label }: ClassOccurrencesPickerPr
 
           {hasSelectedDates && (
             <div className="mt-4">
-              <DateTimeList
+              <ShowtimesList
                 form={form as unknown as UseFormReturn<Record<string, unknown>>}
                 name={"occurrences"}
                 title="Add times for selected dates"
                 note="Add start time(s) for each selected date."
                 required
+                rowLabel="Class date"
                 maxTimesPerDate={1}
                 locationConfig={{
                   addressName: "address",

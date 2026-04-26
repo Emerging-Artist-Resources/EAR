@@ -2,7 +2,7 @@
 
 import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { useMemo, useState, useEffect, useRef } from "react"
-import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
+import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { EventFormData } from "@/lib/validations/events"
 import { apiGet } from "@/lib/fetch-utils"
@@ -289,7 +289,7 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
     
     // Show selection dropdown when we have parent occurrences (regardless of custom mode)
     const shouldShowSelection = hasParentOccurrences
-    // Show custom DateTimeList when: custom mode is enabled, OR in CUSTOM_ONLY mode, OR no parent occurrences
+    // Show custom ShowtimesList when: custom mode is enabled, OR in CUSTOM_ONLY mode, OR no parent occurrences
     const shouldShowCustomDateTime = isCustomOnly || useCustomDateTime || (isSelectFromParent && !hasParentOccurrences)
 
     return {
@@ -355,12 +355,13 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
 
       {flags.shouldShowCustomDateTime && (
         <>
-          <DateTimeList
+          <ShowtimesList
             key={customDateTimeKey}
             form={form as unknown as UseFormReturn<Record<string, unknown>>}
             title="Add your piece date(s) & time(s)"
             name="extraOccurrences"
             required
+            rowLabel="Piece date"
             locationConfig={{
               addressName: "address",
               venueName: "venueName",

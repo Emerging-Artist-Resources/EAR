@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { occurrenceSchema, extraDateSchema } from "./base"
+import { ORGANIZER_OCCURRENCE_USER_MESSAGES } from "./occurrence-row"
 
 /**
  * Performance-only fields
@@ -206,7 +207,7 @@ export const performanceFields = z
         ctx.addIssue({
           code: "custom",
           path: ["occurrences"],
-          message: "Add at least one date & time",
+          message: ORGANIZER_OCCURRENCE_USER_MESSAGES.needSchedule,
         })
       }
     }
