@@ -30,6 +30,8 @@ function CalendarViewContent() {
     title: string
     starts_at_utc: string | null
     ends_at_utc: string | null
+    cover_image_url?: string | null
+    cover_image_credit?: string | null
   }>>([])
   const { isAuthed } = useAuth()
   const { items, deadlines, loading, fetchCalendar } = useCalendar()
@@ -135,6 +137,12 @@ function CalendarViewContent() {
                       title={listing.title}
                       starts_at_utc={listing.starts_at_utc}
                       ends_at_utc={listing.ends_at_utc}
+                      coverImageUrl={listing.cover_image_url}
+                      coverImageAlt={
+                        listing.cover_image_credit
+                          ? `Listing photo: ${listing.cover_image_credit}`
+                          : `${listing.title} — photo`
+                      }
                     />
                   ))}
                 </HorizontalScrollCards>

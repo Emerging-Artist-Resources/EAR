@@ -58,9 +58,43 @@ export function AdminEventCard({
   const [comments, setComments] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  
+  const [photoReorderBusy, setPhotoReorderBusy] = useState(false)
+
   // Only admins and reviewers can download photos
   const canDownload = role === "ADMIN" || role === "REVIEWER"
+
+  const reorderPhotos = async (photoIds: string[]) => {
+    if (!detail || photoReorderBusy) return
+    setPhotoReorderBusy(true)
+    try {
+      const res = await fetch(`/api/admin/photos/${item.id}/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoIds }),
+      })
+      if (!res.ok) return
+      const refreshed = await fetch(`/api/admin/events/${item.id}`)
+      if (refreshed.ok) {
+        const json = await refreshed.json()
+        setDetail(json?.data ?? null)
+      }
+    } finally {
+      setPhotoReorderBusy(false)
+    }
+  }
+
+  const movePhoto = (sortedIndex: number, delta: number) => {
+    const sorted = [...(detail?.listing_photos ?? [])].sort(
+      (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+    )
+    const j = sortedIndex + delta
+    if (j < 0 || j >= sorted.length) return
+    const next = [...sorted]
+    const tmp = next[sortedIndex]!
+    next[sortedIndex] = next[j]!
+    next[j] = tmp
+    void reorderPhotos(next.map((p) => p.id))
+  }
 
   const submittedAt = useMemo(
     () => new Date(item.submitted_at).toLocaleString(),
@@ -385,7 +419,9 @@ export function AdminEventCard({
             <h4 className="text-base font-bold text-[var(--gray-900)]">Photos</h4>
             {detail.listing_photos?.length ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {detail.listing_photos.map((p: { id: string; path: string; credit?: string | null; sort_order?: number; url?: string | null }) => {
+                {[...detail.listing_photos]
+                  .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                  .map((p: { id: string; path: string; credit?: string | null; sort_order?: number; url?: string | null }, index, arr) => {
                   const handleDownload = async (e: React.MouseEvent) => {
                     e.preventDefault()
                     if (!p.url) return
@@ -414,12 +450,40 @@ export function AdminEventCard({
                   }
 
                   return (
-                    <PhotoThumbnail
-                      key={p.id}
-                      photo={p}
-                      onDownload={handleDownload}
-                      showDownload={canDownload}
-                    />
+                    <div key={p.id} className="space-y-1">
+                      <PhotoThumbnail
+                        photo={p}
+                        onDownload={handleDownload}
+                        showDownload={canDownload}
+                      />
+                      {canDownload && arr.length > 1 && (
+                        <div className="flex gap-1 flex-wrap">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-7 px-2"
+                            disabled={photoReorderBusy || index === 0}
+                            onClick={() => movePhoto(index, -1)}
+                          >
+                            Up
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-7 px-2"
+                            disabled={photoReorderBusy || index === arr.length - 1}
+                            onClick={() => movePhoto(index, 1)}
+                          >
+                            Down
+                          </Button>
+                          {index === 0 && (
+                            <span className="text-xs text-[var(--gray-600)] self-center ml-1">Cover</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )
                 })}
               </div>
