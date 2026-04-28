@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { listCalendarItems, sendListingConfirmationEmail, sendAdminListingNotificationEmail } from "@/features/events/server/service"
 import { z } from "zod"
+import { flexibleUrlNullableSchema } from "@/lib/validations/flexible-url"
 import { createEventOwnedRepo, CreateListingInput } from "@/features/events/server/repository"
 import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamArray, validateRequestBody } from "@/lib/api-utils"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
@@ -38,7 +39,7 @@ const baseSchema = z.object({
   pronouns: z.string().optional().nullable(),
   contact_email: z.string().email("Invalid email address"),
   company: z.string().optional().nullable(),
-  company_website: z.string().url("Invalid URL").optional().nullable(),
+  company_website: flexibleUrlNullableSchema,
   address: z.string().optional().nullable(),
   place_id: z.string().optional().nullable(),
   lat: z.number().optional().nullable(),
@@ -72,14 +73,14 @@ const photoSchema = z.object({
 const pieceDetailsSchema = z.object({
   parent_listing_id: z.string().uuid().optional().nullable(),
   parent_event_name: z.string().optional().nullable(),
-  parent_event_website: z.string().url("Invalid URL").optional().nullable(),
-  parent_event_ticket_link: z.string().url("Invalid URL").optional().nullable(),
+  parent_event_website: flexibleUrlNullableSchema,
+  parent_event_ticket_link: flexibleUrlNullableSchema,
   parent_event_contact_email: z.string().email("Invalid email address").optional().nullable(),
   piece_schedule_mode: z.enum(["FROM_PARENT", "CUSTOM"]).optional().nullable(),
   selected_slots: z.array(z.string()).optional().nullable(),
   piece_title: z.string().optional().nullable(),
   piece_company: z.string().optional().nullable(),
-  piece_company_website: z.string().url("Invalid URL").optional().nullable(),
+  piece_company_website: flexibleUrlNullableSchema,
   piece_description: z.string().optional().nullable(),
   choreographer: z.string().optional().nullable(),
 })

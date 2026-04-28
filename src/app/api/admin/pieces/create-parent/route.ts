@@ -3,10 +3,11 @@ import { requireRole, hasRole } from "@/lib/auth-helpers"
 import { handleApiError, createSuccessResponse, createErrorResponse, ErrorCodes, validateRequestBody } from "@/lib/api-utils"
 import { createMinimalParentEventRepo } from "@/features/events/server/admin"
 import { z } from "zod"
+import { flexibleUrlNullableSchema } from "@/lib/validations/flexible-url"
 
 const createParentSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  website: z.string().url().optional().nullable().or(z.literal("")),
+  website: flexibleUrlNullableSchema,
   email: z.string().email().optional().nullable().or(z.literal("")),
   pieceIds: z.array(z.string().uuid()).min(1, "At least one piece ID is required"),
 })

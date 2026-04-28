@@ -127,11 +127,16 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
     }
 
     // Ensure a first time row exists when the section shows time fields (RHF v7+ stable `append` ref).
+    // Guard with getValues: nested useFieldArray can briefly report length 0 right after the parent
+    // row is appended (e.g. ShowtimesList seeding times: [{ time: "" }]), which would duplicate times.
     useEffect(() => {
       if (!showTime) return
       if (times.length > 0) return
+      const path = `${name}.${index}.times` as const
+      const raw = getValues(path as any) as unknown
+      if (Array.isArray(raw) && raw.length > 0) return
       appendTime({ time: "" } as any)
-    }, [showTime, times.length, appendTime])
+    }, [showTime, times.length, appendTime, getValues, name, index])
 
     const firstTimeFieldName = `${name}.${index}.times.0.time`
     const showFirstTimeErr = showTime ? shouldShowFieldError(form, firstTimeFieldName, errorMode) : false

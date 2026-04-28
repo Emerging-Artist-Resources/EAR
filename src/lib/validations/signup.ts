@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { signupOptionalWebsiteSchema } from "./flexible-url"
 
 // Constants
 export const SIGNUP_STEPS = {
@@ -114,21 +115,13 @@ export function getSignupErrorStepForPath(path: ReadonlyArray<PropertyKey>): Sig
   return "basic"
 }
 
-const optionalWebsiteSchema = z.preprocess((raw: unknown) => {
-  if (raw === null || raw === undefined || raw === "") return null
-  const s = String(raw).trim()
-  if (s === "") return null
-  if (/^https?:\/\//i.test(s)) return s
-  return `https://${s}`
-}, z.union([z.string().url("Enter a valid website URL"), z.null()]))
-
 // Schema Definitions
 const profileFields = z.object({
   profile_type: profileTypeEnum,
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   pronouns: z.string().optional().nullable(),
-  website: optionalWebsiteSchema.optional(),
+  website: signupOptionalWebsiteSchema,
   organization_name: z.string().optional().nullable(),
   location_place_id: z.string().optional().nullable(),
   location_label: z.string().optional().nullable(),

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { flexibleUrlRequiredSchema } from "../flexible-url"
 import { baseSchema, occurrenceSchema, occurrencesSchema, extraDateSchema, extraTimeSchema } from "./base"
 import {
   hasSomeCompleteOrganizerOccurrence,
@@ -111,18 +112,7 @@ export const eventFormSchema = baseSchema
       // Emerging artists: platform listing fee waived (no listingFeeOption / comp / waiver).
     }
     
-    // Validate URL format for link field when it's required
-    if (isOrganizer && data.link && data.link.trim() !== "") {
-      try {
-        new URL(data.link)
-      } catch {
-        ctx.addIssue({
-          code: "custom",
-          path: ["link"],
-          message: "Ticket link must be a valid URL",
-        })
-      }
-    }
+    // Ticket link format is enforced by flexible URL preprocessing + zod on performanceFields.link
   })
   .passthrough()
 
@@ -215,17 +205,6 @@ export const performanceStep2Schema = baseSchema
           path: ["link"],
           message: "Ticket link is required",
         })
-      } else {
-        // Validate URL format
-        try {
-          new URL(data.link)
-        } catch {
-          ctx.addIssue({
-            code: "custom",
-            path: ["link"],
-            message: "Ticket link must be a valid URL",
-          })
-        }
       }
       if (!data.price || data.price.trim() === "") {
         ctx.addIssue({
@@ -769,7 +748,7 @@ export const classStep2Schema = baseSchema
 
 // Funding step 2 schema (minimal - only fundingLink)
 export const fundingStep2Schema = z.object({
-  fundingLink: z.string().min(1, "Funding link is required"),
+  fundingLink: flexibleUrlRequiredSchema("Invalid URL", "Funding link is required"),
 }).passthrough()
 
 // Backwards-compat exports for existing imports

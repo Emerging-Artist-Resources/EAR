@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { flexibleUrlOptionalSchema } from "../flexible-url"
 import { occurrenceSchema } from "./base"
 
 // Class / Workshop-only
@@ -15,7 +16,7 @@ export const classFields = z
     description: z.string().max(2000, "Description must be 2000 characters or less").optional(),
     organizer: z.string().optional(),
     price: z.string().optional(),
-    link: z.string().optional(),
+    link: flexibleUrlOptionalSchema,
     teachers: z.string().optional(),
     styleCategory: z.string().optional(), // or z.enum([...]) if you want strict options
     venueName: z.string().optional(),
@@ -68,7 +69,7 @@ export const classFields = z
      * You can remove these later once migrations are done.
      */
     festivalName: z.string().optional(),
-    festivalLink: z.string().url("Invalid URL").optional(),
+    festivalLink: flexibleUrlOptionalSchema,
     className: z.string().optional(),
     classDates: z.string().optional(),
     classTimes: z.string().optional(),
@@ -82,7 +83,7 @@ export const classFields = z
       .optional(),
     classPrices: z.string().optional(),
     classPrice: z.string().optional(),
-    classLink: z.string().url("Invalid URL").optional(),
+    classLink: flexibleUrlOptionalSchema,
     classDescription: z.string().max(2000).optional(),
     classCreditInfo: z.string().optional(),
     classRecurrence: z.string().optional(),

@@ -7,6 +7,11 @@ import { getEventFieldLabel } from "@/lib/form-helpers"
 import { normalizeErrorMessage } from "@/lib/validation-helpers"
 import type { EventType } from "@/components/event-forms/event-wizard/EventTypeSelector"
 
+function debugPieceSchedule(label: string, payload: unknown) {
+  if (process.env.NODE_ENV === "production") return
+  console.log(`[EAR piece schedule] ${label}`, payload)
+}
+
 /**
  * Hook for validating event form step 2 based on event type
  * Follows the same pattern as useStepValidation for consistency
@@ -42,9 +47,30 @@ export function useEventStepValidation(
 
     // Use step-specific schema instead of full schema + filtering
     const formData = form.getValues()
+    if (eventType === "PERFORMANCE") {
+      const fd = formData as Record<string, unknown>
+      debugPieceSchedule("validateStep (before safeParse)", {
+        type: fd.type,
+        parentEventId: fd.parentEventId,
+        parentEventMode: fd.parentEventMode,
+        pieceScheduleMode: fd.pieceScheduleMode,
+        selectedSlots: fd.selectedSlots,
+        eventDatesConfirmed: fd.eventDatesConfirmed,
+        occurrences: fd.occurrences,
+        extraOccurrences: fd.extraOccurrences,
+      })
+    }
     const result = step2Schema.safeParse(formData)
     
     if (!result.success) {
+      if (eventType === "PERFORMANCE") {
+        debugPieceSchedule("validateStep FAILED — zod issues", result.error.issues)
+        debugPieceSchedule("validateStep FAILED — issue paths", result.error.issues.map((i) => ({
+          path: i.path.join("."),
+          message: i.message,
+          code: i.code,
+        })))
+      }
       // Map schema errors to form errors
       result.error.issues.forEach((error) => {
         // Handle nested paths (e.g., ['occurrences', 0, 'address'])
@@ -79,8 +105,18 @@ export function useEventStepValidation(
         if (matchingIssue) {
           const fieldLabel = getEventFieldLabel(field)
           const errorMessage = matchingIssue.message || ""
-          return normalizeErrorMessage(errorMessage, fieldLabel) || 
-                 `${fieldLabel} is required`
+          const resolved =
+            normalizeErrorMessage(errorMessage, fieldLabel) || `${fieldLabel} is required`
+          if (eventType === "PERFORMANCE") {
+            debugPieceSchedule("getFirstError (from zod)", {
+              matchedField: field,
+              fieldLabel,
+              rawMessage: errorMessage,
+              resolvedToastMessage: resolved,
+              issuePath: matchingIssue.path.join("."),
+            })
+          }
+          return resolved
         }
       }
     }

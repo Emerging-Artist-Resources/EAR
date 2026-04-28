@@ -1,5 +1,6 @@
 import { z } from "zod"
-import { occurrenceSchema, extraDateSchema } from "./base"
+import { flexibleUrlOrEmptySchema, flexibleUrlOptionalSchema } from "../flexible-url"
+import { extraDateSchema } from "./base"
 import { ORGANIZER_OCCURRENCE_USER_MESSAGES } from "./occurrence-row"
 
 /**
@@ -13,8 +14,8 @@ export const performanceFields = z
     title: z.string().optional(),
     description: z.string().max(2000, "Description must be 2000 characters or less").optional(),
     organizer: z.string().optional(),
-    website: z.string().url("Invalid URL").optional().or(z.literal("")),
-    link: z.string().url("Invalid URL").optional().or(z.literal("")),
+    website: flexibleUrlOrEmptySchema,
+    link: flexibleUrlOrEmptySchema,
     price: z.string().optional(),
     participants: z.string().optional(),
 
@@ -31,21 +32,25 @@ export const performanceFields = z
 
     // Legacy festival / split-bill fields (keep for now)
     festival_name: z.string().optional(),
-    festival_link: z.string().url("Invalid URL").optional(),
+    festival_link: flexibleUrlOptionalSchema,
     split_bill_name: z.string().optional(),
-    split_bill_link: z.string().url("Invalid URL").optional(),
+    split_bill_link: flexibleUrlOptionalSchema,
 
     agreeCompTickets: z.boolean().optional(),
     eventDatesConfirmed: z.boolean().optional(),
 
     /**
-     * NEW (recommended): canonical occurrences used by UI
-     * Organizer: event schedule
-     * Piece: used when pieceScheduleMode = CUSTOM
-     * Note: Using z.array() without .min() to allow empty arrays.
-     * Validation requiring at least one occurrence is done conditionally in superRefine based on event type.
+     * Canonical occurrences used by UI (organizer schedule via ShowtimesList).
+     * Rows may include blank date/time placeholders while editing — same lenient shape as extraOccurrences.
+     * Strict "at least one real showtime" rules run in superRefine for ORGANIZER only.
+     * PIECE flow uses selectedSlots / extraOccurrences; stale organizer rows must not fail parse.
      */
-    occurrences: z.array(occurrenceSchema).optional(),
+    occurrences: z.array(
+      extraDateSchema.extend({
+        date: z.string().optional(),
+        times: z.array(z.object({ time: z.string().optional() })).optional(),
+      })
+    ).optional(),
 
     /**
      * LEGACY: keep accepting this (same shape) so existing UI doesn't break
@@ -82,8 +87,8 @@ export const performanceFields = z
 
     // If MANUAL:
     parentEventName: z.string().optional(),
-    parentEventWebsite: z.string().url("Invalid URL").optional().or(z.literal("")),
-    parentEventTicketLink: z.string().url("Invalid URL").optional(),
+    parentEventWebsite: flexibleUrlOrEmptySchema,
+    parentEventTicketLink: flexibleUrlOptionalSchema,
     parentEventContactEmail: z.string().email("Invalid email address").optional().or(z.literal("")),
 
     /**
@@ -109,7 +114,7 @@ export const performanceFields = z
      * These fields are used when submitting a piece within a larger event
      */
     piece_company: z.string().optional(),
-    piece_companyWebsite: z.string().url("Invalid URL").optional().or(z.literal("")),
+    piece_companyWebsite: flexibleUrlOrEmptySchema,
     piece_title: z.string().optional(),
     piece_choreographer: z.string().optional(),
     piece_description: z.string().optional(),

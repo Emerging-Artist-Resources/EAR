@@ -1,6 +1,6 @@
 "use client"
 
-import { UseFormReturn } from "react-hook-form"
+import { UseFormReturn, useFormState } from "react-hook-form"
 import { Select } from "@/components/ui/select"
 
 type Option = {
@@ -32,7 +32,8 @@ export function Dropdown<T extends Record<string, unknown>>({
   errorMode = "touched",
   className,
 }: DropdownProps<T>) {
-  const state = form.getFieldState(name as unknown as never)
+  useFormState({ control: form.control, name: name as never, exact: true })
+  const state = form.getFieldState(name as unknown as never, form.formState)
   const showError =
     Boolean(state.error) &&
     (errorMode === "always" ||

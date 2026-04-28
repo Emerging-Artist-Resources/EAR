@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react"
-import { UseFormReturn, Controller, useWatch } from "react-hook-form"
+import { UseFormReturn, Controller, useWatch, useFormState } from "react-hook-form"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Text } from "@/components/ui/typography"
@@ -126,7 +126,8 @@ function PhotoUploaderInner<T extends Record<string, unknown>>({
     }
   }, [files])
 
-  const state = form.getFieldState(name as unknown as never)
+  useFormState({ control: form.control, name: name as never, exact: true })
+  const state = form.getFieldState(name as unknown as never, form.formState)
   const showError =
     Boolean(state.error) &&
     (state.isTouched || form.formState.isSubmitted || form.formState.submitCount > 0)

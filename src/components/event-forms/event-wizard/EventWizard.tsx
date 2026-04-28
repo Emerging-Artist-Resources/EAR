@@ -126,6 +126,20 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       // Use validation hook directly - it's already memoized based on eventType
       const isValid = await validationHook.validateStep()
       if (!isValid) {
+        if (process.env.NODE_ENV !== "production" && eventType === "PERFORMANCE") {
+          const v = form.getValues()
+          console.log("[EAR piece schedule] step 2 Next blocked", {
+            toastMessage: validationHook.getFirstError() || DEFAULT_EVENT_ERROR_MESSAGE,
+            type: v.type,
+            selectedSlots: v.selectedSlots,
+            pieceScheduleMode: v.pieceScheduleMode,
+            occurrences: v.occurrences,
+            extraOccurrences: v.extraOccurrences,
+            eventDatesConfirmed: v.eventDatesConfirmed,
+            parentEventId: v.parentEventId,
+            formErrors: form.formState.errors,
+          })
+        }
         const errorMessage = validationHook.getFirstError() || DEFAULT_EVENT_ERROR_MESSAGE
         showToast(errorMessage, "error")
         return
@@ -213,6 +227,16 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
 
         // Additional validation for occurrences
         if (eventType === "PERFORMANCE" && payload.occurrences.length === 0) {
+          if (process.env.NODE_ENV !== "production") {
+            const v = data as Record<string, unknown>
+            console.log("[EAR piece schedule] submit blocked — payload has zero occurrences", {
+              formType: v.type,
+              selectedSlots: v.selectedSlots,
+              pieceScheduleMode: v.pieceScheduleMode,
+              formOccurrences: v.occurrences,
+              formExtraOccurrences: v.extraOccurrences,
+            })
+          }
           showToast("Please add at least one date & time", "error")
           setIsSubmitting(false)
           return
@@ -260,6 +284,19 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       }
     },
     (_errors) => {
+      if (process.env.NODE_ENV !== "production" && eventType === "PERFORMANCE") {
+        const v = form.getValues()
+        console.log("[EAR piece schedule] final Submit — RHF/zod rejected", {
+          rhfErrors: _errors,
+          type: v.type,
+          selectedSlots: v.selectedSlots,
+          pieceScheduleMode: v.pieceScheduleMode,
+          occurrences: v.occurrences,
+          extraOccurrences: v.extraOccurrences,
+          eventDatesConfirmed: v.eventDatesConfirmed,
+          parentEventId: v.parentEventId,
+        })
+      }
       // Simplified error handling using validation hook
       const errorMessage = validationHook.getFirstError() || DEFAULT_EVENT_ERROR_MESSAGE
       showToast(errorMessage, "error")
