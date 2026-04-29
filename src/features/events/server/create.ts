@@ -7,6 +7,7 @@ import type {
 } from "./repository-types"
 import { detailTable } from "./repository-types"
 import { calculateListingFee } from "./fee-calculator"
+import { buildPersistableListingMeta } from "./listing-meta-share"
 
 /** Emerging artists never pay platform listing fees for performance or class; force nulls so clients cannot set PAY_FEE. */
 function nullEmergingPlatformListingFeeFields(
@@ -57,7 +58,10 @@ export async function createListingOwnedRepo(
         location_instructions: input.base.location_instructions ?? null,
         social_handles: input.base.social_handles ?? null,
         notes: input.base.notes ?? null,
-        meta: input.base.meta ?? {},
+        meta: buildPersistableListingMeta(
+          input.base.meta as Record<string, unknown> | undefined,
+          input.base.contact_email
+        ),
       })
       .select("id")
       .single()
@@ -71,9 +75,9 @@ export async function createListingOwnedRepo(
     if (input.type === "funding") {
       throw new Error("Funding listings are not currently supported")
     }
-    
+
     const tbl = detailTable[input.type]
-    
+
     // Validate performance_details constraint: ORGANIZER must have title
     if (input.type === "performance" && input.details.subtype === "ORGANIZER") {
       if (!input.details.title) {
@@ -285,7 +289,10 @@ export async function createListingAnonymousRepo(
         location_instructions: input.base.location_instructions ?? null,
         social_handles: input.base.social_handles ?? null,
         notes: input.base.notes ?? null,
-        meta: input.base.meta ?? {},
+        meta: buildPersistableListingMeta(
+          input.base.meta as Record<string, unknown> | undefined,
+          input.base.contact_email
+        ),
       })
       .select("id")
       .single()
@@ -297,16 +304,16 @@ export async function createListingAnonymousRepo(
     if (input.type === "funding") {
       throw new Error("Funding listings are not currently supported")
     }
-    
+
     const tbl = detailTable[input.type]
-    
+
     // Validate performance_details constraint: ORGANIZER must have title
     if (input.type === "performance" && input.details.subtype === "ORGANIZER") {
       if (!input.details.title) {
         throw new Error("Performance ORGANIZER must have a title")
       }
     }
-    
+
     // For auditions, ensure artist_type is set (required NOT NULL)
     // For anonymous submissions, default to EMERGING if not provided
     if (input.type === "audition" && !input.details.artist_type) {

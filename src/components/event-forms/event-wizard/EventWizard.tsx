@@ -16,6 +16,7 @@ import { PageNumbers } from "@/components/forms/blocks/PageNumbers"
 import { useEventStepValidation } from "@/hooks/use-event-step-validation"
 import { DEFAULT_EVENT_ERROR_MESSAGE } from "@/lib/validations/events"
 import { buildEventPayload, type UserInfo } from "./payload-builders"
+import { normalizeShareRecipientEmails } from "@/lib/listing-share"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/contexts/ToastContext"
 import { apiPost, apiGet } from "@/lib/fetch-utils"
@@ -97,6 +98,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       extraOccurrences: [],
       occurrences: [],
       deadlineOccurrences: [],
+      shareRecipientEmails: [],
     } as Partial<EventFormData>,
     mode: 'onBlur',
     reValidateMode: 'onChange',
@@ -267,8 +269,23 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
             return
           }
         }
-        
-        showToast("Submitted successfully! Pending review.", "success")
+
+        if (eventType === "PERFORMANCE" && userInfo.email) {
+          const raw = (data.shareRecipientEmails ?? []).filter(
+            (e): e is string => typeof e === "string"
+          )
+          const n = normalizeShareRecipientEmails(raw, userInfo.email).length
+          if (n > 0) {
+            showToast(
+              `Submitted successfully! ${n} ${n === 1 ? "person" : "people"} will be notified once your listing is approved.`,
+              "success"
+            )
+          } else {
+            showToast("Submitted successfully! Pending review.", "success")
+          }
+        } else {
+          showToast("Submitted successfully! Pending review.", "success")
+        }
         form.reset()
         
         // Navigate after success message

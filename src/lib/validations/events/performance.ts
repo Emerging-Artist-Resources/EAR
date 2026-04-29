@@ -2,6 +2,7 @@ import { z } from "zod"
 import { flexibleUrlOrEmptySchema, flexibleUrlOptionalSchema } from "../flexible-url"
 import { extraDateSchema } from "./base"
 import { ORGANIZER_OCCURRENCE_USER_MESSAGES } from "./occurrence-row"
+import { MAX_SHARE_RECIPIENT_EMAILS } from "@/lib/listing-share"
 
 /**
  * Performance-only fields
@@ -119,6 +120,9 @@ export const performanceFields = z
     piece_choreographer: z.string().optional(),
     piece_description: z.string().optional(),
     piece_credits: z.string().optional(),
+
+    /** Optional: notify these addresses after the listing is approved (performance only; normalized server-side). */
+    shareRecipientEmails: z.array(z.string()).max(MAX_SHARE_RECIPIENT_EMAILS).optional(),
   })
   .superRefine((data, ctx) => {
     // Require type field for performance submissions
@@ -359,6 +363,23 @@ export const performanceFields = z
           code: "custom",
           path: ["piece_credits"],
           message: "Credits / Performers is required",
+        })
+      }
+    }
+
+    if (data.type === "ORGANIZER" || data.type === "PIECE") {
+      const emails = data.shareRecipientEmails
+      if (emails) {
+        emails.forEach((e, i) => {
+          const t = (e ?? "").trim()
+          if (t === "") return
+          if (!z.string().email().safeParse(t).success) {
+            ctx.addIssue({
+              code: "custom",
+              path: ["shareRecipientEmails", i],
+              message: "Invalid email address",
+            })
+          }
         })
       }
     }

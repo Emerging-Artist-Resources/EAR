@@ -20,6 +20,7 @@ type EventPayload = {
     location_instructions: string | null
     social_handles: string | null
     notes: string | null
+    meta?: Record<string, unknown>
     //borough: string | null
   }
   details: Record<string, unknown>
@@ -337,9 +338,21 @@ export async function buildPerformancePayload(
     }
   }
 
+  const rawShare = (data.shareRecipientEmails ?? [])
+    .map((e) => e.trim())
+    .filter(Boolean)
+  const basePayload = buildBasePayload(data, userInfo)
+  const base =
+    rawShare.length > 0
+      ? {
+          ...basePayload,
+          meta: { share: { recipient_emails: rawShare } },
+        }
+      : basePayload
+
   return {
     type: "performance",
-    base: buildBasePayload(data, userInfo),
+    base,
     details: {
       subtype: isPiece ? "PIECE" : "ORGANIZER",
       title: data.title ?? null,

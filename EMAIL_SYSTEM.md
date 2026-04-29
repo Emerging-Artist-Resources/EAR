@@ -98,6 +98,27 @@ For each email type, create a template in Postmark with the corresponding alias:
   - `{{listing_title}}` - Title of the listing
   - `{{cta_url}}` - Link to view the listing in dashboard
 
+#### Template: `listing-share-festival`
+- **Alias**: `listing-share-festival`
+- **Subject**: (configure in Postmark, e.g. someone shared an EAR performance listing with you)
+- **When sent**: After an **approved** performance listing with `performance_details.subtype = ORGANIZER` is approved, once per listing (see idempotency below).
+- **Template Variables**:
+  - `{{listing_title}}` - Title of the listing
+  - `{{public_calendar_url}}` - Deep link to the public calendar (`/calendar?listingId=...`, uses `getPublicAppUrl()`)
+  - `{{inviter_name}}` - Submitter / contact name
+  - `{{inviter_email}}` - Submitter contact email
+  - `{{platform_name}}` - `EAR` (literal from code; use in body for context)
+
+#### Template: `listing-share-piece`
+- **Alias**: `listing-share-piece`
+- **Subject**: (configure in Postmark; same intent as festival template but for a **piece**)
+- **When sent**: After an **approved** performance listing with `performance_details.subtype = PIECE` is approved, once per listing.
+- **Template Variables**: Same as `listing-share-festival`.
+
+**Share list storage:** Recipient addresses live in `listings.meta.share.recipient_emails` (max 10, normalized server-side: trim, lowercase, dedupe, submitter excluded). **`meta.share.sent_at`** is set by the server after the first share batch attempt so re-approval does not resend. Clients cannot set `sent_at` via API. Public listing reads do not expose `meta`.
+
+**Implementation:** `sendListingShareEmailsAfterApproval()` in `src/features/events/server/service.ts`, invoked from `approveListingRepo` in `src/features/events/server/admin-review.ts` after the submitter approval email. Low-level send: `src/lib/email/sendListingShareEmail.ts`.
+
 #### Template: `admin-new-user`
 - **Alias**: `admin-new-user`
 - **Subject**: New user signup: {{user_email}}
@@ -661,6 +682,9 @@ If you've tried the above and still have issues:
 
 - `src/lib/email/postmark.ts` - Postmark client
 - `src/lib/email/sendListingEmail.ts` - Listing email functions
+- `src/lib/email/sendListingShareEmail.ts` - Share-listing Postmark templates (`listing-share-festival`, `listing-share-piece`)
+- `src/lib/listing-share.ts` - Normalize / cap share recipient emails
+- `src/features/events/server/listing-meta-share.ts` - Merge `listings.meta` safely (client cannot set `share.sent_at`)
 - `src/lib/email/sendProfileEmail.ts` - Profile email functions
 - `src/lib/email/sendInternalDonationEmail.ts` - Donation internal template + PDF
 - `src/lib/email/trySendInternalDonationNotifications.ts` - Webhook orchestration

@@ -1,7 +1,7 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { storageService } from "@/services/storage"
-import { sendListingUpdateEmail } from "./service"
+import { sendListingUpdateEmail, sendListingShareEmailsAfterApproval } from "./service"
 import { getListingTitle } from "./listing-utils"
 import { normalizeSupabaseRelation } from "./admin-utils"
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
@@ -149,6 +149,11 @@ export async function approveListingRepo(listingId: string, reviewerId: string) 
   console.log(`[Approval] Completed approval processing for listing ${listingId}`)
 
   await sendApprovalEmail(listingId)
+  try {
+    await sendListingShareEmailsAfterApproval(listingId)
+  } catch (shareEmailError) {
+    console.error(`Failed to send share listing emails for ${listingId}:`, shareEmailError)
+  }
 }
 
 export async function rejectListingRepo(

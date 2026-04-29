@@ -20,6 +20,17 @@ export async function GET(
   }
 }
 
+const listingMetaPatchSchema = z
+  .object({
+    share: z
+      .object({
+        recipient_emails: z.array(z.string()).max(10).optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .passthrough()
+
 const basePatchSchema = z.object({
   contact_name: z.string().min(1).optional(),
   pronouns: z.string().optional().nullable(),
@@ -34,6 +45,7 @@ const basePatchSchema = z.object({
   location_instructions: z.string().optional().nullable(),
   social_handles: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  meta: listingMetaPatchSchema.optional(),
   //borough: z.string().optional().nullable(),
 })
 

@@ -1,6 +1,7 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import type { BaseListingInput, ListingType } from "./repository-types"
 import { detailTable } from "./repository-types"
+import { finalizeListingMetaAfterClientPatch } from "./listing-meta-share"
 
 export async function updatePendingListingRepo(
   listingId: string,
@@ -12,11 +13,39 @@ export async function updatePendingListingRepo(
   const supabase = await getSupabaseServerClient()
 
   if (patch.base) {
-    const { error } = await supabase
-      .from("listings")
-      .update(patch.base)
-      .eq("id", listingId)
-    if (error) throw new Error(`Failed to update listing base: ${error.message}`)
+    const { meta: clientMetaPatch, ...restBase } = patch.base
+    const updatePayload: Record<string, unknown> = { ...restBase }
+
+    if (clientMetaPatch !== undefined) {
+      const { data: row, error: metaFetchErr } = await supabase
+        .from("listings")
+        .select("meta, contact_email")
+        .eq("id", listingId)
+        .single()
+      if (metaFetchErr) {
+        throw new Error(`Failed to get listing meta: ${metaFetchErr.message}`)
+      }
+      const contactEmail =
+        typeof restBase.contact_email === "string" && restBase.contact_email
+          ? restBase.contact_email
+          : (row?.contact_email as string)
+      const newMeta = finalizeListingMetaAfterClientPatch(
+        (row?.meta as Record<string, unknown>) ?? {},
+        clientMetaPatch as Record<string, unknown>,
+        contactEmail
+      )
+      if (newMeta !== null) {
+        updatePayload.meta = newMeta
+      }
+    }
+
+    if (Object.keys(updatePayload).length > 0) {
+      const { error } = await supabase
+        .from("listings")
+        .update(updatePayload)
+        .eq("id", listingId)
+      if (error) throw new Error(`Failed to update listing base: ${error.message}`)
+    }
   }
   if (patch.details) {
     const { data: listing, error: e1 } = await supabase
