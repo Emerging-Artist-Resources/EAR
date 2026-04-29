@@ -2,10 +2,28 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import type {
   CreateListingInput,
+  ListingType,
   OccurrenceType,
 } from "./repository-types"
 import { detailTable } from "./repository-types"
 import { calculateListingFee } from "./fee-calculator"
+
+/** Emerging artists never pay platform listing fees for performance or class; force nulls so clients cannot set PAY_FEE. */
+function nullEmergingPlatformListingFeeFields(
+  type: ListingType,
+  details: Record<string, unknown>
+) {
+  if (details.artist_type !== "EMERGING") return
+  if (type === "performance") {
+    details.listing_fee_option = null
+    details.listing_fee_explanation = null
+    details.complementary_ticket_info = null
+  } else if (type === "class") {
+    details.listing_fee_option = null
+    details.listing_fee_explanation = null
+    details.guest_spot_info = null
+  }
+}
 
 export async function createListingOwnedRepo(
   supabase: SupabaseClient,
@@ -80,7 +98,9 @@ export async function createListingOwnedRepo(
         input.details.artist_type = "EMERGING"
       }
     }
-    
+
+    nullEmergingPlatformListingFeeFields(input.type, input.details)
+
     const { error: e2 } = await supabase
       .from(tbl)
       .insert({ listing_id: listingId, ...input.details })
@@ -218,11 +238,22 @@ export async function createListingOwnedRepo(
 
     return { id: listingId }
   } catch (error) {
-    // Rollback: delete listing if it was created (CASCADE will delete all related data)
+    // Rollback: delete listing if it was created (CASCADE will delete all related data).
+    // User-scoped client cannot DELETE listings under default RLS; use service role so rollback always works.
     if (listingId) {
-      await supabase.from("listings").delete().eq("id", listingId)
+      const admin = getSupabaseServiceClient()
+      const { error: delErr } = await admin
+        .from("listings")
+        .delete()
+        .eq("id", listingId)
+        .eq("created_by", user.id)
+      if (delErr) {
+        console.error("createListingOwnedRepo rollback failed:", delErr.message, {
+          listingId,
+          userId: user.id,
+        })
+      }
     }
-    // Re-throw the original error
     throw error
   }
 }
@@ -281,7 +312,9 @@ export async function createListingAnonymousRepo(
     if (input.type === "audition" && !input.details.artist_type) {
       input.details.artist_type = "EMERGING"
     }
-    
+
+    nullEmergingPlatformListingFeeFields(input.type, input.details)
+
     const { error: e2 } = await serviceSupabase
       .from(tbl)
       .insert({ listing_id: listingId, ...input.details })
@@ -364,11 +397,17 @@ export async function createListingAnonymousRepo(
 
     return { id: listingId }
   } catch (error) {
-    // Rollback: delete listing if it was created (CASCADE will delete all related data)
     if (listingId) {
-      await serviceSupabase.from("listings").delete().eq("id", listingId)
+      const { error: delErr } = await serviceSupabase
+        .from("listings")
+        .delete()
+        .eq("id", listingId)
+      if (delErr) {
+        console.error("createListingAnonymousRepo rollback failed:", delErr.message, {
+          listingId,
+        })
+      }
     }
-    // Re-throw the original error
     throw error
   }
 }

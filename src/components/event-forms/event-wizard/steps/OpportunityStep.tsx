@@ -5,7 +5,7 @@ import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
-import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
+import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { LocationField } from "@/components/forms/blocks/LocationField"
 import { useEffect } from "react"
 import { SelectBlock } from "@/components/forms/blocks/Select"
@@ -38,8 +38,17 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
         <TextAreaField form={form} name={"description"} label="Opportunity Description" required placeholder="About the Opportunity"/>
         <TextAreaField form={form} name={"compensation"} label="What is offered to selected artists?" required placeholder="Include compensation, rehearsal/performance commitments, and any other relevant details."/>       
         <TextAreaField form={form} name={"requirements"} label="Application Requirements" required placeholder="What is required to apply?"/>       
-        <TextField form={form} name={"link"} label="Submission Instructions" required placeholder="Include the submission link, contact email, and any additional required information."/>
-        <DateTimeList form={form as unknown as UseFormReturn<Record<string, unknown>>} name={"deadlineOccurrences"} title="Submission Deadline" maxDates={1} maxTimesPerDate={1} required/>
+        <TextAreaField form={form} name={"link"} label="Submission Instructions" required placeholder="Include the submission link, contact email, and any additional required information."/>
+        <ShowtimesList
+          form={form as unknown as UseFormReturn<Record<string, unknown>>}
+          name={"deadlineOccurrences"}
+          title="Submission Deadline"
+          note="Add the deadline date and time."
+          maxDates={1}
+          maxTimesPerDate={1}
+          required
+          rowLabel="Deadline"
+        />
         <SelectBlock form={form} options={[{ label: "Yes", value: "FEE" }, { label: "No", value: "NO_FEE" }]} name={"fee"} label="Is there an application fee?" required />
         {isFee && (
           <>
@@ -56,6 +65,7 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
         <SimpleFeeDisplay
           form={form}
           artistTypeFieldName={"artistType" as Path<EventFormData>}
+          feeVariant="creative"
         />
       )}
     </>

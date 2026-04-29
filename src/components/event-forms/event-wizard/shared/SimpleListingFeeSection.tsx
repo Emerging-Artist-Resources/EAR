@@ -20,11 +20,13 @@ interface SimpleListingFeeSectionProps {
   emergingOptions?: Array<{ label: string; value: string }>
   complementaryLabel?: string
   explanationLabel?: string
+  /** Performance/class: emerging artists have no platform listing fee UI or charges. */
+  emergingListingWaived?: boolean
 }
 
 /**
- * Shared listing fee component for simple cases (Performance, Audition, Opportunity)
- * Handles $50 established / $35 emerging with complementary ticket or waiver options
+ * Shared listing fee component for organizer performance listings.
+ * Established: platform listing fee; emerging (when not waived): pay / comp / waiver.
  */
 export function SimpleListingFeeSection({
   form,
@@ -34,6 +36,7 @@ export function SimpleListingFeeSection({
   complementaryFieldName,
   establishedFee = 50,
   emergingFee = 35,
+  emergingListingWaived = false,
   emergingOptions = [
     { label: `Pay listing fee ($${emergingFee})`, value: "PAY_FEE" },
     { label: "Provide a complementary ticket", value: "PROVIDE" },
@@ -63,9 +66,9 @@ export function SimpleListingFeeSection({
     }
   }, [artistType, isLoading, form, artistTypeFieldName])
 
-  // Clear fields when artist type changes
+  // Clear platform listing fee fields when not collecting them (established or waived emerging)
   useEffect(() => {
-    if (artistType === "ESTABLISHED") {
+    if (artistType === "ESTABLISHED" || (emergingListingWaived && artistType === "EMERGING")) {
       form.setValue(feeOptionFieldName, undefined as unknown as never)
       form.setValue(explanationFieldName, "" as unknown as never)
       if (complementaryFieldName) {
@@ -75,7 +78,14 @@ export function SimpleListingFeeSection({
       if (complementaryFieldName) fieldsToClear.push(complementaryFieldName)
       form.clearErrors(fieldsToClear as unknown as never)
     }
-  }, [artistType, form, feeOptionFieldName, explanationFieldName, complementaryFieldName])
+  }, [
+    artistType,
+    emergingListingWaived,
+    form,
+    feeOptionFieldName,
+    explanationFieldName,
+    complementaryFieldName,
+  ])
 
   // Clear conditional fields based on option selected
   useEffect(() => {
@@ -96,8 +106,9 @@ export function SimpleListingFeeSection({
       isLoading={isLoading}
       establishedFee={establishedFee}
       emergingFee={emergingFee}
+      emergingListingWaived={emergingListingWaived}
     >
-      {artistType === "EMERGING" && (
+      {artistType === "EMERGING" && !emergingListingWaived && (
         <div className="mt-4 space-y-4">
           <SelectBlock
             form={form}

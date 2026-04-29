@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { flexibleUrlOptionalSchema } from "../flexible-url"
 import { occurrenceSchema } from "./base"
 
 // Creative Opportunity-only
@@ -10,7 +11,7 @@ export const creativeFields = z
     dates: z.string().optional(),
     compensation: z.string().optional(),
     requirements: z.string().optional(),
-    link: z.string().optional(),
+    link: flexibleUrlOptionalSchema,
     deadlineOccurrences: z.array(occurrenceSchema).optional(),
     fee: z.enum(["FEE", "NO_FEE"]).optional(),
     feeAmount: z.string().optional(),

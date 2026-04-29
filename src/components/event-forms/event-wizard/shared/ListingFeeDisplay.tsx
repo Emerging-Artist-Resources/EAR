@@ -9,6 +9,8 @@ interface ListingFeeDisplayProps {
   isLoading: boolean
   establishedFee: number
   emergingFee: number
+  /** When true and artist is EMERGING, show platform listing as free (performance/class only). */
+  emergingListingWaived?: boolean
   children?: React.ReactNode
   feeCalculation?: {
     totalFee: number
@@ -27,7 +29,7 @@ export function ListingFeeDisplay({
   isFirstSubmission,
   isLoading,
   establishedFee,
-  //emergingFee,
+  emergingListingWaived = false,
   children,
   feeCalculation,
 }: ListingFeeDisplayProps) {
@@ -101,6 +103,16 @@ export function ListingFeeDisplay({
     )
   }
 
-  // For emerging artists, render the children (which contains the fee options)
+  if (artistType === "EMERGING" && emergingListingWaived) {
+    return (
+      <Section title="Listing Fee">
+        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
+          <Text className="text-sm font-medium text-gray-900">This listing is free for emerging artists.</Text>
+        </div>
+      </Section>
+    )
+  }
+
+  // For emerging artists (non-waived), render the children (e.g. audition/creative organizer fee)
   return <Section title="Listing Fee">{children}</Section>
 }

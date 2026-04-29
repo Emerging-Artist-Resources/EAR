@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { signupOptionalWebsiteSchema } from "./flexible-url"
 
 // Constants
 export const SIGNUP_STEPS = {
@@ -68,13 +69,59 @@ const requiredNullableEnumField = <T extends z.ZodEnum<any>>(
     { message }
   )
 
+/** Coarse wizard step for redirecting after server-side validation errors */
+export type SignupErrorStep = "basic" | "eligibility" | "wrap-up" | "password"
+
+const BASIC_FIELD_KEYS = new Set<string>([
+  "profile_type",
+  "name",
+  "email",
+  "pronouns",
+  "website",
+  "organization_name",
+  "location_place_id",
+  "location_label",
+])
+
+const ELIGIBILITY_FIELD_KEYS = new Set<string>([
+  "self_identifies_emerging",
+  "operating_budget_range",
+  "operating_budget_other_text",
+  "owns_or_operates_venue",
+  "owns_or_operates_venue_other_text",
+  "supported_by_major_institution",
+  "supported_by_major_institution_other_text",
+  "classes_hosted_independently",
+  "classes_hosted_independently_other_text",
+  "has_501c3",
+  "has_501c3_other_text",
+])
+
+const WRAP_UP_FIELD_KEYS = new Set<string>([
+  "referral_source",
+  "referral_source_other",
+  "newsletter_ear_opt_in",
+  "newsletter_calendar_opt_in",
+])
+
+const PASSWORD_FIELD_KEYS = new Set<string>(["password", "confirmPassword"])
+
+export function getSignupErrorStepForPath(path: ReadonlyArray<PropertyKey>): SignupErrorStep {
+  const key = String(path[0] ?? "")
+  if (PASSWORD_FIELD_KEYS.has(key)) return "password"
+  if (WRAP_UP_FIELD_KEYS.has(key)) return "wrap-up"
+  if (ELIGIBILITY_FIELD_KEYS.has(key)) return "eligibility"
+  if (BASIC_FIELD_KEYS.has(key)) return "basic"
+  return "basic"
+}
+
 // Schema Definitions
 const profileFields = z.object({
   profile_type: profileTypeEnum,
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   pronouns: z.string().optional().nullable(),
-  website: z.string().url("Invalid URL").optional().nullable().or(z.literal("")),
+  website: signupOptionalWebsiteSchema,
   organization_name: z.string().optional().nullable(),
   location_place_id: z.string().optional().nullable(),
   location_label: z.string().optional().nullable(),

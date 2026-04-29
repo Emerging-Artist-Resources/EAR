@@ -1,17 +1,29 @@
 "use client"
 
+import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useFormContext, UseFormReturn } from "react-hook-form"
 import { SignUpPassword } from "@/components/signup/Password"
 import { Button } from "@/components/ui/button"
 import { signupAction } from "@/features/profile/server/signup"
-import { useState } from "react"
 import { Alert } from "@/components/ui/alert"
 import { useToast } from "@/contexts/ToastContext"
 import { getFieldLabel } from "@/lib/form-helpers"
-import { DEFAULT_ERROR_MESSAGE, type SignupFormData } from "@/lib/validations/signup"
+import {
+  DEFAULT_ERROR_MESSAGE,
+  type SignupFormData,
+  type SignupErrorStep,
+} from "@/lib/validations/signup"
 
 const SUBMIT_ERROR_MESSAGE = "Something went wrong. Please try again."
+
+const STEP_ROUTES: Record<SignupErrorStep, string> = {
+  basic: "/auth/signup/basic",
+  eligibility: "/auth/signup/eligibility",
+  "wrap-up": "/auth/signup/wrap-up",
+  password: "/auth/signup/password",
+}
 
 export default function SignUpPasswordPage() {
   const router = useRouter()
@@ -19,24 +31,39 @@ export default function SignUpPasswordPage() {
   const { showToast } = useToast()
   const typedForm = form as unknown as UseFormReturn<SignupFormData>
   const [error, setError] = useState<string | null>(null)
+  const [accountExists, setAccountExists] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = typedForm.handleSubmit(
     async (data) => {
       setLoading(true)
       setError(null)
+      setAccountExists(false)
 
       try {
         const result = await signupAction(data)
 
-        if (result?.error) {
-          setError(result.error)
+        if (result && "error" in result && result.error) {
+          if (result.code === "ACCOUNT_EXISTS") {
+            setError(result.error)
+            setAccountExists(true)
+            showToast(result.error, "error")
+            setLoading(false)
+            return
+          }
+
           showToast(result.error, "error")
+          if (result.step && result.step !== "password") {
+            router.push(STEP_ROUTES[result.step])
+          } else {
+            setError(result.error)
+          }
           setLoading(false)
           return
         }
 
-        router.push("/auth/signup/confirm")
+        const q = encodeURIComponent(data.email.trim())
+        router.push(`/auth/signup/confirm?email=${q}`)
       } catch (err) {
         console.error("Signup error:", err)
         setError(SUBMIT_ERROR_MESSAGE)
@@ -58,7 +85,20 @@ export default function SignUpPasswordPage() {
 
   return (
     <div className="space-y-6">
-      {error && <Alert variant="error">{error}</Alert>}
+      {error && (
+        <Alert variant="error">
+          {accountExists ? (
+            <>
+              An account with this email already exists.{" "}
+              <Link href="/auth/signin" className="font-medium underline underline-offset-2">
+                Sign in
+              </Link>
+            </>
+          ) : (
+            error
+          )}
+        </Alert>
+      )}
       <SignUpPassword form={typedForm} />
       <div className="flex justify-between">
         <Button
@@ -69,16 +109,10 @@ export default function SignUpPasswordPage() {
         >
           Back
         </Button>
-        <Button
-          type="button"
-          variant="primary"
-          onClick={() => handleSubmit()}
-          disabled={loading}
-        >
+        <Button type="button" variant="primary" onClick={() => handleSubmit()} disabled={loading}>
           {loading ? "Creating account..." : "Create account"}
         </Button>
       </div>
     </div>
   )
 }
-

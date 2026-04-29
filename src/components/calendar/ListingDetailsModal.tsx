@@ -20,7 +20,9 @@ import {
   AuditionDetails,
   CreativeDetails,
   FieldRow,
+  SocialHandles,
 } from "./PublicListingDetailSections"
+import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
 
 function getGoogleMapsLink(address: string | null | undefined, placeId: string | null | undefined): string | null {
   if (placeId) {
@@ -90,6 +92,8 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
     class_link?: string | null
     class_style_category?: string | null
     notes?: string | null
+    cover_image_url?: string | null
+    cover_image_credit?: string | null
     occurrences?: Array<{
       id: string
       starts_at_utc: string
@@ -178,6 +182,18 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
 
   const title = listing ? getListingTitle(listing) : "Listing Details"
   const typeLabel = listing ? getTypeLabel(listing.type) : ""
+
+  const creativeOpportunityDates =
+    listing?.type === "creative" && listing.creative_details?.dates?.trim()
+      ? listing.creative_details.dates.trim()
+      : null
+
+  const sortedPhotos = useMemo(() => {
+    if (!listing?.listing_photos?.length) return []
+    return [...listing.listing_photos].sort(
+      (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+    )
+  }, [listing?.listing_photos])
 
   const { hasSingleLocation, singleLocation } = useMemo(() => {
     if (!listing?.listing_occurrences || listing.listing_occurrences.length === 0) {
@@ -308,10 +324,16 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
 
             {/* Dates Card - Location and Dates/Times */}
             {(hasSingleLocation && singleLocation && (singleLocation.address || singleLocation.venue_name)) || 
-             (listing.listing_occurrences && listing.listing_occurrences.length > 0) ? (
+             (listing.listing_occurrences && listing.listing_occurrences.length > 0) ||
+             creativeOpportunityDates ? (
               <Card className="p-4">
                 <h3 className="text-base font-semibold text-gray-900 mb-3">Dates</h3>
                 <div className="space-y-0">
+                  {creativeOpportunityDates && (
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-0 mb-4">
+                      <FieldRow label="Opportunity Dates" value={creativeOpportunityDates} />
+                    </div>
+                  )}
                   {/* Location - Single Location */}
                   {hasSingleLocation && singleLocation && (singleLocation.address || singleLocation.venue_name) && (
                     <div className="grid grid-cols-2 gap-x-6 gap-y-0">
@@ -526,6 +548,12 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                       class_style_category={child.class_style_category}
                       notes={child.notes}
                       occurrences={child.occurrences}
+                      coverImageUrl={child.cover_image_url}
+                      coverImageAlt={
+                        child.cover_image_credit
+                          ? `Listing photo: ${child.cover_image_credit}`
+                          : `${child.title} — photo`
+                      }
                       onClick={child.is_piece || child.is_class ? undefined : () => {
                         if (onListingClick) {
                           onClose()
@@ -538,16 +566,15 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               )
             })()}
 
-            {/* Additional Info Card - Photos, Social Media, Notes 
-            {(sortedPhotos.length > 0) || 
-             listing.social_handles || 
-             listing.notes ? (
+            {(sortedPhotos.length > 0) ||
+            listing.social_handles ||
+            listing.notes ? (
               <Card className="p-4">
                 <h3 className="text-base font-semibold text-gray-900 mb-3">Additional Information</h3>
                 <div className="space-y-0">
                   {sortedPhotos.length > 0 && (
                     <div className="py-2 col-span-2">
-                      <div className="text-sm text-gray-600 mb-2">Photos:</div>
+                      <div className="text-sm text-gray-600 mb-2">Photos</div>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {sortedPhotos.map((photo) => (
                           <PhotoThumbnail
@@ -563,23 +590,23 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                   {(listing.social_handles || listing.notes) && (
                     <div className="grid grid-cols-2 gap-x-6 gap-y-0">
                       {listing.social_handles && (
-                        <FieldRow 
-                          label="Social Media" 
-                          value={<SocialHandles socialHandles={listing.social_handles} />} 
+                        <FieldRow
+                          label="Social Media"
+                          value={<SocialHandles socialHandles={listing.social_handles} />}
                         />
                       )}
 
                       {listing.notes && (
-                        <FieldRow 
-                          label="Additional Information" 
-                          value={<p className="whitespace-pre-wrap">{listing.notes}</p>} 
+                        <FieldRow
+                          label="Additional Information"
+                          value={<p className="whitespace-pre-wrap">{listing.notes}</p>}
                         />
                       )}
                     </div>
                   )}
                 </div>
               </Card>
-            ) : null}*/}
+            ) : null}
           </div>
         )}
     </Modal>

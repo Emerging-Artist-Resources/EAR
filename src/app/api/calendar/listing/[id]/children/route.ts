@@ -3,6 +3,7 @@ import { getSupabaseServerClientAnon } from "@/lib/supabase/serverAnon"
 import { getListingTitle } from "@/features/events/server/listing-utils"
 import { normalizeSupabaseRelation, isLinkedPiece, isLinkedClass } from "@/features/events/server/admin-utils"
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
+import { getCoverPhotoPublic } from "@/lib/listing-photo-cover"
 
 export async function GET(
   _req: NextRequest,
@@ -34,7 +35,8 @@ export async function GET(
             starts_at_utc,
             ends_at_utc,
             tz
-          )
+          ),
+          listing_photos ( id, path, credit, sort_order )
         )
       `)
       .eq("parent_listing_id", id)
@@ -110,6 +112,8 @@ export async function GET(
           .sort((a: any, b: any) => 
             new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime()
           ) || []
+
+        const cover = getCoverPhotoPublic(listing.listing_photos)
         
         return {
           id: listing.id,
@@ -136,6 +140,8 @@ export async function GET(
           class_link: classLinked ? classDetails?.link || null : null,
           class_style_category: classLinked ? classDetails?.style_category || null : null,
           notes: listing.notes || null,
+          cover_image_url: cover?.url ?? null,
+          cover_image_credit: cover?.credit ?? null,
           occurrences: allOccurrences.map((occ: any) => ({
             id: occ.id,
             starts_at_utc: occ.starts_at_utc,

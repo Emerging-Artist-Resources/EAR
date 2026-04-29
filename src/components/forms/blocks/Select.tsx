@@ -1,4 +1,4 @@
-import { Controller, UseFormReturn } from "react-hook-form"
+import { Controller, UseFormReturn, useFormState } from "react-hook-form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card } from "@/components/ui/card"
 
@@ -65,8 +65,14 @@ export function SelectBlock<T extends Record<string, unknown>>({
       )}
     */}
 
-  const state = form.getFieldState(name as unknown as never)
-  const showError = Boolean(state.error) && (errorMode === "always" || state.isTouched || form.formState.isSubmitted || form.formState.submitCount > 0)
+  useFormState({ control: form.control, name: name as never, exact: true })
+  const state = form.getFieldState(name as unknown as never, form.formState)
+  const showError =
+    Boolean(state.error) &&
+    (errorMode === "always" ||
+      state.isTouched ||
+      form.formState.isSubmitted ||
+      form.formState.submitCount > 0)
 
   return (
     <div className={className}>
@@ -129,10 +135,13 @@ export function SelectBlock<T extends Record<string, unknown>>({
                 ))}
 
                 {allowOther && (() => {
-                  const otherState = form.getFieldState(finalOtherName as unknown as never)
+                  const otherState = form.getFieldState(finalOtherName as unknown as never, form.formState)
                   const showOtherErr =
                     Boolean(otherState.error) &&
-                    (errorMode === "always" || otherState.isTouched || form.formState.isSubmitted || form.formState.submitCount > 0)
+                    (errorMode === "always" ||
+                      otherState.isTouched ||
+                      form.formState.isSubmitted ||
+                      form.formState.submitCount > 0)
                   const selected = isSelected(otherValue)
                   return (
                     <Card className="flex items-center p-2 gap-3 text-sm bg-primary-50 text-gray-800">

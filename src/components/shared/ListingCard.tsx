@@ -34,6 +34,9 @@ interface ListingCardProps {
     ends_at_utc: string | null
     tz: string
   }>
+  /** First listing photo by sort_order (e.g. admin-chosen cover). */
+  coverImageUrl?: string | null
+  coverImageAlt?: string | null
 }
 
 function getTypeLabel(type: string): string {
@@ -68,6 +71,8 @@ export function ListingCard({
   class_style_category,
   notes,
   occurrences,
+  coverImageUrl,
+  coverImageAlt,
 }: ListingCardProps) {
   const { isAuthed } = useAuth();
   const { isSaved, loading, saving, toggleSave } = useSavedListings(id);
@@ -80,6 +85,15 @@ export function ListingCard({
       className="p-4 h-full cursor-pointer hover:shadow-md transition-shadow relative"
       onClick={onClick}
     >
+      {coverImageUrl && (
+        <div className="-mx-4 -mt-4 mb-3 overflow-hidden rounded-t-lg border-b border-gray-100">
+          <img
+            src={coverImageUrl}
+            alt={coverImageAlt || ""}
+            className="h-36 w-full object-cover"
+          />
+        </div>
+      )}
       {isAuthed && (
         <div className="absolute top-2 right-2 z-10">
           <FavoriteButton

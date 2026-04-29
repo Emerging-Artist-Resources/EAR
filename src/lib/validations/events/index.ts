@@ -1,5 +1,11 @@
 import { z } from "zod"
+import { flexibleUrlRequiredSchema } from "../flexible-url"
 import { baseSchema, occurrenceSchema, occurrencesSchema, extraDateSchema, extraTimeSchema } from "./base"
+import {
+  hasSomeCompleteOrganizerOccurrence,
+  indexOfOrganizerRowsMissingLocation,
+  ORGANIZER_OCCURRENCE_USER_MESSAGES,
+} from "./occurrence-row"
 import { performanceFields } from "./performance"
 import { auditionFields } from "./audition"
 import { creativeFields } from "./creative"
@@ -103,46 +109,10 @@ export const eventFormSchema = baseSchema
           message: "Artist type is required",
         })
       }
-      // Only validate listingFeeOption for EMERGING artists
-      // ESTABLISHED artists don't see this field (it's auto-set)
-      if (data.artistType === "EMERGING") {
-        if (!data.listingFeeOption) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["listingFeeOption"],
-            message: "Listing fee option is required",
-          })
-        }
-        // Conditional validations only apply to EMERGING artists
-        if (data.listingFeeOption === "EXPLAIN" && (!data.listingFeeExplanation || data.listingFeeExplanation.trim() === "")) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["listingFeeExplanation"],
-            message: "Please explain your alternative arrangement",
-          })
-        }
-        if (data.listingFeeOption === "PROVIDE" && (!data.complementaryTicketInfo || data.complementaryTicketInfo.trim() === "")) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["complementaryTicketInfo"],
-            message: "Please provide complementary ticket information",
-          })
-        }
-      }
+      // Emerging artists: platform listing fee waived (no listingFeeOption / comp / waiver).
     }
     
-    // Validate URL format for link field when it's required
-    if (isOrganizer && data.link && data.link.trim() !== "") {
-      try {
-        new URL(data.link)
-      } catch {
-        ctx.addIssue({
-          code: "custom",
-          path: ["link"],
-          message: "Ticket link must be a valid URL",
-        })
-      }
-    }
+    // Ticket link format is enforced by flexible URL preprocessing + zod on performanceFields.link
   })
   .passthrough()
 
@@ -235,17 +205,6 @@ export const performanceStep2Schema = baseSchema
           path: ["link"],
           message: "Ticket link is required",
         })
-      } else {
-        // Validate URL format
-        try {
-          new URL(data.link)
-        } catch {
-          ctx.addIssue({
-            code: "custom",
-            path: ["link"],
-            message: "Ticket link must be a valid URL",
-          })
-        }
       }
       if (!data.price || data.price.trim() === "") {
         ctx.addIssue({
@@ -254,50 +213,31 @@ export const performanceStep2Schema = baseSchema
           message: "Price is required",
         })
       }
-      const hasValidOccurrences = Array.isArray(data.occurrences) &&
-        data.occurrences.length > 0 &&
-        data.occurrences.some(
-          (d) =>
-            d?.date && d.date.trim() !== "" &&
-            Array.isArray(d?.times) &&
-            d.times.length > 0 &&
-            d.times.some((t) => t?.time && t.time.trim() !== "")
-        )
-      if (!hasValidOccurrences) {
+      const occs = data.occurrences
+      if (!Array.isArray(occs) || occs.length === 0) {
         ctx.addIssue({
           code: "custom",
           path: ["occurrences"],
-          message: "Add at least one date & time",
+          message: ORGANIZER_OCCURRENCE_USER_MESSAGES.needSchedule,
         })
-      } else if (Array.isArray(data.occurrences)) {
-        // Validate that each occurrence has location data
-        const occurrencesWithMissingLocation = data.occurrences
-          .map((occ, index) => ({ occ, index }))
-          .filter(({ occ }) => {
-            // Check if this occurrence has valid date/time
-            const hasValidDateTime = occ?.date && occ.date.trim() !== "" &&
-              Array.isArray(occ?.times) &&
-              occ.times.length > 0 &&
-              occ.times.some((t) => t?.time && t.time.trim() !== "")
-            
-            if (!hasValidDateTime) return false
-            
-            // Check if location is provided (at least one of: address, venueName, or placeId)
-            const hasLocation = (occ?.address && occ.address.trim() !== "") ||
-              (occ?.venueName && occ.venueName.trim() !== "") ||
-              (occ?.placeId && occ.placeId.trim() !== "")
-            
-            return !hasLocation
+      } else {
+        const requireTime = true
+        const missingLocationIndexes = indexOfOrganizerRowsMissingLocation(occs, requireTime)
+        for (const index of missingLocationIndexes) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["occurrences", index, "address"],
+            message: ORGANIZER_OCCURRENCE_USER_MESSAGES.locationOnSubmit,
           })
-        
-        if (occurrencesWithMissingLocation.length > 0) {
-          // Report error for each occurrence missing location
-          occurrencesWithMissingLocation.forEach(({ index }) => {
-            ctx.addIssue({
-              code: "custom",
-              path: ["occurrences", index, "address"],
-              message: "Location is required for each date & time",
-            })
+        }
+        if (
+          !hasSomeCompleteOrganizerOccurrence(occs, requireTime) &&
+          missingLocationIndexes.length === 0
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["occurrences"],
+            message: ORGANIZER_OCCURRENCE_USER_MESSAGES.needSchedule,
           })
         }
       }
@@ -808,7 +748,7 @@ export const classStep2Schema = baseSchema
 
 // Funding step 2 schema (minimal - only fundingLink)
 export const fundingStep2Schema = z.object({
-  fundingLink: z.string().min(1, "Funding link is required"),
+  fundingLink: flexibleUrlRequiredSchema("Invalid URL", "Funding link is required"),
 }).passthrough()
 
 // Backwards-compat exports for existing imports

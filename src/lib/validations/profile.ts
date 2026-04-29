@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { flexibleUrlProfileWebsiteSchema } from "./flexible-url"
 
 const profileSlugSchema = z
   .string()
@@ -10,7 +11,7 @@ export const updateProfileSchema = z.object({
   name: z.string().min(1, "Name cannot be empty").optional(),
   email: z.string().email("Invalid email address").optional(),
   pronouns: z.string().optional().nullable(),
-  website: z.string().url("Invalid URL").optional().nullable().or(z.literal("")),
+  website: flexibleUrlProfileWebsiteSchema.optional(),
   organization_name: z.string().optional().nullable(),
   location_place_id: z.string().optional().nullable(),
   location_label: z.string().optional().nullable(),

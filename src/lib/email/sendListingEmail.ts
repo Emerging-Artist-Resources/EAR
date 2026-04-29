@@ -8,6 +8,7 @@
  * @see EMAIL_SYSTEM.md for setup, usage, and best practices
  */
 
+import { getPublicAppUrl } from "@/lib/app-url"
 import { postmarkClient } from "./postmark"
 
 type ListingEmailType = "listing-received" | "listing-updated" | "admin-listing-received"
@@ -41,7 +42,7 @@ export async function sendListingEmail(
     )
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.eararts.org"
+  const baseUrl = getPublicAppUrl()
   if (!process.env.POSTMARK_FROM_NAME || !process.env.POSTMARK_FROM_EMAIL) {
     const missing = []
     if (!process.env.POSTMARK_FROM_NAME) missing.push("POSTMARK_FROM_NAME")

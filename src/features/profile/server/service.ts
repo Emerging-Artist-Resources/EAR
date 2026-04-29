@@ -15,6 +15,7 @@ import {
   ServiceInquirySummary,
 } from "./types";
 import { sendProfileEmail } from "@/lib/email/sendProfileEmail";
+import { getPublicAppUrl } from "@/lib/app-url";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
 
 export async function getSavedEvents(
@@ -60,7 +61,12 @@ function extractFirstName(fullName: string | null | undefined): string {
 }
 
 export async function sendNewProfileAdminEmail(
-  profile: { name: string | null; email: string | null; profile_type: string | null },
+  profile: {
+    name: string | null
+    email: string | null
+    profile_type: string | null
+    organization_name?: string | null
+  },
   userId: string
 ): Promise<void> {
   const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL
@@ -69,16 +75,17 @@ export async function sendNewProfileAdminEmail(
     return
   }
 
-  // Ensure name is properly extracted - handle null, undefined, and empty strings
   const userName = profile.name?.trim() || "Unknown User"
   const userEmail = profile.email?.trim() || "No email provided"
   const profileType = profile.profile_type || "unknown"
+  const organizationName = profile.organization_name?.trim() || ""
 
   await sendProfileEmail("admin-new-user", {
     to: adminEmail,
     userName,
     userEmail,
     profileType,
+    organizationName,
     userId,
   })
 }
@@ -108,8 +115,14 @@ export async function sendEmailVerificationEmail(
   userName: string | null
 ): Promise<void> {
   const supabase = getSupabaseServiceClient()
-  
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.eararts.org"
+
+  if (process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_APP_URL?.trim()) {
+    console.warn(
+      "[EMAIL] NEXT_PUBLIC_APP_URL is unset in production; auth links fall back to default origin. Set NEXT_PUBLIC_APP_URL to your public site URL."
+    )
+  }
+
+  const baseUrl = getPublicAppUrl()
   const redirectTo = `${baseUrl}/auth/callback`
 
   const { data, error } = await supabase.auth.admin.generateLink({
@@ -132,5 +145,36 @@ export async function sendEmailVerificationEmail(
     to: userEmail,
     firstName,
     verificationUrl,
+  })
+}
+
+export async function sendPasswordResetEmail(
+  userEmail: string,
+  userName: string | null
+): Promise<void> {
+  const supabase = getSupabaseServiceClient()
+  const baseUrl = getPublicAppUrl()
+  const redirectTo = `${baseUrl}/auth/callback/recovery`
+
+  const { data, error } = await supabase.auth.admin.generateLink({
+    type: "recovery",
+    email: userEmail,
+    options: {
+      redirectTo,
+    },
+  })
+
+  if (error || !data?.properties?.action_link) {
+    console.error("[EMAIL] Failed to generate password reset link:", error)
+    throw new Error("Failed to generate password reset link")
+  }
+
+  const resetUrl = data.properties.action_link
+  const firstName = extractFirstName(userName)
+
+  await sendProfileEmail("password-reset", {
+    to: userEmail,
+    firstName,
+    resetUrl,
   })
 }

@@ -16,6 +16,7 @@ import { HorizontalScrollCards } from "@/components/shared/HorizontalScrollCards
 import { ListingCard } from "@/components/shared/ListingCard"
 import { ListingDetailsModal } from "@/components/calendar/ListingDetailsModal"
 import Link from "next/link"
+import { ROUTES } from "@/lib/constants"
 
 function CalendarViewContent() {
   const searchParams = useSearchParams()
@@ -29,6 +30,8 @@ function CalendarViewContent() {
     title: string
     starts_at_utc: string | null
     ends_at_utc: string | null
+    cover_image_url?: string | null
+    cover_image_credit?: string | null
   }>>([])
   const { isAuthed } = useAuth()
   const { items, deadlines, loading, fetchCalendar } = useCalendar()
@@ -134,6 +137,12 @@ function CalendarViewContent() {
                       title={listing.title}
                       starts_at_utc={listing.starts_at_utc}
                       ends_at_utc={listing.ends_at_utc}
+                      coverImageUrl={listing.cover_image_url}
+                      coverImageAlt={
+                        listing.cover_image_credit
+                          ? `Listing photo: ${listing.cover_image_credit}`
+                          : `${listing.title} — photo`
+                      }
                     />
                   ))}
                 </HorizontalScrollCards>
@@ -160,7 +169,7 @@ function CalendarViewContent() {
             <Link href="/auth/signin?returnTo=/calendar">
               <Button variant="primary">Sign in</Button>
             </Link>
-            <Link href="/auth/signup">
+            <Link href={ROUTES.SIGN_UP}>
               <Button variant="outline">Create account</Button>
             </Link>
           </div>

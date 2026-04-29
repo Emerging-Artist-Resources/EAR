@@ -1,18 +1,24 @@
 "use client"
 
-import { UseFormReturn, Path } from "react-hook-form"
+import { UseFormReturn, Path, useWatch } from "react-hook-form"
+import { SimpleFeeDisplay } from "@/components/event-forms/event-wizard/shared/SimpleFeeDisplay"
 import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
-import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
+import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { LocationField } from "@/components/forms/blocks/LocationField"
 import { SelectBlock } from "@/components/forms/blocks/Select"
-import { useEffect } from "react"
-//import { SimpleFeeDisplay } from "@/components/event-forms/event-wizard/shared/SimpleFeeDisplay"
+import { Button } from "@/components/ui/button"
+import { useCallback, useEffect } from "react"
 
 interface AuditionStepProps {
   form: UseFormReturn<EventFormData>
+}
+
+type OccurrenceRow = {
+  date?: string
+  times?: Array<{ time?: string }>
 }
 
 export function AuditionStep({ form }: AuditionStepProps) {
@@ -20,6 +26,38 @@ export function AuditionStep({ form }: AuditionStepProps) {
   // const e = errors as FieldErrors<EventFormData>
   const fee = form.watch("fee") as string | undefined
   const isFee = fee === "FEE"
+
+  const auditionOccurrences = useWatch({
+    control: form.control,
+    name: "occurrences" as Path<EventFormData>,
+  }) as OccurrenceRow[] | undefined
+
+  const canUseAuditionDateForDeadline =
+    Array.isArray(auditionOccurrences) &&
+    auditionOccurrences.length > 0 &&
+    String(auditionOccurrences[0]?.date ?? "").trim() !== ""
+
+  const handleSameAsAuditionDate = useCallback(() => {
+    const occ = form.getValues("occurrences" as Path<EventFormData>) as OccurrenceRow[] | undefined
+    const first = occ?.[0]
+    if (!first || !String(first.date ?? "").trim()) return
+
+    const times =
+      Array.isArray(first.times) && first.times.length > 0
+        ? first.times.map((t) => ({ time: String(t?.time ?? "") }))
+        : [{ time: "" }]
+
+    const row: OccurrenceRow = {
+      date: String(first.date ?? ""),
+      times,
+    }
+
+    form.setValue("deadlineOccurrences" as Path<EventFormData>, [row] as unknown as never, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    })
+  }, [form])
 
   useEffect(() => {
     if (!isFee) {
@@ -49,8 +87,45 @@ export function AuditionStep({ form }: AuditionStepProps) {
       </Section>
 
       <Section title="Key Dates">
-        <DateTimeList form={form as unknown as UseFormReturn<Record<string, unknown>>} name={"occurrences"} maxDates={1} maxTimesPerDate={1} title="Audition Date" note="If you have multiple audition dates, list them in the additional information section" required/>
-        <DateTimeList form={form as unknown as UseFormReturn<Record<string, unknown>>} name={"deadlineOccurrences"} maxDates={1} maxTimesPerDate={1} title="Deadline" note="If you don't have a deadline, use the audition date" required/>
+        <ShowtimesList
+          form={form as unknown as UseFormReturn<Record<string, unknown>>}
+          name={"occurrences"}
+          maxDates={1}
+          maxTimesPerDate={1}
+          title="Audition Date"
+          note="If you have multiple audition dates, list them in the additional information section"
+          required
+          rowLabel="Audition date"
+        />
+        <ShowtimesList
+          form={form as unknown as UseFormReturn<Record<string, unknown>>}
+          name={"deadlineOccurrences"}
+          maxDates={1}
+          maxTimesPerDate={1}
+          title="Deadline"
+          note="If you don't have a separate deadline, use the button below to match your audition date and time."
+          required
+          rowLabel="Deadline"
+          betweenNoteAndRows={
+            <div className="pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto"
+                disabled={!canUseAuditionDateForDeadline}
+                onClick={handleSameAsAuditionDate}
+                title={
+                  !canUseAuditionDateForDeadline
+                    ? "Enter your audition date first"
+                    : undefined
+                }
+              >
+                Same as audition date
+              </Button>
+            </div>
+          }
+        />
       </Section>
 
       <Section title="Location">
@@ -64,7 +139,14 @@ export function AuditionStep({ form }: AuditionStepProps) {
   instructionsName={"locationInstructions"}
   required
 />      </Section>
-    
+
+      {isFee && (
+        <SimpleFeeDisplay
+          form={form}
+          artistTypeFieldName={"artistType" as Path<EventFormData>}
+          feeVariant="audition"
+        />
+      )}
     </>
   )
 }

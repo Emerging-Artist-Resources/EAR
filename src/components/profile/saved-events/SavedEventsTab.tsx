@@ -10,6 +10,7 @@ import { H3, Text } from "@/components/ui/typography";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ListingDetailsModal } from "@/components/calendar/ListingDetailsModal";
+import { useAuth } from "@/hooks/use-auth";
 
 type FilterMode = "all" | "upcoming" | "past";
 
@@ -18,23 +19,48 @@ export const SavedEventsTab = () => {
   const [filter, setFilter] = useState<FilterMode>("all");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
+  const { isAuthed, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthed) {
+      setEvents([]);
+      setIsLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
     const loadEvents = async () => {
       setIsLoading(true);
       try {
-        const data = await apiGet<SavedEvent[]>(`/api/profile/saved-events?mode=${filter}`);
+        const data = await apiGet<SavedEvent[]>(`/api/profile/saved-events?mode=${filter}`, {
+          signal: controller.signal,
+        });
         setEvents(data);
       } catch (error) {
-        console.error("Error fetching saved events:", error);
+        const message = error instanceof Error ? error.message : String(error);
+        const isExpectedLogoutError =
+          message === "UNAUTHORIZED" ||
+          message === "Unauthorized" ||
+          message.includes("HTTP 401");
+        if (!isExpectedLogoutError && !controller.signal.aborted) {
+          console.error("Error fetching saved events:", error);
+        }
         setEvents([]);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     };
 
     void loadEvents();
-  }, [filter]);
+
+    return () => {
+      controller.abort();
+    };
+  }, [filter, isAuthed, authLoading]);
 
   const handleListingClick = useCallback((listingId: string) => {
     setSelectedListingId(listingId);

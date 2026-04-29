@@ -8,15 +8,22 @@
  * @see EMAIL_SYSTEM.md for setup, usage, and best practices
  */
 
+import { getPublicAppUrl } from "@/lib/app-url"
 import { postmarkClient } from "./postmark"
 
-type ProfileEmailType = "admin-new-user" | "profile-approved" | "email-confirmation"
+type ProfileEmailType =
+  | "admin-new-user"
+  | "profile-approved"
+  | "email-confirmation"
+  | "password-reset"
 
 type SendAdminNewUserEmailArgs = {
   to: string
   userName: string
   userEmail: string
   profileType: string
+  /** Optional; Postmark template may show {{organization_name}} */
+  organizationName?: string
   userId: string
 }
 
@@ -33,7 +40,17 @@ type SendEmailConfirmationArgs = {
   verificationUrl: string
 }
 
-type SendProfileEmailArgs = SendAdminNewUserEmailArgs | SendProfileApprovedEmailArgs | SendEmailConfirmationArgs
+type SendPasswordResetArgs = {
+  to: string
+  firstName: string
+  resetUrl: string
+}
+
+type SendProfileEmailArgs =
+  | SendAdminNewUserEmailArgs
+  | SendProfileApprovedEmailArgs
+  | SendEmailConfirmationArgs
+  | SendPasswordResetArgs
 
 export async function sendProfileEmail(
   type: ProfileEmailType,
@@ -50,7 +67,7 @@ export async function sendProfileEmail(
     )
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.eararts.org"
+  const baseUrl = getPublicAppUrl()
   if (!process.env.POSTMARK_FROM_NAME || !process.env.POSTMARK_FROM_EMAIL) {
     const missing = []
     if (!process.env.POSTMARK_FROM_NAME) missing.push("POSTMARK_FROM_NAME")
@@ -72,6 +89,7 @@ export async function sendProfileEmail(
       user_name: adminArgs.userName || "Unknown User",
       user_email: adminArgs.userEmail || "No email provided",
       profile_type: adminArgs.profileType || "unknown",
+      organization_name: adminArgs.organizationName?.trim() || "",
       cta_url: `${baseUrl}/admin/profiles`,
     }
   } else if (type === "profile-approved") {
@@ -81,11 +99,17 @@ export async function sendProfileEmail(
       user_name: approvedArgs.userName,
       cta_url: `${baseUrl}/profile`,
     }
-  } else {
+  } else if (type === "email-confirmation") {
     const confirmationArgs = args as SendEmailConfirmationArgs
     templateModel = {
       first_name: confirmationArgs.firstName,
       verification_url: confirmationArgs.verificationUrl,
+    }
+  } else {
+    const resetArgs = args as SendPasswordResetArgs
+    templateModel = {
+      first_name: resetArgs.firstName,
+      reset_url: resetArgs.resetUrl,
     }
   }
 

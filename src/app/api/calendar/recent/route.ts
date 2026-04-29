@@ -3,6 +3,7 @@ import { getSupabaseServerClientAnon } from "@/lib/supabase/serverAnon"
 import { getListingTitle } from "@/features/events/server/listing-utils"
 import { normalizeSupabaseRelation, isLinkedPiece, isLinkedClass } from "@/features/events/server/admin-utils"
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
+import { getCoverPhotoPublic } from "@/lib/listing-photo-cover"
 
 export async function GET(req: NextRequest) {
   try {
@@ -29,7 +30,8 @@ export async function GET(req: NextRequest) {
           starts_at_utc,
           ends_at_utc,
           tz
-        )
+        ),
+        listing_photos ( id, path, credit, sort_order )
       `)
       .eq("status", "approved")
       .is("deleted_at", null)
@@ -105,7 +107,8 @@ export async function GET(req: NextRequest) {
             starts_at_utc,
             ends_at_utc,
             tz
-          )
+          ),
+          listing_photos ( id, path, credit, sort_order )
         `)
         .in("id", parentIds)
         .eq("status", "approved")
@@ -149,6 +152,8 @@ export async function GET(req: NextRequest) {
           new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime()
         )[0]
       
+      const cover = getCoverPhotoPublic(listing.listing_photos)
+
       return {
         id: listing.id,
         type: listing.type,
@@ -157,6 +162,8 @@ export async function GET(req: NextRequest) {
         starts_at_utc: earliestOccurrence?.starts_at_utc || null,
         ends_at_utc: earliestOccurrence?.ends_at_utc || null,
         tz: earliestOccurrence?.tz || null,
+        cover_image_url: cover?.url ?? null,
+        cover_image_credit: cover?.credit ?? null,
       }
     })
     
@@ -178,6 +185,8 @@ export async function GET(req: NextRequest) {
           new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime()
         )[0]
       
+      const cover = getCoverPhotoPublic(parent.listing_photos)
+
       return {
         id: parent.id,
         type: parent.type,
@@ -186,6 +195,8 @@ export async function GET(req: NextRequest) {
         starts_at_utc: earliestOccurrence?.starts_at_utc || null,
         ends_at_utc: earliestOccurrence?.ends_at_utc || null,
         tz: earliestOccurrence?.tz || null,
+        cover_image_url: cover?.url ?? null,
+        cover_image_credit: cover?.credit ?? null,
       }
     })
     

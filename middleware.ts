@@ -2,7 +2,49 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import { getUserRole } from "@/lib/authz"
 
+function supabaseAuthCodeRedirect(req: NextRequest): NextResponse | null {
+  const { pathname, searchParams } = req.nextUrl
+  if (pathname !== "/") return null
+
+  const code = searchParams.get("code")
+  if (!code) return null
+
+  const type = searchParams.get("type")
+  const callbackPath = type === "recovery" || !type ? "/auth/callback/recovery" : "/auth/callback"
+  const dest = new URL(callbackPath, req.url)
+
+  searchParams.forEach((value, key) => {
+    dest.searchParams.set(key, value)
+  })
+
+  return NextResponse.redirect(dest)
+}
+
+function supabaseAuthErrorRedirect(req: NextRequest): NextResponse | null {
+  const { pathname, searchParams } = req.nextUrl
+  if (pathname !== "/") return null
+
+  const oauthError = searchParams.get("error")
+  const errorCode = searchParams.get("error_code")
+  if (
+    oauthError === "access_denied" ||
+    errorCode === "otp_expired" ||
+    searchParams.has("error_description")
+  ) {
+    const dest = new URL("/auth/signin", req.url)
+    dest.searchParams.set("error", errorCode === "otp_expired" ? "otp_expired" : "auth_link")
+    return NextResponse.redirect(dest)
+  }
+  return null
+}
+
 export async function middleware(req: NextRequest) {
+  const authCodeRedirect = supabaseAuthCodeRedirect(req)
+  if (authCodeRedirect) return authCodeRedirect
+
+  const authFailRedirect = supabaseAuthErrorRedirect(req)
+  if (authFailRedirect) return authFailRedirect
+
   const { pathname } = req.nextUrl
 
   const res = NextResponse.next()
@@ -42,6 +84,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/admin/:path*"
+    "/",
+    "/admin/:path*",
   ],
 }

@@ -6,7 +6,7 @@ import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
-import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
+import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { FestivalAssociationSection } from "./class-workshop/FestivalAssociationSection"
 import { ClassOccurrencesPicker } from "@/components/forms/blocks/ClassOccurrencesPicker"
@@ -168,12 +168,13 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
         />
       ) : (
         <Section title="Schedule">
-          <DateTimeList
+          <ShowtimesList
             form={form as unknown as UseFormReturn<Record<string, unknown>>}
             name={"occurrences"}
             title={isWorkshop ? "Workshop Dates & Times" : "Class Dates & Times"}
             note="Add all known dates and start times."
             required
+            rowLabel={isWorkshop ? "Workshop date" : "Class date"}
             maxTimesPerDate={1}
             locationConfig={{
               addressName: "address",

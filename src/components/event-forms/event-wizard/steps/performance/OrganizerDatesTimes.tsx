@@ -4,9 +4,25 @@ import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { useMemo, useRef, useEffect } from "react"
 import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
-import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
+import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
+import type { LocationConfigFull } from "@/components/forms/blocks/DateTime/types"
 import { Button } from "@/components/ui/button"
 import { formatTime12Hour } from "@/lib/datetime-utils"
+import {
+  isEveryOrganizerOccurrenceRowComplete,
+  isOrganizerOccurrenceRowComplete,
+} from "@/lib/validations/events/occurrence-row"
+
+const ORGANIZER_OCCURRENCE_LOCATION: LocationConfigFull = {
+  addressName: "address",
+  venueName: "venueName",
+  placeIdName: "placeId",
+  latName: "lat",
+  lngName: "lng",
+  instructionsName: "locationInstructions",
+  label: "Location",
+  required: true,
+}
 
 type DateTimeEntry = { 
   date: string
@@ -21,8 +37,7 @@ type DateTimeEntry = {
 }
 
 function isValidEntry(entry: DateTimeEntry | undefined): boolean {
-  if (!entry?.date || !entry.date.trim()) return false
-  return entry.times?.some(t => t?.time && t.time.trim() !== "") ?? false
+  return isOrganizerOccurrenceRowComplete(entry, { requireTime: true })
 }
 
 function filterValidEntries(entries: DateTimeEntry[]): DateTimeEntry[] {
@@ -54,7 +69,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
   // Store confirmed entries to preserve them even if form values change during editing
   const confirmedEntriesRef = useRef<DateTimeEntry[]>([])
   const prevConfirmedRef = useRef<boolean | undefined>(isConfirmed)
-  // Key to force DateTimeList remount when entering edit mode with correct defaults
+  // Key to force schedule editor remount when entering edit mode with correct defaults
   const editKeyRef = useRef(0)
   // Ref to scroll back to section after reset to prevent scroll jump
   const sectionRef = useRef<HTMLDivElement>(null)
@@ -170,7 +185,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
   }, [isConfirmed])
   
   const hasCompleteEntries = useMemo(() => {
-    return extras.some(isValidEntry)
+    return isEveryOrganizerOccurrenceRowComplete(extras, true)
   }, [extras])
 
   const confirmedEntries = useMemo(() => {
@@ -222,7 +237,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
       shouldDirty: true,
     })
     
-    // Set occurrences BEFORE incrementing key, so the values are in place when DateTimeList remounts
+    // Set occurrences BEFORE incrementing key, so the values are in place when the editor remounts
     // This is critical - the values must be set before the component remounts
     form.setValue("occurrences" as Path<EventFormData>, entriesToRestore as unknown as never, {
       shouldDirty: true,
@@ -230,12 +245,12 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
       shouldValidate: false,
     })
     
-    // Increment key to force remount of DateTimeList with the restored values
+    // Increment key to force remount of the schedule editor with the restored values
     editKeyRef.current += 1
     
     // Use multiple timeouts to ensure values persist through the remount cycle
     // After remount, explicitly set location fields on ALL entries to preserve different locations
-    // This ensures each occurrence keeps its own location even if syncLocation is enabled
+    // This ensures each entry keeps its own location when restoring from the confirmed state
     setTimeout(() => {
       entriesToRestore.forEach((entry: DateTimeEntry, index: number) => {
         console.log(`[OrganizerDatesTimes] handleEdit - restoring location for entry ${index}:`, {
@@ -294,62 +309,48 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
     })
   }
 
+  const sectionTitle = "Showtimes"
+  const scheduleTitle = "When and where"
+  const confirmActionLabel = "Confirm showtimes"
+  const confirmedHeadline = "Showtimes confirmed"
+  const emptyConfirmedLabel = "No showtimes confirmed"
+  const editActionLabel = "Edit showtimes"
+
+  const scheduleEditor = (
+    <ShowtimesList<EventFormData>
+      form={form}
+      name="occurrences"
+      title={scheduleTitle}
+      required
+      locationConfig={ORGANIZER_OCCURRENCE_LOCATION}
+    />
+  )
+
   return (
     <div ref={sectionRef}>
-      <Section title="Dates & times">
+      <Section title={sectionTitle}>
       {!needsConfirmation ? (
-        // For SOLO events, always show the DateTimeList directly (no confirmation needed)
-        <DateTimeList<EventFormData>
-          form={form}
-          name={"occurrences"}
-          title="Event dates and times"
-          required
-          locationConfig={{
-            addressName: "address",
-            venueName: "venueName",
-            placeIdName: "placeId",
-            latName: "lat",
-            lngName: "lng",
-            instructionsName: "locationInstructions",
-            label: "Location",
-            required: true,
-          }}
-        />
+        // SOLO: show schedule editor directly (no confirmation)
+        scheduleEditor
       ) : (
-        // For SPLIT_BILL and FESTIVAL, show confirmation flow
+        // SPLIT_BILL and FESTIVAL: confirmation flow
         <>
           {!isConfirmed ? (
             <>
-              <DateTimeList<EventFormData>
-                key={`edit-${editKeyRef.current}`}
-                form={form}
-                name={"occurrences"}
-                title="Event dates and times"
-                required
-                locationConfig={{
-                  addressName: "address",
-                  venueName: "venueName",
-                  placeIdName: "placeId",
-                  latName: "lat",
-                  lngName: "lng",
-                  instructionsName: "locationInstructions",
-                  label: "Location",
-                  required: true,
-                }}
-              />
+              <div key={`edit-${editKeyRef.current}`}>{scheduleEditor}</div>
               <Button
                 type="button"
                 onClick={handleConfirm}
                 disabled={!hasCompleteEntries}
                 className="mt-4"
               >
-                Confirm dates & times
+                {confirmActionLabel}
               </Button>
             </>
           ) : (
             <div className="space-y-4">
               <div className="rounded-md border border-green-200 bg-green-50 p-4">
-                <p className="text-sm font-medium text-gray-900 mb-2">Event dates & times confirmed</p>
+                <p className="text-sm font-medium text-gray-900 mb-2">{confirmedHeadline}</p>
                 {confirmedEntries.length > 0 ? (
                   <ul className="space-y-1 text-sm text-gray-600">
                     {confirmedEntries.map((ex, idx) => {
@@ -365,7 +366,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
                     })}
                   </ul>
                 ) : (
-                  <p className="text-sm text-gray-500">No dates & times confirmed</p>
+                  <p className="text-sm text-gray-500">{emptyConfirmedLabel}</p>
                 )}
                 <Button
                   type="button"
@@ -374,7 +375,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
                   onClick={handleEdit}
                   className="mt-3"
                 >
-                  Edit dates & times
+                  {editActionLabel}
                 </Button>
               </div>
             </div>

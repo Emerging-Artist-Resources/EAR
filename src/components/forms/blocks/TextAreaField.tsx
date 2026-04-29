@@ -1,4 +1,4 @@
-import { UseFormReturn } from "react-hook-form"
+import { UseFormReturn, useFormState } from "react-hook-form"
 import { Textarea } from "@/components/ui/textarea"
 
 interface TextAreaFieldProps<T extends Record<string, unknown>> {
@@ -26,9 +26,15 @@ export function TextAreaField<T extends Record<string, unknown>>({
   errorMode = "touched",
   className,
 }: TextAreaFieldProps<T>) {
-  const { register } = form
-  const state = form.getFieldState(name as unknown as never)
-  const showError = Boolean(state.error) && (errorMode === "always" || state.isTouched || form.formState.isSubmitted || form.formState.submitCount > 0)
+  const { register, control } = form
+  useFormState({ control, name: name as never, exact: true })
+  const state = form.getFieldState(name as unknown as never, form.formState)
+  const showError =
+    Boolean(state.error) &&
+    (errorMode === "always" ||
+      state.isTouched ||
+      form.formState.isSubmitted ||
+      form.formState.submitCount > 0)
   return (
     <div className={className}>
       <div className="mb-1">

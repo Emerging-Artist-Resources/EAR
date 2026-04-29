@@ -165,9 +165,7 @@ export function CreativeDetails({ details }: { details: NonNullable<AdminEventDe
       <Row label="Dates" value={details.dates} />
       <Row label="Compensation" value={details.compensation} />
       <Row label="Requirements" value={details.requirements} />
-      <Row label="Link" value={
-        details.link ? <a className="underline text-[var(--primary-600)]" href={details.link} target="_blank">{details.link}</a> : undefined
-      }/>
+      <Row label="Instructions" value={details.link} />
       <Row label="Fee Option" value={details.fee} />
       <Row label="Fee Amount" value={details.fee_amount} />
       <Row label="Artist Type" value={details.artist_type} />

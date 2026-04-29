@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getEventPublicRepo } from "@/features/events/server/repository"
 import { z, ZodError } from "zod"
+import { flexibleUrlNullableSchema } from "@/lib/validations/flexible-url"
 import { updatePendingEventRepo } from "@/features/events/server/repository"
 
 export async function GET(
@@ -24,7 +25,7 @@ const basePatchSchema = z.object({
   pronouns: z.string().optional().nullable(),
   contact_email: z.string().email().optional(),
   company: z.string().optional().nullable(),
-  company_website: z.string().url().optional().nullable(),
+  company_website: flexibleUrlNullableSchema,
   address: z.string().optional().nullable(),
   place_id: z.string().optional().nullable(),
   lat: z.number().optional().nullable(),

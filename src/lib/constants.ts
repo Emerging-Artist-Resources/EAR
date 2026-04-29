@@ -29,7 +29,7 @@ export const ROUTES = {
   NOTIFICATIONS: "/notifications",
   ADMIN_NOTIFICATIONS: "/admin/notifications",
   SIGN_IN: "/auth/signin",
-  SIGN_UP: "/auth/signup",
+  SIGN_UP: "/auth/signup/basic",
 } as const
 
 export const API_ENDPOINTS = {

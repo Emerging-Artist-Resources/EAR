@@ -2,7 +2,7 @@
 
 import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { useMemo, useState, useEffect, useRef } from "react"
-import { DateTimeList } from "@/components/forms/blocks/DateTimeList"
+import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { EventFormData } from "@/lib/validations/events"
 import { apiGet } from "@/lib/fetch-utils"
@@ -80,6 +80,11 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
     control: form.control,
     name: "selectedSlots" as Path<EventFormData>,
   }) as string[] | undefined
+
+  const pieceScheduleMode = useWatch({
+    control: form.control,
+    name: "pieceScheduleMode" as Path<EventFormData>,
+  }) as string | undefined
 
   const displayConfirmed = isConfirmed ?? false
 
@@ -226,8 +231,21 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
           // Mark dates as confirmed so selection dropdown can show
           // Never populate extraOccurrences - keep it empty until user adds custom dates/times
           form.setValue("eventDatesConfirmed" as Path<EventFormData>, true as never)
+          if (process.env.NODE_ENV !== "production") {
+            console.log("[EAR piece schedule] parent event fetch OK", {
+              parentEventId,
+              rawListingOccurrences: data.listing_occurrences.length,
+              formattedDayGroups: formattedOccurrences.length,
+              eventDatesConfirmed: true,
+            })
+          }
         } else {
           setParentOccurrences([])
+          if (process.env.NODE_ENV !== "production") {
+            console.log("[EAR piece schedule] parent event fetch — no listing_occurrences", {
+              parentEventId,
+            })
+          }
         }
       } catch (error) {
         console.error("Error fetching parent event occurrences:", error)
@@ -289,7 +307,7 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
     
     // Show selection dropdown when we have parent occurrences (regardless of custom mode)
     const shouldShowSelection = hasParentOccurrences
-    // Show custom DateTimeList when: custom mode is enabled, OR in CUSTOM_ONLY mode, OR no parent occurrences
+    // Show custom ShowtimesList when: custom mode is enabled, OR in CUSTOM_ONLY mode, OR no parent occurrences
     const shouldShowCustomDateTime = isCustomOnly || useCustomDateTime || (isSelectFromParent && !hasParentOccurrences)
 
     return {
@@ -302,6 +320,42 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
       shouldShowSelection,
     }
   }, [mode, displayConfirmed, derivedOccurrences.length, useCustomDateTime])
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return
+    const v = form.getValues()
+    console.log("[EAR piece schedule] PieceOccurrencesPicker snapshot", {
+      pickerMode: mode,
+      parentEventId,
+      pieceScheduleMode: v.pieceScheduleMode ?? pieceScheduleMode,
+      selectedSlots: v.selectedSlots,
+      selectedSlotsLength: Array.isArray(v.selectedSlots) ? v.selectedSlots.length : 0,
+      eventDatesConfirmed: v.eventDatesConfirmed,
+      occurrences: v.occurrences,
+      occurrencesLength: Array.isArray(v.occurrences) ? v.occurrences.length : 0,
+      extraOccurrences: v.extraOccurrences,
+      extraOccurrencesLength: Array.isArray(v.extraOccurrences) ? v.extraOccurrences.length : 0,
+      localParentOccurrencesCount: parentOccurrences.length,
+      derivedSelectionOptionsCount: derivedOccurrences.length,
+      useCustomDateTime,
+      displayConfirmed,
+      flags,
+    })
+  }, [
+    mode,
+    parentEventId,
+    selectedSlots,
+    pieceScheduleMode,
+    displayConfirmed,
+    extras,
+    parentOccurrences.length,
+    derivedOccurrences.length,
+    useCustomDateTime,
+    flags.shouldShowSelection,
+    flags.shouldShowCustomDateTime,
+    flags.hasParentOccurrences,
+    form,
+  ])
 
   return (
     <>
@@ -355,12 +409,13 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
 
       {flags.shouldShowCustomDateTime && (
         <>
-          <DateTimeList
+          <ShowtimesList
             key={customDateTimeKey}
             form={form as unknown as UseFormReturn<Record<string, unknown>>}
             title="Add your piece date(s) & time(s)"
             name="extraOccurrences"
             required
+            rowLabel="Piece date"
             locationConfig={{
               addressName: "address",
               venueName: "venueName",

@@ -1,9 +1,114 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import { UseFormReturn, Path } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { loadPlacesLibrary } from "@/lib/googleMaps"
+
+export type LocationFieldInstructionsProps<T extends Record<string, unknown>> = {
+  form: UseFormReturn<T>
+  instructionsName: Path<T>
+  instructionsLabel?: string
+  instructionsNote?: string
+  instructionsPlaceholder?: string
+  /** When set, instructions are hidden until "+ Add instructions" (auto-opens if a value is already set). */
+  instructionsCollapsible?: boolean
+  className?: string
+  /** e.g. no top margin on the add button when the block sits in its own row */
+  addButtonTightTop?: boolean
+  /** When to show validation messages (aligns with date/time fields in showtime & date cards). */
+  errorMode?: "touched" | "always"
+}
+
+/** Renders only the instructions / optional "+ Add instructions" block (register is owned by the parent `LocationField`). */
+export function LocationFieldInstructions<T extends Record<string, unknown>>({
+  form,
+  instructionsName,
+  instructionsLabel = "Location Instructions",
+  instructionsNote,
+  instructionsPlaceholder = "Details to help attendees find the location",
+  instructionsCollapsible = false,
+  className,
+  addButtonTightTop = false,
+  errorMode = "touched",
+}: LocationFieldInstructionsProps<T>) {
+  const instructionsFieldId = useId()
+  const instructionsWatched = form.watch(instructionsName) as string | undefined
+  // Subscribe to validation state (Zod / superRefine on this path)
+  void form.formState.errors
+  const instState = form.getFieldState(instructionsName, form.formState)
+  const showInstErr =
+    instState.error &&
+    (errorMode === "always" ||
+      instState.isTouched ||
+      form.formState.isSubmitted ||
+      form.formState.submitCount > 0)
+  const instErrMsg = showInstErr ? (instState.error?.message as string | undefined) : undefined
+  const hasInstructionsContent = Boolean(
+    instructionsWatched && String(instructionsWatched).trim() !== ""
+  )
+  const [instructionsOpen, setInstructionsOpen] = useState(
+    !instructionsCollapsible || hasInstructionsContent
+  )
+
+  useEffect(() => {
+    if (hasInstructionsContent) setInstructionsOpen(true)
+  }, [hasInstructionsContent])
+
+  if (instructionsCollapsible && !instructionsOpen) {
+    return (
+      <button
+        type="button"
+        className={`w-full text-left text-sm font-medium text-primary-700 hover:text-primary-800 sm:w-auto ${
+          addButtonTightTop ? "mt-0" : "mt-2"
+        } ${className ?? ""}`}
+        onClick={() => setInstructionsOpen(true)}
+      >
+        + Add instructions
+      </button>
+    )
+  }
+
+  return (
+    <div className={className}>
+      {instructionsCollapsible && instructionsOpen ? (
+        <div className="mb-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-sm font-medium text-gray-700" htmlFor={String(instructionsFieldId)}>
+              {instructionsLabel}
+            </label>
+            {!hasInstructionsContent && (
+              <button
+                type="button"
+                className="shrink-0 text-xs text-gray-500 hover:text-gray-700"
+                onClick={() => setInstructionsOpen(false)}
+              >
+                Close
+              </button>
+            )}
+          </div>
+          <p className="mt-0.5 text-xs text-gray-500">
+            Optional: room, entrance, call time, or other wayfinding details.
+          </p>
+        </div>
+      ) : (
+        <div className="mb-1">
+          <label className="block text-sm font-medium text-gray-700" htmlFor={String(instructionsFieldId)}>
+            {instructionsLabel}
+          </label>
+          {instructionsNote ? <p className="mt-1 text-sm text-gray-500">{instructionsNote}</p> : null}
+        </div>
+      )}
+      <Input
+        id={String(instructionsFieldId)}
+        error={Boolean(instErrMsg)}
+        {...form.register(instructionsName)}
+        placeholder={instructionsPlaceholder}
+      />
+      {instErrMsg ? <p className="mt-1 text-xs text-error-600">{instErrMsg}</p> : null}
+    </div>
+  )
+}
 
 interface LocationFieldProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>
@@ -20,6 +125,18 @@ interface LocationFieldProps<T extends Record<string, unknown>> {
   instructionsPlaceholder?: string
   required?: boolean
   showAsterisk?: boolean
+  /** Tighter top margin on the place picker (e.g. horizontal showtime row). */
+  compact?: boolean
+  /** When set with instructionsName, instructions are hidden until "+ Add instructions" (auto-opens if a value is already set). */
+  instructionsCollapsible?: boolean
+  className?: string
+  /**
+   * When `false` (and you still pass `instructionsName` for registration), the address+map
+   * render only; use `LocationFieldInstructions` in the parent to render instructions elsewhere
+   * so expanding instructions does not shift the address row.
+   */
+  includeInstructionsInPlace?: boolean
+  errorMode?: "touched" | "always"
 }
 
 export function LocationField<T extends Record<string, unknown>>({
@@ -37,6 +154,11 @@ export function LocationField<T extends Record<string, unknown>>({
   instructionsPlaceholder = "Details to help attendees find the location",
   required,
   showAsterisk = true,
+  compact = false,
+  instructionsCollapsible = false,
+  className,
+  includeInstructionsInPlace = true,
+  errorMode = "touched",
 }: LocationFieldProps<T>) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const elementRef = useRef<HTMLElement | null>(null)
@@ -56,14 +178,14 @@ export function LocationField<T extends Record<string, unknown>>({
     }
   }, [currentAddress, addressName])
 
-  // keep aux fields registered so wizard steps don’t drop them
+  // Register address + hidden aux fields so Zod/RHF can attach errors and values (address is set via Places `setValue`).
   useEffect(() => {
+    form.register(addressName, { shouldUnregister: false })
     if (venueName) form.register(venueName, { shouldUnregister: false })
     if (placeIdName) form.register(placeIdName, { shouldUnregister: false })
     if (latName) form.register(latName, { shouldUnregister: false })
     if (lngName) form.register(lngName, { shouldUnregister: false })
-    if (instructionsName) form.register(instructionsName, { shouldUnregister: false })
-  }, [form, venueName, placeIdName, latName, lngName, instructionsName])
+  }, [form, addressName, venueName, placeIdName, latName, lngName])
 
   useEffect(() => {
     let cancelled = false
@@ -185,41 +307,44 @@ export function LocationField<T extends Record<string, unknown>>({
   //   required: required ? "Location is required" : false,
   // })
 
+  const mapClassName = compact ? "mt-0 border-2" : "mt-2 border-2"
+
+  void form.formState.errors
+  const addressState = form.getFieldState(addressName, form.formState)
+  const showAddressErr =
+    addressState.error &&
+    (errorMode === "always" ||
+      addressState.isTouched ||
+      form.formState.isSubmitted ||
+      form.formState.submitCount > 0)
+  const addressErrMsg = showAddressErr ? (addressState.error?.message as string | undefined) : undefined
+
   return (
-    <div>
+    <div className={className}>
       <div className="mb-1">
         <label className="block text-sm font-medium text-gray-700">
           {label} {required && showAsterisk ? <span className="text-error-600">*</span> : null}
         </label>
-        {note ? <p className="mt-1 text-sm text-gray-500">{note}</p> : null}
+        {note && !compact ? <p className="mt-1 text-sm text-gray-500">{note}</p> : null}
       </div>
 
       {apiError ? <div className="text-xs text-error-600 mb-2">{apiError}</div> : null}
-
-      {/* RHF-controlled input (typing ALWAYS updates address) */}
-      {/* <Input 
-        {...addressField} 
-        placeholder="Start typing an address…"
-        ref={(e) => {
-          addressField.ref(e)
-          inputRef.current = e
-        }}
-      /> */}
+      {addressErrMsg ? <p className="mb-2 text-xs text-error-600" role="alert">{addressErrMsg}</p> : null}
 
       {/* Place picker UI (selection fills placeId/lat/lng/venue) */}
-      <div className="mt-2 border-2" ref={containerRef} />
+      <div className={mapClassName} ref={containerRef} />
 
-      {instructionsName ? (
-        <div className="mt-2">
-          <div className="mb-1">
-            <label className="block text-sm font-medium text-gray-700">{instructionsLabel}</label>
-            {instructionsNote ? <p className="mt-1 text-sm text-gray-500">{instructionsNote}</p> : null}
-          </div>
-          <Input
-            {...form.register(instructionsName)}
-            placeholder={instructionsPlaceholder}
-          />
-        </div>
+      {includeInstructionsInPlace && instructionsName ? (
+        <LocationFieldInstructions
+          form={form}
+          instructionsName={instructionsName}
+          instructionsLabel={instructionsLabel}
+          instructionsNote={instructionsNote}
+          instructionsPlaceholder={instructionsPlaceholder}
+          instructionsCollapsible={instructionsCollapsible}
+          addButtonTightTop={false}
+          errorMode={errorMode}
+        />
       ) : null}
     </div>
   )

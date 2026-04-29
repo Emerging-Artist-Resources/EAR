@@ -5,6 +5,89 @@ import { storageService } from "@/services/storage"
 import type { ListingType } from "./repository-types"
 import { normalizeSupabaseRelation } from "./admin-utils"
 
+const MIN_SEARCH_QUERY_LENGTH = 2
+const MIN_SEARCH_SCORE = 30
+
+type SearchScoreResult = {
+  score: number
+  tokenCoverageRatio: number
+  hasPrefixMatch: boolean
+  allTokensPresent: boolean
+}
+
+function getListingTitle(listing: any): string | null {
+  if (listing.type === "performance") return listing.performance_details?.title ?? null
+  if (listing.type === "audition") return listing.audition_details?.title ?? null
+  if (listing.type === "creative") return listing.creative_details?.title ?? null
+  if (listing.type === "class") {
+    const classDetails = normalizeSupabaseRelation(listing.class_workshop_details)
+    return classDetails?.title ?? null
+  }
+  return null
+}
+
+export function normalizeSearchText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+export function tokenizeSearchText(text: string): string[] {
+  return normalizeSearchText(text).split(" ").filter(Boolean)
+}
+
+export function scoreListingTitleMatch(normalizedQuery: string, normalizedTitle: string): SearchScoreResult {
+  const queryTokens = tokenizeSearchText(normalizedQuery)
+  const titleTokens = tokenizeSearchText(normalizedTitle)
+
+  if (!queryTokens.length || !titleTokens.length) {
+    return { score: 0, tokenCoverageRatio: 0, hasPrefixMatch: false, allTokensPresent: false }
+  }
+
+  let score = 0
+
+  if (normalizedTitle === normalizedQuery) {
+    score += 100
+  } else if (normalizedTitle.startsWith(normalizedQuery)) {
+    score += 80
+  } else if (normalizedTitle.includes(normalizedQuery)) {
+    score += 60
+  }
+
+  const matchedTokens = queryTokens.filter((queryToken) =>
+    titleTokens.some((titleToken) => titleToken.includes(queryToken))
+  ).length
+
+  const tokenCoverageRatio = matchedTokens / queryTokens.length
+  score += tokenCoverageRatio * 50
+
+  const allTokensPresent = matchedTokens === queryTokens.length
+  if (allTokensPresent) {
+    score += 20
+  }
+
+  const hasPrefixMatch = queryTokens.some((queryToken) =>
+    titleTokens.some((titleToken) => titleToken.startsWith(queryToken))
+  )
+  if (hasPrefixMatch) {
+    score += 10
+  }
+
+  // Optional polish: boost clean word-boundary hits on short terms.
+  if (` ${normalizedTitle}`.includes(` ${normalizedQuery}`)) {
+    score += 10
+  }
+
+  return {
+    score,
+    tokenCoverageRatio,
+    hasPrefixMatch,
+    allTokensPresent,
+  }
+}
+
 export async function searchListingsRepo(params: {
   query: string
   types?: ListingType[]
@@ -12,6 +95,10 @@ export async function searchListingsRepo(params: {
 }) {
   const supabase = getSupabaseServerClientAnon()
   const { query, types = [], limit = 20 } = params
+  const normalizedQuery = normalizeSearchText(query)
+  if (!normalizedQuery || normalizedQuery.length < MIN_SEARCH_QUERY_LENGTH) {
+    return []
+  }
 
   const sel = `
     id, type, status,
@@ -59,28 +146,17 @@ export async function searchListingsRepo(params: {
           return false
         }
       }
-      
-      // Filter by search query if provided
-      if (!query.trim()) return true
-      
-      const queryLower = query.toLowerCase().trim()
-      const title =
-        listing.type === "performance" ? listing.performance_details?.title :
-        listing.type === "audition" ? listing.audition_details?.title :
-        listing.type === "creative" ? listing.creative_details?.title :
-        listing.type === "class" ? listing.class_workshop_details?.title :
-        null
-      
-      return title?.toLowerCase().includes(queryLower)
+
+      return true
     })
     .map((listing: any) => {
-      const title =
-        listing.type === "performance" ? listing.performance_details?.title :
-        listing.type === "audition" ? listing.audition_details?.title :
-        listing.type === "creative" ? listing.creative_details?.title :
-        listing.type === "class" ? listing.class_workshop_details?.title :
-        "Untitled"
-      
+      const title = getListingTitle(listing) ?? "Untitled"
+      const normalizedTitle = normalizeSearchText(title)
+      const { score, tokenCoverageRatio } = scoreListingTitleMatch(normalizedQuery, normalizedTitle)
+
+      // Hybrid threshold: reject weak fuzzy matches but keep strong signal hits.
+      const failsThreshold = score < MIN_SEARCH_SCORE || (tokenCoverageRatio < 0.3 && score < 60)
+
       // Get earliest occurrence for display
       const occurrences = listing.listing_occurrences || []
       const earliestOccurrence = occurrences
@@ -93,8 +169,21 @@ export async function searchListingsRepo(params: {
         title,
         start: earliestOccurrence?.starts_at_utc || null,
         tz: earliestOccurrence?.tz || null,
+        _score: score,
+        _failsThreshold: failsThreshold,
       }
     })
+    .filter((item: any) => !item._failsThreshold)
+    .sort((a: any, b: any) => {
+      if (b._score !== a._score) return b._score - a._score
+
+      const aTime = a.start ? new Date(a.start).getTime() : Number.MAX_SAFE_INTEGER
+      const bTime = b.start ? new Date(b.start).getTime() : Number.MAX_SAFE_INTEGER
+      if (aTime !== bTime) return aTime - bTime
+
+      return (a.title ?? "").localeCompare(b.title ?? "")
+    })
+    .map(({ _score, _failsThreshold, ...item }: any) => item)
     .slice(0, limit)
 
   return results

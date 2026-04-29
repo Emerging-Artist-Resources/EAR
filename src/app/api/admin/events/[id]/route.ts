@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getAdminEventDetail } from "@/features/events/server/service"
-import { getUserRole } from "@/lib/authz"
+import { getAuthenticatedUser, hasRole } from "@/lib/auth-helpers"
 
 export async function GET(
   _req: NextRequest,
@@ -9,11 +8,12 @@ export async function GET(
 ) {
   try {
     const { id } = await ctx.params
-    const supabase = await getSupabaseServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    const role = getUserRole(user)
-    if (!user?.id || (role !== 'ADMIN' && role !== 'REVIEWER')) {
+    const auth = await getAuthenticatedUser()
+    if (!auth) {
       return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
+    }
+    if (!hasRole(auth.role, ["ADMIN", "REVIEWER"])) {
+      return NextResponse.json({ error: { code: 'FORBIDDEN' } }, { status: 403 })
     }
 
     const data = await getAdminEventDetail(id)

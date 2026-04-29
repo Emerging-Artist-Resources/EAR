@@ -1,7 +1,8 @@
 import { z } from "zod"
+import { flexibleUrlOrEmptySchema, flexibleUrlRequiredSchema } from "./validations/flexible-url"
 
 // Performance submission fields (stored in events base + details jsonb)
-const urlString = z.string().url("Enter a valid URL")
+const ticketLinkRequired = flexibleUrlRequiredSchema("Enter a valid URL", "Ticket link is required")
 
 export const performanceSchema = z.object({
   // Base event fields
@@ -12,9 +13,9 @@ export const performanceSchema = z.object({
   // Details (performance-specific)
   // Note: User info (name, pronouns, email) is retrieved from authenticated user profile, not form data
   company: z.string().optional().or(z.literal("")),
-  companyWebsite: urlString.optional().or(z.literal("")),
+  companyWebsite: flexibleUrlOrEmptySchema,
   ticketPrice: z.string().min(1, "Ticket price is required"),
-  ticketLink: urlString.min(1, "Ticket link is required"),
+  ticketLink: ticketLinkRequired,
   shortDescription: z
     .string()
     .min(1, "Short description is required")

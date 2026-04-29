@@ -3,8 +3,11 @@
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import { UseFormReturn, useFieldArray, useWatch } from "react-hook-form"
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Modal } from "@/components/ui/modal"
 import { Text } from "@/components/ui/typography"
+import { useToast } from "@/contexts/ToastContext"
 import { LocationField } from "./LocationField"
 import { DateCard, createLocationFields, type DateItem, type TimeItem, type LocationConfigFull } from "./DateTime"
 
@@ -52,6 +55,7 @@ export function DateTimeList<T extends Record<string, unknown>>({
   locationConfig,
 }: DateTimeListProps<T>) {
   const { control, getValues, setError, setValue } = form
+  const { showToast } = useToast()
 
   const datesArray = useFieldArray({
     control,
@@ -61,8 +65,12 @@ export function DateTimeList<T extends Record<string, unknown>>({
   const { replace, append, remove } = datesArray
   const dateFields = datesArray.fields
 
-  const [syncTimes, setSyncTimes] = useState(false)
+  const [syncTimes, setSyncTimes] = useState(true)
   const [syncLocation, setSyncLocation] = useState(true)
+
+  const [addSecondDateModalOpen, setAddSecondDateModalOpen] = useState(false)
+  const [modalSameLocation, setModalSameLocation] = useState(true)
+  const [modalSameTimes, setModalSameTimes] = useState(true)
 
   // Watch form values to detect external changes (e.g., from setValue in parent)
   const watchedFormValues = useWatch({
@@ -265,6 +273,8 @@ export function DateTimeList<T extends Record<string, unknown>>({
 
   const canAddDate = !maxDates || dateFields.length < maxDates
 
+  const allowsMultipleDates = !maxDates || maxDates > 1
+
   const firstTimes = useWatch({
     control,
     name: showTime && syncTimes && dateFields.length > 0 ? (`${name}.0.times` as any) : undefined,
@@ -279,7 +289,10 @@ export function DateTimeList<T extends Record<string, unknown>>({
   const applyFirstTimesToAll = useCallback((forceSync = false) => {
     const shouldSync = forceSync || syncTimes
     if (!showTime || !shouldSync) return
-    if (dateFields.length < 2) return
+
+    const rows = getValues(name as any) as DateItem[] | undefined
+    const rowCount = Array.isArray(rows) ? rows.length : 0
+    if (rowCount < 2) return
 
     // Read first date times from form
     const firstTimes = getValues(`${name}.0.times` as any) as TimeItem[] | undefined
@@ -293,7 +306,7 @@ export function DateTimeList<T extends Record<string, unknown>>({
     if (timesToSync.length === 0) return
 
     // Apply to all other dates
-    for (let i = 1; i < dateFields.length; i++) {
+    for (let i = 1; i < rowCount; i++) {
       const currentTimes = getValues(`${name}.${i}.times` as any) as TimeItem[] | undefined
       const current = Array.isArray(currentTimes) ? currentTimes : []
       const currentList = current
@@ -310,12 +323,15 @@ export function DateTimeList<T extends Record<string, unknown>>({
         )
       }
     }
-  }, [dateFields.length, getValues, maxTimesPerDate, name, setValue, showTime, syncTimes])
+  }, [getValues, maxTimesPerDate, name, setValue, showTime, syncTimes])
 
   const applyFirstLocationToAll = useCallback((forceSync = false) => {
     const shouldSync = forceSync || syncLocation
     if (!locationConfig || !shouldSync) return
-    if (dateFields.length < 2) return
+
+    const rows = getValues(name as any) as DateItem[] | undefined
+    const rowCount = Array.isArray(rows) ? rows.length : 0
+    if (rowCount < 2) return
 
     // Read first location from form
     const firstAddress = getValues(`${name}.0.${locationConfig.addressName}` as any) as string | undefined
@@ -329,7 +345,7 @@ export function DateTimeList<T extends Record<string, unknown>>({
     if (!firstAddress || firstAddress.trim() === "") return
 
     // Apply to all other dates
-    for (let i = 1; i < dateFields.length; i++) {
+    for (let i = 1; i < rowCount; i++) {
       const currentAddress = getValues(`${name}.${i}.${locationConfig.addressName}` as any) as string | undefined
       
       // Only update if different
@@ -354,7 +370,7 @@ export function DateTimeList<T extends Record<string, unknown>>({
         }
       }
     }
-  }, [locationConfig, syncLocation, dateFields.length, name, getValues, setValue])
+  }, [locationConfig, syncLocation, name, getValues, setValue])
 
   // When first date times change and sync is on -> apply to all
   useEffect(() => {
@@ -370,78 +386,134 @@ export function DateTimeList<T extends Record<string, unknown>>({
     
     const firstAddress = getValues(`${name}.0.${locationConfig.addressName}` as any) as string | undefined
     if (!firstAddress || typeof firstAddress !== "string" || firstAddress.trim() === "") return
+
+    const firstNorm = firstAddress.trim()
     
-    // Check if all locations are the same
-    const allSame = dateFields.every((_, i) => {
+    // Secondary rows often have no address field yet while "same location" is on (copy runs in rAF).
+    // Treat empty as "not a conflict" — only uncheck when another row has a *non-empty* different address.
+    const allCompatible = dateFields.every((_, i) => {
       if (i === 0) return true
       const otherAddress = getValues(`${name}.${i}.${locationConfig.addressName}` as any) as string | undefined
-      return otherAddress === firstAddress
+      const o = (typeof otherAddress === "string" ? otherAddress : "").trim()
+      if (o === "") return true
+      return o === firstNorm
     })
     
-    // If locations differ and syncLocation is checked, uncheck it
-    if (!allSame && syncLocation) {
+    if (!allCompatible && syncLocation) {
       setSyncLocation(false)
     }
   }, [dateFields.length, locationConfig, name, getValues, setSyncLocation, syncLocation])
 
   // When first location changes and sync is on -> apply to all
-  // But only if locations are actually the same (don't overwrite different locations)
+  // But only if we won't overwrite a deliberately different non-empty venue on another row
   useEffect(() => {
     if (!syncLocation) return
     if (!firstLocationAddress || typeof firstLocationAddress !== "string" || firstLocationAddress.trim() === "") return
     if (dateFields.length < 2) return
+
+    const firstNorm = firstLocationAddress.trim()
     
-    // Check if all locations are the same before syncing
-    const allSame = dateFields.every((_, i) => {
+    const safeToSyncFromFirst = dateFields.every((_, i) => {
       if (i === 0) return true
       const otherAddress = getValues(`${name}.${i}.${locationConfig?.addressName}` as any) as string | undefined
-      return otherAddress === firstLocationAddress
+      const o = (typeof otherAddress === "string" ? otherAddress : "").trim()
+      if (o === "") return true
+      return o === firstNorm
     })
     
-    // Only sync if all locations are already the same
-    if (allSame) {
+    if (safeToSyncFromFirst) {
       applyFirstLocationToAll()
     }
   }, [firstLocationAddress, applyFirstLocationToAll, syncLocation, dateFields.length, locationConfig, name, getValues, setSyncLocation])
 
+  const validateLastDateBeforeAdd = useCallback((): boolean => {
+    const lastIndex = dateFields.length - 1
+    if (lastIndex < 0) return true
+
+    const lastDate = (getValues(`${name}.${lastIndex}.date` as any) as string | undefined) ?? ""
+    if (!lastDate) {
+      setError(`${name}.${lastIndex}.date` as any, {
+        type: "required",
+        message: "Date is required",
+      })
+      return false
+    }
+
+    if (showTime) {
+      const lastTimes = (getValues(`${name}.${lastIndex}.times` as any) as TimeItem[] | undefined) ?? []
+      const lastTime = lastTimes[lastTimes.length - 1]?.time ?? ""
+      if (!lastTime) {
+        setError(`${name}.${lastIndex}.times.${Math.max(0, lastTimes.length - 1)}.time` as any, {
+          type: "required",
+          message: "Time is required",
+        })
+        return false
+      }
+    }
+
+    return true
+  }, [dateFields.length, getValues, name, setError, showTime])
+
+  const appendNewDateRow = useCallback(
+    (nextSyncLocation: boolean, nextSyncTimes: boolean, showSyncToasts: boolean) => {
+      const newDate: DateItem = {
+        date: "",
+        times: showTime ? [{ time: "" }] : [],
+        ...(locationConfig && !nextSyncLocation ? createLocationFields(locationConfig, undefined, true) : {}),
+      }
+      append(newDate as any)
+
+      requestAnimationFrame(() => {
+        if (nextSyncTimes && showTime) {
+          applyFirstTimesToAll(true)
+        }
+        if (nextSyncLocation && locationConfig) {
+          applyFirstLocationToAll(true)
+        }
+        if (showSyncToasts) {
+          if (nextSyncTimes && showTime) {
+            showToast("Times synced across all dates.", "success")
+          }
+          if (nextSyncLocation && locationConfig) {
+            showToast("Locations synced across all dates.", "success")
+          }
+        }
+      })
+    },
+    [
+      append,
+      applyFirstLocationToAll,
+      applyFirstTimesToAll,
+      locationConfig,
+      showTime,
+      showToast,
+    ],
+  )
+
+  const secondDateModalHasQuestions = Boolean(locationConfig) || showTime
+
   const handleAddDate = () => {
     if (maxDates && dateFields.length >= maxDates) return
+    if (!validateLastDateBeforeAdd()) return
 
-    const lastIndex = dateFields.length - 1
+    const isFirstSecondDate =
+      dateFields.length === 1 && allowsMultipleDates && secondDateModalHasQuestions
 
-    if (lastIndex >= 0) {
-      const lastDate = (getValues(`${name}.${lastIndex}.date` as any) as string | undefined) ?? ""
-      if (!lastDate) {
-        setError(`${name}.${lastIndex}.date` as any, {
-          type: "required",
-          message: "Date is required",
-        })
-        return
-      }
-
-      if (showTime) {
-        const lastTimes = (getValues(`${name}.${lastIndex}.times` as any) as TimeItem[] | undefined) ?? []
-        const lastTime = lastTimes[lastTimes.length - 1]?.time ?? ""
-        if (!lastTime) {
-          setError(`${name}.${lastIndex}.times.${Math.max(0, lastTimes.length - 1)}.time` as any, {
-            type: "required",
-            message: "Time is required",
-          })
-          return
-        }
-      }
+    if (isFirstSecondDate) {
+      setModalSameLocation(syncLocation)
+      setModalSameTimes(syncTimes)
+      setAddSecondDateModalOpen(true)
+      return
     }
 
-    const newDate: DateItem = {
-      date: "",
-      times: showTime ? [{ time: "" }] : [],
-      ...(locationConfig && !syncLocation ? createLocationFields(locationConfig, undefined, true) : {}),
-    }
-    append(newDate as any)
+    appendNewDateRow(syncLocation, syncTimes, false)
+  }
 
-    if (syncTimes) {
-      requestAnimationFrame(() => applyFirstTimesToAll())
-    }
+  const handleConfirmSecondDateModal = () => {
+    setSyncLocation(modalSameLocation)
+    setSyncTimes(modalSameTimes)
+    setAddSecondDateModalOpen(false)
+    appendNewDateRow(modalSameLocation, modalSameTimes, true)
   }
 
   const headerNote = useMemo(() => {
@@ -457,35 +529,82 @@ export function DateTimeList<T extends Record<string, unknown>>({
     (!maxDates || maxDates > 1) &&
     (!maxTimesPerDate || maxTimesPerDate > 0)
 
+  const showLocationSyncCheckbox = Boolean(locationConfig && dateFields.length >= 2)
+
+  const sharedDetailsSection =
+    dateFields.length >= 2 && (locationConfig || showSyncToggle)
+
+  const sharedSectionTitle =
+    locationConfig && showSyncToggle
+      ? "Venue & matching"
+      : locationConfig
+        ? "Venue"
+        : "Matching start times"
+
+  const sharedSectionBlurb =
+    locationConfig && showSyncToggle
+      ? "When every day uses the same room or start time, keep them in sync here. Turn off an option if one occurrence differs — you can edit per-day details in the cards above."
+      : locationConfig
+        ? "Use one address for every occurrence, or turn off the option below to set a different venue inside each card."
+        : "When every day starts at the same time, keep them in sync here. Turn off to set times separately in each card."
+
+  /** Label for the section that appears once two dates exist (modal copy while still on one date). */
+  const sectionNameAfterSecondDate =
+    locationConfig && showTime ? "Venue & matching" : locationConfig ? "Venue" : "Matching start times"
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       {title && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
+        <header className="space-y-1.5 border-b border-gray-200/80 pb-4">
+          <label className="block text-base font-semibold tracking-tight text-gray-900">
             {title} {required && showAsterisk && <span className="text-error-600">*</span>}
           </label>
-          <p className="mt-1 text-sm text-gray-600">{headerNote}</p>
-        </div>
+          <p className="text-sm leading-relaxed text-gray-600">{headerNote}</p>
+        </header>
       )}
 
-      {locationConfig && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 p-3">
-            <Checkbox
-              id={`${name}-sync-location`}
-              checked={syncLocation}
-              onChange={(e) => {
-                const checked = (e.target as any).checked
-                setSyncLocation(checked)
-                if (checked) {
-                  // Force sync immediately when toggle is enabled
-                  requestAnimationFrame(() => applyFirstLocationToAll(true))
-                }
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            {dateFields.length === 1 ? "First occurrence" : "All occurrences"}
+          </p>
+          {dateFields.length > 1 && (
+            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+              {dateFields.length} dates
+            </span>
+          )}
+        </div>
+        <div className="space-y-4">
+          {dateFields.map((field, index) => (
+            <DateCard
+              key={`${field.id}-${index}`}
+              form={form as any}
+              name={name}
+              index={index}
+              removeDate={remove}
+              showTime={showTime}
+              errorMode={errorMode}
+              disableRemove={index === 0 || (maxDates === 1)}
+              isFirst={index === 0}
+              maxTimesPerDate={maxTimesPerDate}
+              onFirstDateTimesChange={() => {
+                if (syncTimes) applyFirstTimesToAll()
               }}
+              locationConfig={locationConfig}
+              syncLocation={syncLocation}
+              totalOccurrences={dateFields.length}
             />
-            <label htmlFor={`${name}-sync-location`} className="cursor-pointer text-sm font-medium text-gray-700">
-              Same location for all dates
-            </label>
+          ))}
+        </div>
+      </div>
+
+      {locationConfig && !sharedDetailsSection && (
+        <section className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm ring-1 ring-gray-950/5">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">{locationConfig.label || "Venue"}</h3>
+            <p className="mt-1 text-xs leading-relaxed text-gray-600">
+              Search for the address so we can show it on the map and in listings.
+            </p>
           </div>
           {syncLocation && (
             <LocationField
@@ -501,68 +620,157 @@ export function DateTimeList<T extends Record<string, unknown>>({
               instructionsLabel={locationConfig.instructionsLabel}
               instructionsPlaceholder={locationConfig.instructionsPlaceholder}
               required={locationConfig.required}
-              //errorMode={errorMode}
             />
           )}
-        </div>
+        </section>
       )}
 
-      {showSyncToggle && (
-        <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 p-3">
-          <Checkbox
-            id={`${name}-sync-times`}
-            checked={syncTimes}
-            onChange={(e) => {
-              const checked = (e.target as any).checked
-              setSyncTimes(checked)
-              if (checked) {
-                // Force sync immediately when toggle is enabled
-                applyFirstTimesToAll(true)
-              }
-            }}
-          />
-          <label htmlFor={`${name}-sync-times`} className="cursor-pointer text-sm font-medium text-gray-700">
-            Same times for all dates
-          </label>
-          {syncTimes && (
-            <Text className="ml-2 text-xs text-gray-500">
-              Times from the first date will be applied to all dates
-            </Text>
-          )}
-        </div>
-      )}
+      {sharedDetailsSection && (
+        <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm ring-1 ring-gray-950/5">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">{sharedSectionTitle}</h3>
+            <p className="mt-1 text-xs leading-relaxed text-gray-600">{sharedSectionBlurb}</p>
+          </div>
 
-      <div className="space-y-4">
-        {dateFields.map((field, index) => (
-          <DateCard
-            key={`${field.id}-${index}`}
-            form={form as any}
-            name={name}
-            index={index}
-            removeDate={remove}
-            showTime={showTime}
-            errorMode={errorMode}
-            disableRemove={index === 0 || (maxDates === 1)}
-            isFirst={index === 0}
-            maxTimesPerDate={maxTimesPerDate}
-            onFirstDateTimesChange={() => {
-              if (syncTimes) applyFirstTimesToAll()
-            }}
-            locationConfig={locationConfig}
-            syncLocation={syncLocation}
-          />
-        ))}
-      </div>
+          <div className="space-y-3">
+            {showLocationSyncCheckbox && (
+              <div className="flex gap-3 rounded-xl border border-gray-200 bg-gray-50/80 p-3">
+                <Checkbox
+                  id={`${name}-sync-location`}
+                  className="mt-0.5 shrink-0"
+                  checked={syncLocation}
+                  onChange={(e) => {
+                    const checked = (e.target as HTMLInputElement).checked
+                    setSyncLocation(checked)
+                    if (checked) {
+                      requestAnimationFrame(() => applyFirstLocationToAll(true))
+                    }
+                  }}
+                />
+                <div className="min-w-0">
+                  <label htmlFor={`${name}-sync-location`} className="cursor-pointer text-sm font-medium text-gray-900">
+                    Same location for all dates
+                  </label>
+                  <p className="mt-0.5 text-xs leading-snug text-gray-600">
+                    One address applies to every occurrence. Uncheck to set a different venue inside each card.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {locationConfig && syncLocation && (
+              <div className="rounded-xl border border-dashed border-gray-200 bg-white/80 p-3">
+                <LocationField
+                  form={form}
+                  addressName={`${name}.0.${locationConfig.addressName}` as any}
+                  venueName={locationConfig.venueName ? `${name}.0.${locationConfig.venueName}` as any : undefined}
+                  placeIdName={locationConfig.placeIdName ? `${name}.0.${locationConfig.placeIdName}` as any : undefined}
+                  latName={locationConfig.latName ? `${name}.0.${locationConfig.latName}` as any : undefined}
+                  lngName={locationConfig.lngName ? `${name}.0.${locationConfig.lngName}` as any : undefined}
+                  instructionsName={locationConfig.instructionsName ? `${name}.0.${locationConfig.instructionsName}` as any : undefined}
+                  label={locationConfig.label}
+                  note={locationConfig.note}
+                  instructionsLabel={locationConfig.instructionsLabel}
+                  instructionsPlaceholder={locationConfig.instructionsPlaceholder}
+                  required={locationConfig.required}
+                />
+              </div>
+            )}
+
+            {showSyncToggle && (
+              <div className="flex gap-3 rounded-xl border border-gray-200 bg-gray-50/80 p-3">
+                <Checkbox
+                  id={`${name}-sync-times`}
+                  className="mt-0.5 shrink-0"
+                  checked={syncTimes}
+                  onChange={(e) => {
+                    const checked = (e.target as HTMLInputElement).checked
+                    setSyncTimes(checked)
+                    if (checked) {
+                      applyFirstTimesToAll(true)
+                    }
+                  }}
+                />
+                <div className="min-w-0 flex-1">
+                  <label htmlFor={`${name}-sync-times`} className="cursor-pointer text-sm font-medium text-gray-900">
+                    Same times for all dates
+                  </label>
+                  <p className="mt-0.5 text-xs leading-snug text-gray-600">
+                    Start times from the first occurrence copy to the others. Edit the first row to update them all.
+                  </p>
+                  {syncTimes && (
+                    <Text className="mt-2 text-xs text-primary-700">Sync is on — times follow occurrence 1.</Text>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {canAddDate && (
-        <button
-          type="button"
-          onClick={handleAddDate}
-          className="mt-1 rounded border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
-        >
+        <Button type="button" variant="outline" className="w-full border-dashed sm:w-auto" onClick={handleAddDate}>
           + Add another date
-        </button>
+        </Button>
       )}
+
+      <Modal
+        isOpen={addSecondDateModalOpen}
+        onClose={() => setAddSecondDateModalOpen(false)}
+        title="Add a second date"
+        size="sm"
+        headerClassName="bg-primary text-white"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-gray-600">
+            Tell us whether this new day matches your first occurrence. You can always change this in{" "}
+            <span className="font-medium text-gray-800">{sectionNameAfterSecondDate}</span> after the second date is
+            added.
+          </p>
+          <div className="space-y-3">
+            {locationConfig && (
+              <div className="flex gap-3 rounded-xl border border-gray-200 bg-gray-50/80 p-3">
+                <Checkbox
+                  id={`${name}-modal-same-location`}
+                  className="mt-0.5 shrink-0"
+                  checked={modalSameLocation}
+                  onChange={(e) => setModalSameLocation((e.target as HTMLInputElement).checked)}
+                />
+                <div>
+                  <label htmlFor={`${name}-modal-same-location`} className="cursor-pointer text-sm font-medium text-gray-900">
+                    Same venue as the first date
+                  </label>
+                  <p className="mt-0.5 text-xs text-gray-600">Reuse the address you already entered.</p>
+                </div>
+              </div>
+            )}
+            {showTime && (
+              <div className="flex gap-3 rounded-xl border border-gray-200 bg-gray-50/80 p-3">
+                <Checkbox
+                  id={`${name}-modal-same-times`}
+                  className="mt-0.5 shrink-0"
+                  checked={modalSameTimes}
+                  onChange={(e) => setModalSameTimes((e.target as HTMLInputElement).checked)}
+                />
+                <div>
+                  <label htmlFor={`${name}-modal-same-times`} className="cursor-pointer text-sm font-medium text-gray-900">
+                    Same start time(s) as the first date
+                  </label>
+                  <p className="mt-0.5 text-xs text-gray-600">Copies curtain times from occurrence 1.</p>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
+            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => setAddSecondDateModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" className="w-full sm:w-auto" onClick={handleConfirmSecondDateModal}>
+              Add second date
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
