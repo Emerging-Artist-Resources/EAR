@@ -1,35 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { EAR_AUDITION_CREATIVE_LISTING_FEE_USD } from "@/lib/listing-fee-amounts"
-
-export const ESTABLISHED_BASE_FEE = 50
-export const EMERGING_BASE_FEE = 35
-export const EXTRA_DATE_FEE = 10
-
-export interface FeeCalculation {
-  baseFee: number
-  extraFees: number
-  totalFee: number
-  occurrenceCount: number
-}
-
-function calculateClassFees(
-  isWorkshop: boolean,
-  occurrenceCount: number,
-  artistType: "ESTABLISHED" | "EMERGING" | undefined
-): FeeCalculation | null {
-  if (!artistType) return null
-
-  const baseFee = artistType === "ESTABLISHED" ? ESTABLISHED_BASE_FEE : EMERGING_BASE_FEE
-  const extraFees = isWorkshop || occurrenceCount <= 1 ? 0 : (occurrenceCount - 1) * EXTRA_DATE_FEE
-  const totalFee = baseFee + extraFees
-
-  return {
-    baseFee,
-    extraFees,
-    totalFee,
-    occurrenceCount,
-  }
-}
+import {
+  ESTABLISHED_BASE_FEE_USD as ESTABLISHED_BASE_FEE,
+  EMERGING_BASE_FEE_USD as EMERGING_BASE_FEE,
+  calculateClassListingFeeUsd,
+} from "@/lib/fees/listing-fee-policy"
 
 export interface ListingFeeParams {
   listingType: "performance" | "audition" | "creative" | "class"
@@ -70,7 +45,7 @@ export async function calculateListingFee(
     const occurrenceCount = occurrences?.length || 0
     const isWorkshop = classDetails.class_workshop_type === "WORKSHOP"
 
-    const feeCalc = calculateClassFees(isWorkshop, occurrenceCount, classDetails.artist_type)
+    const feeCalc = calculateClassListingFeeUsd(isWorkshop, occurrenceCount, classDetails.artist_type)
     if (!feeCalc) {
       return null
     }

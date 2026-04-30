@@ -1,31 +1,24 @@
-export const ESTABLISHED_BASE_FEE = 50
-export const EMERGING_BASE_FEE = 35
-export const EXTRA_DATE_FEE = 10
+import {
+  ESTABLISHED_BASE_FEE_USD,
+  EMERGING_BASE_FEE_USD,
+  EXTRA_CLASS_FEE_USD,
+  calculateClassListingFeeUsd,
+  type ClassListingFeeCalculation,
+  type ListingArtistType,
+} from "@/lib/fees/listing-fee-policy"
 
-export interface FeeCalculation {
-  baseFee: number
-  extraFees: number
-  totalFee: number
-  occurrenceCount: number
-}
+export const ESTABLISHED_BASE_FEE = ESTABLISHED_BASE_FEE_USD
+export const EMERGING_BASE_FEE = EMERGING_BASE_FEE_USD
+export const EXTRA_DATE_FEE = EXTRA_CLASS_FEE_USD
+
+export type FeeCalculation = ClassListingFeeCalculation
 
 export function calculateClassFees(
   isWorkshop: boolean,
   occurrenceCount: number,
   artistType: "ESTABLISHED" | "EMERGING" | undefined
 ): FeeCalculation | null {
-  if (!artistType) return null
-
-  const baseFee = artistType === "ESTABLISHED" ? ESTABLISHED_BASE_FEE : EMERGING_BASE_FEE
-  const extraFees = isWorkshop || occurrenceCount <= 1 ? 0 : (occurrenceCount - 1) * EXTRA_DATE_FEE
-  const totalFee = baseFee + extraFees
-
-  return {
-    baseFee,
-    extraFees,
-    totalFee,
-    occurrenceCount,
-  }
+  return calculateClassListingFeeUsd(isWorkshop, occurrenceCount, artistType as ListingArtistType | undefined)
 }
 
 export function formatFeeBreakdown(fee: FeeCalculation): string {

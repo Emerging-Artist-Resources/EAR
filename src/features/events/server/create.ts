@@ -26,6 +26,37 @@ function nullEmergingPlatformListingFeeFields(
   }
 }
 
+/** Established artists must pay platform fee for performance/class submissions. */
+function enforceEstablishedPlatformListingFeeFields(
+  type: ListingType,
+  details: Record<string, unknown>
+) {
+  if (details.artist_type !== "ESTABLISHED") return
+  if (type !== "performance" && type !== "class") return
+  details.listing_fee_option = "PAY_FEE"
+}
+
+function validateClassParentConstraint(details: Record<string, unknown>) {
+  const classWorkshopType = details.class_workshop_type
+  if (classWorkshopType !== "CLASS") return
+
+  const hasParentListing = !!details.parent_listing_id
+  const hasParentWorkshopName = !!details.parent_workshop_name
+  const hasParentWorkshopContactEmail = !!details.parent_workshop_contact_email
+
+  // Match DB constraint behavior with a user-friendly error message.
+  const isValid =
+    hasParentListing ||
+    (hasParentWorkshopName && hasParentWorkshopContactEmail) ||
+    (!hasParentListing && !hasParentWorkshopName && !hasParentWorkshopContactEmail)
+
+  if (!isValid) {
+    throw new Error(
+      "Class parent info is incomplete. Please either select an existing workshop, provide both parent workshop name and contact email, or leave all parent workshop fields blank."
+    )
+  }
+}
+
 export async function createListingOwnedRepo(
   supabase: SupabaseClient,
   input: CreateListingInput
@@ -103,7 +134,9 @@ export async function createListingOwnedRepo(
       }
     }
 
+    enforceEstablishedPlatformListingFeeFields(input.type, input.details)
     nullEmergingPlatformListingFeeFields(input.type, input.details)
+    if (input.type === "class") validateClassParentConstraint(input.details)
 
     const { error: e2 } = await supabase
       .from(tbl)
@@ -320,7 +353,9 @@ export async function createListingAnonymousRepo(
       input.details.artist_type = "EMERGING"
     }
 
+    enforceEstablishedPlatformListingFeeFields(input.type, input.details)
     nullEmergingPlatformListingFeeFields(input.type, input.details)
+    if (input.type === "class") validateClassParentConstraint(input.details)
 
     const { error: e2 } = await serviceSupabase
       .from(tbl)

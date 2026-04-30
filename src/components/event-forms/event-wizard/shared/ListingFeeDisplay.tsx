@@ -2,6 +2,7 @@
 
 import { Text } from "@/components/ui/typography"
 import { Section } from "@/components/forms/blocks/Section"
+import { EXTRA_CLASS_FEE_USD } from "@/lib/fees/listing-fee-policy"
 
 interface ListingFeeDisplayProps {
   artistType: "ESTABLISHED" | "EMERGING" | undefined
@@ -91,7 +92,7 @@ export function ListingFeeDisplay({
             {feeCalculation && hasExtraFees ? (
               <>
                 As an established artist, your base listing fee is ${feeCalculation.baseFee}.
-                {" "}Additional fees apply for multiple class dates ($10 per additional date).
+                {" "}Additional fees apply for multiple classes (${EXTRA_CLASS_FEE_USD} per additional class).
                 {" "}Payment will be processed after submission.
               </>
             ) : (

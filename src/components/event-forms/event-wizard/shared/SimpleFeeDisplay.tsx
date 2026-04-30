@@ -6,7 +6,7 @@ import { EventFormData } from "@/lib/validations/events"
 import { useProfileEligibility } from "@/hooks/use-profile-eligibility"
 import { Text } from "@/components/ui/typography"
 import { Section } from "@/components/forms/blocks/Section"
-import { EAR_AUDITION_CREATIVE_LISTING_FEE_USD } from "@/lib/listing-fee-amounts"
+import { AUDITION_CREATIVE_FEE_USD } from "@/lib/fees/listing-fee-policy"
 
 export type OrganizerFeeVariant = "audition" | "creative"
 
@@ -36,7 +36,7 @@ export function SimpleFeeDisplay({ form, artistTypeFieldName }: SimpleFeeDisplay
     }
   }, [artistType, isLoading, form, artistTypeFieldName])
 
-  const feeUsd = EAR_AUDITION_CREATIVE_LISTING_FEE_USD
+  const feeUsd = AUDITION_CREATIVE_FEE_USD
 
   if (isLoading) {
     return (

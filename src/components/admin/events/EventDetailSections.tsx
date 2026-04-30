@@ -1,4 +1,5 @@
 import { AdminEventDetail } from "./types"
+import { getBaseListingFeeUsd } from "@/lib/fees/listing-fee-policy"
 
 function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   if (value === undefined || value === null || value === "") return null
@@ -44,7 +45,7 @@ function OrganizerPerformanceDetails({
     const feeOption = details.listing_fee_option
 
     if (feeOption === "PAY_FEE") {
-      const feeAmount = artistType === "ESTABLISHED" ? "$50" : "$35"
+      const feeAmount = `$${getBaseListingFeeUsd(artistType === "ESTABLISHED" ? "ESTABLISHED" : "EMERGING")}`
       return `Pay listing fee (${feeAmount})`
     } else if (feeOption === "PROVIDE") {
       return "Provide complementary ticket"
@@ -186,7 +187,7 @@ export function ClassDetails({ details }: { details: NonNullable<AdminEventDetai
 
     if (feeOption === "PAY_FEE") {
       const artistType = details.artist_type
-      const feeAmount = artistType === "ESTABLISHED" ? "$50" : "$35"
+      const feeAmount = `$${getBaseListingFeeUsd(artistType === "ESTABLISHED" ? "ESTABLISHED" : "EMERGING")}`
       return `Pay listing fee (${feeAmount})`
     } else if (feeOption === "PROVIDE") {
       return "Provide guest spot"
