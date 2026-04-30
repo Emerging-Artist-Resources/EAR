@@ -42,13 +42,21 @@ export function ClassWorkshopListingFeeSection({
   const feeCalculation = calculateClassFees(isWorkshop, occurrenceCount, effectiveArtistType)
 
   useEffect(() => {
-    if (artistTypeField === "ESTABLISHED" || artistTypeField === "EMERGING") {
+    if (effectiveArtistType === "ESTABLISHED") {
+      form.setValue("listingFeeOption" as Path<EventFormData>, "PAY_FEE" as unknown as never)
+      form.setValue("listingFeeExplanation" as Path<EventFormData>, "" as unknown as never)
+      form.setValue("guestSpotInfo" as Path<EventFormData>, "" as unknown as never)
+      form.clearErrors(["listingFeeOption", "listingFeeExplanation", "guestSpotInfo"] as unknown as never)
+      return
+    }
+
+    if (effectiveArtistType === "EMERGING") {
       form.setValue("listingFeeOption" as Path<EventFormData>, undefined as unknown as never)
       form.setValue("listingFeeExplanation" as Path<EventFormData>, "" as unknown as never)
       form.setValue("guestSpotInfo" as Path<EventFormData>, "" as unknown as never)
       form.clearErrors(["listingFeeOption", "listingFeeExplanation", "guestSpotInfo"] as unknown as never)
     }
-  }, [artistTypeField, form])
+  }, [effectiveArtistType, form])
 
   const feeCalculationForDisplay =
     effectiveArtistType === "ESTABLISHED" ? feeCalculation || undefined : undefined
@@ -58,7 +66,7 @@ export function ClassWorkshopListingFeeSection({
       artistType={effectiveArtistType}
       isFirstSubmission={isFirstSubmission}
       isLoading={isLoading}
-      establishedFee={50}
+      establishedFee={25}
       emergingFee={35}
       emergingListingWaived
       feeCalculation={feeCalculationForDisplay}

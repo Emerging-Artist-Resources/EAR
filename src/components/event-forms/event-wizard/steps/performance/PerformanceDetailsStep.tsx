@@ -9,6 +9,7 @@ import { SelectBlock } from "@/components/forms/blocks/Select"
 
 import { OrganizerFlow } from "@/components/event-forms/event-wizard/steps/performance/OrganizerFlow"
 import { PieceSubmissionFlow } from "@/components/event-forms/event-wizard/steps/performance/PieceSubmissionFlow"
+import { ShareListingSection } from "@/components/event-forms/event-wizard/steps/performance/ShareListingSection"
 
 type PerfType = "ORGANIZER" | "PIECE"
 
@@ -67,6 +68,7 @@ export function PerformanceDetailsStep({ form }: PerformanceDetailsStepProps) {
 
       {perfType === "ORGANIZER" && <OrganizerFlow form={form} />}
       {perfType === "PIECE" && <PieceSubmissionFlow form={form} />}
+      {(perfType === "ORGANIZER" || perfType === "PIECE") && <ShareListingSection form={form} />}
 
     </Section>
   )

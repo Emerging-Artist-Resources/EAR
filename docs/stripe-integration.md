@@ -181,10 +181,10 @@ CREATE TABLE stripe_webhook_events (
 **Function**: `calculateListingFee(params)`
 
 **Supported Listing Types**:
-- **Class/Workshop**: Base fee ($50 established, $35 emerging) + $10 per additional date
-- **Performance**: Base fee ($50 established, $35 emerging)
-- **Audition**: Base fee ($50 established, $35 emerging)
-- **Creative**: Base fee ($50 established, $35 emerging)
+- **Class/Workshop**: Base fee ($25 established, $35 emerging) + $5 per additional class
+- **Performance**: Base fee ($25 established, $35 emerging)
+- **Audition**: Base fee ($25 established, $35 emerging)
+- **Creative**: Base fee ($25 established, $35 emerging)
 
 **Returns**: `{ amount: number, currency: string } | null`
 - Amount is in **cents**

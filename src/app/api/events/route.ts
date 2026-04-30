@@ -34,6 +34,17 @@ export async function GET(req: NextRequest) {
   }
 }
 
+const listingMetaSchema = z
+  .object({
+    share: z
+      .object({
+        recipient_emails: z.array(z.string()).max(10).optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .passthrough()
+
 const baseSchema = z.object({
   contact_name: z.string().min(1, "Contact name is required"),
   pronouns: z.string().optional().nullable(),
@@ -49,6 +60,7 @@ const baseSchema = z.object({
   social_handles: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   borough: z.string().optional().nullable(),
+  meta: listingMetaSchema.optional(),
 })
 
 const occurrenceSchema = z.object({

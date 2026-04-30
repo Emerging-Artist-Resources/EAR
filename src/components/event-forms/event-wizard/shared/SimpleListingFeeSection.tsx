@@ -8,6 +8,10 @@ import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { Text } from "@/components/ui/typography"
 import { useProfileEligibility } from "@/hooks/use-profile-eligibility"
 import { ListingFeeDisplay } from "./ListingFeeDisplay"
+import {
+  ESTABLISHED_BASE_FEE_USD,
+  EMERGING_BASE_FEE_USD,
+} from "@/lib/fees/listing-fee-policy"
 
 interface SimpleListingFeeSectionProps {
   form: UseFormReturn<EventFormData>
@@ -34,8 +38,8 @@ export function SimpleListingFeeSection({
   feeOptionFieldName,
   explanationFieldName,
   complementaryFieldName,
-  establishedFee = 50,
-  emergingFee = 35,
+  establishedFee = ESTABLISHED_BASE_FEE_USD,
+  emergingFee = EMERGING_BASE_FEE_USD,
   emergingListingWaived = false,
   emergingOptions = [
     { label: `Pay listing fee ($${emergingFee})`, value: "PAY_FEE" },

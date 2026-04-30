@@ -413,7 +413,7 @@ export async function getListingForOwnerRepo(listingId: string) {
   const { data, error } = await supabase
     .from("listings")
     .select(`
-      id, type, status, social_handles, notes, submitted_at,
+      id, type, status, social_handles, notes, submitted_at, meta,
       company, company_website, address, place_id, lat, lng, venue_name, location_instructions,
       payment_required, payment_amount, payment_currency, payment_status,
       performance_details (*),

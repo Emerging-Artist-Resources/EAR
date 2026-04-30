@@ -7,6 +7,7 @@ import type {
 } from "./repository-types"
 import { detailTable } from "./repository-types"
 import { calculateListingFee } from "./fee-calculator"
+import { buildPersistableListingMeta } from "./listing-meta-share"
 
 /** Emerging artists never pay platform listing fees for performance or class; force nulls so clients cannot set PAY_FEE. */
 function nullEmergingPlatformListingFeeFields(
@@ -22,6 +23,37 @@ function nullEmergingPlatformListingFeeFields(
     details.listing_fee_option = null
     details.listing_fee_explanation = null
     details.guest_spot_info = null
+  }
+}
+
+/** Established artists must pay platform fee for performance/class submissions. */
+function enforceEstablishedPlatformListingFeeFields(
+  type: ListingType,
+  details: Record<string, unknown>
+) {
+  if (details.artist_type !== "ESTABLISHED") return
+  if (type !== "performance" && type !== "class") return
+  details.listing_fee_option = "PAY_FEE"
+}
+
+function validateClassParentConstraint(details: Record<string, unknown>) {
+  const classWorkshopType = details.class_workshop_type
+  if (classWorkshopType !== "CLASS") return
+
+  const hasParentListing = !!details.parent_listing_id
+  const hasParentWorkshopName = !!details.parent_workshop_name
+  const hasParentWorkshopContactEmail = !!details.parent_workshop_contact_email
+
+  // Match DB constraint behavior with a user-friendly error message.
+  const isValid =
+    hasParentListing ||
+    (hasParentWorkshopName && hasParentWorkshopContactEmail) ||
+    (!hasParentListing && !hasParentWorkshopName && !hasParentWorkshopContactEmail)
+
+  if (!isValid) {
+    throw new Error(
+      "Class parent info is incomplete. Please either select an existing workshop, provide both parent workshop name and contact email, or leave all parent workshop fields blank."
+    )
   }
 }
 
@@ -57,7 +89,10 @@ export async function createListingOwnedRepo(
         location_instructions: input.base.location_instructions ?? null,
         social_handles: input.base.social_handles ?? null,
         notes: input.base.notes ?? null,
-        meta: input.base.meta ?? {},
+        meta: buildPersistableListingMeta(
+          input.base.meta as Record<string, unknown> | undefined,
+          input.base.contact_email
+        ),
       })
       .select("id")
       .single()
@@ -71,9 +106,9 @@ export async function createListingOwnedRepo(
     if (input.type === "funding") {
       throw new Error("Funding listings are not currently supported")
     }
-    
+
     const tbl = detailTable[input.type]
-    
+
     // Validate performance_details constraint: ORGANIZER must have title
     if (input.type === "performance" && input.details.subtype === "ORGANIZER") {
       if (!input.details.title) {
@@ -99,7 +134,9 @@ export async function createListingOwnedRepo(
       }
     }
 
+    enforceEstablishedPlatformListingFeeFields(input.type, input.details)
     nullEmergingPlatformListingFeeFields(input.type, input.details)
+    if (input.type === "class") validateClassParentConstraint(input.details)
 
     const { error: e2 } = await supabase
       .from(tbl)
@@ -285,7 +322,10 @@ export async function createListingAnonymousRepo(
         location_instructions: input.base.location_instructions ?? null,
         social_handles: input.base.social_handles ?? null,
         notes: input.base.notes ?? null,
-        meta: input.base.meta ?? {},
+        meta: buildPersistableListingMeta(
+          input.base.meta as Record<string, unknown> | undefined,
+          input.base.contact_email
+        ),
       })
       .select("id")
       .single()
@@ -297,23 +337,25 @@ export async function createListingAnonymousRepo(
     if (input.type === "funding") {
       throw new Error("Funding listings are not currently supported")
     }
-    
+
     const tbl = detailTable[input.type]
-    
+
     // Validate performance_details constraint: ORGANIZER must have title
     if (input.type === "performance" && input.details.subtype === "ORGANIZER") {
       if (!input.details.title) {
         throw new Error("Performance ORGANIZER must have a title")
       }
     }
-    
+
     // For auditions, ensure artist_type is set (required NOT NULL)
     // For anonymous submissions, default to EMERGING if not provided
     if (input.type === "audition" && !input.details.artist_type) {
       input.details.artist_type = "EMERGING"
     }
 
+    enforceEstablishedPlatformListingFeeFields(input.type, input.details)
     nullEmergingPlatformListingFeeFields(input.type, input.details)
+    if (input.type === "class") validateClassParentConstraint(input.details)
 
     const { error: e2 } = await serviceSupabase
       .from(tbl)

@@ -16,7 +16,7 @@ export const auditionFields = z
     preAuditionClasses: z.string().optional(),
     /**
      * Listing fee fields (only shown if fee === "FEE")
-     * Established artists: $50
+     * Established artists: $25
      * Emerging artists: $35
      */
     artistType: z.enum(["ESTABLISHED", "EMERGING"]).optional(),

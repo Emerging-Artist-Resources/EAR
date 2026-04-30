@@ -2,8 +2,13 @@ import { createListingOwnedRepo, listEvents, listCalendarItemsRepo, getEventPubl
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { sendListingEmail } from "@/lib/email/sendListingEmail"
+import { sendListingShareTemplatedEmail } from "@/lib/email/sendListingShareEmail"
 import { getListingTitle } from "./listing-utils"
 import type { CreateListingInput } from "./repository-types"
+import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { normalizeShareRecipientEmails } from "@/lib/listing-share"
+import { mergeListingMetaWithServerShareSentAt } from "./listing-meta-share"
+import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
 
 export interface UserInfo {
   name: string
@@ -158,4 +163,85 @@ export async function sendAdminListingNotificationEmail(
   })
 }
 
+/**
+ * After listing approval: notify share recipients once (idempotent via meta.share.sent_at).
+ */
+export async function sendListingShareEmailsAfterApproval(listingId: string): Promise<void> {
+  const supabase = await getSupabaseServerClient()
+  try {
+    const { data: listingData, error } = await supabase
+      .from("listings")
+      .select(
+        `
+        id, type, contact_name, contact_email, meta,
+        performance_details (*),
+        audition_details (*),
+        creative_details (*),
+        class_workshop_details!class_workshop_details_listing_id_fkey (*),
+        piece_details!piece_details_listing_id_fkey (*)
+      `
+      )
+      .eq("id", listingId)
+      .single()
 
+    if (error || !listingData) {
+      console.error(`[EMAIL] share listing: failed to load ${listingId}`, error)
+      return
+    }
+
+    if (listingData.type !== "performance") return
+
+    const meta = listingData.meta as Record<string, unknown> | null | undefined
+    const shareRaw =
+      meta && typeof meta === "object" && !Array.isArray(meta)
+        ? (meta as Record<string, unknown>).share
+        : null
+    if (!shareRaw || typeof shareRaw !== "object" || Array.isArray(shareRaw)) return
+
+    const shareObj = shareRaw as Record<string, unknown>
+    if (typeof shareObj.sent_at === "string" && shareObj.sent_at.length > 0) return
+
+    const rawRecipients = shareObj.recipient_emails
+    if (!Array.isArray(rawRecipients)) return
+
+    const normalized = normalizeShareRecipientEmails(
+      rawRecipients.filter((e): e is string => typeof e === "string"),
+      listingData.contact_email
+    )
+    if (normalized.length === 0) return
+
+    const pd = listingData.performance_details as { subtype?: string } | { subtype?: string }[] | null
+    const perfDetails = Array.isArray(pd) ? pd[0] : pd
+    const subtype = perfDetails?.subtype
+    if (subtype !== "ORGANIZER" && subtype !== "PIECE") return
+
+    const template = subtype === "PIECE" ? "listing-share-piece" : "listing-share-festival"
+    const listingForTitle = listingData as unknown as PublicListingDetail
+    const listingTitle = getListingTitle(listingForTitle)
+    const inviterName = listingData.contact_name || "Someone"
+    const inviterEmail = listingData.contact_email || ""
+
+    for (const to of normalized) {
+      try {
+        await sendListingShareTemplatedEmail({
+          template,
+          to,
+          listingTitle,
+          listingId,
+          inviterName,
+          inviterEmail,
+        })
+      } catch (e) {
+        console.error(`[EMAIL] listing share failed for ${to} (listing ${listingId}):`, e)
+      }
+    }
+
+    const newMeta = mergeListingMetaWithServerShareSentAt(meta ?? {}, new Date().toISOString())
+    const { error: upErr } = await supabase.from("listings").update({ meta: newMeta }).eq("id", listingId)
+    if (upErr) {
+      console.error(`[EMAIL] failed to persist share sent_at for ${listingId}:`, upErr)
+    }
+  } catch (e) {
+    console.error(`[EMAIL] sendListingShareEmailsAfterApproval ${listingId}:`, e)
+  }
+}
