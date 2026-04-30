@@ -5,6 +5,7 @@ import HeaderGate from "@/components/layout/header-gate"
 import FooterGate from "@/components/layout/footer-gate"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { AdminLayoutWrapper } from "@/components/admin/shared/AdminLayoutWrapper"
+import { SessionExpiredModal } from "@/components/auth/SessionExpiredModal"
 import { ToastProvider } from "@/contexts/ToastContext"
 import { ToastContainer } from "@/components/ui/ToastContainer"
 
@@ -42,6 +43,7 @@ export default function RootLayout({
               </AdminLayoutWrapper>
             </div>
             <FooterGate />
+            <SessionExpiredModal />
             <ToastContainer />
           </ErrorBoundary>
         </ToastProvider>

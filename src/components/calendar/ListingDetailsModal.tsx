@@ -182,6 +182,13 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
 
   const title = listing ? getListingTitle(listing) : "Listing Details"
   const typeLabel = listing ? getTypeLabel(listing.type) : ""
+  const parentListingId =
+    listing?.piece_details?.parent_listing_id || listing?.class_workshop_details?.parent_listing_id || null
+  const backToParentLabel = listing?.piece_details?.parent_listing_id
+    ? "Back to Performance"
+    : listing?.class_workshop_details?.parent_listing_id
+    ? "Back to Workshop"
+    : null
 
   const creativeOpportunityDates =
     listing?.type === "creative" && listing.creative_details?.dates?.trim()
@@ -227,8 +234,9 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       size="lg"
       headerClassName="bg-primary"
     >
+      <div className="min-h-[calc(90vh-9rem)]">
       {loading && (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex h-full min-h-[calc(90vh-9rem)] items-center justify-center py-12">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mb-4"></div>
               <p className="text-gray-600">Loading listing details...</p>
@@ -237,7 +245,8 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
         )}
 
         {error && (
-          <div className="py-12 text-center">
+          <div className="flex h-full min-h-[calc(90vh-9rem)] items-center justify-center py-12 text-center">
+            <div>
             <p className="text-red-600 mb-4">{error}</p>
             <button
               onClick={onClose}
@@ -245,6 +254,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
             >
               Close
             </button>
+            </div>
           </div>
         )}
 
@@ -277,6 +287,17 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                 </div>
               )}
             </div>
+            {parentListingId && backToParentLabel && onListingClick && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => onListingClick(parentListingId)}
+                  className="text-sm text-primary-600 hover:text-primary-700 underline"
+                >
+                  ← {backToParentLabel}
+                </button>
+              </div>
+            )}
 
             {/* Info Card - Type-Specific Details */}
             {(() => {
@@ -519,7 +540,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                   cardsPerView={3}
                   onCardClick={(index) => {
                     const childListing = childListings[index]
-                    if (childListing && !childListing.is_piece && !childListing.is_class && onListingClick) {
+                    if (childListing && onListingClick) {
                       onClose()
                       onListingClick(childListing.id)
                     }
@@ -554,7 +575,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                           ? `Listing photo: ${child.cover_image_credit}`
                           : `${child.title} — photo`
                       }
-                      onClick={child.is_piece || child.is_class ? undefined : () => {
+                      onClick={() => {
                         if (onListingClick) {
                           onClose()
                           onListingClick(child.id)
@@ -609,6 +630,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
             ) : null}
           </div>
         )}
+      </div>
     </Modal>
   )
 }

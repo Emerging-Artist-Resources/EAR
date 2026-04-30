@@ -3,10 +3,52 @@ import { Card } from "@/components/ui/card"
 import { H3, Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Alert } from "@/components/ui/alert"
+import { supabase } from "@/lib/supabase/client"
+import { requestPasswordResetAction } from "@/features/profile/server/requestPasswordReset"
 
 export const ProfileSettings: React.FC = () => {
   const [earNewsletter, setEarNewsletter] = useState(true)
   const [artistNewsletter, setArtistNewsletter] = useState(true)
+  const [changePasswordLoading, setChangePasswordLoading] = useState(false)
+  const [changePasswordError, setChangePasswordError] = useState<string | null>(null)
+  const [changePasswordMessage, setChangePasswordMessage] = useState<string | null>(null)
+
+  const handleChangePassword = async () => {
+    if (changePasswordLoading) return
+    setChangePasswordLoading(true)
+    setChangePasswordError(null)
+    setChangePasswordMessage(null)
+
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
+
+      if (userError || !user?.email) {
+        setChangePasswordError("Could not determine your account email. Please try again.")
+        setChangePasswordLoading(false)
+        return
+      }
+
+      const result = await requestPasswordResetAction(user.email)
+      if ("error" in result && result.error) {
+        setChangePasswordError(result.error)
+        setChangePasswordLoading(false)
+        return
+      }
+
+      setChangePasswordMessage(
+        "Password reset email sent. Use the link in your inbox to choose a new password."
+      )
+      setChangePasswordLoading(false)
+    } catch (error) {
+      console.error("[profile settings] change password", error)
+      setChangePasswordError("Something went wrong. Please try again.")
+      setChangePasswordLoading(false)
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -39,8 +81,24 @@ export const ProfileSettings: React.FC = () => {
           <div>
             <Text className="font-semibold">Security</Text>
             <div className="mt-2">
-              <Button className="w-full bg-accent-500 hover:bg-accent-600">Change Password</Button>
+              <Button
+                className="w-full bg-accent-500 hover:bg-accent-600"
+                onClick={handleChangePassword}
+                disabled={changePasswordLoading}
+              >
+                {changePasswordLoading ? "Sending reset link..." : "Change Password"}
+              </Button>
             </div>
+            {changePasswordError && (
+              <Alert variant="error" className="mt-3">
+                {changePasswordError}
+              </Alert>
+            )}
+            {changePasswordMessage && (
+              <Alert variant="success" className="mt-3">
+                {changePasswordMessage}
+              </Alert>
+            )}
           </div>
 
           <div className="border-t border-gray-200 pt-4">

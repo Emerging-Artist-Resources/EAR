@@ -13,6 +13,12 @@ import { Alert } from "@/components/ui/alert"
 import { Card, CardContent } from "@/components/ui/card"
 import { ROUTES } from "@/lib/constants"
 
+function sanitizeNextParam(raw: string | null): string {
+  const next = raw ?? "/announcement"
+  if (next.startsWith("/") && !next.startsWith("//")) return next
+  return "/announcement"
+}
+
 function SignInContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -65,7 +71,8 @@ function SignInContent() {
       if (!isMountedRef.current) return
 
       if (data?.session) {
-        router.replace("/announcement")
+        const nextPath = sanitizeNextParam(searchParams.get("next"))
+        router.replace(nextPath)
       } else {
         if (isMountedRef.current) {
           setError("Sign in failed. Please try again.")
