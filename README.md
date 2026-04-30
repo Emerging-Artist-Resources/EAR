@@ -191,11 +191,18 @@ performance-calendar/
 - `npm run lint` - Run ESLint
 - `npm run db:seed` - Seed database with initial data
 
-### Database Operations
-- `npx prisma studio` - Open Prisma Studio (database GUI)
-- `npx prisma migrate dev` - Create and apply migrations
-- `npx prisma generate` - Generate Prisma client
-- `npx prisma db push` - Push schema changes to database
+### Database (Supabase)
+
+Schema is managed with SQL migrations in `supabase/migrations/`. For **local → staging → production** workflow, env separation on Vercel, and Next.js practices, see **[docs/supabase-staging-workflow.md](./docs/supabase-staging-workflow.md)**.
+
+Common CLI commands (from repo root, with [Supabase CLI](https://supabase.com/docs/guides/cli) installed):
+
+- `supabase start` — run local Postgres, API, and Studio
+- `supabase db diff -f <name>` — generate a migration from local schema changes (Docker required)
+- `supabase link --project-ref <ref>` — link this folder to a hosted project
+- `supabase db push` — apply pending migrations to the linked remote
+
+> **Note:** Older README sections below may still mention Prisma; the app uses Supabase. Prefer the doc above for database work.
 
 ## Deployment
 
