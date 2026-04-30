@@ -35,7 +35,7 @@ export function DayEventsPanel({
     >
       <div className="space-y-3">
         {events.length === 0 ? (
-          <div className="text-sm text-gray-500 text-center py-4">
+          <div className="font-sans text-sm text-muted-foreground text-center py-4">
             No events scheduled for this day
           </div>
         ) : (
@@ -44,7 +44,7 @@ export function DayEventsPanel({
             return (
               <div
                 key={`${event.listingId}-${event.occurrenceId}`}
-                className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                className="border border-border-default rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer bg-surface-panel"
                 onClick={() => {
                   onEventClick(event.listingId)
                   onClose()
@@ -54,7 +54,7 @@ export function DayEventsPanel({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
                       <span
-                        className="px-2 py-1 rounded text-xs font-medium border"
+                        className="font-sans px-2 py-1 rounded text-xs font-medium border"
                         style={{
                           backgroundColor: colors.bg,
                           color: colors.text,
@@ -64,7 +64,7 @@ export function DayEventsPanel({
                         {getTypeLabel(event.type)}
                       </span>
                     </div>
-                    <h3 className="font-semibold text-gray-900 truncate">
+                    <h3 className="font-header text-2xl font-semibold text-text-primary truncate">
                       {event.title || "Untitled Event"}
                     </h3>
                   </div>

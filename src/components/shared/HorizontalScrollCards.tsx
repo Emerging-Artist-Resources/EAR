@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { H3, Text } from "@/components/ui/typography"
 
 export interface HorizontalScrollCardsProps {
   title?: string
@@ -89,10 +90,10 @@ export function HorizontalScrollCards({
       {(title || description) && (
         <div className="mb-4">
           {title && (
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <H3 className="text-ear-black">{title}</H3>
           )}
           {description && (
-            <p className="mt-1 text-sm text-gray-600">{description}</p>
+            <Text className="mt-1 text-text-muted">{description}</Text>
           )}
         </div>
       )}
@@ -101,7 +102,7 @@ export function HorizontalScrollCards({
           <Button
             variant="outline"
             size="icon"
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md hover:bg-gray-50"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-surface-panel shadow-md hover:bg-surface-panel-alt"
             onClick={() => scroll("left")}
             aria-label="Scroll left"
           >
@@ -131,7 +132,7 @@ export function HorizontalScrollCards({
           <Button
             variant="outline"
             size="icon"
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md hover:bg-gray-50"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-surface-panel shadow-md hover:bg-surface-panel-alt"
             onClick={() => scroll("right")}
             aria-label="Scroll right"
           >

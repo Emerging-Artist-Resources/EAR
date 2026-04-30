@@ -121,7 +121,7 @@ export function DonationSuccessView({ donationId, variant, artist }: DonationSuc
 
   if (!donationId) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center space-y-4">
           <DonationFunnelTrustHeader variant={variant === "artist" ? "artist" : "generic"} className="mb-2" />
           <Text className="text-gray-600">Missing donation reference. Return to the donation page to try again.</Text>
@@ -134,7 +134,7 @@ export function DonationSuccessView({ donationId, variant, artist }: DonationSuc
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
         <DonationFunnelTrustHeader variant={variant === "artist" ? "artist" : "generic"} className="mb-6" />
         <div className="mb-6">

@@ -3,7 +3,7 @@
 import { useMemo, useState, useRef, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { H2 } from "@/components/ui/typography"
+import { H2, H3, Text } from "@/components/ui/typography"
 import { FilterBar } from "@/components/calendar/FilterBar"
 import { ListingDetailsModal } from "./ListingDetailsModal"
 import { DayEventsPanel } from "./DayEventsPanel"
@@ -215,7 +215,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
               <Button variant="outline" size="sm" onClick={handleTodayClick}>Today</Button>
             </div>
           </div>
-          <div className="pt-3 border-t border-gray-200">
+          <div className="pt-3 border-t border-border-default">
             <FilterBar selectedTypes={selectedTypes} onChangeEventType={setSelectedTypes} />
           </div>
         </div>
@@ -223,7 +223,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
 
       <div className="grid lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3">
-          <Card className="p-2 sm:p-3 shadow-md bg-gray-100">
+          <Card className="p-2 sm:p-3 shadow-md bg-surface-panel-alt">
             {view === 'month' && (
               <MonthView
                 daysInMonth={daysInMonth}
@@ -256,7 +256,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
 
         <div className="lg:col-span-1">
           <Card className="p-6 shadow-md">
-            <h3 className="text-lg font-semibold text-primary mb-4">Upcoming Deadlines</h3>
+            <H3 className="text-primary mb-4">Upcoming Deadlines</H3>
             
             <div className="space-y-3">
               {upcomingDeadlines.map((it) => (
@@ -265,16 +265,16 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
                   type="button"
                   onClick={() => handleItemClick(it.listingId)}
                   aria-label={`View details: ${it.title || "Untitled"}`}
-                  className="group w-full rounded-r-md border-l-4 border-primary/50 pl-3 py-1.5 text-left transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-500)] focus-visible:ring-offset-2"
+                  className="group w-full rounded-r-md border-l-4 border-primary/50 pl-3 py-1.5 text-left transition-colors hover:bg-surface-panel-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
-                  <div className="font-semibold text-sm text-gray-800 group-hover:text-gray-900">
+                  <div className="font-header text-base font-semibold text-text-muted group-hover:text-text-primary">
                     {it.title || "Untitled"}
                   </div>
-                  <div className="text-xs text-gray-600">{formatDateTimeEST(new Date(String(it.start)))}</div>
+                  <Text className="text-sm text-text-muted">{formatDateTimeEST(new Date(String(it.start)))}</Text>
                 </button>
               ))}
               {upcomingDeadlines.length === 0 && (
-                <div className="text-sm text-gray-500">No upcoming deadlines</div>
+                <Text className="text-muted-foreground">No upcoming deadlines</Text>
               )}
             </div>
           </Card>

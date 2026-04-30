@@ -1,7 +1,6 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { H4 } from "../ui/typography"
 import { getFilterTypeColor } from "./event-colors"
 
 interface FilterBarProps {
@@ -41,8 +40,7 @@ export function FilterBar({ selectedTypes, onChangeEventType }: FilterBarProps) 
 
   return (
     <div className="mb-1">
-      <div className="bg-white p-3 rounded-md">
-        <H4 className="text-gray-800 mb-2">Filter:</H4>
+      <div className="bg-surface-panel p-3 rounded-md border border-border-default">
         <div className="flex flex-wrap gap-2">
           <Button
             size="sm"

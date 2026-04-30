@@ -27,17 +27,18 @@ export function PageNumbers({
           <React.Fragment key={n}>
             <span
                 className={[
-                    "inline-flex items-center justify-center rounded-full border",
+                    "inline-flex items-center justify-center rounded-full border border-border-default font-medium",
                     size === "lg" ? "h-10 w-10 text-base" : size === "sm" ? "h-7 w-7 text-xs" : "h-8 w-8 text-sm",
-                    active ? "text-primary-600" : "text-primary-200",
-                    active ? "bg-primary-400 text-white" : "bg-primary-200 text-white"
+                    active
+                      ? "border-brand-primary bg-brand-primary text-primary-foreground"
+                      : "bg-surface-interactive text-text-muted"
                 ].join(" ")}
                 aria-current={active ? "step" : undefined}
                 >
                 {n}
             </span>
             {connector && idx < items.length - 1 && (
-              <span className="text-gray-500" style={{ fontSize: size === "lg" ? 22 : size === "sm" ? 16 : 20 }}>
+              <span className="text-brand-primary/70" style={{ fontSize: size === "lg" ? 22 : size === "sm" ? 16 : 20 }}>
                 <TfiLayoutLineSolid />
               </span>
             )}

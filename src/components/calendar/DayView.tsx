@@ -25,9 +25,9 @@ export function DayView({
 }: DayViewProps) {
   return (
     <div className="p-2">
-      <div className="text-base sm:text-sm text-gray-600 mb-2">{format(currentDate, 'EEEE, MMMM d, yyyy')}</div>
+      <div className="font-sans text-base sm:text-sm text-text-muted mb-2">{format(currentDate, 'EEEE, MMMM d, yyyy')}</div>
       {deduplicatedItems.length === 0 ? (
-        <div className="text-sm text-gray-500">No performances scheduled for this date.</div>
+        <div className="font-sans text-sm text-muted-foreground">No performances scheduled for this date.</div>
       ) : (
         <div className="space-y-3">
           {deduplicatedItems.map((performance) => {
@@ -44,7 +44,7 @@ export function DayView({
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span
-                    className="px-2 py-1 rounded text-xs font-medium"
+                    className="font-sans px-2 py-1 rounded text-xs font-medium"
                     style={{
                       backgroundColor: colors.bg,
                       color: colors.text,
@@ -53,9 +53,9 @@ export function DayView({
                     {performance.type.charAt(0).toUpperCase() + performance.type.slice(1)}
                   </span>
                 </div>
-                <h4 className="text-base sm:text-lg font-medium text-gray-900">{performance.title}</h4>
+                <h4 className="font-header text-2xl font-medium text-text-primary">{performance.title}</h4>
                 {listingOccurrences.length > 1 && (
-                  <div className="mt-2 text-sm text-gray-600">
+                  <div className="mt-2 font-sans text-sm text-text-muted">
                     <div className="font-medium mb-1">Occurrences:</div>
                     <ul className="list-disc list-inside space-y-1">
                       {listingOccurrences.map((occ) => (

@@ -151,17 +151,17 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
     return (
       <Card
         ref={ref}
-        className="space-y-3 rounded-2xl border border-primary-200/90 bg-gradient-to-b from-primary-50/50 to-white p-4 shadow-sm"
+        className="space-y-3 rounded-2xl border border-border-default bg-surface-panel p-4 shadow-sm"
       >
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <h4 className="text-sm font-semibold text-gray-900">
+          <h4 className="text-sm font-semibold text-text-primary">
             {showLabelIndex ? `${rowLabel} ${labelIndex}` : rowLabel}
           </h4>
           {canRemove && (
             <button
               type="button"
               onClick={() => onRemove(index)}
-              className="shrink-0 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-800"
+              className="shrink-0 rounded-md border border-border-default bg-surface-interactive px-2.5 py-1.5 text-xs font-medium text-text-primary shadow-sm transition-colors hover:border-status-error-fg/40 hover:bg-status-error-bg hover:text-status-error-fg"
             >
               Remove
             </button>
@@ -174,7 +174,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
         */}
         <div className={`grid grid-cols-1 items-start gap-x-3 gap-y-2 ${gridColsClass}`}>
             <div className="w-full min-w-0 sm:max-w-[12.5rem] md:max-w-none">
-              <label htmlFor={dateInputId} className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor={dateInputId} className="mb-1 block text-sm font-medium text-text-primary">
                 Date <span className="text-error-600">*</span>
               </label>
               <Input
@@ -190,7 +190,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
 
             {hasTime && (
               <div className="w-full min-w-0 sm:max-w-[9.5rem] md:max-w-none">
-                <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor={`${dateInputId}-time-0`}>
+                <label className="mb-1 block text-sm font-medium text-text-primary" htmlFor={`${dateInputId}-time-0`}>
                   Time <span className="text-error-600">*</span>
                 </label>
                 <Input
@@ -268,7 +268,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
         </div>
 
         {showTime && times.length > 1 && (
-          <div className="space-y-2 border-t border-primary-200/50 pt-3">
+          <div className="space-y-2 border-t border-border-default/70 pt-3">
             {times.slice(1).map((timeField, sliceIndex) => {
               const timeIndex = sliceIndex + 1
               const timeFieldName = `${name}.${index}.times.${timeIndex}.time`
@@ -279,7 +279,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                 <div key={timeField.id} className="flex flex-wrap items-end gap-2 sm:gap-3">
                   <div className="min-w-0 sm:max-w-[9.5rem] sm:flex-1">
                     <label
-                      className="mb-1 block text-sm font-medium text-gray-700"
+                      className="mb-1 block text-sm font-medium text-text-primary"
                       htmlFor={`${dateInputId}-time-${timeIndex}`}
                     >
                       Additional time <span className="text-error-600">*</span>
@@ -296,7 +296,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                   <button
                     type="button"
                     onClick={() => handleRemoveTime(timeIndex)}
-                    className="rounded border border-gray-300 px-2.5 py-2 text-xs hover:bg-gray-50"
+                    className="rounded border border-border-default bg-surface-interactive px-2.5 py-2 text-xs text-text-primary hover:bg-surface-interactive-hover"
                   >
                     Remove
                   </button>
@@ -310,7 +310,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
           <button
             type="button"
             onClick={handleAddTime}
-            className="w-full text-left text-sm font-medium text-gray-800 hover:underline sm:w-auto"
+            className="w-full text-left text-sm font-medium text-text-primary hover:underline sm:w-auto"
           >
             + Add another time
           </button>

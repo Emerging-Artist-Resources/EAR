@@ -36,7 +36,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       {...props}
     >
       <svg
-        className={cn(sizeToIcon[size], active && "text-yellow-500 fill-yellow-500")}
+        className={cn(sizeToIcon[size], active && "text-brand-accent-neutral fill-brand-accent-neutral")}
         viewBox="0 0 24 24"
         fill={active ? "currentColor" : "none"}
         stroke="currentColor"

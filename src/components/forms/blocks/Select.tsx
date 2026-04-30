@@ -78,11 +78,11 @@ export function SelectBlock<T extends Record<string, unknown>>({
     <div className={className}>
       {label && (
         <div className="mb-1">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-text-primary">
             {label} {required && showAsterisk && <span className="text-error-600">*</span>}
           </label>
           {(note || description) && (
-            <p className="mt-1 text-sm text-gray-500">{note || description}</p>
+            <p className="mt-1 text-sm text-text-muted">{note || description}</p>
           )}
         </div>
       )}    
@@ -113,7 +113,7 @@ export function SelectBlock<T extends Record<string, unknown>>({
             return (
               <div className="space-y-2">
                 {options.map((opt) => (
-                  <Card key={opt.value} className="flex p-2 items-center gap-2 text-sm text-gray-800 bg-primary-50">
+                  <Card key={opt.value} className="flex items-center gap-2 border-border-default bg-surface-panel p-2 text-sm text-text-primary">
                     {multiple ? (
                       <Checkbox
                         checked={isSelected(opt.value)}
@@ -124,7 +124,7 @@ export function SelectBlock<T extends Record<string, unknown>>({
                       <input
                         type="radio"
                         name={name}
-                        className="h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-500"
+                        className="h-4 w-4 border-input text-primary focus:ring-ring"
                         checked={isSelected(opt.value)}
                         onChange={() => toggle(opt.value)}
                         disabled={opt.disabled}
@@ -144,7 +144,7 @@ export function SelectBlock<T extends Record<string, unknown>>({
                       form.formState.submitCount > 0)
                   const selected = isSelected(otherValue)
                   return (
-                    <Card className="flex items-center p-2 gap-3 text-sm bg-primary-50 text-gray-800">
+                    <Card className="flex items-center gap-3 border-border-default bg-surface-panel p-2 text-sm text-text-primary">
                       {multiple ? (
                         <Checkbox
                           checked={selected}
@@ -154,7 +154,7 @@ export function SelectBlock<T extends Record<string, unknown>>({
                         <input
                           type="radio"
                           name={name}
-                          className="h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-500"
+                          className="h-4 w-4 border-input text-primary focus:ring-ring"
                           checked={selected}
                           onChange={() => toggle(otherValue)}
                         />
@@ -165,7 +165,7 @@ export function SelectBlock<T extends Record<string, unknown>>({
                         placeholder=""
                         disabled={!selected}
                         className={`flex-1 bg-transparent outline-none border-0 border-b text-sm ${
-                          selected ? "border-gray-300 focus:border-primary-500" : "border-gray-300"
+                          selected ? "border-border-default focus:border-primary" : "border-border-default"
                         } ${selected ? "focus:ring-0" : "cursor-not-allowed opacity-70"}`}
                       />
                       {selected && showOtherErr && (

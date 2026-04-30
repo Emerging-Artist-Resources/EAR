@@ -46,10 +46,10 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
   }
 
   const typeStyles = {
-    success: "bg-green-500 text-white border-green-600",
-    error: "bg-red-500 text-white border-red-600",
-    info: "bg-blue-500 text-white border-blue-600",
-    warning: "bg-yellow-500 text-white border-yellow-600",
+    success: "bg-status-success-bg text-status-success-fg border-border-default",
+    error: "bg-status-error-bg text-status-error-fg border-border-default",
+    info: "bg-brand-secondary text-text-primary border-border-default",
+    warning: "bg-status-warning-bg text-status-warning-fg border-border-default",
   }
 
   return (
@@ -66,7 +66,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
       </div>
       <button
         onClick={handleRemove}
-        className="flex-shrink-0 text-white/80 hover:text-white transition-colors"
+        className="flex-shrink-0 text-current/70 hover:text-current transition-colors"
         aria-label="Close notification"
       >
         <svg

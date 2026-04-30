@@ -8,7 +8,7 @@ import PerformanceModal from "@/components/performance-modal"
 import { useCalendar } from "@/hooks/use-calendar"
 import { useAuth } from "@/hooks/use-auth"
 import { Calendar } from "@/components/calendar/calendar"
-import { Text } from "@/components/ui/typography"
+import { H1, Text } from "@/components/ui/typography"
 import { Modal } from "@/components/ui/modal"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -104,15 +104,44 @@ function CalendarViewContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Text className="text-lg">Loading calendar...</Text>
+      <div className="flex min-h-screen flex-col">
+        <section className="shrink-0 bg-ear-black" aria-hidden>
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+            <div className="h-[120px] lg:h-[200px]" />
+          </div>
+        </section>
+        <div className="flex flex-1 items-center justify-center bg-surface-panel text-text-primary">
+          <Text className="text-lg">Loading calendar...</Text>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen flex-col">
+      <section className="shrink-0 bg-ear-black">
+      <H1 className="text-ear-off-white text-center text-4xl mt-10">COMMUNITY</H1>
+      <H1 className="text-ear-off-white text-center text-4xl">CALENDAR</H1>
+        <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-8 lg:py-16">
+          <div className="order-2 lg:order-1">
+            <div className="h-[260px] w-full rounded-md border border-ear-off-white/15 bg-ear-black/40 lg:h-[420px]" />
+          </div>
+          <div className="order-1 space-y-5 lg:order-2">
+            <Text className="max-w-xl text-xl text-ear-off-white/90">Welcome to the Community Calendar!</Text>
+            <Text className="max-w-xl text-xl text-ear-off-white/90">
+            This is a place to see what is taking shape around you. Performances, workshops, gatherings, and opportunities shared by artists and organizations across the community all live here together.
+            </Text>
+            <Text className="max-w-xl text-xl text-ear-off-white/90">
+            Whether you are looking for somewhere to go, a space to share your work, or a way to invite others into what you are creating, you are welcome to add to this calendar. We hope it helps you find rooms, conversations, and collaborators you might not have discovered otherwise. 
+
+            </Text>
+            <Text className="max-w-xl text-xl text-ear-off-white/90">We encourage you to explore, participate, and contribute. This space grows through the people who use it.
+            </Text>
+          </div>
+        </div>
+      </section>
+      <div className="flex-1 bg-surface-panel text-text-primary">
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className={`px-4 py-6 sm:px-0 transition-opacity duration-200 ${isModalOpen ? 'opacity-50' : ''}`}>
           <CallToAction onSubmitPerformance={handleOpenSubmit} />
           <Calendar items={items} deadlines={deadlines} />
@@ -152,6 +181,7 @@ function CalendarViewContent() {
             </div>
           )}
         </div>
+        </div>
       </div>
       <PerformanceModal
         isOpen={isModalOpen}
@@ -164,7 +194,7 @@ function CalendarViewContent() {
         title="Sign in required"
       >
         <div className="space-y-5">
-          <Text className="text-sm text-gray-700">
+          <Text className="text-sm text-text-muted">
             You must be signed in to submit a listing.
           </Text>
           <div className="flex justify-between">
@@ -190,8 +220,15 @@ function CalendarViewContent() {
 export default function CalendarView() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Text className="text-lg">Loading calendar...</Text>
+      <div className="flex min-h-screen flex-col">
+        <section className="shrink-0 bg-ear-black" aria-hidden>
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+            <div className="h-[120px] lg:h-[200px]" />
+          </div>
+        </section>
+        <div className="flex flex-1 items-center justify-center bg-surface-panel text-text-primary">
+          <Text className="text-lg">Loading calendar...</Text>
+        </div>
       </div>
     }>
       <CalendarViewContent />

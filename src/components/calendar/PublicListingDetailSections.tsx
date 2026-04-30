@@ -82,8 +82,8 @@ export function FieldRow({ label, value }: { label: string; value?: React.ReactN
   if (value === undefined || value === null || value === "") return null
   return (
     <div className="py-2">
-      <div className="text-sm text-gray-600 mb-1">{label}:</div>
-      <div className="text-sm text-gray-900">{value}</div>
+      <div className="font-sans text-sm text-text-muted mb-1">{label}:</div>
+      <div className="font-sans text-sm text-text-primary">{value}</div>
     </div>
   )
 }
@@ -331,7 +331,7 @@ export function SocialHandles({ socialHandles }: { socialHandles: unknown }) {
     try {
       handles = JSON.parse(socialHandles)
     } catch {
-      return <span className="text-sm text-gray-600">{socialHandles}</span>
+      return <span className="font-sans text-sm text-text-muted">{socialHandles}</span>
     }
   } else if (typeof socialHandles === 'object' && socialHandles !== null) {
     handles = socialHandles as Record<string, string>
@@ -347,10 +347,10 @@ export function SocialHandles({ socialHandles }: { socialHandles: unknown }) {
           href={handle.startsWith('http') ? handle : `https://${platform}.com/${handle.replace('@', '')}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-surface-interactive hover:bg-surface-interactive-hover font-sans text-sm font-medium text-text-primary transition-colors"
         >
           <span className="uppercase text-xs">{platform}</span>
-          <span className="text-gray-600">{String(handle)}</span>
+          <span className="text-text-muted">{String(handle)}</span>
         </a>
       ))}
     </div>

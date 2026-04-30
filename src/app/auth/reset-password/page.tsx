@@ -115,7 +115,7 @@ export default function ResetPasswordPage() {
 
   if (sessionReady === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <Text className="text-gray-600">Loading…</Text>
       </div>
     )
@@ -123,7 +123,7 @@ export default function ResetPasswordPage() {
 
   if (sessionReady === false) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 gap-6">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 gap-6">
         <H2 className="text-center">Link invalid or expired</H2>
         <Text className="text-gray-600 text-center max-w-md">
           Request a new password reset link and try again.
@@ -139,7 +139,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <H2 className="text-center">Choose a new password</H2>
 
