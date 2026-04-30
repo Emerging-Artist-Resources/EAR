@@ -1,8 +1,10 @@
 import { z } from "zod"
-import { flexibleUrlOptionalSchema } from "../flexible-url"
 import { occurrenceSchema } from "./base"
 
-// Creative Opportunity-only
+/**
+ * Creative opportunity fields. Submission instructions use `creativeSubmissionInstructions`, not `link`:
+ * the merged event schema ends with class fields, so `link` is always URL-validated for class/performance.
+ */
 export const creativeFields = z
   .object({
     title: z.string().optional(),
@@ -11,7 +13,10 @@ export const creativeFields = z
     dates: z.string().optional(),
     compensation: z.string().optional(),
     requirements: z.string().optional(),
-    link: flexibleUrlOptionalSchema,
+    creativeSubmissionInstructions: z
+      .string()
+      .max(5000, "Submission instructions must be 5000 characters or less")
+      .optional(),
     deadlineOccurrences: z.array(occurrenceSchema).optional(),
     fee: z.enum(["FEE", "NO_FEE"]).optional(),
     feeAmount: z.string().optional(),
@@ -66,11 +71,11 @@ export const creativeFields = z
         message: "Requirements is required",
       })
     }
-    if (!data.link || data.link.trim() === "") {
+    if (!data.creativeSubmissionInstructions || data.creativeSubmissionInstructions.trim() === "") {
       ctx.addIssue({
         code: "custom",
-        path: ["link"],
-        message: "Link is required",
+        path: ["creativeSubmissionInstructions"],
+        message: "Submission instructions are required",
       })
     }
     if (!data.deadlineOccurrences || data.deadlineOccurrences.length === 0) {

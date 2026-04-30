@@ -99,6 +99,7 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       occurrences: [],
       deadlineOccurrences: [],
       shareRecipientEmails: [],
+      creativeSubmissionInstructions: "",
     } as Partial<EventFormData>,
     mode: 'onBlur',
     reValidateMode: 'onChange',

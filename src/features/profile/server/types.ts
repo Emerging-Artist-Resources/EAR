@@ -1,6 +1,11 @@
 // Basic types you can expand later
 
-export type EventType = "performance" | "class" | "audition" | "opportunity" | "other";
+export type EventType =
+  | "performance"
+  | "audition"
+  | "creative"
+  | "class"
+  | "funding";
 
 export interface SavedEvent {
   id: string;

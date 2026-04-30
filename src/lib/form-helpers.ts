@@ -52,6 +52,7 @@ const EVENT_FIELD_LABELS: Partial<Record<keyof EventFormData, string>> = {
   host: "Host",
   dates: "Dates",
   requirements: "Requirements",
+  creativeSubmissionInstructions: "Submission Instructions",
   company: "Company",
   companyWebsite: "Company Website",
   socialHandles: "Social Handles",

@@ -16,6 +16,7 @@ import {
 } from "./types";
 import { sendProfileEmail } from "@/lib/email/sendProfileEmail";
 import { getPublicAppUrl } from "@/lib/app-url";
+import { normalizeSupabaseVerifyActionLink } from "@/lib/supabase/normalizeVerifyActionLink";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
 
 export async function getSavedEvents(
@@ -138,7 +139,7 @@ export async function sendEmailVerificationEmail(
     throw new Error("Failed to generate email verification link")
   }
 
-  const verificationUrl = data.properties.action_link
+  const verificationUrl = normalizeSupabaseVerifyActionLink(data.properties.action_link)
   const firstName = extractFirstName(userName)
 
   await sendProfileEmail("email-confirmation", {
@@ -169,7 +170,7 @@ export async function sendPasswordResetEmail(
     throw new Error("Failed to generate password reset link")
   }
 
-  const resetUrl = data.properties.action_link
+  const resetUrl = normalizeSupabaseVerifyActionLink(data.properties.action_link)
   const firstName = extractFirstName(userName)
 
   await sendProfileEmail("password-reset", {

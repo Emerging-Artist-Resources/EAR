@@ -478,7 +478,11 @@ export function buildCreativePayload(
       dates: data.dates ?? "",
       compensation: data.compensation ?? "",
       requirements: data.requirements ?? "",
-      link: data.link ?? "",
+      // API/DB column remains `link`; form uses free-text field (fallback: legacy `link` on same form object).
+      link:
+        (data.creativeSubmissionInstructions ?? "").trim() ||
+        (data.link ?? "").trim() ||
+        "",
       fee: feeOption,
       fee_amount: data.feeAmount || null,
       artist_type: data.artistType || null,

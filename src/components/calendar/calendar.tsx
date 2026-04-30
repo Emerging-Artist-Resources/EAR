@@ -260,10 +260,18 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
             
             <div className="space-y-3">
               {upcomingDeadlines.map((it) => (
-                <div key={it.occurrenceId} className="border-l-4 border-primary/50 pl-3">
-                  <div className="font-semibold text-sm text-gray-800">{it.title || "Untitled"}</div>
+                <button
+                  key={it.occurrenceId}
+                  type="button"
+                  onClick={() => handleItemClick(it.listingId)}
+                  aria-label={`View details: ${it.title || "Untitled"}`}
+                  className="group w-full rounded-r-md border-l-4 border-primary/50 pl-3 py-1.5 text-left transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-500)] focus-visible:ring-offset-2"
+                >
+                  <div className="font-semibold text-sm text-gray-800 group-hover:text-gray-900">
+                    {it.title || "Untitled"}
+                  </div>
                   <div className="text-xs text-gray-600">{formatDateTimeEST(new Date(String(it.start)))}</div>
-                </div>
+                </button>
               ))}
               {upcomingDeadlines.length === 0 && (
                 <div className="text-sm text-gray-500">No upcoming deadlines</div>

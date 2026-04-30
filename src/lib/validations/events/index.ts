@@ -23,7 +23,12 @@ export const eventFormSchema = baseSchema
     
     const hasDeadlineOccurrences = !!(data.deadlineOccurrences && Array.isArray(data.deadlineOccurrences) && data.deadlineOccurrences.length > 0)
     const hasAuditionFields = !!(data.eligibility && data.instructions)
-    const hasCreativeFields = !!(data.host && data.dates && data.requirements && data.link)
+    const hasCreativeFields = !!(
+      data.host &&
+      data.dates &&
+      data.requirements &&
+      data.creativeSubmissionInstructions
+    )
     const isAudition = hasDeadlineOccurrences && hasAuditionFields && !hasCreativeFields && !data.type
     const isCreative = hasDeadlineOccurrences && hasCreativeFields && !data.type
     
@@ -76,7 +81,12 @@ export const eventFormSchema = baseSchema
     // For auditions: must have deadlineOccurrences AND audition-specific fields (eligibility/instructions)
     // AND NOT have creative-specific fields (host/dates/requirements)
     const hasAuditionFields = !!(data.eligibility && data.instructions)
-    const hasCreativeFields = !!(data.host && data.dates && data.requirements && data.link)
+    const hasCreativeFields = !!(
+      data.host &&
+      data.dates &&
+      data.requirements &&
+      data.creativeSubmissionInstructions
+    )
     
     const isAudition = hasDeadlineOccurrences && hasAuditionFields && !hasCreativeFields && !data.type
     
@@ -499,7 +509,7 @@ export const creativeStep2Schema = baseSchema
     description: true,
     compensation: true,
     requirements: true,
-    link: true,
+    creativeSubmissionInstructions: true,
     deadlineOccurrences: true,
     fee: true,
     feeAmount: true,
@@ -556,11 +566,11 @@ export const creativeStep2Schema = baseSchema
         message: "Requirements is required",
       })
     }
-    if (!data.link || data.link.trim() === "") {
+    if (!data.creativeSubmissionInstructions || data.creativeSubmissionInstructions.trim() === "") {
       ctx.addIssue({
         code: "custom",
-        path: ["link"],
-        message: "Link is required",
+        path: ["creativeSubmissionInstructions"],
+        message: "Submission instructions are required",
       })
     }
     if (!data.deadlineOccurrences || data.deadlineOccurrences.length === 0) {

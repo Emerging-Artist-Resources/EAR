@@ -38,7 +38,13 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
         <TextAreaField form={form} name={"description"} label="Opportunity Description" required placeholder="About the Opportunity"/>
         <TextAreaField form={form} name={"compensation"} label="What is offered to selected artists?" required placeholder="Include compensation, rehearsal/performance commitments, and any other relevant details."/>       
         <TextAreaField form={form} name={"requirements"} label="Application Requirements" required placeholder="What is required to apply?"/>       
-        <TextAreaField form={form} name={"link"} label="Submission Instructions" required placeholder="Include the submission link, contact email, and any additional required information."/>
+        <TextAreaField
+          form={form}
+          name={"creativeSubmissionInstructions"}
+          label="Submission Instructions"
+          required
+          placeholder="Include the submission link, contact email, and any additional required information."
+        />
         <ShowtimesList
           form={form as unknown as UseFormReturn<Record<string, unknown>>}
           name={"deadlineOccurrences"}

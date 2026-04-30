@@ -19,7 +19,7 @@ export function Footer() {
     "text-[var(--gray-700)] transition-colors hover:text-[var(--primary-700)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-500)] focus-visible:ring-offset-2 rounded-sm"
 
   return (
-    <footer className="mt-12 border-t border-[var(--gray-200)] bg-white">
+    <footer className="mt-12 shrink-0 border-t border-[var(--gray-200)] bg-white">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p

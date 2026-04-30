@@ -56,7 +56,7 @@ export const eventTypeValidationFields: Record<
     "description", // Fourth field
     "compensation", // Fifth field
     "requirements", // Sixth field
-    "link", // Seventh field
+    "creativeSubmissionInstructions", // Seventh field (free text; not URL — see creativeFields)
     "deadlineOccurrences", // Eighth field
     "fee", // Ninth field
     "feeAmount", // Conditional field (shown if fee === "FEE")

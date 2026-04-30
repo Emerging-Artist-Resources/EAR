@@ -17,6 +17,7 @@ import { ListingCard } from "@/components/shared/ListingCard"
 import { ListingDetailsModal } from "@/components/calendar/ListingDetailsModal"
 import Link from "next/link"
 import { ROUTES } from "@/lib/constants"
+import { RECENTLY_ADDED_MAX_AGE_DAYS } from "@/lib/recently-added-listings"
 
 function CalendarViewContent() {
   const searchParams = useSearchParams()
@@ -121,6 +122,7 @@ function CalendarViewContent() {
               <Card className="p-6 shadow-md">
                 <HorizontalScrollCards
                   title="Recently Added"
+                  description={`Submitted in the last ${RECENTLY_ADDED_MAX_AGE_DAYS} days`}
                   cardsPerView={4}
                   onCardClick={(index) => {
                     const listing = recentListings[index]

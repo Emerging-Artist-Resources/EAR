@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils"
 
 export interface HorizontalScrollCardsProps {
   title?: string
+  /** Shown under the title (e.g. filter explanation). */
+  description?: string
   children: React.ReactNode[]
   onCardClick?: (index: number) => void
   cardsPerView?: number
@@ -15,6 +17,7 @@ export interface HorizontalScrollCardsProps {
 
 export function HorizontalScrollCards({
   title,
+  description,
   children,
   onCardClick,
   cardsPerView = 3,
@@ -83,8 +86,15 @@ export function HorizontalScrollCards({
 
   return (
     <div className={cn("w-full", className)}>
-      {title && (
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+      {(title || description) && (
+        <div className="mb-4">
+          {title && (
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          )}
+          {description && (
+            <p className="mt-1 text-sm text-gray-600">{description}</p>
+          )}
+        </div>
       )}
       <div className="relative">
         {canScrollLeft && (

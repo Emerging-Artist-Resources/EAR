@@ -4,14 +4,24 @@ import { getListingTitle } from "@/features/events/server/listing-utils"
 import { normalizeSupabaseRelation, isLinkedPiece, isLinkedClass } from "@/features/events/server/admin-utils"
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
 import { getCoverPhotoPublic } from "@/lib/listing-photo-cover"
+import {
+  filterBySubmittedWithinLastDays,
+  getRecentlyAddedCutoff,
+  RECENTLY_ADDED_MAX_AGE_DAYS,
+} from "@/lib/recently-added-listings"
 
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url)
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 12), 20)
-    
+    const now = new Date()
+    const submittedSince = getRecentlyAddedCutoff(now).toISOString()
+
     const supabase = getSupabaseServerClientAnon()
-    
+
+    // Pull extra rows so dedupe / parent merge can still fill `limit` after the 7-day window.
+    const fetchCap = Math.min(Math.max(limit * 6, 48), 120)
+
     // Fetch recent listings including pieces and classes
     const { data: listings, error } = await supabase
       .from("listings")
@@ -35,8 +45,9 @@ export async function GET(req: NextRequest) {
       `)
       .eq("status", "approved")
       .is("deleted_at", null)
+      .gte("submitted_at", submittedSince)
       .order("submitted_at", { ascending: false })
-      .limit(limit * 3)
+      .limit(fetchCap)
     
     if (error) {
       console.error("Error fetching recent listings:", error)
@@ -211,10 +222,15 @@ export async function GET(req: NextRequest) {
       }
     })
     
-    // Sort by submitted_at descending and limit
-    const recentListings = Array.from(uniqueListings.values())
-      .sort((a: { submitted_at: string }, b: { submitted_at: string }) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())
-      .slice(0, limit)
+    // Sort by effective submitted_at, keep only listings added within the recent window, then cap.
+    const recentListings = filterBySubmittedWithinLastDays(
+      Array.from(uniqueListings.values()).sort(
+        (a: { submitted_at: string }, b: { submitted_at: string }) =>
+          new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
+      ),
+      RECENTLY_ADDED_MAX_AGE_DAYS,
+      now
+    ).slice(0, limit)
     
     return NextResponse.json({ data: recentListings }, { 
       headers: { "Cache-Control": "s-maxage=300" } 

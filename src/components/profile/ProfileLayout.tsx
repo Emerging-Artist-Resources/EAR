@@ -10,7 +10,7 @@ interface ProfileLayoutProps {
 
 export const ProfileLayout = ({ children, onOpenSettings }: ProfileLayoutProps) => {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="mb-6">
         <div className="flex items-start justify-between gap-4">
           <div>

@@ -95,12 +95,12 @@ export async function fetchSavedEventsFromDb(
         )[0]
       : null;
 
-    // Determine if event is upcoming or past based on earliest occurrence
-    const eventDate = earliestOccurrence?.starts_at_utc;
-    if (!eventDate) continue;
+    const primaryStartsAt =
+      earliestOccurrence?.starts_at_utc ?? earliestDeadline?.starts_at_utc;
+    if (!primaryStartsAt) continue;
 
-    const isUpcoming = new Date(eventDate) >= new Date(now);
-    const isPast = new Date(eventDate) < new Date(now);
+    const isUpcoming = new Date(primaryStartsAt) >= new Date(now);
+    const isPast = new Date(primaryStartsAt) < new Date(now);
 
     // Apply filter
     if (filter.mode === "upcoming" && !isUpcoming) continue;
@@ -122,15 +122,16 @@ export async function fetchSavedEventsFromDb(
 
     const title = getListingTitle(listingDetail);
 
-    // Get location from occurrence or listing
-    const location = earliestOccurrence?.venue_name || 
-                    earliestOccurrence?.address || 
-                    listing.venue_name || 
-                    listing.address || 
-                    "Location TBD";
+    const location =
+      earliestOccurrence?.venue_name ||
+      earliestOccurrence?.address ||
+      listing.venue_name ||
+      listing.address ||
+      earliestDeadline?.venue_name ||
+      earliestDeadline?.address ||
+      "Location TBD";
 
-    // Format date
-    const date = new Date(eventDate).toLocaleDateString("en-US", {
+    const date = new Date(primaryStartsAt).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -148,14 +149,15 @@ export async function fetchSavedEventsFromDb(
       description = listing.class_workshop_details.description || undefined;
     }
 
-    // Format deadline if exists
-    const deadline = earliestDeadline
-      ? new Date(earliestDeadline.starts_at_utc).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })
-      : undefined;
+    const isPrimaryFromEvent = !!earliestOccurrence?.starts_at_utc;
+    const deadline =
+      isPrimaryFromEvent && earliestDeadline
+        ? new Date(earliestDeadline.starts_at_utc).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        : undefined;
 
     events.push({
       id: listing.id,
