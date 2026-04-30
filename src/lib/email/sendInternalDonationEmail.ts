@@ -53,7 +53,7 @@ export async function sendInternalDonationTemplatedEmail({
   }
 
   if (!postmarkClient) {
-    throw new Error("Postmark client not initialized. POSTMARK_TRANSACTIONAL_TOKEN is missing.")
+    throw new Error("Postmark client not initialized. POSTMARK_SERVER_TOKEN is missing.")
   }
 
   if (!process.env.POSTMARK_FROM_NAME || !process.env.POSTMARK_FROM_EMAIL) {

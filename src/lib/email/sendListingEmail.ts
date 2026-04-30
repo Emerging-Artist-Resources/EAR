@@ -38,7 +38,7 @@ export async function sendListingEmail(
 
   if (!postmarkClient) {
     throw new Error(
-      "Postmark client not initialized. POSTMARK_TRANSACTIONAL_TOKEN is missing."
+      "Postmark client not initialized. POSTMARK_SERVER_TOKEN is missing."
     )
   }
 

@@ -3,14 +3,14 @@
  * 
  * Initializes the Postmark ServerClient for transactional emails.
  * 
- * Requires: POSTMARK_TRANSACTIONAL_TOKEN environment variable
+ * Requires: POSTMARK_SERVER_TOKEN environment variable
  * 
  * @see EMAIL_SYSTEM.md for setup and configuration
  */
 
 import { ServerClient } from "postmark"
 
-const postmarkToken = process.env.POSTMARK_TRANSACTIONAL_TOKEN
+const postmarkToken = process.env.POSTMARK_SERVER_TOKEN
 
 export const postmarkClient: ServerClient | null = postmarkToken
   ? new ServerClient(postmarkToken)
