@@ -7,7 +7,7 @@ export default function CommunityCalendarHero() {
       
       {/* Background Image */}
       <Image
-        src="/images/community-calendar.jpg"
+        src="/images/community-calendar.JPG"
         alt=""
         fill
         priority
