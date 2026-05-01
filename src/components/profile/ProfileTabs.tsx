@@ -24,12 +24,11 @@ export const ProfileTabs = ({ activeTab, onChange }: ProfileTabsProps) => {
           type="button"
           variant={activeTab === tab.key ? "primary" : "outline"}
           size="default"
-          className="flex-1"
-          onClick={() => onChange(tab.key)}
-        >
+          className="flex-1 hover:bg-ear-off-white/70"
+          onClick={() => onChange(tab.key)}>
           {tab.label}
         </Button>
       ))}
     </div>
-  );
-};
+  )
+}

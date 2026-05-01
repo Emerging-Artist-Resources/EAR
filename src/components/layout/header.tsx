@@ -31,7 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
       <Link href={href} className="relative inline-flex flex-col items-center">
         <Button
           variant="none"
-          className="text-ear-baby-blue"
+          className="text-ear-baby-blue hover:text-ear-baby-blue/80"
         >
           {children}
         </Button>

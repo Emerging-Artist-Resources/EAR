@@ -6,6 +6,7 @@ import { Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { AdminProfileCard } from "./AdminProfileCard"
+import { ADMIN_LIGHT_SURFACE } from "@/components/admin/shared/admin-light-surface"
 
 export function AdminProfileList({
   items,
@@ -33,7 +34,9 @@ export function AdminProfileList({
   }
 
   return (
-    <div className="overflow-x-auto rounded-md border border-[var(--gray-200)] bg-white">
+    <div
+      className={`overflow-x-auto rounded-md border border-[var(--gray-200)] ${ADMIN_LIGHT_SURFACE}`}
+    >
       <table className="min-w-full text-sm">
         <thead className="bg-[var(--gray-50)] text-[var(--gray-700)]">
           <tr>

@@ -67,6 +67,7 @@ const EVENT_FIELD_LABELS: Partial<Record<keyof EventFormData, string>> = {
   fundingLink: "Funding Link",
   artistType: "Artist Type",
   preAuditionClasses: "Pre-Audition Classes",
+  listingWebsite: "Website",
   agreeCompTickets: "Comp Tickets Agreement",
   eventDatesConfirmed: "Event Dates Confirmed",
   addPiece: "Add Piece",

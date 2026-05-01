@@ -14,7 +14,7 @@ export const ProfileLayout = ({ children, onOpenSettings }: ProfileLayoutProps) 
       <header className="mb-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <H1 className="text-primary">My Profile</H1>
+            <H1 className="text-ear-baby-blue">My Profile</H1>
             <Text className="mt-1 text-sm">
               Manage your account information and preferences.
             </Text>

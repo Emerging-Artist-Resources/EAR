@@ -1,5 +1,6 @@
 import { UseFormReturn, useFormState } from "react-hook-form"
 import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils"
 
 interface TextAreaFieldProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>
@@ -12,6 +13,8 @@ interface TextAreaFieldProps<T extends Record<string, unknown>> {
   showAsterisk?: boolean
   errorMode?: "touched" | "always"
   className?: string
+  /** Merged into the inner `Textarea` (e.g. `bg-white` on light cards). */
+  inputClassName?: string
 }
 
 export function TextAreaField<T extends Record<string, unknown>>({
@@ -25,6 +28,7 @@ export function TextAreaField<T extends Record<string, unknown>>({
   showAsterisk = true,
   errorMode = "touched",
   className,
+  inputClassName,
 }: TextAreaFieldProps<T>) {
   const { register, control } = form
   useFormState({ control, name: name as never, exact: true })
@@ -49,6 +53,7 @@ export function TextAreaField<T extends Record<string, unknown>>({
         {...register(name as unknown as never)}
         rows={rows}
         placeholder={placeholder}
+        className={cn(inputClassName)}
       />
       {showError && state.error?.message && (
         <p className="mt-1 text-xs text-error-600">

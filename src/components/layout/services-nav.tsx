@@ -18,7 +18,7 @@ export function ServicesNav({ onDarkSurface = false }: { onDarkSurface?: boolean
         <Button
           asChild
           variant="none"
-          className={cn("gap-1 text-ear-baby-blue")}
+          className={cn("gap-1 text-ear-baby-blue hover:text-ear-baby-blue/80")}
         >
           <Link
             href="/services"

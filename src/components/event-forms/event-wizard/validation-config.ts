@@ -43,6 +43,7 @@ export const eventTypeValidationFields: Record<
     "eligibility", // Third field
     "compensation", // Fourth field
     "instructions", // Fifth field
+    "listingWebsite",
     "fee", // Sixth field
     "feeAmount", // Conditional field (shown if fee === "FEE")
     "occurrences", // In Key Dates section
@@ -56,6 +57,7 @@ export const eventTypeValidationFields: Record<
     "description", // Fourth field
     "compensation", // Fifth field
     "requirements", // Sixth field
+    "listingWebsite",
     "creativeSubmissionInstructions", // Seventh field (free text; not URL — see creativeFields)
     "deadlineOccurrences", // Eighth field
     "fee", // Ninth field
@@ -68,6 +70,7 @@ export const eventTypeValidationFields: Record<
     "organizer", // Second field in Basic Info
     "price", // Third field in Basic Info (required for CLASS only, optional for WORKSHOP)
     "link", // Fourth field in Basic Info (required for CLASS only, optional for WORKSHOP)
+    "listingWebsite",
     "description", // Fifth field in Basic Info
     "isPartOfFestivalOrWorkshop", // In Festival or Workshop Association section (required for CLASS only)
     "parentEventId", // In FestivalAssociationSection (required if YES and not creating placeholder, CLASS only)

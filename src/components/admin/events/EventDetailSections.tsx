@@ -11,6 +11,21 @@ function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   )
 }
 
+function WebsiteRow({ href }: { href?: string | null }) {
+  if (!href?.trim()) return null
+  const url = href.trim()
+  return (
+    <Row
+      label="Website"
+      value={
+        <a className="underline text-[var(--primary-600)]" href={url} target="_blank" rel="noopener noreferrer">
+          {url}
+        </a>
+      }
+    />
+  )
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
@@ -149,6 +164,7 @@ export function AuditionDetails({ details }: { details: NonNullable<AdminEventDe
       <Row label="Eligibility" value={details.eligibility} />
       <Row label="Compensation" value={details.compensation} />
       <Row label="Instructions" value={details.instructions} />
+      <WebsiteRow href={details.website} />
       <Row label="Pre-Audition Classes" value={details.pre_audition_classes} />
       <Row label="Fee Option" value={details.fee} />
       <Row label="Fee Amount" value={details.fee_amount} />
@@ -163,10 +179,11 @@ export function CreativeDetails({ details }: { details: NonNullable<AdminEventDe
       <Row label="Title" value={details.title} />
       <Row label="Description" value={details.description} />
       <Row label="Host" value={details.host} />
+      <WebsiteRow href={details.website} />
       <Row label="Dates" value={details.dates} />
       <Row label="Compensation" value={details.compensation} />
       <Row label="Requirements" value={details.requirements} />
-      <Row label="Instructions" value={details.link} />
+      <Row label="Submission instructions" value={details.link} />
       <Row label="Fee Option" value={details.fee} />
       <Row label="Fee Amount" value={details.fee_amount} />
       <Row label="Artist Type" value={details.artist_type} />
@@ -208,9 +225,10 @@ export function ClassDetails({ details }: { details: NonNullable<AdminEventDetai
         <Row label="Organizer" value={details.organizer} />
         <Row label="Teachers" value={details.teachers} />
         <Row label="Price" value={details.price} />
-        <Row label="Link" value={
+        <Row label="Registration link" value={
           details.link ? <a className="underline text-[var(--primary-600)]" href={details.link} target="_blank" rel="noopener noreferrer">{details.link}</a> : undefined
         }/>
+        <WebsiteRow href={details.website} />
         <Row label="Style Category" value={details.style_category} />
         <Row label="Workshop Details" value={details.workshop_details} />
         <Row label="Classes Offered" value={details.classes_offered} />

@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { ADMIN_LIGHT_SURFACE } from "@/components/admin/shared/admin-light-surface"
 
 interface AdminDateFilterProps {
   dateFrom?: string
@@ -17,7 +18,7 @@ export function AdminDateFilter({ dateFrom, dateTo, onChange }: AdminDateFilterP
           type="date"
           value={dateFrom || ""}
           onChange={(e) => onChange({ from: e.target.value || undefined, to: dateTo })}
-          className="rounded-md border border-[var(--gray-300)] px-2 py-1 text-sm"
+          className={`rounded-md border border-[var(--gray-300)] px-2 py-1 text-sm ${ADMIN_LIGHT_SURFACE}`}
         />
       </div>
       <div className="flex flex-col">
@@ -26,7 +27,7 @@ export function AdminDateFilter({ dateFrom, dateTo, onChange }: AdminDateFilterP
           type="date"
           value={dateTo || ""}
           onChange={(e) => onChange({ from: dateFrom, to: e.target.value || undefined })}
-          className="rounded-md border border-[var(--gray-300)] px-2 py-1 text-sm"
+          className={`rounded-md border border-[var(--gray-300)] px-2 py-1 text-sm ${ADMIN_LIGHT_SURFACE}`}
         />
       </div>
       <Button

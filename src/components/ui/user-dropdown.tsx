@@ -47,9 +47,9 @@ export function UserDropdown({ userName, isMobile = false, onDarkSurface = false
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary",
+          "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium focus:outline-none",
           onDarkSurface
-            ? "text-ear-off-white hover:text-ear-off-white"
+            ? "text-ear-baby-blue hover:text-ear-baby-blue/80"
             : "text-ear-baby-blue hover:text-ear-baby-blue",
           isMobile && "text-base"
         )}
@@ -72,15 +72,16 @@ export function UserDropdown({ userName, isMobile = false, onDarkSurface = false
               router.push("/profile")
               setIsOpen(false)
             }}
-              className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-surface-panel-alt"
+              className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-ear-orange"
             >
+              {/* hover:bg-surface-panel-alt */}
               <VscAccount className="w-5 h-5" />
           </button>
          
           <button
             onClick={handleSignOut}
-            className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-surface-panel-alt"
-          >
+              className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-ear-orange"
+            >
             Sign Out
           </button>
         </div>

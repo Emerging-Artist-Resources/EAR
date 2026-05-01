@@ -186,19 +186,19 @@ export function ShowtimesList<T extends FieldValues>({
   )
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {title && (
-        <header className="space-y-1.5 border-b border-gray-200/80 pb-4">
+        <header className="space-y-1 border-b border-border-default/70 pb-3">
           <label className="block text-base font-semibold tracking-tight text-gray-900">
             {title} {required && showAsterisk && <span className="text-error-600">*</span>}
           </label>
-          <p className="text-sm leading-relaxed text-gray-600">{headerNote}</p>
+          <p className="text-sm leading-snug text-gray-600">{headerNote}</p>
         </header>
       )}
 
       {betweenNoteAndRows}
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {fields.map((field, index) => {
           const dateInputId = `${String(name).replace(/[^a-zA-Z0-9-_]/g, "-")}-showtime-date-${index}`
           return (
@@ -226,11 +226,11 @@ export function ShowtimesList<T extends FieldValues>({
       </div>
 
       {maxDates !== 1 && (
-        <div className="space-y-2">
+        <div>
           <Button
             type="button"
-            variant="outline"
-            className="w-full border-dashed sm:w-auto"
+            variant="none"
+            className="w-full border-dashed sm:w-auto bg-ear-orange text-ear-off-white hover:bg-ear-orange hover:text-ear-off-white/80"
             onClick={handleAddShowtime}
             disabled={!canAddShowtime}
             title={
@@ -241,21 +241,21 @@ export function ShowtimesList<T extends FieldValues>({
                 : undefined
             }
           >
-            + Add another showtime
+            + Add another {rowLabel}
           </Button>
-          {!canAddShowtime && (
+          {/* {!canAddShowtime && (
             <p className="text-xs text-amber-800" role="status">
               {requireLocation
                 ? "Add a date, a time, and a location to the showtime above before you add another."
                 : "Add a date and a time to the slot above before you add another."}
             </p>
-          )}
-          <p className="text-xs text-gray-500">
+          )} */}
+          {/* <p className="text-xs text-gray-500">
             <span className="font-medium text-gray-600">Tip: </span>
             {requireLocation
               ? "New showtimes copy from the one above: location always; time only when that showtime has a single time. The date is left blank to fill in."
               : "New rows copy the previous slot’s time when it has a single time. The date is left blank to fill in."}
-          </p>
+          </p> */}
         </div>
       )}
     </div>

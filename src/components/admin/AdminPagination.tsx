@@ -1,5 +1,7 @@
 "use client"
 
+import { ADMIN_LIGHT_SURFACE } from "@/components/admin/shared/admin-light-surface"
+
 export function AdminPagination({
   page,
   limit,
@@ -28,8 +30,8 @@ export function AdminPagination({
           disabled={!canPrev}
           className={`px-3 py-2 rounded-md border transition-custom ${
             canPrev
-              ? "bg-white hover:bg-[var(--gray-100)]"
-              : "bg-[var(--gray-100)] opacity-60 cursor-not-allowed"
+              ? `${ADMIN_LIGHT_SURFACE} hover:bg-[var(--gray-100)]`
+              : "bg-[var(--gray-100)] text-[var(--gray-700)] opacity-60 cursor-not-allowed"
           }`}
         >
           Previous
@@ -39,8 +41,8 @@ export function AdminPagination({
           disabled={!canNext}
           className={`px-3 py-2 rounded-md border transition-custom ${
             canNext
-              ? "bg-white hover:bg-[var(--gray-100)]"
-              : "bg-[var(--gray-100)] opacity-60 cursor-not-allowed"
+              ? `${ADMIN_LIGHT_SURFACE} hover:bg-[var(--gray-100)]`
+              : "bg-[var(--gray-100)] text-[var(--gray-700)] opacity-60 cursor-not-allowed"
           }`}
         >
           Next

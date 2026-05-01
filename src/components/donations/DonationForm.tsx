@@ -272,7 +272,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
         variant={lockedRecipient ? "artist" : "generic"}
         className="mb-4 max-w-3xl mx-auto gap-1.5 px-2"
       />
-    <Card className="max-w-3xl mx-auto px-6 py-5">
+    <Card className="max-w-3xl mx-auto px-6 py-5 bg-white">
       {lockedRecipient?.donationPageImageUrl ? (
         <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
           {/* eslint-disable-next-line @next/next/no-img-element -- public Supabase URL; avoid next/image remote config */}
@@ -399,7 +399,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
                 min="1"
                 max="100000"
                 placeholder="Enter amount in dollars"
-                className="w-full pl-7 rounded-md border border-gray-300 px-3 py-2"
+                className="w-full bg-white pl-7 rounded-md border border-gray-300 px-3 py-2"
                 value={amountInDollars > 0 ? amountInDollars : ""}
                 onChange={(e) => {
                   const dollars = parseFloat(e.target.value) || 0
@@ -453,7 +453,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
           </label>
 
           {amountInDollars > 0 && (
-            <div className="rounded-md bg-white p-3 text-sm text-gray-700 space-y-1">
+            <div className="rounded-md p-3 text-sm text-gray-700 space-y-1">
               <p>
                 <span className="font-medium text-gray-900">Donation:</span> ${amountInDollars.toFixed(2)}
               </p>
@@ -498,6 +498,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
           label="Name"
           placeholder="Your name"
           required
+          inputClassName="bg-white ring-offset-white"
         />
 
         <TextField
@@ -507,6 +508,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
           type="email"
           placeholder="your.email@example.com"
           required
+          inputClassName="bg-white ring-offset-white"
         />
 
         <TextAreaField
@@ -515,6 +517,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
           label="Message"
           placeholder="Optional message (optional)"
           rows={4}
+          inputClassName="bg-white ring-offset-white"
         />
 
         <div className="space-y-3">
@@ -527,7 +530,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
               type="submit"
               variant="primary"
               disabled={isSubmitting}
-              className="flex-1"
+              className="flex-1 bg-ear-dark-red text-ear-off-white hover:bg-ear-dark-red/90"
             >
               {isSubmitting ? "Processing..." : "Continue to Payment"}
             </Button>

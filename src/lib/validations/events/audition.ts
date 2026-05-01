@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { flexibleUrlOptionalSchema } from "../flexible-url"
 import { occurrenceSchema } from "./base"
 
 // Audition-only
@@ -14,6 +15,8 @@ export const auditionFields = z
     fee: z.enum(["FEE", "NO_FEE"]).optional(),
     feeAmount: z.string().optional(),
     preAuditionClasses: z.string().optional(),
+    /** Company / project website (DB: audition_details.website) */
+    listingWebsite: flexibleUrlOptionalSchema,
     /**
      * Listing fee fields (only shown if fee === "FEE")
      * Established artists: $25

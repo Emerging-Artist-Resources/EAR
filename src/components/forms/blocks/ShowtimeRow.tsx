@@ -151,7 +151,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
     return (
       <Card
         ref={ref}
-        className="space-y-3 rounded-2xl border border-border-default bg-surface-panel p-4 shadow-sm"
+        className="space-y-4 rounded-2xl border border-border-default bg-surface-panel p-4 shadow-sm"
       >
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h4 className="text-sm font-semibold text-text-primary">
@@ -172,9 +172,9 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
           Row 1: date | (time) | place only — address row is isolated from row 2 so
           opening instructions does not move date / time / location.
         */}
-        <div className={`grid grid-cols-1 items-start gap-x-3 gap-y-2 ${gridColsClass}`}>
+        <div className={`grid grid-cols-1 items-start gap-x-4 gap-y-3 ${gridColsClass}`}>
             <div className="w-full min-w-0 sm:max-w-[12.5rem] md:max-w-none">
-              <label htmlFor={dateInputId} className="mb-1 block text-sm font-medium text-text-primary">
+              <label htmlFor={dateInputId} className="mb-1.5 block text-sm font-medium text-text-primary">
                 Date <span className="text-error-600">*</span>
               </label>
               <Input
@@ -190,7 +190,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
 
             {hasTime && (
               <div className="w-full min-w-0 sm:max-w-[9.5rem] md:max-w-none">
-                <label className="mb-1 block text-sm font-medium text-text-primary" htmlFor={`${dateInputId}-time-0`}>
+                <label className="mb-1.5 block text-sm font-medium text-text-primary" htmlFor={`${dateInputId}-time-0`}>
                   Time <span className="text-error-600">*</span>
                 </label>
                 <Input
@@ -268,7 +268,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
         </div>
 
         {showTime && times.length > 1 && (
-          <div className="space-y-2 border-t border-border-default/70 pt-3">
+          <div className="space-y-3 border-t border-border-default/70 pt-3">
             {times.slice(1).map((timeField, sliceIndex) => {
               const timeIndex = sliceIndex + 1
               const timeFieldName = `${name}.${index}.times.${timeIndex}.time`
@@ -279,7 +279,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                 <div key={timeField.id} className="flex flex-wrap items-end gap-2 sm:gap-3">
                   <div className="min-w-0 sm:max-w-[9.5rem] sm:flex-1">
                     <label
-                      className="mb-1 block text-sm font-medium text-text-primary"
+                      className="mb-1.5 block text-sm font-medium text-text-primary"
                       htmlFor={`${dateInputId}-time-${timeIndex}`}
                     >
                       Additional time <span className="text-error-600">*</span>

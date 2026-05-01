@@ -141,7 +141,7 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
     <>
       <div className="flex items-center justify-between mb-3">
         <H3>My Listings</H3>
-        <Button variant="link" onClick={handleSubmitPerformance}>
+        <Button variant="link" onClick={handleSubmitPerformance} className="text-ear-baby-blue hover:text-ear-baby-blue/80">
           + Submit New Listing
         </Button>
       </div>

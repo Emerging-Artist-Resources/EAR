@@ -64,7 +64,6 @@ export function SignUpEligibility({ form }: SignUpEligibilityProps) {
         options={[
           { label: "Yes", value: "yes" },
           { label: "No", value: "no" },
-          { label: "Other", value: "other" },
         ]}
       />
 
@@ -82,7 +81,6 @@ export function SignUpEligibility({ form }: SignUpEligibilityProps) {
         options={[
           { label: "Yes", value: "yes" },
           { label: "No", value: "no" },
-          { label: "Other", value: "other" },
         ]}
       />
 
@@ -100,7 +98,6 @@ export function SignUpEligibility({ form }: SignUpEligibilityProps) {
         options={[
           { label: "Yes", value: "yes" },
           { label: "No", value: "no" },
-          { label: "Other", value: "other" },
         ]}
       />
 
@@ -114,7 +111,6 @@ export function SignUpEligibility({ form }: SignUpEligibilityProps) {
         options={[
           { label: "Yes", value: "yes" },
           { label: "No", value: "no" },
-          { label: "Other", value: "other" },
         ]}
       />
     </Section>

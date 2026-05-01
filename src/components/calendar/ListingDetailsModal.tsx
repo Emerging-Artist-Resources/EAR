@@ -234,6 +234,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       title={title}
       size="lg"
       headerClassName="bg-primary"
+      contentClassName="border-border-default bg-surface-modal-warm text-text-primary"
     >
       <div className="min-h-[calc(90vh-9rem)]">
       {loading && (
@@ -251,7 +252,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
             <Text className="text-status-error-fg mb-4">{error}</Text>
             <button
               onClick={onClose}
-              className="text-primary-600 hover:text-primary-700 underline"
+              className="text-brand-primary hover:text-brand-primary-hover underline"
             >
               Close
             </button>
@@ -293,7 +294,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                 <button
                   type="button"
                   onClick={() => onListingClick(parentListingId)}
-                  className="text-sm text-primary-600 hover:text-primary-700 underline"
+                  className="text-sm text-brand-primary hover:text-brand-primary-hover underline"
                 >
                   ← {backToParentLabel}
                 </button>
@@ -312,7 +313,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               
               return (
                 <Card className="p-4">
-                  <H3 className="mb-3 text-ear-black">Information</H3>
+                  <H3 className="mb-3 text-text-primary">Information</H3>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-0">
                     {listing.type === "performance" && listing.performance_details && (
                       <>
@@ -349,7 +350,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
              (listing.listing_occurrences && listing.listing_occurrences.length > 0) ||
              creativeOpportunityDates ? (
               <Card className="p-4">
-                <H3 className="mb-3 text-ear-black">Dates</H3>
+                <H3 className="mb-3 text-text-primary">Dates</H3>
                 <div className="space-y-0">
                   {creativeOpportunityDates && (
                     <div className="grid grid-cols-2 gap-x-6 gap-y-0 mb-4">
@@ -370,7 +371,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                                   href={getGoogleMapsLink(singleLocation.address, singleLocation.place_id)!}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-primary-600 hover:text-primary-700 underline ml-2"
+                                  className="ml-2 text-brand-primary hover:text-brand-primary-hover underline"
                                 >
                                   View on Maps →
                                 </a>
@@ -423,7 +424,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                                       href={getGoogleMapsLink(occurrenceLocation.address, occurrenceLocation.place_id)!}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-primary-600 hover:text-primary-700 underline text-xs ml-2"
+                                      className="ml-2 text-xs text-brand-primary hover:text-brand-primary-hover underline"
                                     >
                                       View on Maps →
                                     </a>
@@ -467,7 +468,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                             {events.length > 3 && !showAllDates && (
                               <button
                                 onClick={() => setShowAllDates(true)}
-                                className="text-sm text-primary-600 hover:text-primary-700 underline mt-2"
+                                className="mt-2 text-sm text-brand-primary hover:text-brand-primary-hover underline"
                               >
                                 See more ({events.length - 3} more)
                               </button>
@@ -475,7 +476,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                             {events.length > 3 && showAllDates && (
                               <button
                                 onClick={() => setShowAllDates(false)}
-                                className="text-sm text-primary-600 hover:text-primary-700 underline mt-2"
+                                className="mt-2 text-sm text-brand-primary hover:text-brand-primary-hover underline"
                               >
                                 See less
                               </button>
@@ -592,7 +593,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
             listing.social_handles ||
             listing.notes ? (
               <Card className="p-4">
-                <H3 className="mb-3 text-ear-black">Additional Information</H3>
+                <H3 className="mb-3 text-text-primary">Additional Information</H3>
                 <div className="space-y-0">
                   {sortedPhotos.length > 0 && (
                     <div className="py-2 col-span-2">

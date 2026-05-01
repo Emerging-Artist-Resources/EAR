@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { flexibleUrlOptionalSchema } from "../flexible-url"
 import { occurrenceSchema } from "./base"
 
 /**
@@ -26,6 +27,8 @@ export const creativeFields = z
      * Emerging artists: $35
      */
     artistType: z.enum(["ESTABLISHED", "EMERGING"]).optional(),
+    /** Host / project website (DB: creative_details.website; distinct from link = submission instructions) */
+    listingWebsite: flexibleUrlOptionalSchema,
   })
   .superRefine((data, ctx) => {
     // Required fields

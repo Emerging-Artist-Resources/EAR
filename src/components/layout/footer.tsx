@@ -32,7 +32,6 @@ export function Footer() {
             <nav className="flex flex-wrap items-center gap-4 text-sm" aria-label="Footer">
               <Link className="underline text-ear-baby-blue hover:text-primary" href="/calendar">Calendar</Link>
               <Link className="underline text-ear-baby-blue hover:text-primary" href="/announcement">Announcements</Link>
-              <Link className="underline text-ear-baby-blue hover:text-primary" href="/profile">Profile</Link>
               <Link className="underline text-ear-baby-blue hover:text-primary" href="/forms">Submit Listing</Link>
               <Link className="underline text-ear-baby-blue hover:text-primary" href="/donate">Donate</Link>
             </nav>

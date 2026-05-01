@@ -342,7 +342,6 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
                 type="button"
                 onClick={handleConfirm}
                 disabled={!hasCompleteEntries}
-                className="mt-4"
               >
                 {confirmActionLabel}
               </Button>

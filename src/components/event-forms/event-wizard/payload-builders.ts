@@ -434,6 +434,7 @@ export function buildAuditionPayload(
       compensation: data.compensation ?? "",
       instructions: data.instructions ?? "",
       pre_audition_classes: data.preAuditionClasses || null,
+      website: (data.listingWebsite ?? "").trim() || null,
       fee: feeOption,
       fee_amount: data.feeAmount || null,
       artist_type: data.artistType || null,
@@ -483,6 +484,7 @@ export function buildCreativePayload(
         (data.creativeSubmissionInstructions ?? "").trim() ||
         (data.link ?? "").trim() ||
         "",
+      website: (data.listingWebsite ?? "").trim() || null,
       fee: feeOption,
       fee_amount: data.feeAmount || null,
       artist_type: data.artistType || null,
@@ -581,6 +583,7 @@ export function buildClassPayload(
       teachers: data.teachers ?? "",
       price: data.price ?? data.classPrice ?? null,
       link: data.link ?? data.classLink ?? null,
+      website: (data.listingWebsite ?? "").trim() || null,
       style_category: data.styleCategory || null,
       workshop_details: data.workshopDetails || null,
       classes_offered: data.classesOffered || null,

@@ -224,33 +224,31 @@ export function ClassOccurrencesPicker({ form, label }: ClassOccurrencesPickerPr
           />
 
           {hasSelectedDates && (
-            <div className="mt-4">
-              <ShowtimesList
-                form={form as unknown as UseFormReturn<Record<string, unknown>>}
-                name={"occurrences"}
-                title="Add times for selected dates"
-                note="Add start time(s) for each selected date."
-                required
-                rowLabel="Class date"
-                maxTimesPerDate={1}
-                locationConfig={{
-                  addressName: "address",
-                  venueName: "venueName",
-                  placeIdName: "placeId",
-                  latName: "lat",
-                  lngName: "lng",
-                  instructionsName: "instructions",
-                  label: "Location",
-                  required: true,
-                }}
-              />
-            </div>
+            <ShowtimesList
+              form={form as unknown as UseFormReturn<Record<string, unknown>>}
+              name={"occurrences"}
+              title="Add times for selected dates"
+              note="Add start time(s) for each selected date."
+              required
+              rowLabel="Class date"
+              maxTimesPerDate={1}
+              locationConfig={{
+                addressName: "address",
+                venueName: "venueName",
+                placeIdName: "placeId",
+                latName: "lat",
+                lngName: "lng",
+                instructionsName: "instructions",
+                label: "Location",
+                required: true,
+              }}
+            />
           )}
 
           <button
             type="button"
             onClick={() => setUseManualEntry(true)}
-            className="mt-4 text-sm text-blue-600 hover:text-blue-800 underline"
+            className="text-sm text-blue-600 hover:text-blue-800 underline"
           >
             Don't see your dates? Enter manually instead
           </button>

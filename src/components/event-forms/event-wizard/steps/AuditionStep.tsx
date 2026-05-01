@@ -9,6 +9,7 @@ import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { LocationField } from "@/components/forms/blocks/LocationField"
 import { SelectBlock } from "@/components/forms/blocks/Select"
+import { ListingWebsiteField } from "@/components/forms/blocks/ListingWebsiteField"
 import { Button } from "@/components/ui/button"
 import { useCallback, useEffect } from "react"
 
@@ -75,6 +76,7 @@ export function AuditionStep({ form }: AuditionStepProps) {
         <TextAreaField form={form} name={"eligibility"} label="Eligibility" required placeholder="Please describe who you are seeking and who is eligible to apply. Include relevant details such as style, age, experience, and any other qualifications."/>
         <TextField form={form} name={"compensation"} label="Compensation" required placeholder="Specify the amount, or describe any non-monetary compensation offered"/>
         <TextAreaField form={form} name={"instructions"} label="Audition Instructions" required placeholder="Please describe your audition instructions. Include submission link, email, and all prescreen requirements."/>
+        <ListingWebsiteField form={form} />
         <TextAreaField form={form} name={"preAuditionClasses"} label="Are there any preaudition classes, workshops, or intensives that are recommended prior to auditioning?"/>
 
         
