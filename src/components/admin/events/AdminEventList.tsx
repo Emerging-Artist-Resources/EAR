@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Modal } from "@/components/ui/modal"
 import { AdminEventCard } from "./AdminEventCard"
 import type { AdminEventDetail } from "./types"
+import { ADMIN_LIGHT_SURFACE } from "@/components/admin/shared/admin-light-surface"
 
 export function AdminEventList({
   items,
@@ -33,7 +34,9 @@ export function AdminEventList({
 
   return (
     <>
-      <div className="overflow-x-auto rounded-md border border-[var(--gray-200)] bg-white">
+      <div
+        className={`overflow-x-auto rounded-md border border-[var(--gray-200)] ${ADMIN_LIGHT_SURFACE}`}
+      >
         <table className="min-w-full text-sm">
           <thead className="bg-[var(--gray-50)] text-[var(--gray-700)]">
             <tr>
@@ -103,7 +106,7 @@ export function AdminEventList({
 
       <Modal isOpen={open} onClose={() => setOpen(false)} title="Submission details" headerClassName="bg-primary" size="lg">
         {loadingSelected && (
-          <div className="p-6 text-center text-[var(--gray-600)]">Loading…</div>
+          <div className="p-6 text-center text-[var(--ear-off-white)] opacity-90">Loading…</div>
         )}
         {!loadingSelected && selected && (
           <div className="max-h-[70vh] overflow-y-auto">

@@ -58,7 +58,7 @@ export default function SignUpWizardLayout({ children }: LayoutProps) {
 
   return (
     <FormProvider {...methods}>
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-2xl">
           <Card>
             <div className="relative -mx-6 -mt-6 mb-4 px-6 py-4 rounded-t-md bg-primary space-y-3">

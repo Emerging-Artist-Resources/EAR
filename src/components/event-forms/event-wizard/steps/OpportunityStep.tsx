@@ -10,6 +10,7 @@ import { LocationField } from "@/components/forms/blocks/LocationField"
 import { useEffect } from "react"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { SimpleFeeDisplay } from "@/components/event-forms/event-wizard/shared/SimpleFeeDisplay"
+import { ListingWebsiteField } from "@/components/forms/blocks/ListingWebsiteField"
 
 interface OpportunityStepProps {
   form: UseFormReturn<EventFormData>
@@ -34,11 +35,18 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
       <Section title="Creative Opportunity Details">
         <TextField form={form} name={"title"} label="Opportunity Name" required />
         <TextField form={form} name={"host"} label="Hosting Indivdual/Organization" required/>
+        <ListingWebsiteField form={form} />
         <TextField form={form} name={"dates"} label="Opportunity Dates" required placeholder="Opportunity Dates"/>
         <TextAreaField form={form} name={"description"} label="Opportunity Description" required placeholder="About the Opportunity"/>
         <TextAreaField form={form} name={"compensation"} label="What is offered to selected artists?" required placeholder="Include compensation, rehearsal/performance commitments, and any other relevant details."/>       
         <TextAreaField form={form} name={"requirements"} label="Application Requirements" required placeholder="What is required to apply?"/>       
-        <TextAreaField form={form} name={"link"} label="Submission Instructions" required placeholder="Include the submission link, contact email, and any additional required information."/>
+        <TextAreaField
+          form={form}
+          name={"creativeSubmissionInstructions"}
+          label="Submission Instructions"
+          required
+          placeholder="Include the submission link, contact email, and any additional required information."
+        />
         <ShowtimesList
           form={form as unknown as UseFormReturn<Record<string, unknown>>}
           name={"deadlineOccurrences"}

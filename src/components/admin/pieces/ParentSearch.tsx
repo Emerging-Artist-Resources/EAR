@@ -93,7 +93,7 @@ export function ParentSearch({ onSelect, selectedParentId: _selectedParentId }: 
         </div>
       )}
       {showResults && results.length > 0 && (
-        <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white text-[var(--gray-900)] shadow-lg max-h-60 overflow-auto">
           {results.map((item) => (
             <button
               key={item.id}
@@ -107,7 +107,7 @@ export function ParentSearch({ onSelect, selectedParentId: _selectedParentId }: 
         </div>
       )}
       {showResults && query && !isSearching && results.length === 0 && (
-        <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-500 shadow-lg">
+        <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white p-4 text-sm text-[var(--gray-600)] shadow-lg">
           No parent events found. Try a different search term.
         </div>
       )}

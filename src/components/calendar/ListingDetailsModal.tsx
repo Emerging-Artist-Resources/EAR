@@ -23,6 +23,7 @@ import {
   SocialHandles,
 } from "./PublicListingDetailSections"
 import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
+import { H3, H4, Text } from "@/components/ui/typography"
 
 function getGoogleMapsLink(address: string | null | undefined, placeId: string | null | undefined): string | null {
   if (placeId) {
@@ -182,6 +183,13 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
 
   const title = listing ? getListingTitle(listing) : "Listing Details"
   const typeLabel = listing ? getTypeLabel(listing.type) : ""
+  const parentListingId =
+    listing?.piece_details?.parent_listing_id || listing?.class_workshop_details?.parent_listing_id || null
+  const backToParentLabel = listing?.piece_details?.parent_listing_id
+    ? "Back to Performance"
+    : listing?.class_workshop_details?.parent_listing_id
+    ? "Back to Workshop"
+    : null
 
   const creativeOpportunityDates =
     listing?.type === "creative" && listing.creative_details?.dates?.trim()
@@ -226,42 +234,46 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       title={title}
       size="lg"
       headerClassName="bg-primary"
+      contentClassName="border-border-default bg-surface-modal-warm text-text-primary"
     >
+      <div className="min-h-[calc(90vh-9rem)]">
       {loading && (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex h-full min-h-[calc(90vh-9rem)] items-center justify-center py-12">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mb-4"></div>
-              <p className="text-gray-600">Loading listing details...</p>
+              <Text className="text-text-muted">Loading listing details...</Text>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="py-12 text-center">
-            <p className="text-red-600 mb-4">{error}</p>
+          <div className="flex h-full min-h-[calc(90vh-9rem)] items-center justify-center py-12 text-center">
+            <div>
+            <Text className="text-status-error-fg mb-4">{error}</Text>
             <button
               onClick={onClose}
-              className="text-primary-600 hover:text-primary-700 underline"
+              className="text-brand-primary hover:text-brand-primary-hover underline"
             >
               Close
             </button>
+            </div>
           </div>
         )}
 
         {!loading && !error && listing && (
           <div className="space-y-4">
             {/* Header with type badge and save button */}
-            <div className="flex items-center justify-between gap-3 pb-4 border-b border-gray-200">
+            <div className="flex items-center justify-between gap-3 pb-4 border-b border-border-default">
               <div className="flex items-center gap-3">
                 <Badge variant="primary" size="sm">{typeLabel}</Badge>
                 {listing.company && (
-                  <span className="text-sm text-gray-600">{listing.company}</span>
+                  <Text className="text-text-muted">{listing.company}</Text>
                 )}
               </div>
               {isAuthed && (
                 <div className="flex items-center gap-2">
                   {saveError && (
-                    <span className="text-sm text-red-600">{saveError}</span>
+                    <Text className="text-status-error-fg">{saveError}</Text>
                   )}
                   <FavoriteButton
                     active={isSaved}
@@ -277,6 +289,17 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                 </div>
               )}
             </div>
+            {parentListingId && backToParentLabel && onListingClick && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => onListingClick(parentListingId)}
+                  className="text-sm text-brand-primary hover:text-brand-primary-hover underline"
+                >
+                  ← {backToParentLabel}
+                </button>
+              </div>
+            )}
 
             {/* Info Card - Type-Specific Details */}
             {(() => {
@@ -290,7 +313,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               
               return (
                 <Card className="p-4">
-                  <h3 className="text-base font-semibold text-gray-900 mb-3">Information</h3>
+                  <H3 className="mb-3 text-text-primary">Information</H3>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-0">
                     {listing.type === "performance" && listing.performance_details && (
                       <>
@@ -327,7 +350,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
              (listing.listing_occurrences && listing.listing_occurrences.length > 0) ||
              creativeOpportunityDates ? (
               <Card className="p-4">
-                <h3 className="text-base font-semibold text-gray-900 mb-3">Dates</h3>
+                <H3 className="mb-3 text-text-primary">Dates</H3>
                 <div className="space-y-0">
                   {creativeOpportunityDates && (
                     <div className="grid grid-cols-2 gap-x-6 gap-y-0 mb-4">
@@ -348,7 +371,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                                   href={getGoogleMapsLink(singleLocation.address, singleLocation.place_id)!}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-primary-600 hover:text-primary-700 underline ml-2"
+                                  className="ml-2 text-brand-primary hover:text-brand-primary-hover underline"
                                 >
                                   View on Maps →
                                 </a>
@@ -384,24 +407,24 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                     const hasLocation = occurrenceLocation && (occurrenceLocation.address || occurrenceLocation.venue_name)
                     
                     return (
-                      <div key={o.id} className="border-l-4 border-primary-300 pl-4 py-2 bg-white rounded-r">
-                        <div className="text-sm font-semibold text-gray-900 mb-1">
+                      <div key={o.id} className="border-l-4 border-primary-300 pl-4 py-2 bg-surface-panel rounded-r">
+                        <div className="font-header text-xl font-semibold text-text-primary mb-1">
                           {formatDateTimeEST(o.starts_at_utc)}
                           {o.ends_at_utc && ` - ${formatDateTimeEST(o.ends_at_utc)}`}
                         </div>
                         {!hasSingleLocation && hasLocation && occurrenceLocation && (
-                          <div className="ml-0 mt-2 space-y-1 text-sm">
+                          <div className="ml-0 mt-2 space-y-1 font-sans text-sm">
                             {occurrenceLocation.address && (
                               <div className="flex items-start gap-2">
-                                <span className="text-gray-600 font-medium">Address:</span>
+                                <span className="text-text-muted font-medium">Address:</span>
                                 <div className="flex-1">
-                                  <span className="text-gray-900">{occurrenceLocation.address}</span>
+                                  <span className="text-text-primary">{occurrenceLocation.address}</span>
                                   {getGoogleMapsLink(occurrenceLocation.address, occurrenceLocation.place_id) && (
                                     <a
                                       href={getGoogleMapsLink(occurrenceLocation.address, occurrenceLocation.place_id)!}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-primary-600 hover:text-primary-700 underline text-xs ml-2"
+                                      className="ml-2 text-xs text-brand-primary hover:text-brand-primary-hover underline"
                                     >
                                       View on Maps →
                                     </a>
@@ -411,14 +434,14 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                             )}
                             {occurrenceLocation.venue_name && (
                               <div>
-                                <span className="text-gray-600 font-medium">Venue: </span>
-                                <span className="text-gray-900">{occurrenceLocation.venue_name}</span>
+                                <span className="text-text-muted font-medium">Venue: </span>
+                                <span className="text-text-primary">{occurrenceLocation.venue_name}</span>
                               </div>
                             )}
                             {occurrenceLocation.location_instructions && (
                               <div>
-                                <span className="text-gray-600 font-medium">Instructions: </span>
-                                <span className="text-gray-900">{occurrenceLocation.location_instructions}</span>
+                                <span className="text-text-muted font-medium">Instructions: </span>
+                                <span className="text-text-primary">{occurrenceLocation.location_instructions}</span>
                               </div>
                             )}
                           </div>
@@ -431,7 +454,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                     <div className="space-y-4">
                       {deadlines.length > 0 && (
                         <div>
-                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Deadlines</h4>
+                          <H4 className="text-text-muted mb-2">Deadlines</H4>
                           <div className="space-y-2">
                             {deadlines.map(renderOccurrence)}
                           </div>
@@ -439,13 +462,13 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                       )}
                       {events.length > 0 && (
                         <div>
-                          <h4 className="text-sm font-semibold text-gray-700 mb-2">{eventTypeLabel} Dates</h4>
+                          <H4 className="text-text-muted mb-2">{eventTypeLabel} Dates</H4>
                           <div className="space-y-2">
                             {events.slice(0, showAllDates ? events.length : 3).map(renderOccurrence)}
                             {events.length > 3 && !showAllDates && (
                               <button
                                 onClick={() => setShowAllDates(true)}
-                                className="text-sm text-primary-600 hover:text-primary-700 underline mt-2"
+                                className="mt-2 text-sm text-brand-primary hover:text-brand-primary-hover underline"
                               >
                                 See more ({events.length - 3} more)
                               </button>
@@ -453,7 +476,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                             {events.length > 3 && showAllDates && (
                               <button
                                 onClick={() => setShowAllDates(false)}
-                                className="text-sm text-primary-600 hover:text-primary-700 underline mt-2"
+                                className="mt-2 text-sm text-brand-primary hover:text-brand-primary-hover underline"
                               >
                                 See less
                               </button>
@@ -519,7 +542,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                   cardsPerView={3}
                   onCardClick={(index) => {
                     const childListing = childListings[index]
-                    if (childListing && !childListing.is_piece && !childListing.is_class && onListingClick) {
+                    if (childListing && onListingClick) {
                       onClose()
                       onListingClick(childListing.id)
                     }
@@ -554,7 +577,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                           ? `Listing photo: ${child.cover_image_credit}`
                           : `${child.title} — photo`
                       }
-                      onClick={child.is_piece || child.is_class ? undefined : () => {
+                      onClick={() => {
                         if (onListingClick) {
                           onClose()
                           onListingClick(child.id)
@@ -570,11 +593,11 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
             listing.social_handles ||
             listing.notes ? (
               <Card className="p-4">
-                <h3 className="text-base font-semibold text-gray-900 mb-3">Additional Information</h3>
+                <H3 className="mb-3 text-text-primary">Additional Information</H3>
                 <div className="space-y-0">
                   {sortedPhotos.length > 0 && (
                     <div className="py-2 col-span-2">
-                      <div className="text-sm text-gray-600 mb-2">Photos</div>
+                      <Text className="text-text-muted mb-2">Photos</Text>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {sortedPhotos.map((photo) => (
                           <PhotoThumbnail
@@ -609,6 +632,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
             ) : null}
           </div>
         )}
+      </div>
     </Modal>
   )
 }

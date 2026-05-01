@@ -1,6 +1,7 @@
 import React from "react"
 import { UseFormReturn, useFormState } from "react-hook-form"
 import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 
 interface TextFieldProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>
@@ -14,6 +15,8 @@ interface TextFieldProps<T extends Record<string, unknown>> {
   errorMode?: "touched" | "always"
   prefix?: React.ReactNode
   className?: string
+  /** Merged into the inner `Input` (e.g. `bg-white` on light cards). */
+  inputClassName?: string
 }
 
 export function TextField<T extends Record<string, unknown>>({
@@ -28,6 +31,7 @@ export function TextField<T extends Record<string, unknown>>({
   errorMode = "touched",
   prefix,
   className,
+  inputClassName,
 }: TextFieldProps<T>) {
   const { register, control } = form
   useFormState({ control, name: name as never, exact: true })
@@ -57,7 +61,7 @@ export function TextField<T extends Record<string, unknown>>({
           required={required}
           aria-required={required ? true : undefined}
           error={showError}
-          className={prefix ? "pl-7" : undefined}
+          className={cn(prefix && "pl-7", inputClassName)}
         />
       </div>
       {showError && state.error?.message && (

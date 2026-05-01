@@ -4,6 +4,27 @@
 
 import type { ApiResponse } from "./api-utils"
 
+let sessionExpiredModalShown = false
+
+function notifySessionExpired() {
+  if (typeof window === "undefined" || sessionExpiredModalShown) return
+
+  if (window.location.pathname.startsWith("/auth/signin")) return
+
+  const next = `${window.location.pathname}${window.location.search}`
+  sessionExpiredModalShown = true
+
+  window.dispatchEvent(
+    new CustomEvent("app:session-expired", {
+      detail: { next },
+    })
+  )
+}
+
+export function resetSessionExpiredModalFlag() {
+  sessionExpiredModalShown = false
+}
+
 /**
  * Type-safe fetch wrapper that handles API responses
  */
@@ -21,6 +42,9 @@ export async function apiFetch<T = unknown>(
 
   if (!response.ok) {
     const errorData = (await response.json().catch(() => ({}))) as ApiResponse
+    if (response.status === 401) {
+      notifySessionExpired()
+    }
     throw new Error(
       errorData.error?.message || errorData.error?.code || `HTTP ${response.status}`
     )

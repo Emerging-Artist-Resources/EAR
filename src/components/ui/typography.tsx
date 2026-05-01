@@ -6,27 +6,27 @@ export interface TypographyProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 export const H1 = ({ className, ...props }: TypographyProps) => (
-  <h1 className={cn("text-3xl font-bold tracking-tight text-gray-900", className)} {...props} />
+  <h1 className={cn("font-title text-3xl font-bold tracking-tight text-inherit", className)} {...props} />
 )
 
 export const H2 = ({ className, ...props }: TypographyProps) => (
-  <h2 className={cn("text-2xl font-semibold tracking-tight text-gray-900", className)} {...props} />
+  <h2 className={cn("font-header text-2xl font-semibold tracking-tight text-inherit", className)} {...props} />
 )
 
 export const H3 = ({ className, ...props }: TypographyProps) => (
-  <h3 className={cn("text-xl font-semibold tracking-tight text-gray-900", className)} {...props} />
+  <h3 className={cn("font-header text-2xl font-semibold tracking-tight text-inherit", className)} {...props} />
 )
 
 export const H4 = ({ className, ...props }: TypographyProps) => (
-  <h4 className={cn("text-lg font-medium tracking-tight text-gray-900", className)} {...props} />
+  <h4 className={cn("font-header text-2xl font-medium tracking-tight text-inherit", className)} {...props} />
 )
 
 export const Text = ({ className, ...props }: TypographyProps) => (
-  <p className={cn("text-sm leading-6 text-gray-700", className)} {...props} />
+  <p className={cn("font-sans text-base leading-6 text-inherit", className)} {...props} />
 )
 
 export const Muted = ({ className, ...props }: TypographyProps) => (
-  <p className={cn("text-sm text-gray-500", className)} {...props} />
+  <p className={cn("text-sm text-inherit opacity-80", className)} {...props} />
 )
 
 

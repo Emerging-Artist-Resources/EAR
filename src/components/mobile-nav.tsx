@@ -5,12 +5,14 @@ import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { VscAccount } from "react-icons/vsc"
 import { useAuth } from "@/hooks/use-auth"
 import { servicesNavItems } from "@/lib/services-nav"
 
 interface MobileNavProps {
   onSubmitPerformance?: () => void
+  onDarkSurface?: boolean
 }
 
 const isProtectedRoute = (pathname: string): boolean => {
@@ -19,7 +21,7 @@ const isProtectedRoute = (pathname: string): boolean => {
          pathname.startsWith("/forms")
 }
 
-export default function MobileNav({ onSubmitPerformance }: MobileNavProps) {
+export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }: MobileNavProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
@@ -43,7 +45,11 @@ export default function MobileNav({ onSubmitPerformance }: MobileNavProps) {
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className="text-gray-400 hover:text-gray-600"
+        className={cn(
+          onDarkSurface
+            ? "text-ear-off-white hover:bg-white/10 hover:text-ear-off-white"
+            : "text-ear-baby-blue hover:bg-ear-baby-blue/10 hover:text-ear-baby-blue"
+        )}
         aria-label="Toggle menu"
       >
         <span className="sr-only">Open main menu</span>
@@ -66,7 +72,7 @@ export default function MobileNav({ onSubmitPerformance }: MobileNavProps) {
       </Button>
 
       {isOpen && (
-        <div className="absolute top-16 left-0 right-0 bg-white shadow-lg z-50">
+        <div className="absolute top-16 left-0 right-0 bg-surface-panel shadow-lg z-50">
           <div className="px-2 pt-2 pb-3 space-y-1">
             {/* Public Navigation */}
             {publicNavigation.map((item) => (
@@ -86,9 +92,9 @@ export default function MobileNav({ onSubmitPerformance }: MobileNavProps) {
               </Button>
             </Link>
 
-            <div className="border-t border-gray-200 my-2" />
+            <div className="border-t border-border-default my-2" />
             <div className="px-2 py-1">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Services</p>
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Services</p>
             </div>
             {servicesNavItems.map((item) => (
               <Link
@@ -106,9 +112,9 @@ export default function MobileNav({ onSubmitPerformance }: MobileNavProps) {
             {/* Admin Navigation - visually separated */}
             {adminNavigation.length > 0 && (
               <>
-                <div className="border-t border-gray-200 my-2" />
+                <div className="border-t border-border-default my-2" />
                 <div className="px-2 py-1">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin</p>
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Admin</p>
                 </div>
                 {adminNavigation.map((item) => (
                   <Link
@@ -136,8 +142,8 @@ export default function MobileNav({ onSubmitPerformance }: MobileNavProps) {
             )}
               {isAuthed ? (
                 <>
-                  <div className="border-t border-gray-200 pt-3 mt-3">
-                    <p className="px-3 py-2 text-sm text-gray-500">
+                  <div className="border-t border-border-default pt-3 mt-3">
+                    <p className="px-3 py-2 text-sm text-text-muted">
                       Welcome, {userName || "User"}
                     </p>
                   
@@ -146,7 +152,7 @@ export default function MobileNav({ onSubmitPerformance }: MobileNavProps) {
                         router.push("/profile")
                         setIsOpen(false)
                       }}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-surface-panel-alt"
                       >
                         <VscAccount className="w-5 h-5" />
                     </button>

@@ -6,12 +6,18 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
 
 import { supabase } from "@/lib/supabase/client"
-import { H2, Text } from "@/components/ui/typography"
+import { H1, Text } from "@/components/ui/typography"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
 import { Card, CardContent } from "@/components/ui/card"
 import { ROUTES } from "@/lib/constants"
+
+function sanitizeNextParam(raw: string | null): string {
+  const next = raw ?? "/announcement"
+  if (next.startsWith("/") && !next.startsWith("//")) return next
+  return "/announcement"
+}
 
 function SignInContent() {
   const router = useRouter()
@@ -65,7 +71,8 @@ function SignInContent() {
       if (!isMountedRef.current) return
 
       if (data?.session) {
-        router.replace("/announcement")
+        const nextPath = sanitizeNextParam(searchParams.get("next"))
+        router.replace(nextPath)
       } else {
         if (isMountedRef.current) {
           setError("Sign in failed. Please try again.")
@@ -82,14 +89,14 @@ function SignInContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <H2 className="mt-6 text-center">Welcome back to EAR</H2>
-          <Text className="text-center mt-2 text-gray-600">Sign in to your account to continue</Text>
+          <H1 className="mt-6 text-center">Welcome back to EAR</H1>
+          <Text className="text-center mt-2 text-ear-baby-blue">Sign in to your account to continue</Text>
         </div>
 
-        <Card>
+        <Card className="bg-ear-off-white">
           <CardContent className="pt-6">
             <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm flex flex-col gap-3">
@@ -173,7 +180,7 @@ function SignInContent() {
             type="button"
             onClick={() => router.push("/announcement")}
             variant="outline"
-            className="w-full justify-center border border-primary"
+            className="w-full bg-ear-baby-blue text-ear-black hover:bg-ear-baby-blue/90 justify-center border border-primary"
           >
             Continue as guest
           </Button>
@@ -187,7 +194,7 @@ export default function SignIn() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="min-h-screen flex items-center justify-center bg-background">
           <p className="text-gray-600">Loading…</p>
         </div>
       }

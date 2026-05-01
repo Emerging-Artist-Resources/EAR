@@ -50,7 +50,7 @@ export function AdminSidebar() {
     <aside
       className={`${
         isCollapsed ? "w-16" : "w-64"
-      } hidden lg:block flex-shrink-0 bg-white border-r border-gray-200 min-h-[calc(100vh-4rem)] transition-all duration-300`}
+      } hidden lg:block flex-shrink-0 border-r border-gray-200 min-h-[calc(100vh-4rem)] transition-all duration-300`}
     >
       <div className={`p-6 border-b border-gray-200 flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
         {!isCollapsed && <H3>Admin Dashboard</H3>}

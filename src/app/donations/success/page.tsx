@@ -21,7 +21,7 @@ export default function DonationSuccessPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-background flex items-center justify-center">
           <Text>Loading…</Text>
         </div>
       }

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Modal } from "@/components/ui/modal"
 import { Text } from "@/components/ui/typography"
+import { ADMIN_LIGHT_SURFACE } from "@/components/admin/shared/admin-light-surface"
 
 export function AdminProfileCard({
   profile,
@@ -137,7 +138,8 @@ export function AdminProfileCard({
         isOpen={open}
         onClose={() => setOpen(false)}
         title="Update Profile Status"
-        headerClassName="bg-primary"
+        headerClassName="bg-primary text-primary-foreground"
+        contentClassName="bg-[var(--surface-panel)] border-[var(--border-default)] text-[var(--gray-900)]"
       >
         <div className="space-y-4">
           <div>
@@ -207,14 +209,14 @@ export function AdminProfileCard({
               <button
                 type="button"
                 onClick={() => setEligibilityExpanded(!eligibilityExpanded)}
-                className="w-full flex items-center justify-between text-left"
+                className="w-full flex items-center justify-between gap-2 rounded-md py-2 text-left hover:bg-[var(--gray-100)]/80 transition-colors"
               >
-                <Text className="text-sm font-medium text-[var(--gray-700)]">
+                <span className="text-sm font-medium text-[var(--gray-800)]">
                   Emerging Artist Eligibility Form
-                </Text>
-                <Text className="text-sm text-[var(--gray-500)]">
+                </span>
+                <span className="text-sm tabular-nums text-[var(--gray-600)] shrink-0">
                   {eligibilityExpanded ? "−" : "+"}
-                </Text>
+                </span>
               </button>
               {eligibilityExpanded && (
                 <div className="mt-2 bg-[var(--gray-50)] rounded-md p-4 space-y-4">
@@ -315,7 +317,7 @@ export function AdminProfileCard({
                   onChange={() => setSelectedStatus("emerging")}
                   className="w-4 h-4 text-[var(--primary-600)]"
                 />
-                <Text>Emerging</Text>
+                <span className="text-sm text-[var(--gray-900)]">Emerging</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -326,7 +328,7 @@ export function AdminProfileCard({
                   onChange={() => setSelectedStatus("established")}
                   className="w-4 h-4 text-[var(--primary-600)]"
                 />
-                <Text>Established</Text>
+                <span className="text-sm text-[var(--gray-900)]">Established</span>
               </label>
             </div>
           </div>
@@ -344,7 +346,7 @@ export function AdminProfileCard({
                     onChange={() => setSelectedFiscalStatus(status)}
                     className="w-4 h-4 text-[var(--primary-600)]"
                   />
-                  <Text className="capitalize">{status}</Text>
+                  <span className="text-sm text-[var(--gray-900)] capitalize">{status}</span>
                 </label>
               ))}
             </div>
@@ -357,7 +359,7 @@ export function AdminProfileCard({
                 value={fiscalNote}
                 onChange={(e) => setFiscalNote(e.target.value)}
                 rows={3}
-                className="w-full rounded-md border border-[var(--gray-300)] px-3 py-2 text-sm"
+                className={`w-full rounded-md border border-[var(--gray-300)] px-3 py-2 text-sm ${ADMIN_LIGHT_SURFACE}`}
                 placeholder="Add context for this fiscal sponsorship status change"
               />
             </div>

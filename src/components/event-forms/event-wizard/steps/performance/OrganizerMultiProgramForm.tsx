@@ -88,17 +88,7 @@ export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventF
           </div>
         )}
 
-        <div className="mt-6 space-y-4">
-          <div className="rounded-md border border-blue-200 bg-blue-50 p-4">
-            <p className="text-sm font-medium text-gray-900 mb-2">Shareable link</p>
-            <p className="text-sm text-gray-600 mb-3">
-              A shareable link will be provided after your event is approved. You can send this link to other artists to submit their pieces.
-            </p>
-            <p className="text-xs text-gray-500">
-              (Link will be available after approval)
-            </p>
-          </div>
-        </div>
+       
       </Section>
 
     </>

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import { ADMIN_LIGHT_SURFACE } from "@/components/admin/shared/admin-light-surface"
 
 interface ReviewActionsProps {
   comments: string
@@ -21,7 +22,7 @@ export function ReviewActions({
         Review comments (optional)
       </label>
       <textarea
-        className="w-full rounded-md border border-[var(--gray-300)] p-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary-600)]"
+        className={`w-full rounded-md border border-[var(--gray-300)] p-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary-600)] ${ADMIN_LIGHT_SURFACE}`}
         rows={3}
         placeholder="Add comments for the submitter…"
         value={comments}

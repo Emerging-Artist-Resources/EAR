@@ -22,15 +22,15 @@ export function MonthView({
   onShowMoreClick,
 }: MonthViewProps) {
   return (
-    <div className="grid grid-cols-7 gap-px bg-gray-200">
+    <div className="grid grid-cols-7 gap-px bg-border-default">
       {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-        <div key={day} className="bg-gray-50 py-2 text-center text-xs sm:text-sm font-medium text-gray-500">
+        <div key={day} className="bg-surface-panel-alt py-2 text-center font-sans text-xs sm:text-sm font-medium text-text-muted">
           <span className="hidden sm:inline">{day}</span>
           <span className="sm:hidden">{day.charAt(0)}</span>
         </div>
       ))}
       {emptyCells.map((__, idx) => (
-        <div key={`empty-${idx}`} className="bg-white min-h-[80px] sm:min-h-[120px]" />
+        <div key={`empty-${idx}`} className="bg-surface-panel min-h-[80px] sm:min-h-[120px]" />
       ))}
       {daysInMonth.map((day) => {
         const dayKey = format(day, 'yyyy-MM-dd')
@@ -40,10 +40,10 @@ export function MonthView({
         return (
           <div
             key={day.toISOString()}
-            className={`bg-white p-1 sm:p-2 min-h-[80px] sm:min-h-[120px] cursor-pointer hover:bg-gray-50 ${!isCurrentMonth ? 'text-gray-300' : ''} ${isToday ? 'bg-secondary' : ''}`}
+            className={`bg-surface-panel p-1 sm:p-2 min-h-[80px] sm:min-h-[120px] cursor-pointer hover:bg-surface-panel-alt ${!isCurrentMonth ? 'text-muted-foreground/40' : ''} ${isToday ? 'bg-secondary' : ''}`}
             onClick={() => {}}
           >
-            <div className={`text-xs sm:text-sm font-medium ${isToday ? 'text-primary' : isCurrentMonth ? 'text-gray-900' : 'text-gray-300'}`}>
+            <div className={`font-sans text-xs sm:text-sm font-medium ${isToday ? 'text-primary' : isCurrentMonth ? 'text-text-primary' : 'text-muted-foreground/40'}`}>
               {format(day, 'd')}
             </div>
             <div className="mt-1 space-y-1">
@@ -52,7 +52,7 @@ export function MonthView({
                 return (
                   <div 
                     key={`${performance.listingId}-${day.toISOString()}`} 
-                    className="text-xs px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate cursor-pointer hover:opacity-80 transition-colors"
+                    className="font-sans text-xs px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate cursor-pointer hover:opacity-80 transition-colors"
                     style={{
                       backgroundColor: colors.bg,
                       color: colors.text,
@@ -70,7 +70,7 @@ export function MonthView({
               })}
               {dayPerformances.length > 2 && (
                 <div 
-                  className="text-xs text-gray-500 cursor-pointer hover:text-gray-700 hover:underline transition-colors"
+                  className="font-sans text-xs text-text-muted cursor-pointer hover:text-text-primary hover:underline transition-colors"
                   onClick={(e) => {
                     e.stopPropagation()
                     if (onShowMoreClick) {

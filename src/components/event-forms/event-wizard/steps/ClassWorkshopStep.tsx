@@ -10,6 +10,7 @@ import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { FestivalAssociationSection } from "./class-workshop/FestivalAssociationSection"
 import { ClassOccurrencesPicker } from "@/components/forms/blocks/ClassOccurrencesPicker"
+import { ListingWebsiteField } from "@/components/forms/blocks/ListingWebsiteField"
 
 interface ClassesWorkshopsStepProps {
   form: UseFormReturn<EventFormData>
@@ -107,6 +108,8 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
           placeholder="Link or signup instructions"
           required={!isWorkshop}
         />
+
+        <ListingWebsiteField form={form} />
 
         <TextAreaField
           form={form}

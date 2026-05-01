@@ -12,6 +12,8 @@ export interface ModalProps {
   showCloseButton?: boolean
   closeOnOverlay?: boolean
   headerClassName?: string
+  /** Replaces default `bg-background border-border` on the dialog panel (e.g. light cream shell). */
+  contentClassName?: string
 }
 
 const sizeClasses = {
@@ -30,6 +32,7 @@ export const Modal: React.FC<ModalProps> = ({
   showCloseButton = true,
   closeOnOverlay = true,
   headerClassName,
+  contentClassName,
 }) => {
   if (!isOpen) return null
 
@@ -43,26 +46,25 @@ export const Modal: React.FC<ModalProps> = ({
     <div
       className={cn(
         // replacement for variants.modal.overlay
-        "fixed inset-0 bg-black/50 backdrop-blur-[1px] flex items-center justify-center p-4 z-[9999] overflow-y-auto"
+        "fixed inset-0 bg-ear-black/70 backdrop-blur-[1px] flex items-center justify-center p-4 z-[9999] overflow-y-auto"
       )}
       onClick={handleOverlayClick}
     >
       <div
         className={cn(
-          // replacement for variants.modal.content
-          "w-full bg-background rounded-md shadow-lg border border-border my-auto",
-          "max-h-[90vh] flex flex-col",
-          sizeClasses[size]
+          "w-full rounded-md shadow-lg border my-auto max-h-[90vh] flex flex-col",
+          sizeClasses[size],
+          contentClassName ?? "bg-background border-border"
         )}
         onClick={(e) => e.stopPropagation()}
       >
         <div
           className={cn(
             "relative flex-shrink-0 px-6 py-4 flex items-center justify-center rounded-t-md",
-            headerClassName ?? "bg-primary text-white"
+            headerClassName ?? "bg-primary text-primary-foreground"
           )}
         >
-          <H2 className="text-center text-white">{title}</H2>
+          <H2 className="text-center text-primary-foreground">{title}</H2>
 
           {showCloseButton && (
             <Button

@@ -53,6 +53,7 @@ export type PublicListingDetail = {
     eligibility?: string
     compensation?: string
     instructions?: string
+    website?: string | null
   } | null
   creative_details?: {
     title?: string
@@ -62,6 +63,7 @@ export type PublicListingDetail = {
     compensation?: string
     requirements?: string
     link?: string
+    website?: string | null
   } | null
   class_workshop_details?: {
     class_workshop_type?: "CLASS" | "WORKSHOP"
@@ -70,6 +72,7 @@ export type PublicListingDetail = {
     organizer?: string
     price?: string | null
     link?: string | null
+    website?: string | null
     workshop_details?: string | null
     classes_offered?: string | null
     drop_in_classes?: string | null
@@ -82,9 +85,26 @@ export function FieldRow({ label, value }: { label: string; value?: React.ReactN
   if (value === undefined || value === null || value === "") return null
   return (
     <div className="py-2">
-      <div className="text-sm text-gray-600 mb-1">{label}:</div>
-      <div className="text-sm text-gray-900">{value}</div>
+      <div className="font-sans text-sm text-text-muted mb-1">{label}:</div>
+      <div className="font-sans text-sm text-text-primary">{value}</div>
     </div>
+  )
+}
+
+const linkClass = "text-primary-600 hover:text-primary-700 underline"
+
+export function WebsiteLinkRow({ label, href }: { label: string; href?: string | null }) {
+  const url = href?.trim()
+  if (!url) return null
+  return (
+    <FieldRow
+      label={label}
+      value={
+        <a className={linkClass} href={url} target="_blank" rel="noopener noreferrer">
+          {url}
+        </a>
+      }
+    />
   )
 }
 
@@ -136,6 +156,7 @@ export function ClassDetails({ details }: { details: NonNullable<PublicListingDe
     details.description ||
     details.price ||
     details.link ||
+    details.website ||
     details.organizer
 
   if (!hasContent) return null
@@ -149,11 +170,11 @@ export function ClassDetails({ details }: { details: NonNullable<PublicListingDe
       <FieldRow label="Description" value={details.description} />
       <FieldRow label="Price" value={details.price} />
       <FieldRow 
-        label="Link" 
+        label="Registration link" 
         value={
           details.link ? (
             <a 
-              className="text-primary-600 hover:text-primary-700 underline" 
+              className={linkClass} 
               href={details.link} 
               target="_blank" 
               rel="noopener noreferrer"
@@ -163,6 +184,7 @@ export function ClassDetails({ details }: { details: NonNullable<PublicListingDe
           ) : undefined
         } 
       />
+      <WebsiteLinkRow label="Website" href={details.website} />
     </>
   )
 }
@@ -242,6 +264,7 @@ export function WorkshopDetails({ details }: { details: NonNullable<PublicListin
     details.organizer ||
     details.price ||
     details.link ||
+    details.website ||
     details.workshop_details ||
     details.classes_offered ||
     details.drop_in_classes
@@ -255,11 +278,11 @@ export function WorkshopDetails({ details }: { details: NonNullable<PublicListin
       <FieldRow label="Organizer" value={details.organizer} />
       <FieldRow label="Price" value={details.price} />
       <FieldRow 
-        label="Link" 
+        label="Registration link" 
         value={
           details.link ? (
             <a 
-              className="text-primary-600 hover:text-primary-700 underline" 
+              className={linkClass} 
               href={details.link} 
               target="_blank" 
               rel="noopener noreferrer"
@@ -269,6 +292,7 @@ export function WorkshopDetails({ details }: { details: NonNullable<PublicListin
           ) : undefined
         } 
       />
+      <WebsiteLinkRow label="Website" href={details.website} />
       <FieldRow label="Workshop Details" value={details.workshop_details} />
       <FieldRow label="Classes Offered" value={details.classes_offered} />
       <FieldRow label="Drop-in Classes" value={details.drop_in_classes} />
@@ -283,7 +307,8 @@ export function AuditionDetails({ details }: { details: NonNullable<PublicListin
     details.description ||
     details.eligibility ||
     details.compensation ||
-    details.instructions
+    details.instructions ||
+    details.website
 
   if (!hasContent) return null
 
@@ -294,6 +319,7 @@ export function AuditionDetails({ details }: { details: NonNullable<PublicListin
       <FieldRow label="Eligibility" value={details.eligibility} />
       <FieldRow label="Compensation" value={details.compensation} />
       <FieldRow label="Instructions" value={details.instructions} />
+      <WebsiteLinkRow label="Website" href={details.website} />
     </>
   )
 }
@@ -306,7 +332,8 @@ export function CreativeDetails({ details }: { details: NonNullable<PublicListin
     details.host ||
     details.compensation ||
     details.requirements ||
-    details.link
+    details.link ||
+    details.website
 
   if (!hasContent) return null
 
@@ -315,9 +342,10 @@ export function CreativeDetails({ details }: { details: NonNullable<PublicListin
       <FieldRow label="Title" value={details.title} />
       <FieldRow label="Description" value={details.description} />
       <FieldRow label="Host" value={details.host} />
+      <WebsiteLinkRow label="Website" href={details.website} />
       <FieldRow label="Compensation" value={details.compensation} />
       <FieldRow label="Requirements" value={details.requirements} />
-      <FieldRow label="Instructions" value={details.link} />
+      <FieldRow label="Submission instructions" value={details.link} />
     </>
   )
 }
@@ -331,7 +359,7 @@ export function SocialHandles({ socialHandles }: { socialHandles: unknown }) {
     try {
       handles = JSON.parse(socialHandles)
     } catch {
-      return <span className="text-sm text-gray-600">{socialHandles}</span>
+      return <span className="font-sans text-sm text-text-muted">{socialHandles}</span>
     }
   } else if (typeof socialHandles === 'object' && socialHandles !== null) {
     handles = socialHandles as Record<string, string>
@@ -347,10 +375,10 @@ export function SocialHandles({ socialHandles }: { socialHandles: unknown }) {
           href={handle.startsWith('http') ? handle : `https://${platform}.com/${handle.replace('@', '')}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-surface-interactive hover:bg-surface-interactive-hover font-sans text-sm font-medium text-text-primary transition-colors"
         >
           <span className="uppercase text-xs">{platform}</span>
-          <span className="text-gray-600">{String(handle)}</span>
+          <span className="text-text-muted">{String(handle)}</span>
         </a>
       ))}
     </div>

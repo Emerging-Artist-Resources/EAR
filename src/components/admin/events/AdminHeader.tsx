@@ -38,7 +38,7 @@ export function AdminHeader({
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between">
-        <H2>Reviews Listings</H2>
+        <H2>Review Listings</H2>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         {tabBtn("PENDING", "Pending", counts.pending)}

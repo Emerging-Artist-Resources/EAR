@@ -184,6 +184,7 @@ CREATE TABLE audition_details (
   compensation TEXT NOT NULL,
   instructions TEXT NOT NULL,
   pre_audition_classes TEXT,
+  website TEXT,
   
   -- Fee information
   -- Note: fee can be NULL (for NO_FEE), or one of PAY_FEE, PROVIDE, EXPLAIN
@@ -213,6 +214,7 @@ CREATE TABLE creative_details (
   compensation TEXT NOT NULL,
   requirements TEXT NOT NULL,
   link TEXT NOT NULL,
+  website TEXT,
   
   -- Fee information
   -- Note: fee can be NULL (for NO_FEE), or one of PAY_FEE, PROVIDE, EXPLAIN
@@ -331,6 +333,7 @@ CREATE TABLE class_workshop_details (
   teachers TEXT NOT NULL,
   price TEXT,
   link TEXT,
+  website TEXT,
   style_category TEXT,
   
   -- Workshop-specific fields

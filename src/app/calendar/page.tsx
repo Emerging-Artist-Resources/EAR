@@ -17,6 +17,8 @@ import { ListingCard } from "@/components/shared/ListingCard"
 import { ListingDetailsModal } from "@/components/calendar/ListingDetailsModal"
 import Link from "next/link"
 import { ROUTES } from "@/lib/constants"
+import { RECENTLY_ADDED_MAX_AGE_DAYS } from "@/lib/recently-added-listings"
+import CommunityCalendarHero from "@/components/calendar/CommunityCalendarHero"
 
 function CalendarViewContent() {
   const searchParams = useSearchParams()
@@ -103,15 +105,26 @@ function CalendarViewContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Text className="text-lg">Loading calendar...</Text>
+      <div className="flex min-h-screen flex-col">
+        <section className="shrink-0 bg-ear-black" aria-hidden>
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+            <div className="h-[120px] lg:h-[200px]" />
+          </div>
+        </section>
+        <div className="flex flex-1 items-center justify-center bg-surface-panel text-text-primary">
+          <Text className="text-lg">Loading calendar...</Text>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen flex-col">
+      <section className="relative w-full min-h-screen shrink-0 overflow-hidden bg-ear-black">
+        <CommunityCalendarHero />
+      </section>
+      <div className="flex-1 bg-surface-panel text-text-primary">
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className={`px-4 py-6 sm:px-0 transition-opacity duration-200 ${isModalOpen ? 'opacity-50' : ''}`}>
           <CallToAction onSubmitPerformance={handleOpenSubmit} />
           <Calendar items={items} deadlines={deadlines} />
@@ -121,6 +134,7 @@ function CalendarViewContent() {
               <Card className="p-6 shadow-md">
                 <HorizontalScrollCards
                   title="Recently Added"
+                  description={`Submitted in the last ${RECENTLY_ADDED_MAX_AGE_DAYS} days`}
                   cardsPerView={4}
                   onCardClick={(index) => {
                     const listing = recentListings[index]
@@ -150,6 +164,7 @@ function CalendarViewContent() {
             </div>
           )}
         </div>
+        </div>
       </div>
       <PerformanceModal
         isOpen={isModalOpen}
@@ -162,7 +177,7 @@ function CalendarViewContent() {
         title="Sign in required"
       >
         <div className="space-y-5">
-          <Text className="text-sm text-gray-700">
+          <Text className="text-sm text-text-muted">
             You must be signed in to submit a listing.
           </Text>
           <div className="flex justify-between">
@@ -188,8 +203,15 @@ function CalendarViewContent() {
 export default function CalendarView() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Text className="text-lg">Loading calendar...</Text>
+      <div className="flex min-h-screen flex-col">
+        <section className="shrink-0 bg-ear-black" aria-hidden>
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+            <div className="h-[120px] lg:h-[200px]" />
+          </div>
+        </section>
+        <div className="flex flex-1 items-center justify-center bg-surface-panel text-text-primary">
+          <Text className="text-lg">Loading calendar...</Text>
+        </div>
       </div>
     }>
       <CalendarViewContent />

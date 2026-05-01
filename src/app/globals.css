@@ -3,31 +3,85 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: "TAN BUSTER";
+  src: url("/fonts/TANBUSTER-Bold.otf") format("opentype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Canela Text";
+  src: url("/fonts/Canela%20Text%20Family/CanelaText-Regular-Trial.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Canela Text";
+  src: url("/fonts/Canela%20Text%20Family/CanelaText-Bold-Trial.otf") format("opentype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Neue Montreal";
+  src: url("/fonts/neue-montreal/NeueMontreal-Regular.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Neue Montreal";
+  src: url("/fonts/neue-montreal/NeueMontreal-Medium.otf") format("opentype");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Neue Montreal";
+  src: url("/fonts/neue-montreal/NeueMontreal-Bold.otf") format("opentype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
 :root {
-  /* Colors */
-  /* Primary: Warm Taupe */
-  --primary-50: #f7ebe6; /* very light taupe */
-  --primary-100: #f2dfd6;
-  --primary-200: #e7c7b8;
-  --primary-300: #dba08a;
-  --primary-400: #c9775c;
-  --primary-500: #bf6646; /* provided */
-  --primary-600: #a8573c;
-  --primary-700: #8b4833;
-  --primary-800: #6f3a2a;
-  --primary-900: #5b3023;
+  /* EAR brand colors */
+  --ear-black: #111111;
+  --ear-off-white: #f6f5ec;
+  --ear-baby-blue: #c3d5ee;
+  --ear-dark-red: #5a1b0e;
+  --ear-orange: #d05435;
+  --ear-dark-sage: #4e5a4f;
+  --ear-cream-brown: #c1b49a;
 
-  /* Secondary: Ivory */
-  --secondary-50: #f2ece4; /* provided */
-  --secondary-100: #efe6dc;
-  --secondary-200: #e7dccf;
+  /* Keep existing token structure for compatibility */
+  --primary-50: #f6ebe8;
+  --primary-100: #ecd3ce;
+  --primary-200: #d9a7a0;
+  --primary-300: #c47d72;
+  --primary-400: #a95344;
+  --primary-500: var(--ear-dark-red);
+  --primary-600: var(--ear-dark-red);
+  --primary-700: #43150a;
+  --primary-800: #351108;
+  --primary-900: #270c06;
 
-  /* Accent (optional) */
-  --accent-50: #eef2ff;
-  --accent-500: #6366f1;
-  --accent-600: #4f46e5;
-  --accent-700: #4338ca;
-  --accent-800: #3730a3;
+  --secondary-50: var(--ear-off-white);
+  --secondary-100: #ecebdd;
+  --secondary-200: #e2e1d0;
+
+  --accent-50: #fbeee9;
+  --accent-500: var(--ear-orange);
+  --accent-600: #b9492f;
+  --accent-700: #943b26;
+  --accent-800: #742f1e;
 
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
@@ -38,7 +92,7 @@
   --gray-600: #4b5563;
   --gray-700: #374151;
   --gray-800: #1f2937;
-  --gray-900: #111827;
+  --gray-900: var(--ear-black);
 
   --success-50: #f0fdf4;
   --success-100: #dcfce7;
@@ -62,9 +116,10 @@
   --warning-500: #f59e0b;
   --warning-600: #d97706;
 
-  /* Typography (easy to switch) */
-  --brand-font-sans: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  --brand-font-serif: "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  /* Typography */
+  --brand-font-sans: "Neue Montreal", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  --brand-font-title: "TAN BUSTER", "Neue Montreal", ui-sans-serif, system-ui, sans-serif;
+  --brand-font-header: "Canela Text", "Times New Roman", Times, serif;
   --brand-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Spacing */
@@ -92,24 +147,50 @@
   --transition-normal: 200ms ease-in-out;
   --transition-slow: 300ms ease-in-out;
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --surface-app: var(--ear-black);
+  --surface-panel: var(--ear-off-white);
+  --surface-panel-alt: #ebe9dc;
+  --surface-interactive: #ece8dc;
+  --surface-interactive-hover: #e1dccd;
+  /* Warm off-white + cream-brown mix for large light surfaces (e.g. submit listing modal) */
+  --surface-modal-warm: color-mix(in srgb, var(--ear-off-white) 82%, var(--ear-cream-brown) 18%);
+  --text-primary: var(--ear-black);
+  --text-inverse: var(--ear-off-white);
+  --text-muted: #4e5a4f;
+  --border-default: #d6d0bf;
+  --border-strong: #c1b49a;
+  --brand-primary: var(--ear-dark-red);
+  --brand-primary-hover: #43150a;
+  --brand-secondary: var(--ear-baby-blue);
+  --brand-secondary-hover: #a8bfdc;
+  --brand-accent-warm: var(--ear-orange);
+  --brand-accent-neutral: var(--ear-cream-brown);
+  --status-success-bg: #dfe9dd;
+  --status-success-fg: #2f4a36;
+  --status-warning-bg: #f2dfcf;
+  --status-warning-fg: #6d321f;
+  --status-error-bg: #f3d9d2;
+  --status-error-fg: var(--ear-dark-red);
+  --focus-ring: var(--ear-baby-blue);
+
+  --background: var(--surface-app);
+  --foreground: var(--text-inverse);
+  --card: var(--surface-panel);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface-panel);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--ear-dark-red);
+  --primary-foreground: var(--ear-off-white);
+  --secondary: var(--ear-baby-blue);
+  --secondary-foreground: var(--ear-black);
+  --muted: var(--surface-panel-alt);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--ear-orange);
+  --accent-foreground: var(--ear-off-white);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: var(--border-default);
+  --input: var(--border-default);
+  --ring: var(--focus-ring);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -163,7 +244,40 @@
   --color-accent-800: var(--accent-800);
 
   --font-sans: var(--brand-font-sans);
+  --font-title: var(--brand-font-title);
+  --font-header: var(--brand-font-header);
   --font-mono: var(--brand-font-mono);
+  --color-ear-black: var(--ear-black);
+  --color-ear-off-white: var(--ear-off-white);
+  --color-ear-baby-blue: var(--ear-baby-blue);
+  --color-ear-dark-red: var(--ear-dark-red);
+  --color-ear-orange: var(--ear-orange);
+  --color-ear-dark-sage: var(--ear-dark-sage);
+  --color-ear-cream-brown: var(--ear-cream-brown);
+  --color-surface-app: var(--surface-app);
+  --color-surface-panel: var(--surface-panel);
+  --color-surface-panel-alt: var(--surface-panel-alt);
+  --color-surface-interactive: var(--surface-interactive);
+  --color-surface-interactive-hover: var(--surface-interactive-hover);
+  --color-surface-modal-warm: var(--surface-modal-warm);
+  --color-text-primary: var(--text-primary);
+  --color-text-inverse: var(--text-inverse);
+  --color-text-muted: var(--text-muted);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-hover: var(--brand-primary-hover);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-secondary-hover: var(--brand-secondary-hover);
+  --color-brand-accent-warm: var(--brand-accent-warm);
+  --color-brand-accent-neutral: var(--brand-accent-neutral);
+  --color-status-success-bg: var(--status-success-bg);
+  --color-status-success-fg: var(--status-success-fg);
+  --color-status-warning-bg: var(--status-warning-bg);
+  --color-status-warning-fg: var(--status-warning-fg);
+  --color-status-error-bg: var(--status-error-bg);
+  --color-status-error-fg: var(--status-error-fg);
+  --color-focus-ring: var(--focus-ring);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -205,36 +319,12 @@
 }
 
 body {
-  /* Textured paper background 
-  * 221712 -- dark taupe
-      url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paper'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.2 0 0 0 0 0.15 0 0 0 0.15 0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23paper)' opacity='0.6'/%3E%3C/svg%3E"),
-    radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0) !important;
-  * f5f5f0 -- taupe
-  url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paper'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23paper)' opacity='0.4'/%3E%3C/svg%3E"),
-    radial-gradient(circle at 1px 1px, rgba(0,0,0,0.015) 1px, transparent 0) !important;
-  */
-  background: #f5f5f0 !important;
-  background-image: 
-    url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paper'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23paper)' opacity='0.4'/%3E%3C/svg%3E"),
-    radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0) !important;
-  background-size: 200px 200px, 20px 20px !important;
+  background: var(--ear-black) !important;
   position: relative;
-  color: var(--gray-900);
+  /* Must match --foreground: unlayered rules win over @layer base; gray-900 on ear-black was invisible */
+  color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   line-height: 1.6;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.15 0 0 0 0 0.1 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.12'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 0;
 }
 
 /* Utility classes */
@@ -284,8 +374,8 @@ body::before {
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
+  --background: var(--ear-black);
+  --foreground: var(--ear-off-white);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);

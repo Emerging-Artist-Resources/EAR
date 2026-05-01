@@ -7,10 +7,10 @@ export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const alertVariants = {
-  default: "bg-gray-50 text-gray-800 border-gray-200",
-  success: "bg-green-50 text-green-800 border-green-200",
-  warning: "bg-yellow-50 text-yellow-800 border-yellow-200",
-  error: "bg-red-50 text-red-800 border-red-200",
+  default: "bg-surface-panel-alt text-text-primary border-border-default",
+  success: "bg-status-success-bg text-status-success-fg border-border-default",
+  warning: "bg-status-warning-bg text-status-warning-fg border-border-default",
+  error: "bg-status-error-bg text-status-error-fg border-border-default",
 }
 
 export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(

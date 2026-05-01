@@ -86,7 +86,7 @@ export function ListingCard({
       onClick={onClick}
     >
       {coverImageUrl && (
-        <div className="-mx-4 -mt-4 mb-3 overflow-hidden rounded-t-lg border-b border-gray-100">
+        <div className="-mx-4 -mt-4 mb-3 overflow-hidden rounded-t-lg border-b border-border-default">
           <img
             src={coverImageUrl}
             alt={coverImageAlt || ""}
@@ -115,12 +115,12 @@ export function ListingCard({
           <Badge variant="primary" size="sm" className="inline-block">
             {getTypeLabel(type)}
           </Badge>
-          <h4 className="font-semibold text-sm text-gray-900 line-clamp-2 pr-8">{title}</h4>
+          <h4 className="font-header text-xl font-semibold text-text-primary line-clamp-2 pr-8">{title}</h4>
         </div>
         
         {is_piece && sortedOccurrences.length > 0 && (
-          <div className="text-xs text-gray-600">
-            <div className="font-medium text-gray-700 mb-1">Dates:</div>
+          <div className="font-sans text-xs text-text-muted">
+            <div className="font-medium text-text-primary mb-1">Dates:</div>
             <ul className="list-disc ml-4 space-y-0.5">
               {sortedOccurrences.map((occ) => (
                 <li key={occ.id}>
@@ -133,27 +133,27 @@ export function ListingCard({
         )}
         
         {!is_piece && starts_at_utc && (
-          <div className="text-xs text-gray-600">
+          <div className="font-sans text-xs text-text-muted">
             {formatDateTimeEST(starts_at_utc)}
             {ends_at_utc && ` - ${formatDateTimeEST(ends_at_utc)}`}
           </div>
         )}
         
         {is_piece && (
-          <div className="space-y-1 text-xs text-gray-600 border-t border-gray-200 pt-2 mt-2">
+          <div className="space-y-1 font-sans text-xs text-text-muted border-t border-border-default pt-2 mt-2">
             {piece_company && (
               <div>
-                <span className="font-medium text-gray-700">Company/Artist:</span> {piece_company}
+                <span className="font-medium text-text-primary">Company/Artist:</span> {piece_company}
               </div>
             )}
             {piece_company_website && (
               <div>
-                <span className="font-medium text-gray-700">Website:</span>{" "}
+                <span className="font-medium text-text-primary">Website:</span>{" "}
                 <a
                   href={piece_company_website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  className="text-primary-600 hover:underline"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {piece_company_website}
@@ -162,59 +162,59 @@ export function ListingCard({
             )}
             {piece_description && (
               <div>
-                <span className="font-medium text-gray-700">Description:</span>{" "}
+                <span className="font-medium text-text-primary">Description:</span>{" "}
                 <span className="line-clamp-2">{piece_description}</span>
               </div>
             )}
             {choreographer && (
               <div>
-                <span className="font-medium text-gray-700">Choreographer:</span> {choreographer}
+                <span className="font-medium text-text-primary">Choreographer:</span> {choreographer}
               </div>
             )}
             {notes && (
               <div>
-                <span className="font-medium text-gray-700">Credits:</span> {notes}
+                <span className="font-medium text-text-primary">Credits:</span> {notes}
               </div>
             )}
           </div>
         )}
         
         {is_class && (
-          <div className="space-y-1 text-xs text-gray-600 border-t border-gray-200 pt-2 mt-2">
+          <div className="space-y-1 font-sans text-xs text-text-muted border-t border-border-default pt-2 mt-2">
             {class_title && (
               <div>
-                <span className="font-medium text-gray-700">Title:</span> {class_title}
+                <span className="font-medium text-text-primary">Title:</span> {class_title}
               </div>
             )}
             {class_description && (
               <div>
-                <span className="font-medium text-gray-700">Description:</span>{" "}
+                <span className="font-medium text-text-primary">Description:</span>{" "}
                 <span className="line-clamp-2">{class_description}</span>
               </div>
             )}
             {class_organizer && (
               <div>
-                <span className="font-medium text-gray-700">Organizer:</span> {class_organizer}
+                <span className="font-medium text-text-primary">Organizer:</span> {class_organizer}
               </div>
             )}
             {class_teachers && (
               <div>
-                <span className="font-medium text-gray-700">Teachers:</span> {class_teachers}
+                <span className="font-medium text-text-primary">Teachers:</span> {class_teachers}
               </div>
             )}
             {class_price && (
               <div>
-                <span className="font-medium text-gray-700">Price:</span> {class_price}
+                <span className="font-medium text-text-primary">Price:</span> {class_price}
               </div>
             )}
             {class_link && (
               <div>
-                <span className="font-medium text-gray-700">Link:</span>{" "}
+                <span className="font-medium text-text-primary">Link:</span>{" "}
                 <a
                   href={class_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  className="text-primary-600 hover:underline"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {class_link}
@@ -223,7 +223,7 @@ export function ListingCard({
             )}
             {class_style_category && (
               <div>
-                <span className="font-medium text-gray-700">Style Category:</span> {class_style_category}
+                <span className="font-medium text-text-primary">Style Category:</span> {class_style_category}
               </div>
             )}
           </div>

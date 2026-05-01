@@ -17,6 +17,8 @@ export const classFields = z
     organizer: z.string().optional(),
     price: z.string().optional(),
     link: flexibleUrlOptionalSchema,
+    /** Class/workshop website (DB: class_workshop_details.website; registration stays in link) */
+    listingWebsite: flexibleUrlOptionalSchema,
     teachers: z.string().optional(),
     styleCategory: z.string().optional(), // or z.enum([...]) if you want strict options
     venueName: z.string().optional(),

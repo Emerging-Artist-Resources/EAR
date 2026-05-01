@@ -4,13 +4,16 @@ import { useState, useRef, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { VscAccount } from "react-icons/vsc";
 import { useRouter } from "next/navigation"
+import { cn } from "@/lib/utils"
 
 interface UserDropdownProps {
   userName: string
   isMobile?: boolean
+  /** Light text for dark header backgrounds (e.g. calendar hero) */
+  onDarkSurface?: boolean
 }
 
-export function UserDropdown({ userName, isMobile = false }: UserDropdownProps) {
+export function UserDropdown({ userName, isMobile = false, onDarkSurface = false }: UserDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -43,9 +46,13 @@ export function UserDropdown({ userName, isMobile = false }: UserDropdownProps) 
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center space-x-2 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary ${
-          isMobile ? "text-base" : ""
-        }`}
+        className={cn(
+          "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium focus:outline-none",
+          onDarkSurface
+            ? "text-ear-baby-blue hover:text-ear-baby-blue/80"
+            : "text-ear-baby-blue hover:text-ear-baby-blue",
+          isMobile && "text-base"
+        )}
       >
         <span>Welcome, {userName}</span>
         <svg
@@ -59,21 +66,22 @@ export function UserDropdown({ userName, isMobile = false }: UserDropdownProps) 
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-fit bg-white justify-center rounded-md shadow-lg py-1 z-50 border border-gray-200">
+        <div className="absolute right-0 mt-2 w-fit bg-surface-panel justify-center rounded-md shadow-lg py-1 z-50 border border-border-default">
           <button
             onClick={() => {
               router.push("/profile")
               setIsOpen(false)
             }}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-ear-orange"
             >
+              {/* hover:bg-surface-panel-alt */}
               <VscAccount className="w-5 h-5" />
           </button>
          
           <button
             onClick={handleSignOut}
-            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
+              className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-ear-orange"
+            >
             Sign Out
           </button>
         </div>

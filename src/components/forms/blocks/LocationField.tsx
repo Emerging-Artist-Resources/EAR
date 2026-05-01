@@ -321,7 +321,7 @@ export function LocationField<T extends Record<string, unknown>>({
 
   return (
     <div className={className}>
-      <div className="mb-1">
+      <div className={compact ? "mb-1.5" : "mb-1"}>
         <label className="block text-sm font-medium text-gray-700">
           {label} {required && showAsterisk ? <span className="text-error-600">*</span> : null}
         </label>

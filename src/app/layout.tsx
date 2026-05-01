@@ -5,6 +5,7 @@ import HeaderGate from "@/components/layout/header-gate"
 import FooterGate from "@/components/layout/footer-gate"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { AdminLayoutWrapper } from "@/components/admin/shared/AdminLayoutWrapper"
+import { SessionExpiredModal } from "@/components/auth/SessionExpiredModal"
 import { ToastProvider } from "@/contexts/ToastContext"
 import { ToastContainer } from "@/components/ui/ToastContainer"
 
@@ -31,15 +32,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} flex min-h-dvh flex-col antialiased`}
       >
         <ToastProvider>
           <ErrorBoundary>
             <HeaderGate />
-            <AdminLayoutWrapper>
-              {children}
-            </AdminLayoutWrapper>
+            <div className="flex min-h-0 flex-1 flex-col">
+              <AdminLayoutWrapper>
+                {children}
+              </AdminLayoutWrapper>
+            </div>
             <FooterGate />
+            <SessionExpiredModal />
             <ToastContainer />
           </ErrorBoundary>
         </ToastProvider>

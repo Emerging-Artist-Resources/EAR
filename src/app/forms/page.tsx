@@ -48,7 +48,7 @@ function SubmitListingContent() {
   }, [router, returnTo])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {!checkingAuth && (
         <PerformanceModal isOpen={open} onClose={handleClose} onSuccess={handleSuccess} />
       )}
@@ -58,7 +58,7 @@ function SubmitListingContent() {
 
 export default function SubmitListingPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><Text>Loading...</Text></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Text>Loading...</Text></div>}>
       <SubmitListingContent />
     </Suspense>
   )

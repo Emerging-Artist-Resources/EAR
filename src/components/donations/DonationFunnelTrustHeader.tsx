@@ -17,11 +17,11 @@ export function DonationFunnelTrustHeader({
   return (
     <div className={cn("flex flex-col items-center gap-2", className)}>
       <Image
-        src="/EAR-logo.png"
+        src="/EAR-Logos/EAR LOGOS-09.png"
         alt="Emerging Artist Resources"
-        width={288}
-        height={353}
-        className="h-14 w-auto"
+        width={92}
+        height={92}
+        className="h-24 w-auto"
         priority
       />
       <p className="text-sm text-gray-600 text-center">Secure donation powered by Stripe</p>

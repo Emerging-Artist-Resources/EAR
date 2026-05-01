@@ -15,7 +15,13 @@ export default function PerformanceModal({ isOpen, onClose, onSuccess }: Perform
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Submit a Listing" closeOnOverlay={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Submit a Listing"
+      closeOnOverlay={false}
+      contentClassName="border-border-default bg-surface-modal-warm text-text-primary"
+    >
       {/* Wizard is now a separate component */}
       <EventWizard onSuccess={onSuccess} onClose={handleClose} />
     </Modal>

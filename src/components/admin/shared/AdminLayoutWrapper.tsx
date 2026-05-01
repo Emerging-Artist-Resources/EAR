@@ -29,12 +29,20 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
     return <>{children}</>
   }
 
+  if (pathname?.startsWith("/calendar")) {
+    return (
+      <div className="min-h-0 flex-1 px-4 sm:px-6 lg:px-8">
+        {children}
+      </div>
+    )
+  }
+
   const isAdminPage = pathname?.startsWith("/admin")
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)]">
+    <div className="flex min-h-0 flex-1">
       <AdminSidebar />
-      <main className="flex-1 min-w-0 overflow-auto">
+      <main className="min-h-0 flex-1 min-w-0 overflow-auto">
         {isAdminPage ? (
           children
         ) : (

@@ -17,32 +17,32 @@ export function WeekView({
 }: WeekViewProps) {
   return (
     <>
-      <div className="hidden sm:grid grid-cols-7 gap-px bg-gray-200">
+      <div className="hidden sm:grid grid-cols-7 gap-px bg-border-default">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <div key={day} className="bg-gray-50 py-2 text-center text-xs sm:text-sm font-medium text-gray-500">
+          <div key={day} className="bg-surface-panel-alt py-2 text-center font-sans text-xs sm:text-sm font-medium text-text-muted">
             <span className="hidden sm:inline">{day}</span>
             <span className="sm:hidden">{day.charAt(0)}</span>
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-7 gap-px bg-gray-200">
+      <div className="grid grid-cols-1 sm:grid-cols-7 gap-px bg-border-default">
         {daysOfWeek.map((day) => {
           const dayKey = format(day, 'yyyy-MM-dd')
           const dayPerformances = itemsByDate.get(dayKey) || []
           const isToday = isSameDay(day, new Date())
           return (
-            <div key={day.toISOString()} className={`bg-white p-2 min-h-[100px] sm:min-h-[140px] ${isToday ? 'bg-secondary' : ''}`}>
-              <div className={`text-xs sm:text-sm font-medium ${isToday ? 'text-primary' : 'text-gray-900'}`}>{format(day, 'EEE d')}</div>
+            <div key={day.toISOString()} className={`bg-surface-panel p-2 min-h-[100px] sm:min-h-[140px] ${isToday ? 'bg-secondary' : ''}`}>
+              <div className={`font-sans text-xs sm:text-sm font-medium ${isToday ? 'text-primary' : 'text-text-primary'}`}>{format(day, 'EEE d')}</div>
               <div className="mt-1 space-y-1">
                 {dayPerformances.length === 0 ? (
-                  <div className="text-xs text-gray-400">No events</div>
+                  <div className="font-sans text-xs text-muted-foreground">No events</div>
                 ) : (
                   dayPerformances.map((performance) => {
                     const colors = getEventTypeColor(performance.type)
                     return (
                       <div 
                         key={`${performance.listingId}-${day.toISOString()}`} 
-                        className="text-xs px-2 py-1 rounded truncate cursor-pointer hover:opacity-80 transition-colors"
+                        className="font-sans text-xs px-2 py-1 rounded truncate cursor-pointer hover:opacity-80 transition-colors"
                         style={{
                           backgroundColor: colors.bg,
                           color: colors.text,

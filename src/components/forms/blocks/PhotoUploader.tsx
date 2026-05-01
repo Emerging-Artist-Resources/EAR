@@ -206,11 +206,11 @@ function PhotoUploaderInner<T extends Record<string, unknown>>({
 
       <Card
         className={`p-4 border-dashed border-2 ${
-          showError ? "border-error-600" : "border-gray-300"
-        } bg-primary-50`}
+          showError ? "border-error-600" : "border-gray-400"
+        } bg-ear-off-white`}
       >
         <div
-          className="rounded-md bg-primary-50 p-6 text-center"
+          className="rounded-md bg-ear-off-white p-6 text-center"
           onDragOver={(e) => e.preventDefault()}
           onDrop={async (e) => {
             e.preventDefault()

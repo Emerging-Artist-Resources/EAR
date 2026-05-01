@@ -76,7 +76,7 @@ export const SavedEventsTab = () => {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <H3>Saved Events</H3>
-            <Text className="text-sm text-gray-600">Events you bookmarked for later</Text>
+            <Text className="text-sm text-ear-baby-blue">Events you bookmarked for later</Text>
           </div>
           <Link href="/calendar">
             <Button variant="link">Browse More Events</Button>

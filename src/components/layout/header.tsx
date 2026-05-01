@@ -1,12 +1,12 @@
 "use client"
 import React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { UserDropdown } from "@/components/ui/user-dropdown"
 import MobileNav from "@/components/mobile-nav"
 import { useAuth } from "@/hooks/use-auth"
-import { H3 } from "@/components/ui/typography"
 import { WavyLine } from "@/components/ui/wavy-line"
 import { ServicesNav } from "@/components/layout/services-nav"
 import { Heart } from "lucide-react"
@@ -22,19 +22,23 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { isAuthed, userName, isLoading } = useAuth()
   const pathname = usePathname()
+  const onDarkSurface = pathname === "/calendar"
 
   const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
     const isActive = pathname === href || (href !== "/" && pathname?.startsWith(href))
     
     return (
       <Link href={href} className="relative inline-flex flex-col items-center">
-        <Button variant="none" className={isActive ? "text-primary" : ""}>
+        <Button
+          variant="none"
+          className="text-ear-baby-blue hover:text-ear-baby-blue/80"
+        >
           {children}
         </Button>
         {isActive && (
           <div className="absolute -bottom-1 left-0 right-0">
             <WavyLine 
-              color="black" 
+              color={onDarkSurface ? "var(--ear-off-white)" : "var(--ear-black)"} 
               height={2}
               wavePattern="hand-drawn"
             />
@@ -45,20 +49,29 @@ export const Header: React.FC<HeaderProps> = ({
   }
 
   return (
-    <nav className="bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className={"shrink-0 bg-transparent"}>
+      <div className="max-w-7xl mx-auto w-full">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <H3 className="text-gray-900">Emerging Artist Resources</H3>
+            <div aria-label="Emerging Artist Resources" className="flex justify-start items-left" >
+              <Image
+                src="/EAR-Logos/EAR LOGOS-12.png"
+                alt="Emerging Artist Resources logo"
+                width={250}
+                height={250}
+                className="item-left"
+                priority
+              />
+            </div>
           </div>
           <div className="hidden lg:flex items-center space-x-4">
             {/* Public Navigation */}
             <NavLink href="/calendar">Calendar</NavLink>
             <NavLink href="/announcement">Announcements</NavLink>
-            <ServicesNav />
+            <ServicesNav onDarkSurface={onDarkSurface} />
 
-            <Button className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:scale-[1.03] hover:shadow-md transition-all duration-200">
-              <Heart className="mr-2 h-4 w-4 text-white" />
+            <Button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium hover:scale-[1.03] hover:shadow-md transition-all duration-200">
+              <Heart className="mr-2 h-4 w-4 text-primary-foreground" />
               <Link href="/donate">Support Artists</Link>
             </Button>
 
@@ -72,16 +85,23 @@ export const Header: React.FC<HeaderProps> = ({
                 
                 <UserDropdown 
                   userName={userName || "User"} 
+                  onDarkSurface={onDarkSurface}
                 />
               </>
             ) : (
               <Link href="/auth/signin">
-                <Button variant="ghost">Sign In</Button>
+                <Button
+                  variant="ghost"
+                  className="text-ear-baby-blue hover:bg-ear-baby-blue/10 hover:text-ear-baby-blue"
+                >
+                  Sign In
+                </Button>
               </Link>
             )}
           </div>
           <MobileNav 
             onSubmitPerformance={onSubmitPerformance}
+            onDarkSurface={onDarkSurface}
           />
         </div>
       </div>

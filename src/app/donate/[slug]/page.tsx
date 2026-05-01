@@ -19,7 +19,7 @@ export default async function DonateToArtistPage({ params, searchParams }: PageP
   const statusMessage = q.canceled === "true" ? ("canceled" as const) : null
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-ear-off-white py-12 px-4 sm:px-6 lg:px-8">
       <DonationForm
         lockedRecipient={{
           userId: profile.id,

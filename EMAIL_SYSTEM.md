@@ -269,7 +269,7 @@ When a new user signs up, an email verification email is automatically sent:
 
 **Verification Link:**
 - Generated using `supabase.auth.admin.generateLink()` (magic link) with `redirectTo` set to `{NEXT_PUBLIC_APP_URL}/auth/callback` (see `getPublicAppUrl()` in `src/lib/app-url.ts` when the env var is unset).
-- **`/auth/callback`** (App Router route handler at `src/app/auth/callback/route.ts`) exchanges the `code` query param for a session and sets auth cookies, then redirects to the app (default `next=/announcement`, with `verified=1` appended).
+- **`/auth/callback`** (client page at `src/app/auth/callback/page.tsx` using `completeAuthCallbackClient` in `src/lib/auth/completeAuthCallbackClient.ts`) exchanges a PKCE `code` or parses hash tokens (`magiclink`, `signup`, etc.), sets the session via the browser Supabase client, then redirects (default `next=/announcement`, with `verified=1` appended).
 - **Supabase dashboard:** set **Site URL** and **Redirect URLs** to your production origin and include:
   - `https://<your-domain>/auth/callback` (email verification / magic link)
   - `https://<your-domain>/auth/callback/recovery` (**required** for password reset — Supabase often strips `?next=` from the main callback URL)

@@ -84,6 +84,7 @@ export type AdminEventDetail = {
     compensation?: string
     instructions?: string
     pre_audition_classes?: string | null
+    website?: string | null
     fee?: "PAY_FEE" | "PROVIDE" | "EXPLAIN" | null
     fee_amount?: string | null
     artist_type?: "ESTABLISHED" | "EMERGING"
@@ -97,6 +98,7 @@ export type AdminEventDetail = {
     compensation?: string
     requirements?: string
     link?: string
+    website?: string | null
     fee?: "PAY_FEE" | "PROVIDE" | "EXPLAIN" | null
     fee_amount?: string | null
     artist_type?: "ESTABLISHED" | "EMERGING" | null
@@ -110,6 +112,7 @@ export type AdminEventDetail = {
     teachers?: string
     price?: string | null
     link?: string | null
+    website?: string | null
     style_category?: string | null
     workshop_details?: string | null
     classes_offered?: string | null
