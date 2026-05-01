@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { VscAccount } from "react-icons/vsc"
 import { useAuth } from "@/hooks/use-auth"
 import { servicesNavItems } from "@/lib/services-nav"
+import { Heart } from "lucide-react"
 
 interface MobileNavProps {
   onSubmitPerformance?: () => void
@@ -82,13 +83,14 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
                 className="block"
                 onClick={() => setIsOpen(false)}
               >
-                <Button variant="ghost" className="w-full justify-start text-base">{item.name}</Button>
+                <Button variant="ghost" className="w-full justify-start text-ear-black">{item.name}</Button>
               </Link>
             ))}
 
             <Link href="/donate" className="block" onClick={() => setIsOpen(false)}>
-              <Button variant="default" className="mt-1 w-full justify-start text-base">
-                Donate
+              <Button variant="default" className="mt-1 w-full justify-start text-ear-off-white">
+                <Heart className="mr-2 h-4 w-4 text-ear-off-white" />
+                Support Artists
               </Button>
             </Link>
 
@@ -103,7 +105,7 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
                 className="block"
                 onClick={() => setIsOpen(false)}
               >
-                <Button variant="ghost" className="w-full justify-start text-base">
+                <Button variant="ghost" className="w-full justify-start text-ear-black">
                   {item.label}
                 </Button>
               </Link>
@@ -123,7 +125,7 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
                     className="block"
                     onClick={() => setIsOpen(false)}
                   >
-                    <Button variant="ghost" className="w-full justify-start text-base">{item.name}</Button>
+                    <Button variant="ghost" className="w-full justify-start text-ear-black">{item.name}</Button>
                   </Link>
                 ))}
               </>
@@ -182,7 +184,7 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
                         }
                       }}
                       variant="outline"
-                      className="w-full justify-start text-base"
+                      className="w-full justify-start text-ear-black"
                     >
                       Sign Out
                     </Button>
@@ -194,7 +196,7 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
                 className="block"
                 onClick={() => setIsOpen(false)}
               >
-                <Button variant="outline" className="w-full justify-start text-base">Sign In</Button>
+                <Button variant="outline" className="w-full justify-start text-ear-black">Sign In</Button>
               </Link>
             )}
           </div>
