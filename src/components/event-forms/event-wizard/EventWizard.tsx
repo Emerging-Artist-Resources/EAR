@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo, useEffect } from "react"
+import { useState, useCallback, useMemo, useEffect, useRef } from "react"
 import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
 import type { Resolver } from "react-hook-form"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
@@ -19,13 +19,17 @@ import { buildEventPayload, type UserInfo } from "./payload-builders"
 import { normalizeShareRecipientEmails } from "@/lib/listing-share"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/contexts/ToastContext"
-import { apiPost, apiGet } from "@/lib/fetch-utils"
+import { apiPost, apiGet, apiPut } from "@/lib/fetch-utils"
 import { supabase } from "@/lib/supabase/client"
 import { storageService } from "@/services/storage"
+import { ownerListingToFormLoad } from "./owner-listing-to-form"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 interface EventWizardProps {
-  onSuccess: () => void
+  onSuccess: (info?: { wasApprovedResubmit?: boolean }) => void
   onClose: () => void
+  /** When set, wizard loads this listing and saves via PUT /api/events/:id */
+  listingId?: string | null
 }
 
 interface ProfileData {
@@ -41,11 +45,15 @@ interface ProfileData {
 
 
 
-export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
+export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [eventType, setEventType] = useState<EventType | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [profilePronouns, setProfilePronouns] = useState<string | null>(null)
+  const [initialPersistedStatus, setInitialPersistedStatus] = useState<string | null>(null)
+  const [showApprovedResubmitConfirm, setShowApprovedResubmitConfirm] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const existingPhotosRef = useRef<Array<{ path: string; credit?: string | null }>>([])
   const { user, userName } = useAuth()
   const { showToast } = useToast()
 
@@ -75,6 +83,50 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
       cancelled = true
     }
   }, [user])
+
+  useEffect(() => {
+    if (!listingId) {
+      setInitialPersistedStatus(null)
+      setLoadError(null)
+      existingPhotosRef.current = []
+      return
+    }
+
+    let cancelled = false
+    setLoadError(null)
+
+    const run = async () => {
+      try {
+        const row = await apiGet<Record<string, unknown>>(`/api/events/${listingId}/owner`)
+        if (cancelled) return
+        const { eventType: et, defaults, initialPersistedStatus: st, existingPhotos } = ownerListingToFormLoad(row)
+        existingPhotosRef.current = existingPhotos
+        setEventType(et)
+        setInitialPersistedStatus(st)
+        form.reset({
+          agreeCompTickets: false,
+          address: "",
+          extraOccurrences: [],
+          occurrences: [],
+          deadlineOccurrences: [],
+          shareRecipientEmails: [],
+          creativeSubmissionInstructions: "",
+          listingWebsite: "",
+          ...defaults,
+        } as Partial<EventFormData>)
+        setStep(1)
+      } catch (e) {
+        if (!cancelled) {
+          setLoadError(e instanceof Error ? e.message : "Failed to load listing")
+        }
+      }
+    }
+
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [listingId])
 
   // Derive userInfo from auth state and profile
   const userInfo = useMemo<UserInfo | null>(() => {
@@ -158,149 +210,194 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
     setStep(((step - 1) as 1 | 2 | 3))
   }, [step])
 
-  const handleSubmit = form.handleSubmit(
-    async (data) => {
-      try {
-        setIsSubmitting(true)
+  const submitListingData = async (data: EventFormData) => {
+    try {
+      setIsSubmitting(true)
 
-        if (!eventType) {
-          showToast("Please select an event type", "error")
-          setIsSubmitting(false)
-          return
-        }
+      if (!eventType) {
+        showToast("Please select an event type", "error")
+        setIsSubmitting(false)
+        return
+      }
 
-        if (!userInfo) {
-          showToast("Please sign in to submit", "error")
-          setIsSubmitting(false)
-          return
-        }
+      if (!userInfo) {
+        showToast("Please sign in to submit", "error")
+        setIsSubmitting(false)
+        return
+      }
 
-        if (!user?.id) {
-          showToast("Please sign in to submit", "error")
-          setIsSubmitting(false)
-          return
-        }
+      if (!user?.id) {
+        showToast("Please sign in to submit", "error")
+        setIsSubmitting(false)
+        return
+      }
 
-        // Upload photos to storage before building payload
-        const photoPaths: Array<{ path: string; credit?: string | null; sort_order?: number }> = []
-        const promoFiles = data.promoFiles as File[] | undefined
-        
-        if (promoFiles && Array.isArray(promoFiles) && promoFiles.length > 0) {
-          const bucket = "event-photos"
-          const userId = user.id
-          
-          for (let i = 0; i < Math.min(promoFiles.length, 5); i++) {
-            const file = promoFiles[i]
-            if (!file || !(file instanceof File)) continue
-            
-            try {
-              // Generate unique filename: listings/{userId}/{timestamp}-{index}.jpg
-              const timestamp = Date.now()
-              const fileExt = file.name.split('.').pop() || 'jpg'
-              const fileName = `${timestamp}-${i}.${fileExt}`
-              const filePath = `listings/${userId}/${fileName}`
-              
-              // Upload file to storage
-              await storageService.uploadFile(supabase, bucket, filePath, file, {
-                cacheControl: '3600',
-                upsert: false
-              })
-              
-              // Add to photo paths array
-              photoPaths.push({
-                path: filePath,
-                credit: data.credits || null,
-                sort_order: i
-              })
-            } catch (uploadError) {
-              console.error(`Failed to upload photo ${i}:`, uploadError)
-              const errorMsg = uploadError instanceof Error ? uploadError.message : "Failed to upload photo"
-              showToast(`Photo upload failed: ${errorMsg}`, "error")
-              setIsSubmitting(false)
-              return
-            }
-          }
-        }
+      const photoPaths: Array<{ path: string; credit?: string | null; sort_order?: number }> = []
+      const promoFiles = data.promoFiles as File[] | undefined
 
-        const payload = await buildEventPayload(data, eventType, userInfo)
-        
-        // Add photos to payload
-        if (photoPaths.length > 0) {
-          payload.photos = photoPaths
-        }
+      if (promoFiles && Array.isArray(promoFiles) && promoFiles.length > 0) {
+        const bucket = "event-photos"
+        const userId = user.id
 
-        // Additional validation for occurrences
-        if (eventType === "PERFORMANCE" && payload.occurrences.length === 0) {
-          if (process.env.NODE_ENV !== "production") {
-            const v = data as Record<string, unknown>
-            console.log("[EAR piece schedule] submit blocked — payload has zero occurrences", {
-              formType: v.type,
-              selectedSlots: v.selectedSlots,
-              pieceScheduleMode: v.pieceScheduleMode,
-              formOccurrences: v.occurrences,
-              formExtraOccurrences: v.extraOccurrences,
+        for (let i = 0; i < Math.min(promoFiles.length, 5); i++) {
+          const file = promoFiles[i]
+          if (!file || !(file instanceof File)) continue
+
+          try {
+            const timestamp = Date.now()
+            const fileExt = file.name.split(".").pop() || "jpg"
+            const fileName = `${timestamp}-${i}.${fileExt}`
+            const filePath = `listings/${userId}/${fileName}`
+
+            await storageService.uploadFile(supabase, bucket, filePath, file, {
+              cacheControl: "3600",
+              upsert: false,
             })
+
+            photoPaths.push({
+              path: filePath,
+              credit: data.credits || null,
+              sort_order: i,
+            })
+          } catch (uploadError) {
+            console.error(`Failed to upload photo ${i}:`, uploadError)
+            const errorMsg = uploadError instanceof Error ? uploadError.message : "Failed to upload photo"
+            showToast(`Photo upload failed: ${errorMsg}`, "error")
+            setIsSubmitting(false)
+            return
           }
-          showToast("Please add at least one date & time", "error")
-          setIsSubmitting(false)
-          return
         }
+      }
 
-        if (eventType === "CLASS" && payload.occurrences.length === 0) {
-          showToast("Please provide at least one valid class date/time", "error")
-          setIsSubmitting(false)
-          return
+      const payload = await buildEventPayload(data, eventType, userInfo)
+
+      if (photoPaths.length > 0) {
+        payload.photos = photoPaths
+      } else if (existingPhotosRef.current.length > 0) {
+        payload.photos = existingPhotosRef.current.map((p, i) => ({
+          path: p.path,
+          credit: (data.credits && data.credits.trim()) || p.credit || null,
+          sort_order: i,
+        }))
+      }
+
+      if (eventType === "PERFORMANCE" && payload.occurrences.length === 0) {
+        if (process.env.NODE_ENV !== "production") {
+          const v = data as Record<string, unknown>
+          console.log("[EAR piece schedule] submit blocked — payload has zero occurrences", {
+            formType: v.type,
+            selectedSlots: v.selectedSlots,
+            pieceScheduleMode: v.pieceScheduleMode,
+            formOccurrences: v.occurrences,
+            formExtraOccurrences: v.extraOccurrences,
+          })
         }
+        showToast("Please add at least one date & time", "error")
+        setIsSubmitting(false)
+        return
+      }
 
-        const response = await apiPost<{ id: string; payment_required?: boolean }>("/api/events", payload)
-        
-        if (response?.payment_required) {
+      if (eventType === "CLASS" && payload.occurrences.length === 0) {
+        showToast("Please provide at least one valid class date/time", "error")
+        setIsSubmitting(false)
+        return
+      }
+
+      if (listingId) {
+        const putResult = await apiPut<{
+          id: string
+          payment_required?: boolean
+          was_approved_resubmit?: boolean
+        }>(`/api/events/${listingId}`, payload)
+
+        if (putResult?.payment_required) {
           try {
             const checkoutResponse = await apiPost<{ url: string }>("/api/stripe/create-checkout-session", {
-              listingId: response.id,
+              listingId: putResult.id,
             })
-            
+
             if (checkoutResponse?.url) {
               window.location.href = checkoutResponse.url
               return
             }
           } catch (checkoutError) {
-            const errorMessage = checkoutError instanceof Error ? checkoutError.message : "Failed to create payment session"
+            const errorMessage =
+              checkoutError instanceof Error ? checkoutError.message : "Failed to create payment session"
             showToast(errorMessage, "error")
             setIsSubmitting(false)
             return
           }
         }
 
-        if (eventType === "PERFORMANCE" && userInfo.email) {
-          const raw = (data.shareRecipientEmails ?? []).filter(
-            (e): e is string => typeof e === "string"
+        if (putResult?.was_approved_resubmit) {
+          showToast(
+            "Your changes were submitted for review. The listing will reappear publicly once approved.",
+            "success"
           )
-          const n = normalizeShareRecipientEmails(raw, userInfo.email).length
-          if (n > 0) {
-            showToast(
-              `Submitted successfully! ${n} ${n === 1 ? "person" : "people"} will be notified once your listing is approved.`,
-              "success"
-            )
-          } else {
-            showToast("Submitted successfully! Pending review.", "success")
+        } else {
+          showToast("Listing updated successfully.", "success")
+        }
+
+        form.reset()
+        setTimeout(() => {
+          onSuccess({ wasApprovedResubmit: Boolean(putResult?.was_approved_resubmit) })
+          onClose()
+        }, 800)
+        return
+      }
+
+      const response = await apiPost<{ id: string; payment_required?: boolean }>("/api/events", payload)
+
+      if (response?.payment_required) {
+        try {
+          const checkoutResponse = await apiPost<{ url: string }>("/api/stripe/create-checkout-session", {
+            listingId: response.id,
+          })
+
+          if (checkoutResponse?.url) {
+            window.location.href = checkoutResponse.url
+            return
           }
+        } catch (checkoutError) {
+          const errorMessage =
+            checkoutError instanceof Error ? checkoutError.message : "Failed to create payment session"
+          showToast(errorMessage, "error")
+          setIsSubmitting(false)
+          return
+        }
+      }
+
+      if (eventType === "PERFORMANCE" && userInfo.email) {
+        const raw = (data.shareRecipientEmails ?? []).filter((e): e is string => typeof e === "string")
+        const n = normalizeShareRecipientEmails(raw, userInfo.email).length
+        if (n > 0) {
+          showToast(
+            `Submitted successfully! ${n} ${n === 1 ? "person" : "people"} will be notified once your listing is approved.`,
+            "success"
+          )
         } else {
           showToast("Submitted successfully! Pending review.", "success")
         }
-        form.reset()
-        
-        // Navigate after success message
-        setTimeout(() => {
-          onSuccess()
-          onClose()
-        }, 1200)
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Something went wrong"
-        showToast(errorMessage, "error")
-      } finally {
-        setIsSubmitting(false)
+      } else {
+        showToast("Submitted successfully! Pending review.", "success")
       }
+      form.reset()
+
+      setTimeout(() => {
+        onSuccess()
+        onClose()
+      }, 1200)
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Something went wrong"
+      showToast(errorMessage, "error")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleSubmit = form.handleSubmit(
+    async (data) => {
+      await submitListingData(data)
     },
     (_errors) => {
       if (process.env.NODE_ENV !== "production" && eventType === "PERFORMANCE") {
@@ -325,6 +422,28 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
 
   return (
     <div className="space-y-6">
+      {loadError && (
+        <p className="text-sm text-red-600 text-center" role="alert">
+          {loadError}
+        </p>
+      )}
+      <ConfirmDialog
+        isOpen={showApprovedResubmitConfirm}
+        title="Resubmit for review?"
+        description={
+          <div className="space-y-2">
+            <p>Editing this approved listing will resubmit it for review.</p>
+            <p>It will be temporarily removed from the public calendar until approved again.</p>
+          </div>
+        }
+        confirmLabel="Save and resubmit"
+        cancelLabel="Cancel"
+        onCancel={() => setShowApprovedResubmitConfirm(false)}
+        onConfirm={() => {
+          setShowApprovedResubmitConfirm(false)
+          void handleSubmit()
+        }}
+      />
       {/* Progress */}
       {/* {(() => {
         const progressPct = step === 1 ? 50 : 100
@@ -344,7 +463,12 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
         <PageNumbers current={step} total={3} />
       </div>
       {step === 1 && (
-        <BasicInfoStep form={form} eventType={eventType} onChangeType={setEventType} />
+        <BasicInfoStep
+          form={form}
+          eventType={eventType}
+          onChangeType={setEventType}
+          lockListingType={!!listingId}
+        />
       )}
       {step === 2 && (
         eventType === 'PERFORMANCE' ? (
@@ -384,11 +508,15 @@ export function EventWizard({ onSuccess, onClose }: EventWizardProps) {
             <Button
               type="button"
               onClick={() => {
-                handleSubmit()
+                if (listingId && initialPersistedStatus === "approved") {
+                  setShowApprovedResubmitConfirm(true)
+                  return
+                }
+                void handleSubmit()
               }}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !!loadError}
             >
-              {isSubmitting ? "Submitting..." : "Submit"}
+              {isSubmitting ? "Saving..." : listingId ? "Save changes" : "Submit"}
             </Button>
           )}
         </div>

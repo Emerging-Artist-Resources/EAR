@@ -54,4 +54,6 @@ export interface MyListing {
   payment_required?: boolean;
   payment_status?: "not_required" | "requires_payment" | "paid" | "refunded" | "canceled";
   payment_amount?: number | null;
+  resubmitted_at?: string | null;
+  reviewed_at?: string | null;
 }

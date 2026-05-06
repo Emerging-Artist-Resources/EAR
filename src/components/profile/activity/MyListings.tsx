@@ -10,11 +10,22 @@ import type { MyListing } from "@/features/profile/server/types";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import PerformanceModal from "@/components/performance-modal";
 
-function statusToVariant(status: MyListing["status"]): "success" | "warning" | "error" | "default" {
-  if (status === "approved") return "success";
-  if (status === "pending" || status === "pending_payment") return "warning";
-  if (status === "rejected") return "error";
+function listingBadgeVariant(listing: MyListing): "success" | "warning" | "error" | "default" {
+  if (listing.status === "approved") return "success";
+  if (listing.status === "pending" || listing.status === "pending_payment") return "warning";
+  if (listing.status === "rejected") return "error";
   return "default";
+}
+
+function listingBadgeLabel(listing: MyListing): string {
+  if (listing.status === "approved") return "Approved";
+  if (listing.status === "pending_payment") return "Pending Payment";
+  if (listing.status === "rejected") return "Rejected";
+  if (listing.status === "pending") {
+    if (listing.resubmitted_at) return "Resubmitted for Review";
+    return "Pending Review";
+  }
+  return listing.status;
 }
 
 function getTypeLabel(type: string): string {
@@ -65,6 +76,8 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalListingId, setModalListingId] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -96,16 +109,28 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
     return () => {
       isMounted = false;
     };
-  }, [page]);
+  }, [page, refreshKey]);
 
-  const handleSubmitPerformance = useCallback(() => {
+  const openCreateModal = useCallback(() => {
+    setModalListingId(null);
     setIsModalOpen(true);
   }, []);
 
-  const handleModalSuccess = useCallback(() => {
-    setIsModalOpen(false);
-    setPage(0);
+  const openEditModal = useCallback((listingId: string) => {
+    setModalListingId(listingId);
+    setIsModalOpen(true);
   }, []);
+
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+    setModalListingId(null);
+  }, []);
+
+  const handleModalSuccess = useCallback(() => {
+    closeModal();
+    setPage(0);
+    setRefreshKey((k) => k + 1);
+  }, [closeModal]);
 
   const handlePayNow = useCallback(async (listingId: string) => {
     if (loadingId === listingId) return;
@@ -141,7 +166,7 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
     <>
       <div className="flex items-center justify-between mb-3">
         <H3>My Listings</H3>
-        <Button variant="link" onClick={handleSubmitPerformance} className="text-ear-baby-blue hover:text-ear-baby-blue/80">
+        <Button variant="link" onClick={openCreateModal} className="text-ear-baby-blue hover:text-ear-baby-blue/80">
           + Submit New Listing
         </Button>
       </div>
@@ -177,13 +202,25 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
                       <Text className="text-sm text-gray-600">
                         Submitted on {formattedDate}
                       </Text>
-                      <div className="mt-1 flex gap-2 flex-wrap">
+                      <div className="mt-1 flex gap-2 flex-wrap items-center">
                         <Button 
                           variant="link" 
                           onClick={() => onListingClick?.(listing.id)}
                         >
                           View listing
                         </Button>
+                        <Button
+                          variant="link"
+                          onClick={() => openEditModal(listing.id)}
+                          className="text-ear-baby-blue hover:text-ear-baby-blue/80"
+                        >
+                          Edit
+                        </Button>
+                        {listing.status === "approved" && (
+                          <Text className="text-xs text-gray-500 w-full sm:w-auto">
+                            Editing will require re-approval
+                          </Text>
+                        )}
                         {showPayButton && (
                           <Button
                             variant="primary"
@@ -195,8 +232,8 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
                         )}
                       </div>
                     </div>
-                    <Badge variant={statusToVariant(listing.status)}>
-                      {listing.status.charAt(0).toUpperCase() + listing.status.slice(1)}
+                    <Badge variant={listingBadgeVariant(listing)}>
+                      {listingBadgeLabel(listing)}
                     </Badge>
                   </div>
                 </Card>
@@ -215,8 +252,9 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
       </Card>
       <PerformanceModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={closeModal}
         onSuccess={handleModalSuccess}
+        listingId={modalListingId}
       />
     </>
   );

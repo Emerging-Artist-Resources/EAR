@@ -10,7 +10,7 @@ import { calculateListingFee } from "./fee-calculator"
 import { buildPersistableListingMeta } from "./listing-meta-share"
 
 /** Emerging artists never pay platform listing fees for performance or class; force nulls so clients cannot set PAY_FEE. */
-function nullEmergingPlatformListingFeeFields(
+export function nullEmergingPlatformListingFeeFields(
   type: ListingType,
   details: Record<string, unknown>
 ) {
@@ -27,7 +27,7 @@ function nullEmergingPlatformListingFeeFields(
 }
 
 /** Established artists must pay platform fee for performance/class submissions. */
-function enforceEstablishedPlatformListingFeeFields(
+export function enforceEstablishedPlatformListingFeeFields(
   type: ListingType,
   details: Record<string, unknown>
 ) {
@@ -36,7 +36,7 @@ function enforceEstablishedPlatformListingFeeFields(
   details.listing_fee_option = "PAY_FEE"
 }
 
-function validateClassParentConstraint(details: Record<string, unknown>) {
+export function validateClassParentConstraint(details: Record<string, unknown>) {
   const classWorkshopType = details.class_workshop_type
   if (classWorkshopType !== "CLASS") return
 

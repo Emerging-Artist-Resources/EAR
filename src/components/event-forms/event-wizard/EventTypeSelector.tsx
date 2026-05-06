@@ -7,9 +7,10 @@ export type EventType = 'PERFORMANCE' | 'AUDITION' | 'CREATIVE' | 'CLASS' | 'FUN
 interface EventTypeSelectorProps {
   eventType: EventType | null
   onChangeType: (t: EventType) => void
+  disabled?: boolean
 }
 
-export function EventTypeSelector({ eventType, onChangeType }: EventTypeSelectorProps) {
+export function EventTypeSelector({ eventType, onChangeType, disabled }: EventTypeSelectorProps) {
   const value = eventType ?? ''
 
   const handleChange: React.ChangeEventHandler<HTMLSelectElement> = (e) => {
@@ -17,10 +18,11 @@ export function EventTypeSelector({ eventType, onChangeType }: EventTypeSelector
   }
 
   return (
-    <div>
+    <div className={disabled ? "opacity-60 pointer-events-none" : undefined}>
       <Select
         value={value}
         onChange={handleChange}
+        disabled={disabled}
       >
         <option value="" disabled>Select listing type</option>
         <option value="PERFORMANCE">Performance</option>

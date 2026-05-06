@@ -98,6 +98,21 @@ export async function apiPatch<T = unknown>(
 }
 
 /**
+ * Type-safe PUT request helper
+ */
+export async function apiPut<T = unknown>(
+  url: string,
+  body: unknown,
+  options?: Omit<RequestInit, "method" | "body">
+): Promise<T> {
+  return apiFetch<T>(url, {
+    ...options,
+    method: "PUT",
+    body: JSON.stringify(body),
+  })
+}
+
+/**
  * Type-safe DELETE request helper
  */
 export async function apiDelete<T = unknown>(

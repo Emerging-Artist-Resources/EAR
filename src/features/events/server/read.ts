@@ -398,7 +398,7 @@ export async function listMyListingsRepo(page: number = 0, limit: number = 10) {
   // Get paginated listings
   const { data, error } = await supabase
     .from("listings")
-    .select(`id, type, status, submitted_at, payment_required, payment_status, payment_amount`)
+    .select(`id, type, status, submitted_at, payment_required, payment_status, payment_amount, resubmitted_at, reviewed_at`)
     .eq("created_by", user.id)
     .is("deleted_at", null)
     .order("submitted_at", { ascending: false })
@@ -414,6 +414,7 @@ export async function getListingForOwnerRepo(listingId: string) {
     .from("listings")
     .select(`
       id, type, status, social_handles, notes, submitted_at, meta,
+      resubmitted_at, reviewed_at, reviewed_by,
       company, company_website, address, place_id, lat, lng, venue_name, location_instructions,
       payment_required, payment_amount, payment_currency, payment_status,
       performance_details (*),

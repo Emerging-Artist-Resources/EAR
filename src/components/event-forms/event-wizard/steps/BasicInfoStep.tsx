@@ -11,9 +11,11 @@ interface BasicInfoStepProps {
   form: UseFormReturn<EventFormData>
   eventType: EventType | null
   onChangeType: (t: EventType) => void
+  /** When editing an existing listing, listing type cannot change */
+  lockListingType?: boolean
 }
 
-export function BasicInfoStep({ eventType, onChangeType }: BasicInfoStepProps) {
+export function BasicInfoStep({ eventType, onChangeType, lockListingType }: BasicInfoStepProps) {
   return (
     <>
       <Card>
@@ -36,7 +38,7 @@ export function BasicInfoStep({ eventType, onChangeType }: BasicInfoStepProps) {
 
       <Section className="mt-4" >
         <H4>Select your listing:</H4>
-        <EventTypeSelector eventType={eventType} onChangeType={onChangeType} />
+        <EventTypeSelector eventType={eventType} onChangeType={onChangeType} disabled={lockListingType} />
       </Section>
     </>
   );

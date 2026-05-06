@@ -6,24 +6,32 @@ import { EventWizard } from "@/components/event-forms/event-wizard/EventWizard"
 interface PerformanceModalProps {
   isOpen: boolean
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: (info?: { wasApprovedResubmit?: boolean }) => void
+  /** When set, modal opens in edit mode for this listing id */
+  listingId?: string | null
 }
 
-export default function PerformanceModal({ isOpen, onClose, onSuccess }: PerformanceModalProps) {
+export default function PerformanceModal({ isOpen, onClose, onSuccess, listingId }: PerformanceModalProps) {
   const handleClose = () => {
     onClose()
   }
+
+  const title = listingId ? "Edit listing" : "Submit a Listing"
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Submit a Listing"
+      title={title}
       closeOnOverlay={false}
       contentClassName="border-border-default bg-surface-modal-warm text-text-primary"
     >
-      {/* Wizard is now a separate component */}
-      <EventWizard onSuccess={onSuccess} onClose={handleClose} />
+      <EventWizard
+        key={listingId ?? "new-listing"}
+        listingId={listingId ?? undefined}
+        onSuccess={onSuccess}
+        onClose={handleClose}
+      />
     </Modal>
   )
 }
