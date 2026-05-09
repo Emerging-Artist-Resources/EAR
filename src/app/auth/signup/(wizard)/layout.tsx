@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PageNumbers } from "@/components/forms/blocks/PageNumbers"
 import { signupFormSchema } from "@/lib/validations/signup"
 import { zodResolver } from "@/lib/vendor/react-hook-form-zod"
+import { ROUTES } from "@/lib/constants"
 
 interface LayoutProps {
   children: React.ReactNode
@@ -64,7 +65,7 @@ export default function SignUpWizardLayout({ children }: LayoutProps) {
             <div className="relative -mx-6 -mt-6 mb-4 px-6 py-4 rounded-t-md bg-primary space-y-3">
               <H2 className="text-center text-white">Create an EAR Account</H2>
               <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-white/95">
-                <Link href="/announcement" className="underline underline-offset-2 hover:text-white">
+                <Link href={ROUTES.HOME} className="underline underline-offset-2 hover:text-white">
                   Back to home
                 </Link>
                 <span className="opacity-70 hidden sm:inline" aria-hidden>

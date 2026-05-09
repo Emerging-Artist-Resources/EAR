@@ -6,20 +6,21 @@ import { Modal } from "@/components/ui/modal"
 import { Button } from "@/components/ui/button"
 import { resetSessionExpiredModalFlag } from "@/lib/fetch-utils"
 import { supabase } from "@/lib/supabase/client"
+import { ROUTES } from "@/lib/constants"
 
 type SessionExpiredEventDetail = {
   next?: string
 }
 
 function sanitizeNextParam(raw: string | null | undefined): string {
-  const next = raw ?? "/announcement"
+  const next = raw ?? ROUTES.HOME
   if (next.startsWith("/") && !next.startsWith("//")) return next
-  return "/announcement"
+  return ROUTES.HOME
 }
 
 export function SessionExpiredModal() {
   const [isOpen, setIsOpen] = useState(false)
-  const [nextPath, setNextPath] = useState("/announcement")
+  const [nextPath, setNextPath] = useState<string>(ROUTES.HOME)
   const [guestLoading, setGuestLoading] = useState(false)
 
   useEffect(() => {
@@ -62,7 +63,7 @@ export function SessionExpiredModal() {
       resetSessionExpiredModalFlag()
       setIsOpen(false)
       // Force a full reload to ensure all authenticated client/server state is cleared.
-      window.location.assign("/announcement")
+      window.location.assign(ROUTES.HOME)
     }
   }
 

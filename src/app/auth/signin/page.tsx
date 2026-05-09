@@ -14,9 +14,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ROUTES } from "@/lib/constants"
 
 function sanitizeNextParam(raw: string | null): string {
-  const next = raw ?? "/announcement"
+  const next = raw ?? ROUTES.HOME
   if (next.startsWith("/") && !next.startsWith("//")) return next
-  return "/announcement"
+  return ROUTES.HOME
 }
 
 function SignInContent() {
@@ -71,7 +71,9 @@ function SignInContent() {
       if (!isMountedRef.current) return
 
       if (data?.session) {
-        const nextPath = sanitizeNextParam(searchParams.get("next"))
+        const nextPath = sanitizeNextParam(
+          searchParams.get("next") ?? searchParams.get("returnTo")
+        )
         router.replace(nextPath)
       } else {
         if (isMountedRef.current) {
@@ -178,7 +180,7 @@ function SignInContent() {
         <div className="text-center">
           <Button
             type="button"
-            onClick={() => router.push("/announcement")}
+            onClick={() => router.push(ROUTES.HOME)}
             variant="outline"
             className="w-full bg-ear-baby-blue text-ear-black hover:bg-ear-baby-blue/90 justify-center border border-primary"
           >

@@ -5,11 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { completeAuthCallbackClient } from "@/lib/auth/completeAuthCallbackClient"
 import { supabase } from "@/lib/supabase/client"
 import { Text } from "@/components/ui/typography"
+import { ROUTES } from "@/lib/constants"
 
 function sanitizeNextParam(raw: string | null): string {
-  const next = raw ?? "/announcement"
+  const next = raw ?? ROUTES.HOME
   if (next.startsWith("/") && !next.startsWith("//")) return next
-  return "/announcement"
+  return ROUTES.HOME
 }
 
 function AuthCallbackInner() {

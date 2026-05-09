@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { isAuthed, userName, isLoading } = useAuth()
   const pathname = usePathname()
-  const onDarkSurface = pathname === "/calendar"
+  const onDarkSurface = pathname === "/calendar" || pathname === "/"
 
   const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
     const isActive = pathname === href || (href !== "/" && pathname?.startsWith(href))
@@ -53,16 +53,20 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto w-full">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <div aria-label="Emerging Artist Resources" className="flex justify-start items-left" >
+            <Link
+              href="/"
+              aria-label="Emerging Artist Resources — Home"
+              className="flex shrink-0 items-center"
+            >
               <Image
                 src="/EAR-Logos/EAR LOGOS-12.png"
-                alt="Emerging Artist Resources logo"
+                alt="Emerging Artist Resources"
                 width={250}
                 height={250}
-                className="item-left"
+                className="h-25 w-auto md:h-25"
                 priority
               />
-            </div>
+            </Link>
           </div>
           <div className="hidden lg:flex items-center space-x-4">
             {/* Public Navigation */}

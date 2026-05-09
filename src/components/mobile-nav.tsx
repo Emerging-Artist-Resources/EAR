@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { VscAccount } from "react-icons/vsc"
 import { useAuth } from "@/hooks/use-auth"
+import { ROUTES } from "@/lib/constants"
 import { servicesNavItems } from "@/lib/services-nav"
 import { Heart } from "lucide-react"
 
@@ -177,7 +178,7 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
                           const shouldRedirect = currentPath && isProtectedRoute(currentPath)
                           
                           if (shouldRedirect) {
-                            router.replace("/announcement")
+                            router.replace(ROUTES.HOME)
                           }
                         } catch (err) {
                           console.error("Sign out error:", err)
