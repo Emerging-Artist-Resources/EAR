@@ -84,49 +84,49 @@ CREATE POLICY "Users can insert piece_details" ON "public"."piece_details" FOR I
 DROP POLICY IF EXISTS "Users can update audition_details" ON "public"."audition_details";
 CREATE POLICY "Users can update audition_details" ON "public"."audition_details" FOR UPDATE TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."listings" "l"
-  WHERE (("l"."id" = "audition_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"]))))) WITH CHECK ((EXISTS ( SELECT 1
+  WHERE (("l"."id" = "audition_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"])))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."listings" "l"
   WHERE (("l"."id" = "audition_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"]))))));
 
 DROP POLICY IF EXISTS "Users can update class_workshop_details" ON "public"."class_workshop_details";
 CREATE POLICY "Users can update class_workshop_details" ON "public"."class_workshop_details" FOR UPDATE TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."listings" "l"
-  WHERE (("l"."id" = "class_workshop_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"]))))) WITH CHECK ((EXISTS ( SELECT 1
+  WHERE (("l"."id" = "class_workshop_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"])))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."listings" "l"
   WHERE (("l"."id" = "class_workshop_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"]))))));
 
 DROP POLICY IF EXISTS "Users can update creative_details" ON "public"."creative_details";
 CREATE POLICY "Users can update creative_details" ON "public"."creative_details" FOR UPDATE TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."listings" "l"
-  WHERE (("l"."id" = "creative_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"]))))) WITH CHECK ((EXISTS ( SELECT 1
+  WHERE (("l"."id" = "creative_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"])))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."listings" "l"
   WHERE (("l"."id" = "creative_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"]))))));
 
 DROP POLICY IF EXISTS "Users can update listing_occurrences" ON "public"."listing_occurrences";
 CREATE POLICY "Users can update listing_occurrences" ON "public"."listing_occurrences" FOR UPDATE TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."listings" "l"
-  WHERE (("l"."id" = "listing_occurrences"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"]))))) WITH CHECK ((EXISTS ( SELECT 1
+  WHERE (("l"."id" = "listing_occurrences"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"])))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."listings" "l"
   WHERE (("l"."id" = "listing_occurrences"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"]))))));
 
 DROP POLICY IF EXISTS "Users can update listing_photos" ON "public"."listing_photos";
 CREATE POLICY "Users can update listing_photos" ON "public"."listing_photos" FOR UPDATE TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."listings" "l"
-  WHERE (("l"."id" = "listing_photos"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"]))))) WITH CHECK ((EXISTS ( SELECT 1
+  WHERE (("l"."id" = "listing_photos"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"])))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."listings" "l"
   WHERE (("l"."id" = "listing_photos"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"]))))));
 
 DROP POLICY IF EXISTS "Users can update performance_details" ON "public"."performance_details";
 CREATE POLICY "Users can update performance_details" ON "public"."performance_details" FOR UPDATE TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."listings" "l"
-  WHERE (("l"."id" = "performance_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"]))))) WITH CHECK ((EXISTS ( SELECT 1
+  WHERE (("l"."id" = "performance_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"])))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."listings" "l"
   WHERE (("l"."id" = "performance_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"]))))));
 
 DROP POLICY IF EXISTS "Users can update piece_details" ON "public"."piece_details";
 CREATE POLICY "Users can update piece_details" ON "public"."piece_details" FOR UPDATE TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."listings" "l"
-  WHERE (("l"."id" = "piece_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"]))))) WITH CHECK ((EXISTS ( SELECT 1
+  WHERE (("l"."id" = "piece_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"])))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."listings" "l"
   WHERE (("l"."id" = "piece_details"."listing_id") AND ("l"."created_by" = "auth"."uid"()) AND ("l"."status" = ANY (ARRAY['pending'::"public"."listing_status", 'pending_payment'::"public"."listing_status"]))))));
 
