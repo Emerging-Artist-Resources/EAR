@@ -1,5 +1,6 @@
 /**
- * Postmark templates: listing-share-festival (organizer), listing-share-piece (piece).
+ * Postmark templates: listing-share-festival (performance organizer + multi-day workshop),
+ * listing-share-piece (piece).
  * @see EMAIL_SYSTEM.md
  */
 

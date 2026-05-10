@@ -43,7 +43,7 @@ export function ShareListingSection({ form }: { form: UseFormReturn<EventFormDat
   }
 
   return (
-    <Section title="Share this listing (optional)">
+    <Section title="Share this listing">
       <p className="text-sm text-muted-foreground mb-3">
         We&apos;ll email these people after your listing is approved. They&apos;ll get a link to your
         public calendar listing on EAR.

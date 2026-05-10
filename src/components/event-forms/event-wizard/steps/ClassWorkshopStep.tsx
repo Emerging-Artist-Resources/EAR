@@ -11,6 +11,7 @@ import { SelectBlock } from "@/components/forms/blocks/Select"
 import { FestivalAssociationSection } from "./class-workshop/FestivalAssociationSection"
 import { ClassOccurrencesPicker } from "@/components/forms/blocks/ClassOccurrencesPicker"
 import { ListingWebsiteField } from "@/components/forms/blocks/ListingWebsiteField"
+import { ShareListingSection } from "@/components/event-forms/event-wizard/steps/performance/ShareListingSection"
 
 interface ClassesWorkshopsStepProps {
   form: UseFormReturn<EventFormData>
@@ -98,13 +99,13 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
           name={"price"}
           label={isWorkshop ? "Workshop Price" : "Class Price"}
           placeholder="e.g., $30, Free, $20-40 sliding scale"
-          required={!isWorkshop}
+          required //TODO: why was this not required for WORKSHOP?
         />
 
         <TextField
           form={form}
-          name={"link"}
-          label="Registration Link"
+          name={"classRegistrationDetails"}
+          label="Registration link or instructions"
           placeholder="Link or signup instructions"
           required={!isWorkshop}
         />
@@ -194,6 +195,8 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
           />
         </Section>
       )}
+
+      {isWorkshop && <ShareListingSection form={form} />}
     </>
   )
 }

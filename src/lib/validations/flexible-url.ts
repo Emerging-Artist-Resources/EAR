@@ -17,17 +17,39 @@ export function normalizeUserEnteredUrl(input: string): string {
   return `https://${s}`
 }
 
+/** RFC 2606 / obvious non-production hostnames we should not accept as listing URLs. */
+const RESERVED_PUBLIC_SUFFIX_STYLE_TLDS = new Set(["test", "invalid", "example"])
+
 /**
- * Hostnames like `dance` parse as valid URLs but are almost never real ticket/website links.
- * Require a dot (e.g. example.org), localhost, or IP-style hosts.
+ * Hostnames like `dance` or `www.` parse oddly but are not useful public web URLs.
+ * Require multi-label DNS shape (domain.tld), valid labels, localhost, or IPv4 literal.
+ * IPv6 / bracket hosts: rely on ":" heuristic after URL parsing.
  */
 function isLikelyWebHostname(hostname: string): boolean {
-  const h = hostname.trim().toLowerCase()
+  let h = hostname.trim().toLowerCase()
   if (!h) return false
   if (h === "localhost") return true
   if (/^(\d{1,3}\.){3}\d{1,3}$/.test(h)) return true
   if (h.includes(":")) return true
-  return h.includes(".")
+
+  // FQDN trailing dot (e.g. example.com.) — normalize for label checks
+  h = h.replace(/\.+$/g, "")
+  if (!h.includes(".")) return false
+
+  const parts = h.split(".")
+  if (parts.some((p) => p.length === 0)) return false
+  if (parts.length < 2) return false
+
+  const labelRe = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
+  for (const p of parts) {
+    if (p.length > 63 || !labelRe.test(p)) return false
+  }
+
+  const tld = parts[parts.length - 1]
+  if (tld.length < 2) return false
+  if (RESERVED_PUBLIC_SUFFIX_STYLE_TLDS.has(tld)) return false
+
+  return true
 }
 
 function isValidHttpUrl(value: string): boolean {

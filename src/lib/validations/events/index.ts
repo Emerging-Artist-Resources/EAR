@@ -609,12 +609,12 @@ export const creativeStep2Schema = baseSchema
 // Class step 2 schema
 export const classStep2Schema = baseSchema
   .merge(classFields)
+  .merge(performanceFields.pick({ shareRecipientEmails: true }))
   .pick({
     title: true,
     description: true,
     organizer: true,
     price: true,
-    link: true,
     teachers: true,
     occurrences: true,
     classWorkshopType: true,
@@ -630,6 +630,8 @@ export const classStep2Schema = baseSchema
     lat: true,
     lng: true,
     locationInstructions: true,
+    shareRecipientEmails: true,
+    classRegistrationDetails: true,
   })
   .passthrough()
   .superRefine((data, ctx) => {
@@ -661,13 +663,18 @@ export const classStep2Schema = baseSchema
       })
     }
 
-    // CLASS-specific fields (price and link are optional for WORKSHOP)
+    // CLASS-specific fields (price and registration details are optional for WORKSHOP)
     if (isClass) {
       if (!data.price || data.price.trim() === "") {
         ctx.addIssue({ code: "custom", path: ["price"], message: "Price is required" })
       }
-      if (!data.link || data.link.trim() === "") {
-        ctx.addIssue({ code: "custom", path: ["link"], message: "Link is required" })
+      const reg = data.classRegistrationDetails?.trim() ?? ""
+      if (!reg) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["classRegistrationDetails"],
+          message: "Registration link or instructions are required",
+        })
       }
       
       // Festival or Workshop Association (only for CLASS)
@@ -760,6 +767,23 @@ export const classStep2Schema = baseSchema
         for (let j = 0; j < occ.times.length; j++) {
           refineOccurrenceTimeSlotEndAfterStart(occ.times[j], ctx, ["occurrences", i, "times", j])
         }
+      }
+    }
+
+    if (data.classWorkshopType === "WORKSHOP") {
+      const emails = data.shareRecipientEmails
+      if (emails) {
+        emails.forEach((e, i) => {
+          const t = (e ?? "").trim()
+          if (t === "") return
+          if (!z.string().email().safeParse(t).success) {
+            ctx.addIssue({
+              code: "custom",
+              path: ["shareRecipientEmails", i],
+              message: "Invalid email address",
+            })
+          }
+        })
       }
     }
   })

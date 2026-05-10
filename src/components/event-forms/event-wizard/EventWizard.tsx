@@ -129,6 +129,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
           shareRecipientEmails: [],
           creativeSubmissionInstructions: "",
           listingWebsite: "",
+          classRegistrationDetails: "",
           ...defaults,
         } as Partial<EventFormData>)
         setStep(1)
@@ -170,6 +171,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       shareRecipientEmails: [],
       creativeSubmissionInstructions: "",
       listingWebsite: "",
+      classRegistrationDetails: "",
     } as Partial<EventFormData>,
     mode: 'onBlur',
     reValidateMode: 'onChange',

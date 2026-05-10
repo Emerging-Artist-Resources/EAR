@@ -121,7 +121,7 @@ export const performanceFields = z
     piece_description: z.string().optional(),
     piece_credits: z.string().optional(),
 
-    /** Optional: notify these addresses after the listing is approved (performance only; normalized server-side). */
+    /** Optional: notify these addresses after approval (performance organizer/piece + workshop; normalized server-side). */
     shareRecipientEmails: z.array(z.string()).max(MAX_SHARE_RECIPIENT_EMAILS).optional(),
   })
   .superRefine((data, ctx) => {

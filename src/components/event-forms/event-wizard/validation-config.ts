@@ -69,13 +69,14 @@ export const eventTypeValidationFields: Record<
     "title", // First field in Basic Info section
     "organizer", // Second field in Basic Info
     "price", // Third field in Basic Info (required for CLASS only, optional for WORKSHOP)
-    "link", // Fourth field in Basic Info (required for CLASS only, optional for WORKSHOP)
+    "classRegistrationDetails", // Registration link or instructions (required for CLASS only)
     "listingWebsite",
     "description", // Fifth field in Basic Info
     "isPartOfFestivalOrWorkshop", // In Festival or Workshop Association section (required for CLASS only)
     "parentEventId", // In FestivalAssociationSection (required if YES and not creating placeholder, CLASS only)
     "placeholderTitle", // In FestivalAssociationSection (required if YES and creating placeholder, CLASS only)
     "occurrences", // In Schedule section (required for both CLASS and WORKSHOP)
+    "shareRecipientEmails", // After schedule, workshop-only (ShareListingSection)
   ],
   FUNDING: ["fundingLink"],
 }

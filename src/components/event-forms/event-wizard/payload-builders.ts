@@ -561,6 +561,20 @@ export function buildClassPayload(
     basePayload.location_instructions = (firstOccurrence as any).locationInstructions || null
   }
 
+  const isWorkshop = (data.classWorkshopType || "CLASS") === "WORKSHOP"
+  const rawShare = isWorkshop
+    ? (data.shareRecipientEmails ?? [])
+        .map((e) => e.trim())
+        .filter(Boolean)
+    : []
+  const base =
+    rawShare.length > 0
+      ? {
+          ...basePayload,
+          meta: { share: { recipient_emails: rawShare } },
+        }
+      : basePayload
+
   // Handle parent workshop relationship for CLASS type
   const isClass = (data.classWorkshopType || "CLASS") === "CLASS"
   const isPartOfFestivalOrWorkshop = data.isPartOfFestivalOrWorkshop === "YES"
@@ -574,7 +588,7 @@ export function buildClassPayload(
 
   return {
     type: "class",
-    base: basePayload,
+    base,
     details: {
       class_workshop_type: data.classWorkshopType || "CLASS",
       title: data.title ?? data.className ?? "",
@@ -582,7 +596,10 @@ export function buildClassPayload(
       organizer: data.organizer ?? "",
       teachers: data.teachers ?? "",
       price: data.price ?? data.classPrice ?? null,
-      link: data.link ?? data.classLink ?? null,
+      link:
+        (data.classRegistrationDetails ?? "").trim() ||
+        (data.classLink ?? "").trim() ||
+        null,
       website: (data.listingWebsite ?? "").trim() || null,
       style_category: data.styleCategory || null,
       workshop_details: data.workshopDetails || null,

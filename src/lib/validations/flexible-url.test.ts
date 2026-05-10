@@ -45,6 +45,23 @@ describe("flexibleUrlOrEmptySchema", () => {
     expect(r.success).toBe(false)
   })
 
+  it("rejects incomplete hosts like www.", () => {
+    expect(flexibleUrlOrEmptySchema.safeParse("www.").success).toBe(false)
+  })
+
+  it("rejects reserved .test TLD hostnames like www.test", () => {
+    expect(flexibleUrlOrEmptySchema.safeParse("www.test").success).toBe(false)
+  })
+
+  it("rejects empty DNS labels (double dots)", () => {
+    expect(flexibleUrlOrEmptySchema.safeParse("foo..bar.org").success).toBe(false)
+  })
+
+  it("accepts normal multi-label hosts", () => {
+    const r = flexibleUrlOrEmptySchema.safeParse("www.example.org/path")
+    expect(r.success).toBe(true)
+  })
+
   it("rejects dangerous schemes like javascript", () => {
     const r = flexibleUrlOrEmptySchema.safeParse("javascript:alert(1)")
     expect(r.success).toBe(false)

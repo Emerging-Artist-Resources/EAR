@@ -189,7 +189,15 @@ export async function sendListingShareEmailsAfterApproval(listingId: string): Pr
       return
     }
 
-    if (listingData.type !== "performance") return
+    const cwdRaw = listingData.class_workshop_details as
+      | { class_workshop_type?: string }
+      | { class_workshop_type?: string }[]
+      | null
+    const cwd = Array.isArray(cwdRaw) ? cwdRaw[0] : cwdRaw
+    const isWorkshopListing =
+      listingData.type === "class" && cwd?.class_workshop_type === "WORKSHOP"
+
+    if (listingData.type !== "performance" && !isWorkshopListing) return
 
     const meta = listingData.meta as Record<string, unknown> | null | undefined
     const shareRaw =
@@ -213,9 +221,18 @@ export async function sendListingShareEmailsAfterApproval(listingId: string): Pr
     const pd = listingData.performance_details as { subtype?: string } | { subtype?: string }[] | null
     const perfDetails = Array.isArray(pd) ? pd[0] : pd
     const subtype = perfDetails?.subtype
-    if (subtype !== "ORGANIZER" && subtype !== "PIECE") return
+    if (
+      listingData.type === "performance" &&
+      subtype !== "ORGANIZER" &&
+      subtype !== "PIECE"
+    ) {
+      return
+    }
 
-    const template = subtype === "PIECE" ? "listing-share-piece" : "listing-share-festival"
+    const template =
+      isWorkshopListing || subtype === "ORGANIZER"
+        ? "listing-share-festival"
+        : "listing-share-piece"
     const listingForTitle = listingData as unknown as PublicListingDetail
     const listingTitle = getListingTitle(listingForTitle)
     const inviterName = listingData.contact_name || "Someone"

@@ -20,8 +20,15 @@ export const classFields = z
     description: z.string().max(2000, "Description must be 2000 characters or less").optional(),
     organizer: z.string().optional(),
     price: z.string().optional(),
-    link: flexibleUrlOptionalSchema,
-    /** Class/workshop website (DB: class_workshop_details.website; registration stays in link) */
+    /**
+     * Registration URL and/or free-text signup instructions (DB: class_workshop_details.link).
+     * Separate from performance `link` (ticket URL) so class text does not override merged URL schema.
+     */
+    classRegistrationDetails: z
+      .string()
+      .max(2000, "Registration details must be 2000 characters or less")
+      .optional(),
+    /** Class/workshop website (DB: class_workshop_details.website) */
     listingWebsite: flexibleUrlOptionalSchema,
     teachers: z.string().optional(),
     styleCategory: z.string().optional(), // or z.enum([...]) if you want strict options
@@ -89,7 +96,7 @@ export const classFields = z
       .optional(),
     classPrices: z.string().optional(),
     classPrice: z.string().optional(),
-    classLink: flexibleUrlOptionalSchema,
+    classLink: z.string().max(2000).optional(),
     classDescription: z.string().max(2000).optional(),
     classCreditInfo: z.string().optional(),
     classRecurrence: z.string().optional(),
@@ -138,13 +145,18 @@ export const classFields = z
       })
     }
 
-    // CLASS-specific fields (price and link are optional for WORKSHOP)
+    // CLASS-specific fields (price and registration details are optional for WORKSHOP)
     if (isClass) {
       if (!data.price || data.price.trim() === "") {
         ctx.addIssue({ code: "custom", path: ["price"], message: "Price is required" })
       }
-      if (!data.link || data.link.trim() === "") {
-        ctx.addIssue({ code: "custom", path: ["link"], message: "Link is required" })
+      const reg = data.classRegistrationDetails?.trim() ?? ""
+      if (!reg) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["classRegistrationDetails"],
+          message: "Registration link or instructions are required",
+        })
       }
       
       // Festival or Workshop Association (only for CLASS)
@@ -260,6 +272,23 @@ export const classFields = z
         for (let j = 0; j < occ.times.length; j++) {
           refineOccurrenceTimeSlotEndAfterStart(occ.times[j], ctx, ["occurrences", i, "times", j])
         }
+      }
+    }
+
+    if (data.classWorkshopType === "WORKSHOP") {
+      const emails = (data as { shareRecipientEmails?: string[] }).shareRecipientEmails
+      if (emails) {
+        emails.forEach((e: string, i: number) => {
+          const t = (e ?? "").trim()
+          if (t === "") return
+          if (!z.string().email().safeParse(t).success) {
+            ctx.addIssue({
+              code: "custom",
+              path: ["shareRecipientEmails", i],
+              message: "Invalid email address",
+            })
+          }
+        })
       }
     }
   })

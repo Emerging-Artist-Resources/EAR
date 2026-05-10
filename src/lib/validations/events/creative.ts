@@ -3,8 +3,8 @@ import { flexibleUrlOptionalSchema } from "../flexible-url"
 import { occurrenceSchema } from "./base"
 
 /**
- * Creative opportunity fields. Submission instructions use `creativeSubmissionInstructions`, not `link`:
- * the merged event schema ends with class fields, so `link` is always URL-validated for class/performance.
+ * Creative opportunity fields. Submission instructions use `creativeSubmissionInstructions`, not `link`.
+ * Class/workshop registration uses `classRegistrationDetails` (free text); performance ticket `link` stays URL-validated.
  */
 export const creativeFields = z
   .object({
