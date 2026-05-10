@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { UseFormReturn, useWatch } from "react-hook-form"
 import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
@@ -26,6 +26,11 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
   const isPartOfFestivalOrWorkshop = useWatch({
     control: form.control,
     name: "isPartOfFestivalOrWorkshop",
+  }) as "YES" | "NO" | undefined
+
+  const dropInClassesAvailable = useWatch({
+    control: form.control,
+    name: "dropInClassesAvailable",
   }) as "YES" | "NO" | undefined
 
   // const occurrences = useWatch({
@@ -61,6 +66,25 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
       ] as unknown as never)
     }
   }, [isPart, form.setValue, form.clearErrors])
+
+  const prevClassWorkshopTypeRef = useRef(classWorkshopType)
+  useEffect(() => {
+    const prev = prevClassWorkshopTypeRef.current
+    prevClassWorkshopTypeRef.current = classWorkshopType
+    if (prev === "WORKSHOP" && classWorkshopType === "CLASS") {
+      form.setValue("dropInClassesAvailable", undefined)
+      form.setValue("dropInClasses", "")
+      form.clearErrors(["dropInClassesAvailable", "dropInClasses"] as unknown as never)
+    }
+  }, [classWorkshopType, form.setValue, form.clearErrors])
+
+  useEffect(() => {
+    if (!isWorkshop) return
+    if (dropInClassesAvailable === "NO") {
+      form.setValue("dropInClasses", "")
+      form.clearErrors("dropInClasses" as unknown as never)
+    }
+  }, [isWorkshop, dropInClassesAvailable, form.setValue, form.clearErrors])
 
   return (
     <>
@@ -138,13 +162,26 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
             rows={4}
           />
 
-          <TextAreaField
+          <SelectBlock
             form={form}
-            name={"dropInClasses"}
-            label="Are drop-in classes available? And if so, how much do they cost?"
-            placeholder="Please describe the drop-in classes and their pricing."
-            rows={4}
+            name={"dropInClassesAvailable"}
+            label="Are drop-in classes available?"
+            required
+            options={[
+              { label: "No", value: "NO" },
+              { label: "Yes", value: "YES" },
+            ]}
           />
+
+          {dropInClassesAvailable === "YES" && (
+            <TextAreaField
+              form={form}
+              name={"dropInClasses"}
+              label="How much do they cost? (and any other drop-in details)"
+              placeholder="e.g., $25 per class, sliding scale, which sessions allow drop-ins"
+              rows={4}
+            />
+          )}
         </Section>
       )}
 

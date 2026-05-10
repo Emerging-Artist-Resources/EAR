@@ -562,6 +562,12 @@ export function buildClassPayload(
   }
 
   const isWorkshop = (data.classWorkshopType || "CLASS") === "WORKSHOP"
+  const dropInClassesStored =
+    isWorkshop && data.dropInClassesAvailable === "YES"
+      ? (data.dropInClasses ?? "").trim() || null
+      : isWorkshop
+        ? null
+        : (data.dropInClasses ?? "").trim() || null
   const rawShare = isWorkshop
     ? (data.shareRecipientEmails ?? [])
         .map((e) => e.trim())
@@ -604,7 +610,7 @@ export function buildClassPayload(
       style_category: data.styleCategory || null,
       workshop_details: data.workshopDetails || null,
       classes_offered: data.classesOffered || null,
-      drop_in_classes: data.dropInClasses || null,
+      drop_in_classes: dropInClassesStored,
       artist_type: data.artistType || data.classArtistType || null,
       listing_fee_option: data.listingFeeOption || data.classListingFeeOption || null,
       listing_fee_explanation: data.listingFeeExplanation || data.classListingFeeExplanation || null,

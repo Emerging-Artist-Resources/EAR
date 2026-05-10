@@ -226,7 +226,13 @@ export function ownerListingToFormLoad(row: UnknownRecord): OwnerListingLoadResu
       styleCategory: (cwd?.style_category as string) || undefined,
       workshopDetails: (cwd?.workshop_details as string) || undefined,
       classesOffered: (cwd?.classes_offered as string) || undefined,
-      dropInClasses: (cwd?.drop_in_classes as string) || undefined,
+      ...(() => {
+        const dropText = ((cwd?.drop_in_classes as string) ?? "").trim()
+        return {
+          dropInClassesAvailable: (dropText ? "YES" : "NO") as EventFormData["dropInClassesAvailable"],
+          dropInClasses: dropText || undefined,
+        }
+      })(),
       artistType: (cwd?.artist_type as EventFormData["artistType"]) || undefined,
       listingFeeOption: (cwd?.listing_fee_option as EventFormData["listingFeeOption"]) || undefined,
       listingFeeExplanation: (cwd?.listing_fee_explanation as string) || undefined,

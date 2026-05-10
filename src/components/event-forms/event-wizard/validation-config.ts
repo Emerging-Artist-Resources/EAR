@@ -72,6 +72,8 @@ export const eventTypeValidationFields: Record<
     "classRegistrationDetails", // Registration link or instructions (required for CLASS only)
     "listingWebsite",
     "description", // Fifth field in Basic Info
+    "dropInClassesAvailable", // Workshop: drop-in yes/no (before schedule)
+    "dropInClasses", // Workshop: drop-in details when Yes
     "isPartOfFestivalOrWorkshop", // In Festival or Workshop Association section (required for CLASS only)
     "parentEventId", // In FestivalAssociationSection (required if YES and not creating placeholder, CLASS only)
     "placeholderTitle", // In FestivalAssociationSection (required if YES and creating placeholder, CLASS only)

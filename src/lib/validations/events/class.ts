@@ -75,6 +75,8 @@ export const classFields = z
     // Workshop-only extras (optional)
     workshopDetails: z.string().optional(),
     classesOffered: z.string().optional(),
+    /** UI only: required for WORKSHOP when submitting; maps to drop_in_classes when YES */
+    dropInClassesAvailable: z.enum(["YES", "NO"]).optional(),
     dropInClasses: z.string().optional(),
 
     /**
@@ -276,6 +278,24 @@ export const classFields = z
     }
 
     if (data.classWorkshopType === "WORKSHOP") {
+      const avail = data.dropInClassesAvailable
+      if (avail !== "YES" && avail !== "NO") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["dropInClassesAvailable"],
+          message: "Select whether drop-in classes are available",
+        })
+      } else if (avail === "YES") {
+        const detail = data.dropInClasses?.trim() ?? ""
+        if (!detail) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["dropInClasses"],
+            message: "Describe drop-in pricing or details",
+          })
+        }
+      }
+
       const emails = (data as { shareRecipientEmails?: string[] }).shareRecipientEmails
       if (emails) {
         emails.forEach((e: string, i: number) => {

@@ -632,6 +632,11 @@ export const classStep2Schema = baseSchema
     locationInstructions: true,
     shareRecipientEmails: true,
     classRegistrationDetails: true,
+    listingWebsite: true,
+    workshopDetails: true,
+    classesOffered: true,
+    dropInClassesAvailable: true,
+    dropInClasses: true,
   })
   .passthrough()
   .superRefine((data, ctx) => {
@@ -771,6 +776,24 @@ export const classStep2Schema = baseSchema
     }
 
     if (data.classWorkshopType === "WORKSHOP") {
+      const avail = data.dropInClassesAvailable
+      if (avail !== "YES" && avail !== "NO") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["dropInClassesAvailable"],
+          message: "Select whether drop-in classes are available",
+        })
+      } else if (avail === "YES") {
+        const detail = data.dropInClasses?.trim() ?? ""
+        if (!detail) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["dropInClasses"],
+            message: "Describe drop-in pricing or details",
+          })
+        }
+      }
+
       const emails = data.shareRecipientEmails
       if (emails) {
         emails.forEach((e, i) => {
