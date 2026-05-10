@@ -16,6 +16,7 @@ function relMany<T>(x: T | T[] | null | undefined): T[] {
 
 function occurrenceRowToForm(occ: {
   starts_at_utc: string
+  ends_at_utc?: string | null
   address?: string | null
   place_id?: string | null
   lat?: number | null
@@ -24,9 +25,13 @@ function occurrenceRowToForm(occ: {
   location_instructions?: string | null
 }) {
   const { date, time } = convertUTCToEST(occ.starts_at_utc)
+  let endTime = ""
+  if (occ.ends_at_utc) {
+    endTime = convertUTCToEST(occ.ends_at_utc).time
+  }
   return {
     date,
-    times: [{ time }],
+    times: [{ time, endTime }],
     address: occ.address ?? undefined,
     placeId: occ.place_id ?? undefined,
     lat: occ.lat ?? undefined,

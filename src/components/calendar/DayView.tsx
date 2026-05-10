@@ -61,6 +61,9 @@ export function DayView({
                       {listingOccurrences.map((occ) => (
                         <li key={occ.occurrenceId}>
                           {formatTimeEST(new Date(occ.start))}
+                          {occ.endsAt
+                            ? ` – ${formatTimeEST(new Date(String(occ.endsAt)))}`
+                            : ""}
                         </li>
                       ))}
                     </ul>

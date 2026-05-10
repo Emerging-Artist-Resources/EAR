@@ -161,6 +161,20 @@ export function formatTimeEST12Hour(utcISOString: string): string {
 }
 
 /**
+ * Formats a UTC ISO string to date only in EST (no time).
+ * @returns e.g. "May 21, 2026"
+ */
+export function formatDateOnlyEST(utcISOString: string): string {
+  const date = new Date(utcISOString)
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: EST_TIMEZONE,
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date)
+}
+
+/**
  * Formats a UTC ISO string to date and 12-hour time in EST
  * @param utcISOString - ISO string in UTC
  * @returns Formatted string like "Jan 1, 2024, 7:00 PM"
@@ -176,4 +190,30 @@ export function formatDateTimeEST(utcISOString: string): string {
     minute: '2-digit',
     hour12: true,
   }).format(date)
+}
+
+/** Calendar day in America/New_York for comparing start/end (handles DST). */
+function estDateKey(utcISOString: string): string {
+  const date = new Date(utcISOString)
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: EST_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date)
+}
+
+/**
+ * Start + optional end in EST. Same calendar day: "May 21, 2026, 8:15 AM - 9:21 AM".
+ * Different days (rare): full datetime for each side.
+ */
+export function formatOccurrenceRangeEST(startsAtUtc: string, endsAtUtc?: string | null): string {
+  const raw = endsAtUtc != null ? String(endsAtUtc).trim() : ""
+  if (!raw) return formatDateTimeEST(startsAtUtc)
+
+  if (estDateKey(startsAtUtc) === estDateKey(raw)) {
+    return `${formatDateOnlyEST(startsAtUtc)}, ${formatTimeEST12Hour(startsAtUtc)} - ${formatTimeEST12Hour(raw)}`
+  }
+
+  return `${formatDateTimeEST(startsAtUtc)} - ${formatDateTimeEST(raw)}`
 }

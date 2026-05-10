@@ -11,7 +11,10 @@ export interface SavedEvent {
   id: string;
   type: EventType;
   name: string;
-  date: string;       // ISO string or formatted string
+  /** Display: start (and end when present), EST — from `formatOccurrenceRangeEST`. */
+  date: string;
+  /** ISO start of the primary occurrence or deadline; for reliable past/upcoming checks. */
+  primaryStartsAtIso?: string;
   location: string;
   deadline?: string;
   description?: string;

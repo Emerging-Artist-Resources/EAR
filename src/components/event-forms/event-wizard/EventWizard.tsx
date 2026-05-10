@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react"
+import { useState, useCallback, useMemo, useEffect, useLayoutEffect, useRef } from "react"
 import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
 import type { Resolver } from "react-hook-form"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
@@ -45,8 +45,21 @@ interface ProfileData {
 
 
 
+/** Reset modal / nested scroll positions when the wizard step changes so step 2+ starts at the top. */
+function scrollAncestorsToTop(startEl: HTMLElement | null) {
+  let el: HTMLElement | null = startEl
+  while (el && el !== document.body) {
+    const { overflowY } = window.getComputedStyle(el)
+    if (overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay") {
+      el.scrollTop = 0
+    }
+    el = el.parentElement
+  }
+}
+
 export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1)
+  const wizardRootRef = useRef<HTMLDivElement>(null)
   const [eventType, setEventType] = useState<EventType | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [profilePronouns, setProfilePronouns] = useState<string | null>(null)
@@ -83,6 +96,10 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       cancelled = true
     }
   }, [user])
+
+  useLayoutEffect(() => {
+    scrollAncestorsToTop(wizardRootRef.current)
+  }, [step])
 
   useEffect(() => {
     if (!listingId) {
@@ -421,7 +438,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
   )
 
   return (
-    <div className="space-y-6">
+    <div ref={wizardRootRef} className="space-y-6">
       {loadError && (
         <p className="text-sm text-red-600 text-center" role="alert">
           {loadError}

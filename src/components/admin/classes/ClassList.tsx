@@ -4,7 +4,7 @@ import { ClassNeedingLink } from "./types"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { formatDateTimeEST } from "@/lib/datetime-utils"
+import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
 
 interface ClassListProps {
   classes: ClassNeedingLink[]
@@ -74,8 +74,7 @@ export function ClassList({ classes, onLinkClick }: ClassListProps) {
                       <ul className="list-disc ml-5 text-sm text-gray-600 space-y-1">
                         {classItem.occurrences.map((occ) => (
                           <li key={occ.id}>
-                            {formatDateTimeEST(occ.starts_at_utc)}
-                            {occ.ends_at_utc && ` - ${formatDateTimeEST(occ.ends_at_utc)}`}
+                            {formatOccurrenceRangeEST(occ.starts_at_utc, occ.ends_at_utc)}
                             {(occ.venue_name || occ.address) && (
                               <span className="text-gray-500">
                                 {" "}

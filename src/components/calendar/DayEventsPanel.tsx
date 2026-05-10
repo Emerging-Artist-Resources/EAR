@@ -4,6 +4,8 @@ import { format } from "date-fns"
 import { Modal } from "@/components/ui/modal"
 import type { CalendarItem } from "@/hooks/use-calendar"
 import { getEventTypeColor } from "./event-colors"
+import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
+import { Text } from "@/components/ui/typography"
 
 interface DayEventsPanelProps {
   isOpen: boolean
@@ -67,6 +69,9 @@ export function DayEventsPanel({
                     <h3 className="font-header text-2xl font-semibold text-text-primary truncate">
                       {event.title || "Untitled Event"}
                     </h3>
+                    <Text className="text-sm text-text-muted mt-1">
+                      {formatOccurrenceRangeEST(event.start, event.endsAt)}
+                    </Text>
                   </div>
                 </div>
               </div>

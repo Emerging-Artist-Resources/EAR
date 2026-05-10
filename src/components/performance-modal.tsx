@@ -24,7 +24,7 @@ export default function PerformanceModal({ isOpen, onClose, onSuccess, listingId
       onClose={handleClose}
       title={title}
       closeOnOverlay={false}
-      contentClassName="border-border-default bg-surface-modal-warm text-text-primary"
+      contentClassName="max-w-4xl border-border-default bg-surface-modal-warm text-text-primary"
     >
       <EventWizard
         key={listingId ?? "new-listing"}

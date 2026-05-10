@@ -15,9 +15,11 @@ interface ParentEventData {
 interface ClassOccurrencesPickerProps {
   form: UseFormReturn<EventFormData>
   label: string
+  /** Pass through to schedule rows (class/workshop end times). */
+  showEndTime?: boolean
 }
 
-export function ClassOccurrencesPicker({ form, label }: ClassOccurrencesPickerProps) {
+export function ClassOccurrencesPicker({ form, label, showEndTime = false }: ClassOccurrencesPickerProps) {
   const [useManualEntry, setUseManualEntry] = useState(false)
   const [parentDates, setParentDates] = useState<string[]>([])
   const [loadingParent, setLoadingParent] = useState(false)
@@ -138,7 +140,7 @@ export function ClassOccurrencesPicker({ form, label }: ClassOccurrencesPickerPr
     const currentOccurrences = (form.getValues("occurrences" as Path<EventFormData>) ??
       []) as Array<{
       date: string
-      times: Array<{ time: string }>
+      times: Array<{ time: string; endTime?: string }>
     }>
 
     const existingDatesSet = new Set(currentOccurrences.map((occ) => occ.date))
@@ -149,13 +151,13 @@ export function ClassOccurrencesPicker({ form, label }: ClassOccurrencesPickerPr
         ...currentOccurrences,
         ...datesToAdd.map((date) => ({
           date,
-          times: [{ time: "" }],
+          times: showEndTime ? [{ time: "", endTime: "" }] : [{ time: "" }],
         })),
       ].sort((a: { date: string }, b: { date: string }) => a.date.localeCompare(b.date))
 
       form.setValue("occurrences" as Path<EventFormData>, newOccurrences as never)
     }
-  }, [selectedDates, form, useManualEntry, hasSelectedDates])
+  }, [selectedDates, form, useManualEntry, hasSelectedDates, showEndTime])
 
   if (shouldShowManualEntry) {
     return (
@@ -177,6 +179,7 @@ export function ClassOccurrencesPicker({ form, label }: ClassOccurrencesPickerPr
           required
           rowLabel="Class date"
           maxTimesPerDate={1}
+          showEndTime={showEndTime}
           locationConfig={{
             addressName: "address",
             venueName: "venueName",
@@ -232,6 +235,7 @@ export function ClassOccurrencesPicker({ form, label }: ClassOccurrencesPickerPr
               required
               rowLabel="Class date"
               maxTimesPerDate={1}
+              showEndTime={showEndTime}
               locationConfig={{
                 addressName: "address",
                 venueName: "venueName",

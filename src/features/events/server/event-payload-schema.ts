@@ -30,18 +30,33 @@ export const eventPayloadBaseSchema = z.object({
   meta: listingMetaSchema.optional(),
 })
 
-export const eventOccurrenceSchema = z.object({
-  starts_at_utc: z.string().datetime("Invalid datetime format"),
-  ends_at_utc: z.string().datetime("Invalid datetime format").optional().nullable(),
-  tz: z.string().min(1, "Timezone is required"),
-  occurrence_type: z.enum(["event", "deadline"]).optional(),
-  address: z.string().optional().nullable(),
-  place_id: z.string().optional().nullable(),
-  lat: z.number().optional().nullable(),
-  lng: z.number().optional().nullable(),
-  venue_name: z.string().optional().nullable(),
-  location_instructions: z.string().optional().nullable(),
-})
+export const eventOccurrenceSchema = z
+  .object({
+    starts_at_utc: z.string().datetime("Invalid datetime format"),
+    ends_at_utc: z.string().datetime("Invalid datetime format").optional().nullable(),
+    tz: z.string().min(1, "Timezone is required"),
+    occurrence_type: z.enum(["event", "deadline"]).optional(),
+    address: z.string().optional().nullable(),
+    place_id: z.string().optional().nullable(),
+    lat: z.number().optional().nullable(),
+    lng: z.number().optional().nullable(),
+    venue_name: z.string().optional().nullable(),
+    location_instructions: z.string().optional().nullable(),
+  })
+  .superRefine((occ, ctx) => {
+    const endRaw = occ.ends_at_utc
+    if (endRaw == null || endRaw === "") return
+    const startMs = Date.parse(occ.starts_at_utc)
+    const endMs = Date.parse(endRaw)
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return
+    if (endMs <= startMs) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "End time must be after start time",
+        path: ["ends_at_utc"],
+      })
+    }
+  })
 
 export const eventPhotoSchema = z.object({
   path: z.string().min(1, "Photo path is required"),

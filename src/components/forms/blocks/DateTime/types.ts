@@ -1,4 +1,4 @@
-export type TimeItem = { time: string }
+export type TimeItem = { time: string; endTime?: string }
 
 export type DateItem = {
   date: string

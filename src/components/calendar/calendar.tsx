@@ -24,12 +24,8 @@ import {
   subWeeks,
   addDays,
 } from "date-fns"
-import { formatDateTimeEST as formatDateTimeESTUtil, convertUTCToEST } from "@/lib/datetime-utils"
+import { convertUTCToEST, formatOccurrenceRangeEST } from "@/lib/datetime-utils"
 import { filterCalendarItems, getItemsForDate, handleMonthChange } from "./calendar-utils"
-
-const formatDateTimeEST = (date: Date): string => {
-  return formatDateTimeESTUtil(date.toISOString())
-}
 
 const INITIAL_MONTH_KEY = (() => {
   const now = new Date()
@@ -270,7 +266,9 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
                   <div className="font-header text-base font-semibold text-text-muted group-hover:text-text-primary">
                     {it.title || "Untitled"}
                   </div>
-                  <Text className="text-sm text-text-muted">{formatDateTimeEST(new Date(String(it.start)))}</Text>
+                  <Text className="text-sm text-text-muted">
+                    {formatOccurrenceRangeEST(String(it.start), it.endsAt)}
+                  </Text>
                 </button>
               ))}
               {upcomingDeadlines.length === 0 && (

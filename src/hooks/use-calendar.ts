@@ -7,6 +7,8 @@ export type CalendarItem = {
   type: "performance" | "audition" | "creative" | "class" | "funding"
   title: string | null
   start: string
+  /** Present when the occurrence has an end instant (e.g. class/workshop slots). */
+  endsAt?: string | null
   tz: string
 }
 

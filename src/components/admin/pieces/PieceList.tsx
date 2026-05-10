@@ -4,7 +4,7 @@ import { PieceNeedingLink } from "./types"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { formatDateTimeEST } from "@/lib/datetime-utils"
+import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
 
 interface PieceListProps {
   pieces: PieceNeedingLink[]
@@ -45,8 +45,7 @@ export function PieceList({ pieces, onLinkClick }: PieceListProps) {
                       <ul className="list-disc ml-5 text-sm text-gray-600 space-y-1">
                         {piece.occurrences.map((occ) => (
                           <li key={occ.id}>
-                            {formatDateTimeEST(occ.starts_at_utc)}
-                            {occ.ends_at_utc && ` - ${formatDateTimeEST(occ.ends_at_utc)}`}
+                            {formatOccurrenceRangeEST(occ.starts_at_utc, occ.ends_at_utc)}
                           </li>
                         ))}
                       </ul>

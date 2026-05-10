@@ -49,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
   }
 
   return (
-    <nav className={"shrink-0 bg-transparent"}>
+    <nav className={"shrink-0 bg-ear-black"}>
       <div className="max-w-7xl mx-auto w-full">
         <div className="flex justify-between h-16">
           <div className="flex items-center">

@@ -1,6 +1,10 @@
 import { z } from "zod"
 import { flexibleUrlOptionalSchema } from "../flexible-url"
-import { occurrenceSchema } from "./base"
+import {
+  occurrenceSchema,
+  refineOccurrenceTimeSlotEndAfterStart,
+  lenientOccurrenceTimeSlotSchema,
+} from "./base"
 
 // Class / Workshop-only
 export const classFields = z
@@ -32,7 +36,7 @@ export const classFields = z
     occurrences: z.array(
       occurrenceSchema.extend({
         date: z.string().optional(),
-        times: z.array(z.object({ time: z.string().optional() })).optional(),
+        times: z.array(lenientOccurrenceTimeSlotSchema).optional(),
       })
     ).optional(),
 
@@ -247,6 +251,14 @@ export const classFields = z
               message: "Location is required for each date & time",
             })
           })
+        }
+      }
+
+      for (let i = 0; i < normalizedOccurrences.length; i++) {
+        const occ = normalizedOccurrences[i]
+        if (!occ?.times?.length) continue
+        for (let j = 0; j < occ.times.length; j++) {
+          refineOccurrenceTimeSlotEndAfterStart(occ.times[j], ctx, ["occurrences", i, "times", j])
         }
       }
     }

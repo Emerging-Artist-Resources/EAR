@@ -9,21 +9,21 @@ export function ThreeCardsSection() {
           href="/announcement"
           title="About us"
           imageSrc="/images/home-about-us.png"
-          tapeSrc="/accents/tape.svg"
+          tapeSrc="/accents/tape.png"
           imageAlt="Performers seated on stage"
         />
         <NavCard
           href="/calendar"
           title="Community calendar"
           imageSrc="/images/home-about-us.png"
-          tapeSrc="/accents/tape.svg"
+          tapeSrc="/accents/tape.png"
           imageAlt="Community calendar"
         />
         <NavCard
           href="/services"
           title="Services"
           imageSrc="/images/home-services.png"
-          tapeSrc="/accents/tape.svg"
+          tapeSrc="/accents/tape.png"
           imageAlt="Performer on stage"
         />
       </div>

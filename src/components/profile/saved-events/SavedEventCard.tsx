@@ -28,11 +28,11 @@ export const SavedEventCard = ({ event, onListingClick }: SavedEventCardProps) =
   }, [event.attendanceStatus]);
   
   const isPastEvent = useMemo(() => {
-    if (!event.date) return false;
-    // Parse formatted date string (e.g., "January 15, 2024")
-    const parsedDate = new Date(event.date);
+    const iso = event.primaryStartsAtIso ?? event.date;
+    if (!iso) return false;
+    const parsedDate = new Date(iso);
     return !isNaN(parsedDate.getTime()) && parsedDate < new Date();
-  }, [event.date]);
+  }, [event.primaryStartsAtIso, event.date]);
   
   const deadlineText = event.deadline ? `Deadline: ${event.deadline}` : null;
   const eventType = String(event.type || "").toLowerCase();

@@ -55,6 +55,8 @@ export interface ShowtimeRowProps<T extends FieldValues> {
   canRemove: boolean
   maxTimesPerDate?: number
   dateInputId: string
+  /** When true, shows an end-time field per time slot (e.g. class/workshop). Default false. */
+  showEndTime?: boolean
 }
 
 export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
@@ -73,6 +75,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
       canRemove,
       maxTimesPerDate,
       dateInputId,
+      showEndTime = false,
     },
     ref,
   ) {
@@ -119,7 +122,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
         return
       }
 
-      appendTime({ time: "" } as any)
+      appendTime((showEndTime ? { time: "", endTime: "" } : { time: "" }) as any)
     }
 
     const handleRemoveTime = (timeIndex: number) => {
@@ -135,18 +138,42 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
       const path = `${name}.${index}.times` as const
       const raw = getValues(path as any) as unknown
       if (Array.isArray(raw) && raw.length > 0) return
-      appendTime({ time: "" } as any)
-    }, [showTime, times.length, appendTime, getValues, name, index])
+      appendTime((showEndTime ? { time: "", endTime: "" } : { time: "" }) as any)
+    }, [showTime, times.length, appendTime, getValues, name, index, showEndTime])
 
     const firstTimeFieldName = `${name}.${index}.times.0.time`
+    const firstEndTimeFieldName = `${name}.${index}.times.0.endTime`
     const showFirstTimeErr = showTime ? shouldShowFieldError(form, firstTimeFieldName, errorMode) : false
     const firstTimeErrMsg = showFirstTimeErr ? getErrorMessage(form, firstTimeFieldName) : undefined
+    const showFirstEndErr =
+      showTime && showEndTime ? shouldShowFieldError(form, firstEndTimeFieldName, errorMode) : false
+    const firstEndErrMsg = showFirstEndErr ? getErrorMessage(form, firstEndTimeFieldName) : undefined
 
     const hasTime = showTime && times.length > 0
     const hasLocation = Boolean(locationConfig)
     const hasInstructionsField = Boolean(locationConfig?.instructionsName)
-    const gridColsClass =
-      hasTime && hasLocation ? "md:grid-cols-3" : hasTime || hasLocation ? "md:grid-cols-2" : "md:grid-cols-1"
+    const gridColsClass = (() => {
+      if (!hasTime && !hasLocation) return "md:grid-cols-1"
+      if (!hasTime && hasLocation) return "md:grid-cols-2"
+      if (hasTime && !hasLocation) return showEndTime ? "md:grid-cols-3" : "md:grid-cols-2"
+      return showEndTime ? "md:grid-cols-4" : "md:grid-cols-3"
+    })()
+
+    const locationColStartClass = hasTime
+      ? showEndTime
+        ? "md:col-start-4"
+        : "md:col-start-3"
+      : "md:col-start-2"
+    const instructionsSpacerSpanClass = hasTime
+      ? showEndTime
+        ? "md:col-span-3 md:col-start-1 md:row-start-2"
+        : "md:col-span-2 md:col-start-1 md:row-start-2"
+      : "md:col-start-1 md:row-start-2"
+    const instructionsPanelColClass = hasTime
+      ? showEndTime
+        ? "md:row-start-2 md:col-start-4"
+        : "md:row-start-2 md:col-start-3"
+      : "md:row-start-2 md:col-start-2"
 
     return (
       <Card
@@ -204,15 +231,28 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
               </div>
             )}
 
+            {hasTime && showEndTime && (
+              <div className="w-full min-w-0 sm:max-w-[9.5rem] md:max-w-none">
+                <label
+                  className="mb-1.5 block text-sm font-medium text-text-primary"
+                  htmlFor={`${dateInputId}-end-0`}
+                >
+                  End time
+                </label>
+                <Input
+                  id={`${dateInputId}-end-0`}
+                  type="time"
+                  error={showFirstEndErr}
+                  className="w-full"
+                  {...register(firstEndTimeFieldName as any)}
+                />
+                {firstEndErrMsg && <p className="mt-1 text-xs text-red-600">{firstEndErrMsg}</p>}
+              </div>
+            )}
+
             {hasLocation && locationConfig && (
               <>
-                <div
-                  className={
-                    hasTime
-                      ? "min-h-0 min-w-0 md:row-start-1 md:col-start-3"
-                      : "min-h-0 min-w-0 md:row-start-1 md:col-start-2"
-                  }
-                >
+                <div className={`min-h-0 min-w-0 md:row-start-1 ${locationColStartClass}`}>
                   <LocationField
                     form={form}
                     addressName={`${name}.${index}.${locationConfig.addressName}` as Path<FieldValues>}
@@ -233,23 +273,13 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
 
                 {hasInstructionsField && (
                   <div
-                    className={
-                      hasTime
-                        ? "hidden h-0 overflow-hidden p-0 md:col-span-2 md:col-start-1 md:row-start-2 md:block"
-                        : "hidden h-0 overflow-hidden p-0 md:col-start-1 md:row-start-2 md:block"
-                    }
+                    className={`hidden h-0 overflow-hidden p-0 md:block ${instructionsSpacerSpanClass}`}
                     aria-hidden
                   />
                 )}
 
                 {hasInstructionsField && (
-                  <div
-                    className={
-                      hasTime
-                        ? "min-w-0 md:row-start-2 md:col-start-3"
-                        : "min-w-0 md:row-start-2 md:col-start-2"
-                    }
-                  >
+                  <div className={`min-w-0 ${instructionsPanelColClass}`}>
                     <LocationFieldInstructions
                       form={form}
                       instructionsName={
@@ -272,8 +302,12 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
             {times.slice(1).map((timeField, sliceIndex) => {
               const timeIndex = sliceIndex + 1
               const timeFieldName = `${name}.${index}.times.${timeIndex}.time`
+              const endTimeFieldName = `${name}.${index}.times.${timeIndex}.endTime`
               const showTimeErr = shouldShowFieldError(form, timeFieldName, errorMode)
               const timeErrMsgLocal = showTimeErr ? getErrorMessage(form, timeFieldName) : undefined
+              const showEndErr =
+                showEndTime && shouldShowFieldError(form, endTimeFieldName, errorMode)
+              const endErrMsgLocal = showEndErr ? getErrorMessage(form, endTimeFieldName) : undefined
 
               return (
                 <div key={timeField.id} className="flex flex-wrap items-end gap-2 sm:gap-3">
@@ -293,6 +327,24 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                     />
                     {timeErrMsgLocal && <p className="mt-1 text-xs text-red-600">{timeErrMsgLocal}</p>}
                   </div>
+                  {showEndTime && (
+                    <div className="min-w-0 sm:max-w-[9.5rem] sm:flex-1">
+                      <label
+                        className="mb-1.5 block text-sm font-medium text-text-primary"
+                        htmlFor={`${dateInputId}-end-${timeIndex}`}
+                      >
+                        End time
+                      </label>
+                      <Input
+                        id={`${dateInputId}-end-${timeIndex}`}
+                        type="time"
+                        error={showEndErr}
+                        className="w-full"
+                        {...register(endTimeFieldName as any)}
+                      />
+                      {endErrMsgLocal && <p className="mt-1 text-xs text-red-600">{endErrMsgLocal}</p>}
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleRemoveTime(timeIndex)}

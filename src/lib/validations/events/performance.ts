@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { flexibleUrlOrEmptySchema, flexibleUrlOptionalSchema } from "../flexible-url"
-import { extraDateSchema } from "./base"
+import { extraDateSchema, lenientOccurrenceTimeSlotSchema } from "./base"
 import { ORGANIZER_OCCURRENCE_USER_MESSAGES } from "./occurrence-row"
 import { MAX_SHARE_RECIPIENT_EMAILS } from "@/lib/listing-share"
 
@@ -49,7 +49,7 @@ export const performanceFields = z
     occurrences: z.array(
       extraDateSchema.extend({
         date: z.string().optional(),
-        times: z.array(z.object({ time: z.string().optional() })).optional(),
+        times: z.array(lenientOccurrenceTimeSlotSchema).optional(),
       })
     ).optional(),
 
@@ -63,7 +63,7 @@ export const performanceFields = z
     extraOccurrences: z.array(
       extraDateSchema.extend({
         date: z.string().optional(),
-        times: z.array(z.object({ time: z.string().optional() })).optional(),
+        times: z.array(lenientOccurrenceTimeSlotSchema).optional(),
       })
     ).optional(),
 

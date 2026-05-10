@@ -5,7 +5,7 @@ import { Modal } from "@/components/ui/modal"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { FavoriteButton } from "@/components/ui/favorite-button"
-import { formatDateTimeEST } from "@/lib/datetime-utils"
+import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { getListingTitle } from "@/features/events/server/listing-utils"
 import { HorizontalScrollCards } from "@/components/shared/HorizontalScrollCards"
@@ -409,8 +409,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                     return (
                       <div key={o.id} className="border-l-4 border-primary-300 pl-4 py-2 bg-surface-panel rounded-r">
                         <div className="font-header text-xl font-semibold text-text-primary mb-1">
-                          {formatDateTimeEST(o.starts_at_utc)}
-                          {o.ends_at_utc && ` - ${formatDateTimeEST(o.ends_at_utc)}`}
+                          {formatOccurrenceRangeEST(o.starts_at_utc, o.ends_at_utc)}
                         </div>
                         {!hasSingleLocation && hasLocation && occurrenceLocation && (
                           <div className="ml-0 mt-2 space-y-1 font-sans text-sm">

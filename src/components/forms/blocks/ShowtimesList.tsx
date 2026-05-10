@@ -33,12 +33,22 @@ export interface ShowtimesListProps<T extends FieldValues> {
   rowLabel?: string
   /** Placed after the intro note (and section title) and before the date/time cards. */
   betweenNoteAndRows?: ReactNode
+  /** When true, each slot can include an end time (class/workshop). Default false. */
+  showEndTime?: boolean
 }
 
-function buildInitialRow(showTime: boolean, locationConfig?: LocationConfigFull): DateItem {
+function buildInitialRow(
+  showTime: boolean,
+  locationConfig: LocationConfigFull | undefined,
+  showEndTime: boolean,
+): DateItem {
   return {
     date: "",
-    times: showTime ? [{ time: "" }] : [],
+    times: showTime
+      ? showEndTime
+        ? [{ time: "", endTime: "" }]
+        : [{ time: "" }]
+      : [],
     ...createLocationFields(locationConfig, undefined, true),
   } as DateItem
 }
@@ -46,17 +56,26 @@ function buildInitialRow(showTime: boolean, locationConfig?: LocationConfigFull)
 function buildNewShowtimeFromPrevious(
   prev: Record<string, any> | undefined,
   showTime: boolean,
-  locationConfig?: LocationConfigFull,
+  locationConfig: LocationConfigFull | undefined,
+  showEndTime: boolean,
 ): DateItem {
   const times = prev?.times
   let timeValue = ""
+  let endTimeValue = ""
   if (showTime && Array.isArray(times) && times.length === 1) {
     timeValue = (times[0] as { time?: string })?.time ?? ""
+    endTimeValue = (times[0] as { endTime?: string })?.endTime ?? ""
   }
   const loc = createLocationFields(locationConfig, prev as Partial<DateItem>)
+  const slot =
+    showTime && showEndTime
+      ? { time: timeValue, endTime: endTimeValue }
+      : showTime
+        ? { time: timeValue }
+        : null
   return {
     date: "",
-    times: showTime ? [{ time: timeValue }] : [],
+    times: slot ? [slot] : [],
     ...loc,
   } as DateItem
 }
@@ -75,6 +94,7 @@ export function ShowtimesList<T extends FieldValues>({
   locationConfig,
   rowLabel = "Showtime",
   betweenNoteAndRows,
+  showEndTime = false,
 }: ShowtimesListProps<T>) {
   const { control, getValues, setFocus, setError } = form
   const initDone = useRef(false)
@@ -117,7 +137,7 @@ export function ShowtimesList<T extends FieldValues>({
       initDone.current = true
       return
     }
-    append(buildInitialRow(showTime, locationConfig) as any)
+    append(buildInitialRow(showTime, locationConfig, showEndTime) as any)
     initDone.current = true
     // Intentionally run once on mount: simple empty → one row. No watch/replace/signature.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -165,7 +185,7 @@ export function ShowtimesList<T extends FieldValues>({
     }
 
     const newIndex = fields.length
-    const row = buildNewShowtimeFromPrevious(prev, showTime, locationConfig)
+    const row = buildNewShowtimeFromPrevious(prev, showTime, locationConfig, showEndTime)
     append(row as any)
     const datePath = `${name}.${newIndex}.date` as any
 
@@ -176,7 +196,7 @@ export function ShowtimesList<T extends FieldValues>({
       setFocus(datePath, { shouldSelect: true })
       rowElsRef.current[newIndex]?.scrollIntoView({ block: "nearest", behavior: "smooth" })
     }, 0)
-  }, [append, fields.length, getValues, locationConfig, name, requireLocation, setError, setFocus, showTime])
+  }, [append, fields.length, getValues, locationConfig, name, requireLocation, setError, setFocus, showTime, showEndTime])
 
   useEffect(
     () => () => {
@@ -220,6 +240,7 @@ export function ShowtimesList<T extends FieldValues>({
               dateInputId={dateInputId}
               rowLabel={rowLabel}
               showLabelIndex={maxDates !== 1}
+              showEndTime={showEndTime}
             />
           )
         })}

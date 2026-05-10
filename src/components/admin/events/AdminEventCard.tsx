@@ -16,7 +16,7 @@ import {
 import { ReviewActions } from "./ReviewActions"
 import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
 import { useAuth } from "@/hooks/use-auth"
-import { formatDateTimeEST } from "@/lib/datetime-utils"
+import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
 
 function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   if (value === undefined || value === null || value === "") return null
@@ -343,8 +343,7 @@ export function AdminEventCard({
                         return (
                           <div key={o.id} className="border-l-2 border-[var(--gray-200)] pl-3 space-y-1">
                             <div className="text-sm font-medium text-[var(--gray-800)]">
-                              {formatDateTimeEST(o.starts_at_utc)}
-                              {o.ends_at_utc && ` - ${formatDateTimeEST(o.ends_at_utc)}`}
+                              {formatOccurrenceRangeEST(o.starts_at_utc, o.ends_at_utc)}
                             </div>
                             {!hasSingleLocation && hasLocation && (
                               <div className="ml-4 space-y-1 text-sm">

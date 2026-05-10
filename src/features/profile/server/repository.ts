@@ -15,6 +15,7 @@ import {
   parseActiveDonationDesignationConfig,
 } from "@/lib/donations/donationDesignationConfig";
 import { resolveDonationRecipientDisplayName } from "@/lib/profile/donationRecipientDisplayName";
+import { formatOccurrenceRangeEST } from "@/lib/datetime-utils";
 
 export async function fetchSavedEventsFromDb(
   userId: string,
@@ -131,11 +132,11 @@ export async function fetchSavedEventsFromDb(
       earliestDeadline?.address ||
       "Location TBD";
 
-    const date = new Date(primaryStartsAt).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    const primaryEndsAt = earliestOccurrence?.starts_at_utc
+      ? (earliestOccurrence.ends_at_utc ?? null)
+      : (earliestDeadline?.ends_at_utc ?? null)
+
+    const date = formatOccurrenceRangeEST(primaryStartsAt, primaryEndsAt)
 
     // Get description from appropriate detail table
     let description: string | undefined;
@@ -164,6 +165,7 @@ export async function fetchSavedEventsFromDb(
       type: listing.type as SavedEvent["type"],
       name: title,
       date,
+      primaryStartsAtIso: primaryStartsAt,
       location,
       deadline,
       description,

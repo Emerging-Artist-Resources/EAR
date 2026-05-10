@@ -246,13 +246,10 @@ export async function listCalendarItemsRepo(params: {
         return subtype === "ORGANIZER"
       }
       if (row.listings?.type === "class") {
-        const classDetails = normalizeSupabaseRelation(row.listings.class_workshop_details)
-        if (classDetails?.class_workshop_type === "CLASS") {
-          // Allow classes with parent_workshop_name but no parent_listing_id
-          return classDetails?.parent_workshop_name && !classDetails?.parent_listing_id
-        }
-        // Show all workshops (class_workshop_type === "WORKSHOP")
-        return classDetails?.class_workshop_type === "WORKSHOP"
+        // Show every approved class/workshop listing on the calendar. Occurrences are already
+        // scoped to this listing; the old filter only allowed placeholder-parent CLASS rows and
+        // all WORKSHOP rows, which hid normal CLASS submissions (linked or standalone).
+        return true
       }
       return true
     })

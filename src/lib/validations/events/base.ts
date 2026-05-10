@@ -34,13 +34,60 @@ export const baseSchema = z.object({
 
 /**
  * Canonical schedule shape:
- * occurrences = [{ date, times: [{ time }], address?, venueName?, placeId?, lat?, lng?, locationInstructions? }]
+ * occurrences = [{ date, times: [{ time, endTime? }], address?, venueName?, placeId?, lat?, lng?, locationInstructions? }]
  *
  * Location fields are optional and used when locationConfig is provided in DateTimeList
  * (e.g., for performance and class/workshop where each occurrence can have its own location)
  */
-export const occurrenceTimeSchema = z.object({
-  time: z.string().min(1, "Time is required"),
+
+/** Same calendar-day HH:mm rules as occurrenceTimeSchema — reusable for step-level superRefine (e.g. class) where times are loosely typed. */
+export function refineOccurrenceTimeSlotEndAfterStart(
+  slot: { time?: string | null | undefined; endTime?: string | null | undefined },
+  ctx: z.RefinementCtx,
+  pathPrefix: (string | number)[],
+): void {
+  const raw = (slot.endTime ?? "").trim()
+  if (!raw) return
+  const endPath = [...pathPrefix, "endTime"]
+  if (!/^\d{2}:\d{2}$/.test(raw)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Enter a valid end time",
+      path: endPath,
+    })
+    return
+  }
+  const start = String(slot.time ?? "").trim()
+  if (!/^\d{2}:\d{2}$/.test(start)) return
+  const toMin = (s: string) => {
+    const [h, m] = s.split(":").map(Number)
+    return h * 60 + m
+  }
+  if (toMin(raw) <= toMin(start)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "End time must be after start time",
+      path: endPath,
+    })
+  }
+}
+
+export const occurrenceTimeSchema = z
+  .object({
+    time: z.string().min(1, "Time is required"),
+    endTime: z.union([z.literal(""), z.string()]).optional(),
+  })
+  .superRefine((row, ctx) => {
+    refineOccurrenceTimeSlotEndAfterStart(row, ctx, [])
+  })
+
+/**
+ * Wizard / merge schemas use optional `time` while editing; must still allow `endTime`
+ * so Zod parse does not strip it before `buildEventPayload` → `ends_at_utc`.
+ */
+export const lenientOccurrenceTimeSlotSchema = z.object({
+  time: z.string().optional(),
+  endTime: z.union([z.literal(""), z.string()]).optional(),
 })
 
 export const occurrenceSchema = z.object({

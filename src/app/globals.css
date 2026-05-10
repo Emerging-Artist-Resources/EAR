@@ -319,7 +319,7 @@
 }
 
 body {
-  background: var(--ear-black) !important;
+  background: var(--ear-off-white) !important;
   position: relative;
   /* Must match --foreground: unlayered rules win over @layer base; gray-900 on ear-black was invisible */
   color: var(--foreground);

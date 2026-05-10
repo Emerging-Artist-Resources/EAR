@@ -42,6 +42,20 @@ type EventPayload = {
   photos?: Array<{ path: string; credit?: string | null; sort_order?: number }>
 }
 
+function occurrenceSlotPayload(
+  date: string,
+  t: { time?: string; endTime?: string | null },
+  rest: Omit<EventPayload["occurrences"][number], "starts_at_utc" | "ends_at_utc" | "tz">
+): EventPayload["occurrences"][number] {
+  const endRaw = (t.endTime ?? "").trim()
+  return {
+    starts_at_utc: convertESTToUTC(date, t.time!),
+    ends_at_utc: endRaw ? convertESTToUTC(date, endRaw) : null,
+    tz: EST_TIMEZONE,
+    ...rest,
+  }
+}
+
 export interface UserInfo {
   name: string
   email: string
@@ -81,11 +95,9 @@ export async function buildPerformancePayload(
   const primaryDate = data.date
   const primaryTime = data.showTime
   if (primaryDate && primaryTime) {
-    occurrences.push({
-      starts_at_utc: convertESTToUTC(primaryDate, primaryTime),
-      tz: EST_TIMEZONE,
-      occurrence_type: 'event',
-    })
+    occurrences.push(
+      occurrenceSlotPayload(primaryDate, { time: primaryTime }, { occurrence_type: "event" }),
+    )
   }
 
   const isPiece = data.type === "PIECE"
@@ -152,18 +164,17 @@ export async function buildPerformancePayload(
         selectedOccurrences.push(selectedOcc)
         
         // Create occurrence with location fields from parent
-        occurrences.push({
-          starts_at_utc: convertESTToUTC(date, time),
-          tz: EST_TIMEZONE,
-          occurrence_type: 'event',
-          // Copy location fields from parent occurrence if available
-          address: locationData.address,
-          place_id: locationData.place_id,
-          lat: locationData.lat,
-          lng: locationData.lng,
-          venue_name: locationData.venue_name,
-          location_instructions: locationData.location_instructions,
-        })
+        occurrences.push(
+          occurrenceSlotPayload(date, { time }, {
+            occurrence_type: "event",
+            address: locationData.address,
+            place_id: locationData.place_id,
+            lat: locationData.lat,
+            lng: locationData.lng,
+            venue_name: locationData.venue_name,
+            location_instructions: locationData.location_instructions,
+          }),
+        )
       }
     }
     
@@ -211,18 +222,17 @@ export async function buildPerformancePayload(
             continue
           }
           
-          occurrences.push({
-            starts_at_utc: convertESTToUTC(d.date, t.time),
-            tz: EST_TIMEZONE,
-            occurrence_type: 'event',
-            // Extract location fields from date item if present
-            address: (d as any).address || null,
-            place_id: (d as any).placeId || null,
-            lat: (d as any).lat || null,
-            lng: (d as any).lng || null,
-            venue_name: (d as any).venueName || null,
-            location_instructions: (d as any).locationInstructions || null,
-          })
+          occurrences.push(
+            occurrenceSlotPayload(d.date, t, {
+              occurrence_type: "event",
+              address: (d as any).address || null,
+              place_id: (d as any).placeId || null,
+              lat: (d as any).lat || null,
+              lng: (d as any).lng || null,
+              venue_name: (d as any).venueName || null,
+              location_instructions: (d as any).locationInstructions || null,
+            }),
+          )
         }
       }
     }
@@ -290,17 +300,17 @@ export async function buildPerformancePayload(
           continue
         }
         
-        occurrences.push({
-          starts_at_utc: convertESTToUTC(d.date, t.time),
-          tz: EST_TIMEZONE,
-          occurrence_type: 'event',
-          address,
-          place_id: placeId,
-          lat: (d as any).lat || null,
-          lng: (d as any).lng || null,
-          venue_name: venueName,
-          location_instructions: locationInstructions,
-        })
+        occurrences.push(
+          occurrenceSlotPayload(d.date, t, {
+            occurrence_type: "event",
+            address,
+            place_id: placeId,
+            lat: (d as any).lat || null,
+            lng: (d as any).lng || null,
+            venue_name: venueName,
+            location_instructions: locationInstructions,
+          }),
+        )
       }
     }
   }
@@ -390,18 +400,17 @@ export function buildAuditionPayload(
     if (!occ?.date || !Array.isArray(occ?.times)) continue
     for (const t of occ.times) {
       if (!t?.time) continue
-      occurrences.push({
-        starts_at_utc: convertESTToUTC(occ.date, t.time),
-        tz: EST_TIMEZONE,
-        occurrence_type: 'event',
-        // Extract location fields from occurrence if present
-        address: (occ as any).address || null,
-        place_id: (occ as any).placeId || null,
-        lat: (occ as any).lat || null,
-        lng: (occ as any).lng || null,
-        venue_name: (occ as any).venueName || null,
-        location_instructions: (occ as any).locationInstructions || null,
-      })
+      occurrences.push(
+        occurrenceSlotPayload(occ.date, t, {
+          occurrence_type: "event",
+          address: (occ as any).address || null,
+          place_id: (occ as any).placeId || null,
+          lat: (occ as any).lat || null,
+          lng: (occ as any).lng || null,
+          venue_name: (occ as any).venueName || null,
+          location_instructions: (occ as any).locationInstructions || null,
+        }),
+      )
     }
   }
 
@@ -410,11 +419,9 @@ export function buildAuditionPayload(
     if (!deadline?.date || !Array.isArray(deadline?.times)) continue
     for (const t of deadline.times) {
       if (!t?.time) continue
-      occurrences.push({
-        starts_at_utc: convertESTToUTC(deadline.date, t.time),
-        tz: EST_TIMEZONE,
-        occurrence_type: 'deadline',
-      })
+      occurrences.push(
+        occurrenceSlotPayload(deadline.date, t, { occurrence_type: "deadline" }),
+      )
     }
   }
 
@@ -455,11 +462,9 @@ export function buildCreativePayload(
     if (!deadline?.date || !Array.isArray(deadline?.times)) continue
     for (const t of deadline.times) {
       if (!t?.time) continue
-      occurrences.push({
-        starts_at_utc: convertESTToUTC(deadline.date, t.time),
-        tz: EST_TIMEZONE,
-        occurrence_type: 'deadline',
-      })
+      occurrences.push(
+        occurrenceSlotPayload(deadline.date, t, { occurrence_type: "deadline" }),
+      )
     }
   }
 
@@ -509,18 +514,17 @@ export function buildClassPayload(
     if (!d?.date || !Array.isArray(d?.times)) continue
     for (const t of d.times) {
       if (!t?.time) continue
-      occurrences.push({
-        starts_at_utc: convertESTToUTC(d.date, t.time),
-        tz: EST_TIMEZONE,
-        occurrence_type: 'event',
-        // Extract location fields from date item if present
-        address: (d as any).address || null,
-        place_id: (d as any).placeId || null,
-        lat: (d as any).lat || null,
-        lng: (d as any).lng || null,
-        venue_name: (d as any).venueName || null,
-        location_instructions: (d as any).locationInstructions || null,
-      })
+      occurrences.push(
+        occurrenceSlotPayload(d.date, t, {
+          occurrence_type: "event",
+          address: (d as any).address || null,
+          place_id: (d as any).placeId || null,
+          lat: (d as any).lat || null,
+          lng: (d as any).lng || null,
+          venue_name: (d as any).venueName || null,
+          location_instructions: (d as any).locationInstructions || null,
+        }),
+      )
     }
   }
 
@@ -534,18 +538,14 @@ export function buildClassPayload(
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/
     const primaryList = tokens
       .filter((tok) => dateRegex.test(tok))
-      .map((tok) => ({
-        starts_at_utc: convertESTToUTC(tok, primaryTime),
-        tz: EST_TIMEZONE,
-        occurrence_type: 'event' as const,
-      }))
+      .map((tok) =>
+        occurrenceSlotPayload(tok, { time: primaryTime }, { occurrence_type: "event" as const }),
+      )
     const extraOcc = (data.classExtraOccurrences ?? [])
       .filter((o) => o?.date && o?.time)
-      .map((o) => ({
-        starts_at_utc: convertESTToUTC(o.date, o.time),
-        tz: EST_TIMEZONE,
-        occurrence_type: 'event' as const,
-      }))
+      .map((o) =>
+        occurrenceSlotPayload(o.date, { time: o.time }, { occurrence_type: "event" as const }),
+      )
     occurrences.push(...primaryList, ...extraOcc)
   }
 

@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { FavoriteButton } from "@/components/ui/favorite-button"
-import { formatDateTimeEST } from "@/lib/datetime-utils"
+import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
 import { useSavedListings } from "@/hooks/use-saved-listings"
 import { useAuth } from "@/hooks/use-auth"
 
@@ -124,8 +124,7 @@ export function ListingCard({
             <ul className="list-disc ml-4 space-y-0.5">
               {sortedOccurrences.map((occ) => (
                 <li key={occ.id}>
-                  {formatDateTimeEST(occ.starts_at_utc)}
-                  {occ.ends_at_utc && ` - ${formatDateTimeEST(occ.ends_at_utc)}`}
+                  {formatOccurrenceRangeEST(occ.starts_at_utc, occ.ends_at_utc)}
                 </li>
               ))}
             </ul>
@@ -134,8 +133,7 @@ export function ListingCard({
         
         {!is_piece && starts_at_utc && (
           <div className="font-sans text-xs text-text-muted">
-            {formatDateTimeEST(starts_at_utc)}
-            {ends_at_utc && ` - ${formatDateTimeEST(ends_at_utc)}`}
+            {formatOccurrenceRangeEST(starts_at_utc, ends_at_utc)}
           </div>
         )}
         

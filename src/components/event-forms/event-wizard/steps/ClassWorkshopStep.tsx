@@ -168,6 +168,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
         <ClassOccurrencesPicker
           form={form}
           label={isWorkshop ? "Workshop Schedule" : "Class Schedule"}
+          showEndTime
         />
       ) : (
         <Section title="Schedule">
@@ -179,6 +180,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
             required
             rowLabel={isWorkshop ? "Workshop date" : "Class date"}
             maxTimesPerDate={1}
+            showEndTime
             locationConfig={{
               addressName: "address",
               venueName: "venueName",
