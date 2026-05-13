@@ -24,6 +24,7 @@ import {
 } from "./PublicListingDetailSections"
 import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
 import { H3, H4, Text } from "@/components/ui/typography"
+import { getCalendarListingTypeLabel } from "@/lib/listing-type-labels"
 
 function getGoogleMapsLink(address: string | null | undefined, placeId: string | null | undefined): string | null {
   if (placeId) {
@@ -37,13 +38,7 @@ function getGoogleMapsLink(address: string | null | undefined, placeId: string |
 
 
 function getTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    performance: "Performance",
-    audition: "Audition",
-    creative: "Creative Opportunity",
-    class: "Class/Workshop",
-  }
-  return labels[type] || type
+  return getCalendarListingTypeLabel(type)
 }
 
 function getOccurrenceLocation(
@@ -191,7 +186,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
     ? "Back to Workshop"
     : null
 
-  const creativeOpportunityDates =
+  const opportunityDatesSummary =
     listing?.type === "creative" && listing.creative_details?.dates?.trim()
       ? listing.creative_details.dates.trim()
       : null
@@ -348,13 +343,13 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
             {/* Dates Card - Location and Dates/Times */}
             {(hasSingleLocation && singleLocation && (singleLocation.address || singleLocation.venue_name)) || 
              (listing.listing_occurrences && listing.listing_occurrences.length > 0) ||
-             creativeOpportunityDates ? (
+             opportunityDatesSummary ? (
               <Card className="p-4">
                 <H3 className="mb-3 text-text-primary">Dates</H3>
                 <div className="space-y-0">
-                  {creativeOpportunityDates && (
+                  {opportunityDatesSummary && (
                     <div className="grid grid-cols-2 gap-x-6 gap-y-0 mb-4">
-                      <FieldRow label="Opportunity Dates" value={creativeOpportunityDates} />
+                      <FieldRow label="Opportunity Dates" value={opportunityDatesSummary} />
                     </div>
                   )}
                   {/* Location - Single Location */}

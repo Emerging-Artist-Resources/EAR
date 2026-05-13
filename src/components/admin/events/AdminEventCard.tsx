@@ -17,6 +17,7 @@ import { ReviewActions } from "./ReviewActions"
 import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
 import { useAuth } from "@/hooks/use-auth"
 import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
+import { OPPORTUNITY_LISTING_TYPE_LABEL } from "@/lib/listing-type-labels"
 
 function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   if (value === undefined || value === null || value === "") return null
@@ -326,7 +327,7 @@ export function AdminEventCard({
                       const eventTypeLabels: Record<string, string> = {
                         performance: "Performance",
                         audition: "Audition",
-                        creative: "Creative",
+                        creative: OPPORTUNITY_LISTING_TYPE_LABEL,
                         class: "Class",
                       }
                       const eventTypeLabel = eventTypeLabels[detail.type] || "Event"

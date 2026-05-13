@@ -176,14 +176,14 @@ export function AuditionDetails({ details }: { details: NonNullable<AdminEventDe
 export function CreativeDetails({ details }: { details: NonNullable<AdminEventDetail['creative_details']> }) {
   return (
     <div className="grid gap-2">
-      <Row label="Title" value={details.title} />
-      <Row label="Description" value={details.description} />
-      <Row label="Host" value={details.host} />
+      <Row label="Opportunity Name" value={details.title} />
+      <Row label="Opportunity Description" value={details.description} />
+      <Row label="Hosting Organization/Individual(s)" value={details.host} />
       <WebsiteRow href={details.website} />
-      <Row label="Dates" value={details.dates} />
-      <Row label="Compensation" value={details.compensation} />
-      <Row label="Requirements" value={details.requirements} />
-      <Row label="Submission instructions" value={details.link} />
+      <Row label="Opportunity Dates" value={details.dates} />
+      <Row label="What is Offered" value={details.compensation} />
+      <Row label="Application Requirements" value={details.requirements} />
+      <Row label="Submission Instructions" value={details.link} />
       <Row label="Fee Option" value={details.fee} />
       <Row label="Fee Amount" value={details.fee_amount} />
       <Row label="Artist Type" value={details.artist_type} />

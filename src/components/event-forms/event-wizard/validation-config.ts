@@ -51,18 +51,18 @@ export const eventTypeValidationFields: Record<
     "address", // In Location section
   ],
   CREATIVE: [
-    "title", // First field in OpportunityStep - Creative Opportunity Details section
-    "host", // Second field
-    "dates", // Third field
-    "description", // Fourth field
-    "compensation", // Fifth field
-    "requirements", // Sixth field
+    "title",
+    "host",
     "listingWebsite",
-    "creativeSubmissionInstructions", // Seventh field (free text; not URL — see creativeFields)
-    "deadlineOccurrences", // Eighth field
-    "fee", // Ninth field
-    "feeAmount", // Conditional field (shown if fee === "FEE")
-    "address", // In Location section
+    "dates",
+    "description",
+    "compensation",
+    "requirements",
+    "creativeSubmissionInstructions",
+    "deadlineOccurrences",
+    "fee",
+    "feeAmount",
+    "address",
   ],
   CLASS: [
     "classWorkshopType",

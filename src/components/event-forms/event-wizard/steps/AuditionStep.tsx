@@ -12,6 +12,7 @@ import { SelectBlock } from "@/components/forms/blocks/Select"
 import { ListingWebsiteField } from "@/components/forms/blocks/ListingWebsiteField"
 import { Button } from "@/components/ui/button"
 import { useCallback, useEffect } from "react"
+import { AUDITION_FEE_LISTING_POLICY_TOOLTIP } from "@/lib/fees/listing-fee-policy"
 
 interface AuditionStepProps {
   form: UseFormReturn<EventFormData>
@@ -118,7 +119,7 @@ export function AuditionStep({ form }: AuditionStepProps) {
             options={[{ label: "Yes", value: "FEE" }, { label: "No", value: "NO_FEE" }]}
             name={"fee"}
             label="Is there an audition fee?"
-            labelTooltip="Please note: auditions with audition fees are subject to a listing fee."
+            labelTooltip={AUDITION_FEE_LISTING_POLICY_TOOLTIP}
             required
           />
         </div>
@@ -178,8 +179,6 @@ export function AuditionStep({ form }: AuditionStepProps) {
           latName={"lat"}
           lngName={"lng"}
           instructionsName={"locationInstructions"}
-          instructionsNote="Provide details to help attendees find the space."
-          instructionsPlaceholder="Provide details to help attendees find the space."
           required
         />
       </Section>

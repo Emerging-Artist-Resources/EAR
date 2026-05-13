@@ -6,23 +6,27 @@ import { TextField } from "@/components/forms/blocks/TextField"
 
 type ListingWebsiteFieldProps = {
   form: UseFormReturn<EventFormData>
-  /** Defaults to optional website helper copy when omitted. */
+  /** Helper text below the "Website" label (e.g. "Optional"). */
   note?: string
+  /** Input placeholder (URL hint). */
+  placeholder?: string
 }
 
+const DEFAULT_LABEL_NOTE = "Link to your company, project, or event page."
+const DEFAULT_PLACEHOLDER = "https://…"
+
 /**
- * Optional listing website (audition / creative / class-workshop).
+ * Optional listing website (audition / opportunity / class-workshop).
  * Stored as `website` on type-specific detail rows; form field is `listingWebsite`.
  */
-const DEFAULT_WEBSITE_NOTE = "Optional: Link to your company, project, or event page."
-
-export function ListingWebsiteField({ form, note }: ListingWebsiteFieldProps) {
+export function ListingWebsiteField({ form, note, placeholder }: ListingWebsiteFieldProps) {
   return (
     <TextField
       form={form as unknown as UseFormReturn<Record<string, unknown>>}
       name="listingWebsite"
       label="Website"
-      placeholder={note ?? DEFAULT_WEBSITE_NOTE}
+      note={note ?? DEFAULT_LABEL_NOTE}
+      placeholder={placeholder ?? DEFAULT_PLACEHOLDER}
     />
   )
 }

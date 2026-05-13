@@ -329,12 +329,13 @@ export function AuditionDetails({ details }: { details: NonNullable<PublicListin
   )
 }
 
-// Creative Opportunity
+// Opportunity (`creative` type)
 export function CreativeDetails({ details }: { details: NonNullable<PublicListingDetail['creative_details']> }) {
   const hasContent = 
     details.title ||
     details.description ||
     details.host ||
+    details.dates ||
     details.compensation ||
     details.requirements ||
     details.link ||
@@ -344,13 +345,14 @@ export function CreativeDetails({ details }: { details: NonNullable<PublicListin
 
   return (
     <>
-      <FieldRow label="Title" value={details.title} />
-      <FieldRow label="Description" value={details.description} />
-      <FieldRow label="Host" value={details.host} />
+      <FieldRow label="Opportunity Name" value={details.title} />
+      <FieldRow label="Opportunity Description" value={details.description} />
+      <FieldRow label="Hosting Organization/Individual(s)" value={details.host} />
       <WebsiteLinkRow label="Website" href={details.website} />
-      <FieldRow label="Compensation" value={details.compensation} />
-      <FieldRow label="Requirements" value={details.requirements} />
-      <FieldRow label="Submission instructions" value={details.link} />
+      <FieldRow label="Opportunity Dates" value={details.dates} />
+      <FieldRow label="What is Offered" value={details.compensation} />
+      <FieldRow label="Application Requirements" value={details.requirements} />
+      <FieldRow label="Submission Instructions" value={details.link} />
     </>
   )
 }

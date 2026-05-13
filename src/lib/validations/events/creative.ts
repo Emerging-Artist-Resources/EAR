@@ -3,8 +3,8 @@ import { flexibleUrlOptionalSchema } from "../flexible-url"
 import { occurrenceSchema } from "./base"
 
 /**
- * Creative opportunity fields. Submission instructions use `creativeSubmissionInstructions`, not `link`.
- * Class/workshop registration uses `classRegistrationDetails` (free text); performance ticket `link` stays URL-validated.
+ * Opportunity listing (`creative` DB type) fields. Submission instructions use
+ * `creativeSubmissionInstructions` (stored as `link` on `creative_details`).
  */
 export const creativeFields = z
   .object({
@@ -36,21 +36,21 @@ export const creativeFields = z
       ctx.addIssue({
         code: "custom",
         path: ["title"],
-        message: "Title is required",
+        message: "Opportunity name is required",
       })
     }
     if (!data.description || data.description.trim() === "") {
       ctx.addIssue({
         code: "custom",
         path: ["description"],
-        message: "Description is required",
+        message: "Opportunity description is required",
       })
     }
     if (!data.host || data.host.trim() === "") {
       ctx.addIssue({
         code: "custom",
         path: ["host"],
-        message: "Host is required",
+        message: "Hosting organization or individual(s) is required",
       })
     }
     if (!data.dates || data.dates.trim() === "") {
@@ -64,14 +64,14 @@ export const creativeFields = z
       ctx.addIssue({
         code: "custom",
         path: ["compensation"],
-        message: "Compensation is required",
+        message: "What is offered is required",
       })
     }
     if (!data.requirements || data.requirements.trim() === "") {
       ctx.addIssue({
         code: "custom",
         path: ["requirements"],
-        message: "Requirements is required",
+        message: "Application requirements are required",
       })
     }
     if (!data.creativeSubmissionInstructions || data.creativeSubmissionInstructions.trim() === "") {
@@ -92,7 +92,7 @@ export const creativeFields = z
       ctx.addIssue({
         code: "custom",
         path: ["fee"],
-        message: "Fee selection is required",
+        message: "Application fee (Yes/No) is required",
       })
     }
 
@@ -102,7 +102,7 @@ export const creativeFields = z
         ctx.addIssue({
           code: "custom",
           path: ["feeAmount"],
-          message: "Fee amount is required when there is a fee",
+          message: "Application fee amount is required when you selected Yes",
         })
       }
       if (!data.artistType) {

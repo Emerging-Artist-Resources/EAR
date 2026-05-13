@@ -104,6 +104,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
     latName: "lat",
     lngName: "lng",
     instructionsName: "locationInstructions",
+    instructionsPlaceholder: "",
     label: "Location",
     required: true,
   } as const
@@ -125,13 +126,13 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
 
       {isClass && (
         <>
-          <Section title="Basic Info" description="CLASS (single or multiple dates)">
+          <Section title="Basic Info" description="Class (single or multiple dates)">
             <TextField form={form} name={"title"} label="Class Name" required />
             <TextField
               form={form}
               name={"organizer"}
               label="Company / Instructor(s)"
-              note="Name of the company or individual(s) leading the class."
+              placeholder="Name of the company or individual(s) leading the class."
               required
             />
             <TextAreaField
@@ -153,13 +154,13 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
               form={form}
               name={"classRegistrationDetails"}
               label="Registration Link & Instructions"
-              note="Provide a link and/or sign-up instructions."
+              placeholder="Provide a link and/or sign-up instructions."
               required
               rows={3}
             />
             <ListingWebsiteField
               form={form}
-              note="Optional: Link to your company or project."
+              note="Link to your company or project."
             />
           </Section>
 

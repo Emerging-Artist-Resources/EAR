@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { OPPORTUNITY_LISTING_TYPE_LABEL } from "@/lib/listing-type-labels"
 import { getFilterTypeColor } from "./event-colors"
 
 interface FilterBarProps {
@@ -14,7 +15,7 @@ const TYPE_LABELS: Record<string, string> = {
   PERFORMANCE: "Performance",
   CLASS: "Class/Workshop",
   AUDITION: "Audition",
-  CREATIVE: "Creative"
+  CREATIVE: OPPORTUNITY_LISTING_TYPE_LABEL
 }
 
 export function FilterBar({ selectedTypes, onChangeEventType }: FilterBarProps) {

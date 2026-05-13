@@ -6,6 +6,7 @@ import { FavoriteButton } from "@/components/ui/favorite-button"
 import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
 import { useSavedListings } from "@/hooks/use-saved-listings"
 import { useAuth } from "@/hooks/use-auth"
+import { getCalendarListingTypeLabel } from "@/lib/listing-type-labels"
 
 interface ListingCardProps {
   id: string
@@ -40,13 +41,7 @@ interface ListingCardProps {
 }
 
 function getTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    performance: "Performance",
-    audition: "Audition",
-    creative: "Creative Opportunity",
-    class: "Class/Workshop",
-  }
-  return labels[type] || type
+  return getCalendarListingTypeLabel(type)
 }
 
 export function ListingCard({ 

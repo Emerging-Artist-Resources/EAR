@@ -1,5 +1,6 @@
 import type { CreateListingInput } from "./repository-types"
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
+import { UNTITLED_OPPORTUNITY_TITLE } from "@/lib/listing-type-labels"
 
 function isCreateListingInput(input: CreateListingInput | PublicListingDetail): input is CreateListingInput {
   return "details" in input && "base" in input
@@ -41,9 +42,9 @@ export function getListingTitle(input: CreateListingInput | PublicListingDetail)
   
   if (input.type === "creative") {
     if (isCreateListingInput(input)) {
-      return (input.details.title as string) || "Untitled Creative Opportunity"
+      return (input.details.title as string) || UNTITLED_OPPORTUNITY_TITLE
     } else {
-      return input.creative_details?.title || "Untitled Creative Opportunity"
+      return input.creative_details?.title || UNTITLED_OPPORTUNITY_TITLE
     }
   }
   

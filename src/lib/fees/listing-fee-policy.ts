@@ -1,6 +1,14 @@
 export type ListingArtistType = "ESTABLISHED" | "EMERGING"
 export type ListingType = "performance" | "audition" | "creative" | "class"
 
+/** Shown beside the audition fee Yes/No control in the listing wizard. */
+export const AUDITION_FEE_LISTING_POLICY_TOOLTIP =
+  "Please note: auditions with audition fees are subject to a listing fee."
+
+/** Shown beside the opportunity application fee Yes/No control in the listing wizard. */
+export const OPPORTUNITY_APPLICATION_FEE_LISTING_POLICY_TOOLTIP =
+  "Please note: opportunities with application fees are subject to a listing fee."
+
 export const ESTABLISHED_BASE_FEE_USD = 25
 export const EMERGING_BASE_FEE_USD = 35
 export const EXTRA_CLASS_FEE_USD = 5

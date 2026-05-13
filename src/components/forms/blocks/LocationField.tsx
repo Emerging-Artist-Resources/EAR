@@ -88,7 +88,7 @@ export function LocationFieldInstructions<T extends Record<string, unknown>>({
             )}
           </div>
           <p className="mt-0.5 text-xs text-gray-500">
-            Optional: room, entrance, call time, or other wayfinding details.
+            {instructionsNote || "Provide details to help attendees find the space."}
           </p>
         </div>
       ) : (
@@ -151,7 +151,7 @@ export function LocationField<T extends Record<string, unknown>>({
   note,
   instructionsLabel = "Location Instructions",
   instructionsNote,
-  instructionsPlaceholder = "Details to help attendees find the location",
+  instructionsPlaceholder = "Provide details to help attendees find the space.",
   required,
   showAsterisk = true,
   compact = false,

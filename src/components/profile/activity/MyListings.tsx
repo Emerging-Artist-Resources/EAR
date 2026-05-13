@@ -28,14 +28,10 @@ function listingBadgeLabel(listing: MyListing): string {
   return listing.status;
 }
 
+import { getCalendarListingTypeLabel } from "@/lib/listing-type-labels";
+
 function getTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    performance: "Performance",
-    audition: "Audition",
-    creative: "Creative Opportunity",
-    class: "Class/Workshop",
-  };
-  return labels[type] || type.charAt(0).toUpperCase() + type.slice(1);
+  return getCalendarListingTypeLabel(type);
 }
 
 const LISTINGS_PER_PAGE = 5;

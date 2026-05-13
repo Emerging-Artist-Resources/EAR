@@ -505,6 +505,7 @@ export const creativeStep2Schema = baseSchema
   .pick({
     title: true,
     host: true,
+    listingWebsite: true,
     dates: true,
     description: true,
     compensation: true,
@@ -528,14 +529,14 @@ export const creativeStep2Schema = baseSchema
       ctx.addIssue({
         code: "custom",
         path: ["title"],
-        message: "Title is required",
+        message: "Opportunity name is required",
       })
     }
     if (!data.host || data.host.trim() === "") {
       ctx.addIssue({
         code: "custom",
         path: ["host"],
-        message: "Host is required",
+        message: "Hosting organization or individual(s) is required",
       })
     }
     if (!data.dates || data.dates.trim() === "") {
@@ -549,21 +550,21 @@ export const creativeStep2Schema = baseSchema
       ctx.addIssue({
         code: "custom",
         path: ["description"],
-        message: "Description is required",
+        message: "Opportunity description is required",
       })
     }
     if (!data.compensation || data.compensation.trim() === "") {
       ctx.addIssue({
         code: "custom",
         path: ["compensation"],
-        message: "Compensation is required",
+        message: "What is offered is required",
       })
     }
     if (!data.requirements || data.requirements.trim() === "") {
       ctx.addIssue({
         code: "custom",
         path: ["requirements"],
-        message: "Requirements is required",
+        message: "Application requirements are required",
       })
     }
     if (!data.creativeSubmissionInstructions || data.creativeSubmissionInstructions.trim() === "") {
@@ -584,7 +585,7 @@ export const creativeStep2Schema = baseSchema
       ctx.addIssue({
         code: "custom",
         path: ["fee"],
-        message: "Fee selection is required",
+        message: "Application fee (Yes/No) is required",
       })
     }
     // Conditional validation for fee (matches form order - feeAmount shown after fee)
@@ -593,7 +594,7 @@ export const creativeStep2Schema = baseSchema
         ctx.addIssue({
           code: "custom",
           path: ["feeAmount"],
-          message: "Fee amount is required when there is a fee",
+          message: "Application fee amount is required when you selected Yes",
         })
       }
     }
