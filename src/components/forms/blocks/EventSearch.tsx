@@ -85,6 +85,8 @@ interface EventSearchProps<T extends Record<string, unknown>> {
   label?: string
   placeholder?: string
   showCantLocateButton?: boolean
+  /** Overrides default "Can't Locate Event" button label. */
+  cantLocateButtonLabel?: string
   onCantLocate?: () => void
   required?: boolean
 }
@@ -97,6 +99,7 @@ export function EventSearch<T extends Record<string, unknown>>({
   label = "Search for event",
   placeholder = "Type to search for events...",
   showCantLocateButton = false,
+  cantLocateButtonLabel = "Can't Locate Event",
   onCantLocate,
   required = false,
 }: EventSearchProps<T>) {
@@ -303,7 +306,7 @@ export function EventSearch<T extends Record<string, unknown>>({
 
       {showCantLocateButton && !isEventSelected && (
         <Button type="button" variant="outline" onClick={handleCantLocate}>
-          Can't Locate Event
+          {cantLocateButtonLabel}
         </Button>
       )}
     </div>

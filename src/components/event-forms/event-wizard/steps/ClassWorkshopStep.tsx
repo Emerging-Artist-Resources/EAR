@@ -33,19 +33,10 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
     name: "dropInClassesAvailable",
   }) as "YES" | "NO" | undefined
 
-  // const occurrences = useWatch({
-  //   control: form.control,
-  //   name: "occurrences" as Path<EventFormData>,
-  // }) as Array<{ date: string; times: Array<{ time: string }> }> | undefined
-
   const isWorkshop = classWorkshopType === "WORKSHOP"
+  const isClass = classWorkshopType === "CLASS"
   const isPart = isPartOfFestivalOrWorkshop === "YES"
-  const shouldUseParentDates = !isWorkshop && isPart
-
-  // const occurrenceCount = useMemo(() => {
-  //   if (!occurrences || !Array.isArray(occurrences)) return 0
-  //   return occurrences.length
-  // }, [occurrences])
+  const shouldUseParentDates = isClass && isPart
 
   useEffect(() => {
     if (!isPart) {
@@ -76,6 +67,26 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
       form.setValue("dropInClasses", "")
       form.clearErrors(["dropInClassesAvailable", "dropInClasses"] as unknown as never)
     }
+    if (prev === "CLASS" && classWorkshopType === "WORKSHOP") {
+      form.setValue("isPartOfFestivalOrWorkshop", "NO")
+      form.setValue("parentEventId", "")
+      form.setValue("placeholderTitle", "")
+      form.setValue("placeholderOrganizerName", "")
+      form.setValue("placeholderContactEmail", "")
+      form.setValue("placeholderWebsiteOrSocial", "")
+      form.setValue("placeholderStartDate", "")
+      form.setValue("placeholderEndDate", "")
+      form.clearErrors([
+        "isPartOfFestivalOrWorkshop",
+        "parentEventId",
+        "placeholderTitle",
+        "placeholderOrganizerName",
+        "placeholderContactEmail",
+        "placeholderWebsiteOrSocial",
+        "placeholderStartDate",
+        "placeholderEndDate",
+      ] as unknown as never)
+    }
   }, [classWorkshopType, form.setValue, form.clearErrors])
 
   useEffect(() => {
@@ -86,154 +97,184 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
     }
   }, [isWorkshop, dropInClassesAvailable, form.setValue, form.clearErrors])
 
+  const locationConfig = {
+    addressName: "address",
+    venueName: "venueName",
+    placeIdName: "placeId",
+    latName: "lat",
+    lngName: "lng",
+    instructionsName: "locationInstructions",
+    label: "Location",
+    required: true,
+  } as const
+
   return (
     <>
-      <Section title="What are you submitting?">
+      <Section title="Entry Selection">
         <SelectBlock
           form={form}
           name={"classWorkshopType"}
-          label="Submission Type"
+          label="What are you submitting?"
           required
           options={[
-            { label: "Class (single or multiple dates)", value: "CLASS" },
-            { label: "Multi-day workshop", value: "WORKSHOP" },
+            { label: "Class (single, recurring, multiple dates, or part of a workshop)", value: "CLASS" },
+            { label: "Workshop", value: "WORKSHOP" },
           ]}
         />
       </Section>
 
-      <Section title="Basic Info">
-        <TextField
-          form={form}
-          name={"title"}
-          label={isWorkshop ? "Workshop Name" : "Class Name"}
-          placeholder="e.g., Contemporary Dance Workshop, Intro to Ballet, Hip Hop Class"
-          required
-        />
-
-        <TextField
-          form={form}
-          name={"organizer"}
-          label="Company / Individuals"
-          required
-          placeholder="Name of the company or individual(s) running the class/workshop"
-        />
-
-        <TextField
-          form={form}
-          name={"price"}
-          label={isWorkshop ? "Workshop Price" : "Class Price"}
-          placeholder="e.g., $30, Free, $20-40 sliding scale"
-          required //TODO: why was this not required for WORKSHOP?
-        />
-
-        <TextField
-          form={form}
-          name={"classRegistrationDetails"}
-          label="Registration link or instructions"
-          placeholder="Link or signup instructions"
-          required={!isWorkshop}
-        />
-
-        <ListingWebsiteField form={form} />
-
-        <TextAreaField
-          form={form}
-          name={"description"}
-          label={isWorkshop ? "Workshop Description" : "Class Description"}
-          required
-          rows={3}
-        />
-      </Section>
-
-      {isWorkshop && (
-        <Section title="Workshop Details">
-          <TextAreaField
-            form={form}
-            name={"workshopDetails"}
-            label="Details"
-            placeholder="Focus, who it's for, prerequisites (optional)."
-            rows={4}
-          />
-          <TextAreaField
-            form={form}
-            name={"classesOffered"}
-            label="Classes Offered"
-            placeholder="List sessions/classes included (optional)."
-            rows={4}
-          />
-
-          <SelectBlock
-            form={form}
-            name={"dropInClassesAvailable"}
-            label="Are drop-in classes available?"
-            required
-            options={[
-              { label: "No", value: "NO" },
-              { label: "Yes", value: "YES" },
-            ]}
-          />
-
-          {dropInClassesAvailable === "YES" && (
+      {isClass && (
+        <>
+          <Section title="Basic Info" description="CLASS (single or multiple dates)">
+            <TextField form={form} name={"title"} label="Class Name" required />
+            <TextField
+              form={form}
+              name={"organizer"}
+              label="Company / Instructor(s)"
+              note="Name of the company or individual(s) leading the class."
+              required
+            />
             <TextAreaField
               form={form}
-              name={"dropInClasses"}
-              label="How much do they cost? (and any other drop-in details)"
-              placeholder="e.g., $25 per class, sliding scale, which sessions allow drop-ins"
+              name={"description"}
+              label="Class Description"
+              required
               rows={4}
             />
+            <TextField
+              form={form}
+              name={"price"}
+              label="Price"
+              required
+              placeholder="e.g., $30, Free, $20–40 sliding scale"
+            />
+            <TextField form={form} name={"classWorkshopDuration"} label="Class Duration" required />
+            <TextAreaField
+              form={form}
+              name={"classRegistrationDetails"}
+              label="Registration Link & Instructions"
+              note="Provide a link and/or sign-up instructions."
+              required
+              rows={3}
+            />
+            <ListingWebsiteField
+              form={form}
+              note="Optional: Link to your company or project."
+            />
+          </Section>
+
+          <Section title="Festival / Workshop Association">
+            <SelectBlock
+              form={form}
+              name={"isPartOfFestivalOrWorkshop"}
+              label="Is this class part of a festival or workshop?"
+              required
+              options={[
+                { label: "No", value: "NO" },
+                { label: "Yes", value: "YES" },
+              ]}
+            />
+          </Section>
+
+          <FestivalAssociationSection form={form} isPartOfFestival={isPart} />
+
+          {shouldUseParentDates ? (
+            <ClassOccurrencesPicker form={form} label="Class Schedule" showEndTime />
+          ) : (
+            <Section title="Schedule">
+              <ShowtimesList
+                form={form as unknown as UseFormReturn<Record<string, unknown>>}
+                name={"occurrences"}
+                title="Class Dates & Times"
+                note="Add all dates and start times."
+                required
+                rowLabel="Class date"
+                maxTimesPerDate={1}
+                showEndTime
+                locationConfig={locationConfig}
+              />
+            </Section>
           )}
-        </Section>
+        </>
       )}
 
-      {!isWorkshop && (
-        <Section title="Festival or Workshop Association">
-          <SelectBlock
-            form={form}
-            name={"isPartOfFestivalOrWorkshop"}
-            label="Is this class part of a festival or multi-day workshop?"
-            required
-            options={[
-              { label: "No", value: "NO" },
-              { label: "Yes", value: "YES" },
-            ]}
-          />
-        </Section>
+      {isWorkshop && (
+        <>
+          <Section title="Basic Info" description="Multi-day workshop">
+            <TextField form={form} name={"title"} label="Workshop Name" required />
+            <TextField form={form} name={"organizer"} label="Hosting Company / Individual(s)" required />
+            <TextAreaField
+              form={form}
+              name={"description"}
+              label="Short Workshop Description"
+              required
+              rows={4}
+            />
+            <TextField form={form} name={"classWorkshopDuration"} label="Workshop Duration" required />
+            <TextField form={form} name={"price"} label="Price" required placeholder="e.g., $30, Free, $20–40 sliding scale" />
+            <TextField
+              form={form}
+              name={"classRegistrationDetails"}
+              label="Registration Link"
+              placeholder="https://…"
+              required
+            />
+            <ListingWebsiteField form={form} note="Optional" />
+          </Section>
+
+          <Section title="Workshop Details">
+            <TextAreaField
+              form={form}
+              name={"workshopDetails"}
+              label="Details"
+              placeholder="What will participants learn or explore? Who is this workshop for? Are there any recommended experience, training, or preparation?"
+              rows={5}
+            />
+            <TextAreaField
+              form={form}
+              name={"classesOffered"}
+              label="Workshop Schedule"
+              placeholder="Provide a list of all classes or sessions included in the workshop, along with the instructors and brief descriptions."
+              rows={6}
+            />
+            <SelectBlock
+              form={form}
+              name={"dropInClassesAvailable"}
+              label="Drop-in Availability"
+              required
+              options={[
+                { label: "No", value: "NO" },
+                { label: "Yes", value: "YES" },
+              ]}
+            />
+            {dropInClassesAvailable === "YES" && (
+              <TextAreaField
+                form={form}
+                name={"dropInClasses"}
+                label="Drop-in Pricing"
+                placeholder="Provide details and pricing if applicable."
+                rows={4}
+              />
+            )}
+          </Section>
+
+          <Section title="Schedule">
+            <ShowtimesList
+              form={form as unknown as UseFormReturn<Record<string, unknown>>}
+              name={"occurrences"}
+              title="Workshop Dates & Times"
+              note="Add all known dates and start times."
+              required
+              rowLabel="Workshop date"
+              maxTimesPerDate={1}
+              showEndTime
+              locationConfig={locationConfig}
+            />
+          </Section>
+
+          <ShareListingSection form={form} />
+        </>
       )}
-
-      {!isWorkshop && <FestivalAssociationSection form={form} isPartOfFestival={isPart} />}
-
-      {shouldUseParentDates ? (
-        <ClassOccurrencesPicker
-          form={form}
-          label={isWorkshop ? "Workshop Schedule" : "Class Schedule"}
-          showEndTime
-        />
-      ) : (
-        <Section title="Schedule">
-          <ShowtimesList
-            form={form as unknown as UseFormReturn<Record<string, unknown>>}
-            name={"occurrences"}
-            title={isWorkshop ? "Workshop Dates & Times" : "Class Dates & Times"}
-            note="Add all known dates and start times."
-            required
-            rowLabel={isWorkshop ? "Workshop date" : "Class date"}
-            maxTimesPerDate={1}
-            showEndTime
-            locationConfig={{
-              addressName: "address",
-              venueName: "venueName",
-              placeIdName: "placeId",
-              latName: "lat",
-              lngName: "lng",
-              instructionsName: "locationInstructions",
-              label: "Location",
-              required: true,
-            }}
-          />
-        </Section>
-      )}
-
-      {isWorkshop && <ShareListingSection form={form} />}
     </>
   )
 }

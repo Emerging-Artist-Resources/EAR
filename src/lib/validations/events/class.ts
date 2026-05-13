@@ -30,6 +30,8 @@ export const classFields = z
       .optional(),
     /** Class/workshop website (DB: class_workshop_details.website) */
     listingWebsite: flexibleUrlOptionalSchema,
+    /** DB: class_workshop_details.duration — length, dates, or schedule summary. */
+    classWorkshopDuration: z.string().max(500, "Duration must be 500 characters or less").optional(),
     teachers: z.string().optional(),
     styleCategory: z.string().optional(), // or z.enum([...]) if you want strict options
     venueName: z.string().optional(),
@@ -147,7 +149,16 @@ export const classFields = z
       })
     }
 
-    // CLASS-specific fields (price and registration details are optional for WORKSHOP)
+    const duration = data.classWorkshopDuration?.trim() ?? ""
+    if (!duration) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["classWorkshopDuration"],
+        message: "Duration is required",
+      })
+    }
+
+    // CLASS-specific fields
     if (isClass) {
       if (!data.price || data.price.trim() === "") {
         ctx.addIssue({ code: "custom", path: ["price"], message: "Price is required" })
@@ -160,12 +171,21 @@ export const classFields = z
           message: "Registration link or instructions are required",
         })
       }
-      
+
+      const assocRaw = data.isPartOfFestivalOrWorkshop
+      if (assocRaw !== "YES" && assocRaw !== "NO") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["isPartOfFestivalOrWorkshop"],
+          message: "Please indicate whether this class is part of a festival or workshop",
+        })
+      }
+
       // Festival or Workshop Association (only for CLASS)
-      const assoc = data.isPartOfFestivalOrWorkshop ?? "NO"
+      const assoc = assocRaw ?? "NO"
       if (assoc === "YES") {
-        const hasParentId = !!data.parentEventId
-        const creatingPlaceholder = !!data.placeholderTitle
+        const hasParentId = !!data.parentEventId?.trim()
+        const creatingPlaceholder = !!(data.placeholderTitle && data.placeholderTitle.trim() !== "")
 
         if (!hasParentId && !creatingPlaceholder) {
           ctx.addIssue({
@@ -176,28 +196,28 @@ export const classFields = z
         }
 
         if (!hasParentId && creatingPlaceholder) {
-          if (!data.placeholderOrganizerName) {
+          if (!data.placeholderOrganizerName || data.placeholderOrganizerName.trim() === "") {
             ctx.addIssue({
               code: "custom",
               path: ["placeholderOrganizerName"],
               message: "Organizer name is required",
             })
           }
-          if (!data.placeholderContactEmail) {
+          if (!data.placeholderContactEmail || data.placeholderContactEmail.trim() === "") {
             ctx.addIssue({
               code: "custom",
               path: ["placeholderContactEmail"],
               message: "Contact email is required",
             })
           }
-          if (!data.placeholderStartDate) {
+          if (!data.placeholderStartDate || data.placeholderStartDate.trim() === "") {
             ctx.addIssue({
               code: "custom",
               path: ["placeholderStartDate"],
               message: "Start date is required",
             })
           }
-          if (!data.placeholderEndDate) {
+          if (!data.placeholderEndDate || data.placeholderEndDate.trim() === "") {
             ctx.addIssue({
               code: "custom",
               path: ["placeholderEndDate"],
@@ -205,6 +225,19 @@ export const classFields = z
             })
           }
         }
+      }
+    } else {
+      // WORKSHOP: price and registration required (same as class listings)
+      if (!data.price || data.price.trim() === "") {
+        ctx.addIssue({ code: "custom", path: ["price"], message: "Price is required" })
+      }
+      const regW = data.classRegistrationDetails?.trim() ?? ""
+      if (!regW) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["classRegistrationDetails"],
+          message: "Registration link is required",
+        })
       }
     }
 

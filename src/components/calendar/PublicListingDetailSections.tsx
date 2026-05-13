@@ -73,6 +73,7 @@ export type PublicListingDetail = {
     price?: string | null
     link?: string | null
     website?: string | null
+    duration?: string | null
     workshop_details?: string | null
     classes_offered?: string | null
     drop_in_classes?: string | null
@@ -150,10 +151,11 @@ export function PieceDetails({ details }: { details: NonNullable<PublicListingDe
 
 // Class (standalone, no link yet)
 export function ClassDetails({ details }: { details: NonNullable<PublicListingDetail['class_workshop_details']> }) {
-  const hasContent = 
+  const hasContent =
     (details.parent_workshop_name && !details.parent_listing_id) ||
     details.title ||
     details.description ||
+    details.duration ||
     details.price ||
     details.link ||
     details.website ||
@@ -168,6 +170,7 @@ export function ClassDetails({ details }: { details: NonNullable<PublicListingDe
       )}
       <FieldRow label="Title" value={details.title} />
       <FieldRow label="Description" value={details.description} />
+      <FieldRow label="Duration" value={details.duration} />
       <FieldRow label="Price" value={details.price} />
       <FieldRow 
         label="Registration link" 
@@ -258,9 +261,10 @@ export function PerformanceDetails({ details }: { details: NonNullable<PublicLis
 export function WorkshopDetails({ details }: { details: NonNullable<PublicListingDetail['class_workshop_details']> }) {
   if (details.class_workshop_type !== "WORKSHOP") return null
 
-  const hasContent = 
+  const hasContent =
     details.title ||
     details.description ||
+    details.duration ||
     details.organizer ||
     details.price ||
     details.link ||
@@ -275,6 +279,7 @@ export function WorkshopDetails({ details }: { details: NonNullable<PublicListin
     <>
       <FieldRow label="Title" value={details.title} />
       <FieldRow label="Description" value={details.description} />
+      <FieldRow label="Duration" value={details.duration} />
       <FieldRow label="Organizer" value={details.organizer} />
       <FieldRow label="Price" value={details.price} />
       <FieldRow 

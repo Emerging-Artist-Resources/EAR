@@ -71,22 +71,61 @@ export function AuditionStep({ form }: AuditionStepProps) {
   return (
     <>
       <Section title="Audition Details">
-        <TextField form={form} name={"title"} label="Audition Name" required/>
-        <TextAreaField form={form} name={"description"} label="Describe the Opportunity" required placeholder="Please provide an overview of the company, contract terms, and key details of the audition opportunity. Include duration, compensation, location, and rehearsal/performance commitments. "/>
-        <TextAreaField form={form} name={"eligibility"} label="Eligibility" required placeholder="Please describe who you are seeking and who is eligible to apply. Include relevant details such as style, age, experience, and any other qualifications."/>
-        <TextField form={form} name={"compensation"} label="Compensation" required placeholder="Specify the amount, or describe any non-monetary compensation offered"/>
-        <TextAreaField form={form} name={"instructions"} label="Audition Instructions" required placeholder="Please describe your audition instructions. Include submission link, email, and all prescreen requirements."/>
+        <TextField form={form} name={"title"} label="Audition Name" required />
         <ListingWebsiteField form={form} />
-        <TextAreaField form={form} name={"preAuditionClasses"} label="Are there any preaudition classes, workshops, or intensives that are recommended prior to auditioning?"/>
-
-        
-        <SelectBlock form={form} options={[{ label: "Yes", value: "FEE" }, { label: "No", value: "NO_FEE" }]} name={"fee"} label="Is there an audition fee?" required />
-        {isFee && (
-          <>
-            <TextField form={form} name={"feeAmount"} label="Audition Fee Amount" required placeholder="$ or description"/>
-          </>
-        )}
+        <TextAreaField
+          form={form}
+          name={"description"}
+          label="Opportunity Description"
+          required
+          placeholder="Provide an overview of the company, contract terms, and key details. Include duration, compensation, location, and rehearsal/performance commitments."
+        />
+        <TextAreaField
+          form={form}
+          name={"eligibility"}
+          label="Eligibility"
+          required
+          placeholder="Describe who you are seeking and who is eligible to apply. Include style, age range, experience level, and any other relevant qualifications."
+        />
+        <TextField
+          form={form}
+          name={"compensation"}
+          label="Compensation"
+          required
+          placeholder="Specify compensation amount or describe any non-monetary compensation."
+        />
       </Section>
+
+      <Section title="Audition Instructions">
+        <TextAreaField
+          form={form}
+          name={"instructions"}
+          label="Instructions"
+          required
+          placeholder="Provide submission and audition details, including links, prescreen requirements, email address, and other instructions."
+        />
+        <TextAreaField
+          form={form}
+          name={"preAuditionClasses"}
+          label="Pre-Audition Opportunities"
+          placeholder="Are there any recommended classes, workshops, or intensives prior to auditioning?"
+        />
+        </Section>
+        <Section title="Audition Fee">
+        <div>
+          <SelectBlock
+            form={form}
+            options={[{ label: "Yes", value: "FEE" }, { label: "No", value: "NO_FEE" }]}
+            name={"fee"}
+            label="Is there an audition fee?"
+            labelTooltip="Please note: auditions with audition fees are subject to a listing fee."
+            required
+          />
+        </div>
+        {isFee && (
+          <TextField form={form} name={"feeAmount"} label="Audition Fee Amount" required placeholder="$ or description" />
+        )}
+        </Section>
 
       <Section title="Key Dates">
         <ShowtimesList
@@ -95,7 +134,7 @@ export function AuditionStep({ form }: AuditionStepProps) {
           maxDates={1}
           maxTimesPerDate={1}
           title="Audition Date"
-          note="If you have multiple audition dates, list them in the additional information section"
+          titleTooltip="If you have multiple audition dates, list them in the audition instructions."
           required
           rowLabel="Audition date"
         />
@@ -104,10 +143,10 @@ export function AuditionStep({ form }: AuditionStepProps) {
           name={"deadlineOccurrences"}
           maxDates={1}
           maxTimesPerDate={1}
-          title="Deadline"
-          note="If you don't have a separate deadline, use the button below to match your audition date and time."
+          title="Application Deadline"
+          note="If no application deadline exists, you may match it to the audition date and time."
           required
-          rowLabel="Deadline"
+          rowLabel="Application deadline"
           betweenNoteAndRows={
             <div className="pt-1">
               <Button
@@ -131,16 +170,19 @@ export function AuditionStep({ form }: AuditionStepProps) {
       </Section>
 
       <Section title="Location">
-      <LocationField
-  form={form}
-  addressName={"address"}
-  venueName={"venueName"}
-  placeIdName={"placeId"}
-  latName={"lat"}
-  lngName={"lng"}
-  instructionsName={"locationInstructions"}
-  required
-/>      </Section>
+        <LocationField
+          form={form}
+          addressName={"address"}
+          venueName={"venueName"}
+          placeIdName={"placeId"}
+          latName={"lat"}
+          lngName={"lng"}
+          instructionsName={"locationInstructions"}
+          instructionsNote="Provide details to help attendees find the space."
+          instructionsPlaceholder="Provide details to help attendees find the space."
+          required
+        />
+      </Section>
 
       {isFee && (
         <SimpleFeeDisplay

@@ -36,28 +36,45 @@ export function FestivalAssociationSection({
           eventType="CLASS"
           eventIdField={"parentEventId" as Path<EventFormData>}
           eventModeField={"parentEventMode" as Path<EventFormData>}
-          label="Search for festival/workshop by name"
+          label="Search for Event"
           placeholder="Start typing the event name…"
           showCantLocateButton={true}
+          cantLocateButtonLabel="Can't find event? Enter manually"
           onCantLocate={() => setShowPlaceholder(true)}
         />
       )}
 
       {showPlaceholder && (
-        <Section title="Basic event info (so we can link it later)">
-          <TextField form={form} name={"placeholderTitle"} label="Festival / Workshop Title" required />
-          <TextField form={form} name={"placeholderOrganizerName"} label="Organizer Name" />
+        <Section title="Enter event manually">
+          <TextField form={form} name={"placeholderTitle"} label="Event Title" required />
+          <TextField form={form} name={"placeholderOrganizerName"} label="Organizer Name" required />
           <TextField
             form={form}
             name={"placeholderContactEmail"}
-            label="Organizer Contact Email"
+            label="Organizer Email"
             placeholder="name@email.com"
+            required
           />
           <TextField
             form={form}
             name={"placeholderWebsiteOrSocial"}
             label="Website / Social"
-            placeholder="Link or @handle (optional)"
+            note="Optional"
+            placeholder="Link or @handle"
+          />
+          <TextField
+            form={form}
+            name={"placeholderStartDate"}
+            label="Event start date"
+            type="date"
+            required
+          />
+          <TextField
+            form={form}
+            name={"placeholderEndDate"}
+            label="Event end date"
+            type="date"
+            required
           />
 
           <button
@@ -72,4 +89,3 @@ export function FestivalAssociationSection({
     </>
   )
 }
-

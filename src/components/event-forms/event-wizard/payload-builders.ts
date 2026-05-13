@@ -607,6 +607,7 @@ export function buildClassPayload(
         (data.classLink ?? "").trim() ||
         null,
       website: (data.listingWebsite ?? "").trim() || null,
+      duration: (data.classWorkshopDuration ?? "").trim() || null,
       style_category: data.styleCategory || null,
       workshop_details: data.workshopDetails || null,
       classes_offered: data.classesOffered || null,

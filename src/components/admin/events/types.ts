@@ -113,6 +113,7 @@ export type AdminEventDetail = {
     price?: string | null
     link?: string | null
     website?: string | null
+    duration?: string | null
     style_category?: string | null
     workshop_details?: string | null
     classes_offered?: string | null

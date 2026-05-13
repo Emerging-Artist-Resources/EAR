@@ -222,6 +222,7 @@ export function ClassDetails({ details }: { details: NonNullable<AdminEventDetai
         <Row label="Type" value={details.class_workshop_type} />
         <Row label="Title" value={details.title} />
         <Row label="Description" value={details.description} />
+        <Row label="Duration" value={details.duration} />
         <Row label="Organizer" value={details.organizer} />
         <Row label="Teachers" value={details.teachers} />
         <Row label="Price" value={details.price} />

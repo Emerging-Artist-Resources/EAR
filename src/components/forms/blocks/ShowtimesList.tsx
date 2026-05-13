@@ -11,12 +11,15 @@ import {
 } from "@/lib/validations/events/occurrence-row"
 import { createLocationFields, type DateItem, type LocationConfigFull } from "./DateTime"
 import { ShowtimeRow } from "./ShowtimeRow"
+import { FormFieldTooltip } from "./FormFieldTooltip"
 
 export interface ShowtimesListProps<T extends FieldValues> {
   form: UseFormReturn<T>
   name: string
   title?: string
   note?: string
+  /** When set, shows an info control beside the title; default intro copy is omitted (pass `note` to show both). */
+  titleTooltip?: string
   required?: boolean
   showAsterisk?: boolean
   showTime?: boolean
@@ -85,6 +88,7 @@ export function ShowtimesList<T extends FieldValues>({
   name,
   title,
   note,
+  titleTooltip,
   required = false,
   showAsterisk = true,
   showTime = true,
@@ -122,13 +126,21 @@ export function ShowtimesList<T extends FieldValues>({
     return isOrganizerOccurrenceRowComplete(last, { requireTime: showTime, requireLocation })
   }, [fields.length, maxDates, requireLocation, showTime, watchedOccurrences])
 
-  const headerNote = note
-    ? note
-    : !showTime
-      ? "Add one or more dates."
-      : requireLocation
-        ? "Add one or more showtimes. New rows start with a blank date and copy the previous showtime’s time and location (when it’s a single time). You can add more than one time on the same date when needed."
-        : "Add one or more date & time slots. New rows copy the previous slot’s time when it’s a single time."
+  const defaultHeaderNote = !showTime
+    ? "Add one or more dates."
+    : requireLocation
+      ? "Add one or more showtimes. New rows start with a blank date and copy the previous showtime’s time and location (when it’s a single time). You can add more than one time on the same date when needed."
+      : "Add one or more date & time slots. New rows copy the previous slot’s time when it’s a single time."
+
+  const tooltipText = titleTooltip?.trim()
+  const hasTitleTooltip = Boolean(tooltipText)
+
+  const headerNote =
+    note !== undefined && note !== ""
+      ? note
+      : hasTitleTooltip
+        ? undefined
+        : defaultHeaderNote
 
   useEffect(() => {
     if (initDone.current) return
@@ -209,10 +221,14 @@ export function ShowtimesList<T extends FieldValues>({
     <div className="space-y-4">
       {title && (
         <header className="space-y-1 border-b border-border-default/70 pb-3">
-          <label className="block text-base font-semibold tracking-tight text-gray-900">
-            {title} {required && showAsterisk && <span className="text-error-600">*</span>}
-          </label>
-          <p className="text-sm leading-snug text-gray-600">{headerNote}</p>
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            <label className="text-base font-semibold tracking-tight text-gray-900">
+              {title}
+              {required && showAsterisk ? <span className="text-error-600"> *</span> : null}
+            </label>
+            {hasTitleTooltip && tooltipText ? <FormFieldTooltip text={tooltipText} /> : null}
+          </div>
+          {headerNote ? <p className="text-sm leading-snug text-gray-600">{headerNote}</p> : null}
         </header>
       )}
 

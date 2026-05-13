@@ -8,6 +8,7 @@ import { AdminLayoutWrapper } from "@/components/admin/shared/AdminLayoutWrapper
 import { SessionExpiredModal } from "@/components/auth/SessionExpiredModal"
 import { ToastProvider } from "@/contexts/ToastContext"
 import { ToastContainer } from "@/components/ui/ToastContainer"
+import { AppTooltipProvider } from "@/components/providers/app-tooltip-provider"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,19 +35,21 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} flex min-h-dvh flex-col antialiased`}
       >
-        <ToastProvider>
-          <ErrorBoundary>
-            <HeaderGate />
-            <div className="flex min-h-0 flex-1 flex-col">
-              <AdminLayoutWrapper>
-                {children}
-              </AdminLayoutWrapper>
-            </div>
-            <FooterGate />
-            <SessionExpiredModal />
-            <ToastContainer />
-          </ErrorBoundary>
-        </ToastProvider>
+        <AppTooltipProvider>
+          <ToastProvider>
+            <ErrorBoundary>
+              <HeaderGate />
+              <div className="flex min-h-0 flex-1 flex-col">
+                <AdminLayoutWrapper>
+                  {children}
+                </AdminLayoutWrapper>
+              </div>
+              <FooterGate />
+              <SessionExpiredModal />
+              <ToastContainer />
+            </ErrorBoundary>
+          </ToastProvider>
+        </AppTooltipProvider>
       </body>
     </html>
   );

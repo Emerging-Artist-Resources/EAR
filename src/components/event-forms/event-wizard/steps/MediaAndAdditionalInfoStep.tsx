@@ -34,6 +34,13 @@ export function MediaAndAdditionalInfoStep({ form, eventType }: MediaAndAddition
 
   const isWorkshop = classWorkshopType === "WORKSHOP"
   const showListingFee = eventType === "PERFORMANCE" || eventType === "CLASS"
+  const isAudition = eventType === "AUDITION"
+  const isClassListing = eventType === "CLASS"
+
+  const promoImagesDescription =
+    isAudition || isClassListing
+      ? "Upload up to 5 images (recommended)."
+      : "Images are highly encouraged for marketing! Please upload up to 5 images."
 
   return (
     <>
@@ -42,13 +49,13 @@ export function MediaAndAdditionalInfoStep({ form, eventType }: MediaAndAddition
           form={form}
           name={"promoFiles"}
           label="Promotional Images"
-          description="Images are highly encouraged for marketing! Please upload up to 5 images."
+          description={promoImagesDescription}
         />
         <TextAreaField
           form={form}
           name={"credits"}
           label="Image Description / Photo Credit"
-          placeholder="Describe the images and provide photo credit"
+          placeholder={isAudition ? undefined : "Describe the images and provide photo credit"}
           rows={3}
         />
         <TextField
@@ -76,8 +83,14 @@ export function MediaAndAdditionalInfoStep({ form, eventType }: MediaAndAddition
         <TextAreaField
           form={form}
           name={"notes"}
-          label="Anything else you'd like us to know?"
-          placeholder="Additional information"
+          label={
+            isAudition || isClassListing ? "Additional Information" : "Anything else you'd like us to know?"
+          }
+          placeholder={
+            isAudition || isClassListing
+              ? "Provide any other relevant details."
+              : "Additional information"
+          }
           rows={4}
         />
       </Section>

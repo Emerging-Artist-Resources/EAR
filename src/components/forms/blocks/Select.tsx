@@ -1,6 +1,9 @@
+"use client"
+
 import { Controller, UseFormReturn, useFormState } from "react-hook-form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card } from "@/components/ui/card"
+import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
 
 type Option = {
   value: string
@@ -12,6 +15,8 @@ interface SelectBlockProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>
   name: string
   label?: string
+  /** Shown in a hover tooltip beside the label (info icon). */
+  labelTooltip?: string
   note?: string
   description?: string // Keep for backward compatibility
   options: Option[]
@@ -30,6 +35,7 @@ export function SelectBlock<T extends Record<string, unknown>>({
   form,
   name,
   label,
+  labelTooltip,
   note,
   description,
   options,
@@ -74,13 +80,19 @@ export function SelectBlock<T extends Record<string, unknown>>({
       form.formState.isSubmitted ||
       form.formState.submitCount > 0)
 
+  const labelTooltipText = labelTooltip?.trim()
+
   return (
     <div className={className}>
       {label && (
         <div className="mb-1">
-          <label className="block text-sm font-medium text-text-primary">
-            {label} {required && showAsterisk && <span className="text-error-600">*</span>}
-          </label>
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            <label className="text-sm font-medium text-text-primary">
+              {label}
+              {required && showAsterisk ? <span className="text-error-600"> *</span> : null}
+            </label>
+            {labelTooltipText ? <FormFieldTooltip text={labelTooltipText} /> : null}
+          </div>
           {(note || description) && (
             <p className="mt-1 text-sm text-text-muted">{note || description}</p>
           )}

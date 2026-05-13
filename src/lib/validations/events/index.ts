@@ -618,12 +618,15 @@ export const classStep2Schema = baseSchema
     teachers: true,
     occurrences: true,
     classWorkshopType: true,
+    classWorkshopDuration: true,
     isPartOfFestivalOrWorkshop: true,
     parentEventId: true,
     placeholderTitle: true,
     placeholderOrganizerName: true,
     placeholderContactEmail: true,
     placeholderWebsiteOrSocial: true,
+    placeholderStartDate: true,
+    placeholderEndDate: true,
     address: true,
     venueName: true,
     placeId: true,
@@ -668,7 +671,15 @@ export const classStep2Schema = baseSchema
       })
     }
 
-    // CLASS-specific fields (price and registration details are optional for WORKSHOP)
+    const duration = data.classWorkshopDuration?.trim() ?? ""
+    if (!duration) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["classWorkshopDuration"],
+        message: "Duration is required",
+      })
+    }
+
     if (isClass) {
       if (!data.price || data.price.trim() === "") {
         ctx.addIssue({ code: "custom", path: ["price"], message: "Price is required" })
@@ -681,28 +692,67 @@ export const classStep2Schema = baseSchema
           message: "Registration link or instructions are required",
         })
       }
-      
-      // Festival or Workshop Association (only for CLASS)
+
       if (!data.isPartOfFestivalOrWorkshop || (data.isPartOfFestivalOrWorkshop !== "YES" && data.isPartOfFestivalOrWorkshop !== "NO")) {
         ctx.addIssue({
           code: "custom",
           path: ["isPartOfFestivalOrWorkshop"],
-          message: "Festival or Workshop Association is required",
+          message: "Please indicate whether this class is part of a festival or workshop",
         })
       } else if (data.isPartOfFestivalOrWorkshop === "YES") {
-        // If YES, must either select existing festival or create placeholder
         const hasParentId = !!data.parentEventId && data.parentEventId.trim() !== ""
-        
-        if (!hasParentId) {
-          // If no parent ID selected, must create placeholder with title
-          if (!data.placeholderTitle || data.placeholderTitle.trim() === "") {
+        const creatingPlaceholder = !!(data.placeholderTitle && data.placeholderTitle.trim() !== "")
+
+        if (!hasParentId && !creatingPlaceholder) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["parentEventId"],
+            message: "Select an existing festival/workshop or enter event details manually",
+          })
+        }
+
+        if (!hasParentId && creatingPlaceholder) {
+          if (!data.placeholderOrganizerName || data.placeholderOrganizerName.trim() === "") {
             ctx.addIssue({
               code: "custom",
-              path: ["placeholderTitle"],
-              message: "Festival / Workshop Title is required",
+              path: ["placeholderOrganizerName"],
+              message: "Organizer name is required",
+            })
+          }
+          if (!data.placeholderContactEmail || data.placeholderContactEmail.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              path: ["placeholderContactEmail"],
+              message: "Contact email is required",
+            })
+          }
+          if (!data.placeholderStartDate || data.placeholderStartDate.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              path: ["placeholderStartDate"],
+              message: "Start date is required",
+            })
+          }
+          if (!data.placeholderEndDate || data.placeholderEndDate.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              path: ["placeholderEndDate"],
+              message: "End date is required",
             })
           }
         }
+      }
+    } else {
+      if (!data.price || data.price.trim() === "") {
+        ctx.addIssue({ code: "custom", path: ["price"], message: "Price is required" })
+      }
+      const regW = data.classRegistrationDetails?.trim() ?? ""
+      if (!regW) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["classRegistrationDetails"],
+          message: "Registration link is required",
+        })
       }
     }
 

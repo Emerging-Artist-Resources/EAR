@@ -223,6 +223,7 @@ export function ownerListingToFormLoad(row: UnknownRecord): OwnerListingLoadResu
       price: (cwd?.price as string) || "",
       classRegistrationDetails: (cwd?.link as string) || undefined,
       listingWebsite: (cwd?.website as string) || "",
+      classWorkshopDuration: (cwd?.duration as string) || "",
       styleCategory: (cwd?.style_category as string) || undefined,
       workshopDetails: (cwd?.workshop_details as string) || undefined,
       classesOffered: (cwd?.classes_offered as string) || undefined,

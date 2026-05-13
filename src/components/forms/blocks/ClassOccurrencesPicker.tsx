@@ -175,7 +175,7 @@ export function ClassOccurrencesPicker({ form, label, showEndTime = false }: Cla
           form={form as unknown as UseFormReturn<Record<string, unknown>>}
           name={"occurrences"}
           title="Class Dates & Times"
-          note="Add all known dates and start times."
+          note="Add all dates and start times."
           required
           rowLabel="Class date"
           maxTimesPerDate={1}
@@ -186,7 +186,7 @@ export function ClassOccurrencesPicker({ form, label, showEndTime = false }: Cla
             placeIdName: "placeId",
             latName: "lat",
             lngName: "lng",
-            instructionsName: "instructions",
+            instructionsName: "locationInstructions",
             label: "Location",
             required: true,
           }}
@@ -242,7 +242,7 @@ export function ClassOccurrencesPicker({ form, label, showEndTime = false }: Cla
                 placeIdName: "placeId",
                 latName: "lat",
                 lngName: "lng",
-                instructionsName: "instructions",
+                instructionsName: "locationInstructions",
                 label: "Location",
                 required: true,
               }}

@@ -64,6 +64,7 @@ const EVENT_FIELD_LABELS: Partial<Record<keyof EventFormData, string>> = {
   type: "Type",
   eventType: "Event Type",
   classWorkshopType: "Class/Workshop Type",
+  classWorkshopDuration: "Duration",
   dropInClassesAvailable: "Drop-in classes",
   dropInClasses: "Drop-in pricing and details",
   classRegistrationDetails: "Registration link or instructions",
