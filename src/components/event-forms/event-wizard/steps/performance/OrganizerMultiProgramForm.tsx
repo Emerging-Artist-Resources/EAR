@@ -10,7 +10,6 @@ import { Section } from "@/components/forms/blocks/Section"
 import { Button } from "@/components/ui/button"
 import { PieceDetails } from "@/components/forms/blocks/PieceDetails"
 import { SelectBlock } from "@/components/forms/blocks/Select"
-import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
 
 export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventFormData> }) {
   const { fields, append, remove, replace } = useFieldArray({

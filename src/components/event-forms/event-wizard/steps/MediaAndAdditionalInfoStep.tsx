@@ -17,21 +17,6 @@ interface MediaAndAdditionalInfoStepProps {
 }
 
 export function MediaAndAdditionalInfoStep({ form, eventType }: MediaAndAdditionalInfoStepProps) {
-  const perfSubtype = useWatch({
-    control: form.control,
-    name: "type" as Path<EventFormData>,
-  }) as "ORGANIZER" | "PIECE" | undefined
-
-  const perfEventType = useWatch({
-    control: form.control,
-    name: "eventType" as Path<EventFormData>,
-  }) as "SOLO" | "SPLIT_BILL" | "FESTIVAL" | undefined
-
-  const hideDuplicatePromoUploader =
-    eventType === "PERFORMANCE" &&
-    perfSubtype === "ORGANIZER" &&
-    (perfEventType === "SPLIT_BILL" || perfEventType === "FESTIVAL")
-
   const occurrences = useWatch({
     control: form.control,
     name: "occurrences" as Path<EventFormData>,
