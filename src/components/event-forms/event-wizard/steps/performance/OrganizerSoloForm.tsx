@@ -12,12 +12,11 @@ export function OrganizerSoloForm({ form }: { form: UseFormReturn<EventFormData>
   return (
     <>
       <OrganizerDatesTimes form={form} />
-      <Section title="Artist Credits (encouraged)">
+      <Section title="Artist credits (encouraged)">
         <TextAreaField
           form={form}
           name={"participants"}
-          label="Please list all artists and collaborators to be credited for this program"
-          placeholder="Include names, roles, and associated work titles, if applicable."
+          label="Please list all artists and collaborators to be credited for this program. Include names, roles, and associated work titles, if applicable."
         />
       </Section>
     </>

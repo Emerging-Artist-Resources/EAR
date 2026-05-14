@@ -10,10 +10,10 @@ import { Section } from "@/components/forms/blocks/Section"
 import { Button } from "@/components/ui/button"
 import { PieceDetails } from "@/components/forms/blocks/PieceDetails"
 import { SelectBlock } from "@/components/forms/blocks/Select"
+import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
 
 export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventFormData> }) {
-  
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: "pieces" as never,
   })
@@ -25,12 +25,12 @@ export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventF
   const wantsToAddPiece = addPieceChoice === "true" || addPieceChoice === true
 
   useEffect(() => {
-    if (wantsToAddPiece && fields.length === 0) {
-      append({
-        title: "",
-        creatorName: "",
-        creatorEmail: "",
-      } as never)
+    if (!wantsToAddPiece) {
+      replace([])
+      return
+    }
+    if (fields.length === 0) {
+      append({} as never)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wantsToAddPiece, fields.length])
@@ -38,22 +38,29 @@ export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventF
   return (
     <>
       <OrganizerDatesTimes form={form} />
-      
 
-      <Section title="Performance Pieces">
+      {/* <Section title="Media upload (festival or shared program)">
+        <PhotoUploader
+          form={form}
+          name={"promoFiles"}
+          label="Promotional images"
+          description="Upload images for this festival or shared program (optional but recommended)."
+        />
+      </Section> */}
+
+      <Section title="Piece information">
         <SelectBlock
           form={form}
           name={"addPiece" as Path<EventFormData>}
-          label=" Are you presenting work in your own festival "
+          label="Are you presenting work?"
           required
           options={[
-            { label: "Yes, I'm presenting work in my own festival", value: "true" },
-            { label: "No, I am not presenting work in my own festival", value: "false" },
+            { label: "Yes", value: "true" },
+            { label: "No", value: "false" },
           ]}
         />
 
         {wantsToAddPiece && (
-          
           <div className="mt-6 space-y-6">
             {fields.map((field, index) => (
               <PieceDetails
@@ -71,15 +78,9 @@ export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventF
               <Button
                 type="button"
                 variant="outline"
-                onClick={() =>
-                  append({
-                    title: "",
-                    creatorName: "",
-                    creatorEmail: "",
-                  } as never)
-                }
+                onClick={() => append({} as never)}
               >
-                + Add Another Piece
+                + Add another piece
               </Button>
               <span className="text-sm text-gray-600">
                 {fields.length} {fields.length === 1 ? "piece" : "pieces"} added
@@ -87,10 +88,7 @@ export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventF
             </div>
           </div>
         )}
-
-       
       </Section>
-
     </>
   )
 }

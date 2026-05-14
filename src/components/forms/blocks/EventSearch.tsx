@@ -5,6 +5,7 @@ import { useEffect, useReducer, useRef, useCallback, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { apiGet } from "@/lib/fetch-utils"
+import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
 
 type EventType = "performance" | "audition" | "creative" | "class" | "funding"
 
@@ -87,6 +88,8 @@ interface EventSearchProps<T extends Record<string, unknown>> {
   showCantLocateButton?: boolean
   /** Overrides default "Can't Locate Event" button label. */
   cantLocateButtonLabel?: string
+  /** Shown beside the "can't locate" control when search is visible. */
+  cantLocateTooltip?: string
   onCantLocate?: () => void
   required?: boolean
 }
@@ -100,6 +103,7 @@ export function EventSearch<T extends Record<string, unknown>>({
   placeholder = "Type to search for events...",
   showCantLocateButton = false,
   cantLocateButtonLabel = "Can't Locate Event",
+  cantLocateTooltip,
   onCantLocate,
   required = false,
 }: EventSearchProps<T>) {
@@ -305,9 +309,12 @@ export function EventSearch<T extends Record<string, unknown>>({
       </div>
 
       {showCantLocateButton && !isEventSelected && (
-        <Button type="button" variant="outline" onClick={handleCantLocate}>
-          {cantLocateButtonLabel}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="outline" onClick={handleCantLocate}>
+            {cantLocateButtonLabel}
+          </Button>
+          {cantLocateTooltip?.trim() ? <FormFieldTooltip text={cantLocateTooltip.trim()} /> : null}
+        </div>
       )}
     </div>
   )

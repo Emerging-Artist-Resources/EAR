@@ -1,13 +1,28 @@
 "use client"
 
-import { UseFormReturn } from "react-hook-form"
+import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { Dropdown } from "@/components/forms/blocks/Dropdown"
+import { InviteRecipientEmailsSection } from "@/components/event-forms/event-wizard/steps/performance/InviteRecipientEmailsSection"
+
+const SPLIT_FESTIVAL_ORGANIZER_TOOLTIP =
+  "For split bills, one listing must be submitted as the primary event. All other participants should submit as Participating Artists to ensure listings are linked."
+
+const INVITE_PARTICIPATING_ARTISTS_TITLE = "Invite participating artists"
+const INVITE_PARTICIPATING_ARTISTS_DESCRIPTION =
+  "Enter participating artists and companies email addresses. They will receive a notification inviting them to connect their listing to this event."
 
 export function OrganizerBasics({ form }: { form: UseFormReturn<EventFormData> }) {
+  const eventType = useWatch({
+    control: form.control,
+    name: "eventType" as Path<EventFormData>,
+  }) as "SOLO" | "SPLIT_BILL" | "FESTIVAL" | undefined
+
+  const isMulti = eventType === "SPLIT_BILL" || eventType === "FESTIVAL"
+
   return (
     <Section title="Event basics">
       <Dropdown
@@ -23,28 +38,80 @@ export function OrganizerBasics({ form }: { form: UseFormReturn<EventFormData> }
         ]}
       />
 
-      <TextField form={form} name={"title"} label="Show Name" required />
-      <TextField form={form} name={"organizer"} label="Organizer / Presenting Company" required />
-
-      <TextField form={form} name={"website"} label="Website" type="url" placeholder="https://..." />
-      <TextField
-        form={form}
-        name={"link"}
-        label="Ticket Link"
-        type="url"
-        placeholder="https://..."
-        required
-      />
-      <TextField
-        form={form}
-        name={"price"}
-        label="Ticket Cost"
-        placeholder="e.g., $20 / Free / Sliding scale"
-        required
-      />
-
-      <TextAreaField form={form} name={"description"} label="Short Show Description" required rows={4} />
-
+      {isMulti ? (
+        <>
+          <TextField form={form} name={"title"} label="Performance Name" required />
+          <TextField
+            form={form}
+            name={"organizer"}
+            label="Organizer / Presenting Company"
+            labelTooltip={SPLIT_FESTIVAL_ORGANIZER_TOOLTIP}
+            required
+          />
+          <TextField
+            form={form}
+            name={"website"}
+            label="Organizer / Presenting Company Website"
+            type="url"
+            placeholder="https://..."
+          />
+          <InviteRecipientEmailsSection
+            form={form}
+            title={INVITE_PARTICIPATING_ARTISTS_TITLE}
+            description={INVITE_PARTICIPATING_ARTISTS_DESCRIPTION}
+          />
+          <TextField
+            form={form}
+            name={"link"}
+            label="Ticket link"
+            type="url"
+            placeholder="https://..."
+            required
+          />
+          <TextField
+            form={form}
+            name={"price"}
+            label="Ticket Price"
+            placeholder="e.g., $20 / Free / Sliding scale"
+            required
+          />
+          <TextAreaField
+            form={form}
+            name={"description"}
+            label="Short Performance Description"
+            required
+            rows={4}
+          />
+        </>
+      ) : (
+        <>
+          <TextField form={form} name={"title"} label="Performance Name" required />
+          <TextField form={form} name={"organizer"} label="Company / Artist Name" required />
+          <TextField form={form} name={"website"} label="Website" type="url" placeholder="https://..." />
+          <TextField
+            form={form}
+            name={"link"}
+            label="Ticket Link"
+            type="url"
+            placeholder="https://..."
+            required
+          />
+          <TextField
+            form={form}
+            name={"price"}
+            label="Ticket Price"
+            placeholder="e.g., $20 / Free / Sliding scale"
+            required
+          />
+          <TextAreaField
+            form={form}
+            name={"description"}
+            label="Short Performance Description"
+            required
+            rows={4}
+          />
+        </>
+      )}
     </Section>
   )
 }

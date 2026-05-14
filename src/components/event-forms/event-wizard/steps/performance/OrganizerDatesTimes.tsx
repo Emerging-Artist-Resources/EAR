@@ -309,8 +309,6 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
     })
   }
 
-  const sectionTitle = "Showtimes"
-  const scheduleTitle = "When and where"
   const confirmActionLabel = "Confirm showtimes"
   const confirmedHeadline = "Showtimes confirmed"
   const emptyConfirmedLabel = "No showtimes confirmed"
@@ -320,7 +318,8 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
     <ShowtimesList<EventFormData>
       form={form}
       name="occurrences"
-      title={scheduleTitle}
+      title=""
+      note=""
       required
       locationConfig={ORGANIZER_OCCURRENCE_LOCATION}
     />
@@ -328,7 +327,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
 
   return (
     <div ref={sectionRef}>
-      <Section title={sectionTitle}>
+      <Section title="Performance times">
       {!needsConfirmation ? (
         // SOLO: show schedule editor directly (no confirmation)
         scheduleEditor

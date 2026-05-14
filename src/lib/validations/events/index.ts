@@ -159,6 +159,11 @@ export const performanceStep2Schema = baseSchema
     selectedSlots: true,
     parentEventId: true,
     parentEventName: true,
+    parentEventWebsite: true,
+    parentEventContactEmail: true,
+    shareRecipientEmails: true,
+    addPiece: true,
+    website: true,
     piece_company: true,
     piece_companyWebsite: true,
     piece_title: true,
@@ -179,7 +184,7 @@ export const performanceStep2Schema = baseSchema
       ctx.addIssue({
         code: "custom",
         path: ["type"],
-        message: "Performance type is required",
+        message: "Please select your role",
       })
       return // Don't continue validation if type is missing
     }
@@ -206,7 +211,10 @@ export const performanceStep2Schema = baseSchema
         ctx.addIssue({
           code: "custom",
           path: ["organizer"],
-          message: "Organizer is required",
+          message:
+            (data.eventType ?? "SOLO") === "SOLO"
+              ? "Company / artist name is required"
+              : "Organizer / presenting company is required",
         })
       }
       if (!data.link || data.link.trim() === "") {
@@ -251,6 +259,31 @@ export const performanceStep2Schema = baseSchema
           })
         }
       }
+      if (data.eventType === "SPLIT_BILL" || data.eventType === "FESTIVAL") {
+        if (data.addPiece === true) {
+          if (!data.piece_company || data.piece_company.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              path: ["piece_company"],
+              message: "Company / artist name is required when you are presenting work",
+            })
+          }
+          if (!data.piece_title || data.piece_title.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              path: ["piece_title"],
+              message: "Piece title is required when you are presenting work",
+            })
+          }
+          if (!data.piece_description || data.piece_description.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              path: ["piece_description"],
+              message: "Piece description is required when you are presenting work",
+            })
+          }
+        }
+      }
     }
     if (data.type === "PIECE") {
       // Validation order matches form field order for PIECE
@@ -270,12 +303,35 @@ export const performanceStep2Schema = baseSchema
           ctx.addIssue({
             code: "custom",
             path: ["parentEventName"],
-            message: "Event/festival name is required",
+            message: "Event title is required",
           })
         }
       }
-      
-      // 2. Piece schedule (Piece Details section - PieceOccurrencesPicker)
+
+      // 2. Piece detail fields (before schedule in the form)
+      if (!data.piece_company || data.piece_company.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["piece_company"],
+          message: "Company / artist name is required",
+        })
+      }
+      if (!data.piece_title || data.piece_title.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["piece_title"],
+          message: "Piece title is required",
+        })
+      }
+      if (!data.piece_description || data.piece_description.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["piece_description"],
+          message: "Piece description is required",
+        })
+      }
+
+      // 3. Piece schedule (performance times & location)
       const scheduleMode = data.pieceScheduleMode ?? "FROM_PARENT"
       const hasCustomOccurrences = Array.isArray(data.extraOccurrences) &&
         data.extraOccurrences.length > 0 &&
@@ -364,35 +420,6 @@ export const performanceStep2Schema = baseSchema
         }
       }
 
-      // 3. Piece detail fields (Piece Details section)
-      if (!data.piece_company || data.piece_company.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          path: ["piece_company"],
-          message: "Company / Artist Name is required",
-        })
-      }
-      if (!data.piece_title || data.piece_title.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          path: ["piece_title"],
-          message: "Piece Title is required",
-        })
-      }
-      if (!data.piece_description || data.piece_description.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          path: ["piece_description"],
-          message: "Piece Description is required",
-        })
-      }
-      if (!data.piece_credits || data.piece_credits.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          path: ["piece_credits"],
-          message: "Credits / Performers is required",
-        })
-      }
     }
   })
 

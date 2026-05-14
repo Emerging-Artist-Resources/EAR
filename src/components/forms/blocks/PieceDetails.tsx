@@ -15,6 +15,8 @@ interface PieceDetailsProps {
   showOccurrences?: boolean
   occurrencesMode?: "SELECT_FROM_EVENT" | "SELECT_FROM_PARENT" | "CUSTOM_ONLY"
   enableSampleData?: boolean
+  /** When false, hides choreographer / creator (default piece submission flow). */
+  showChoreographerField?: boolean
 }
 
 export function PieceDetails({
@@ -25,14 +27,14 @@ export function PieceDetails({
   showOccurrences = true,
   occurrencesMode = "SELECT_FROM_EVENT",
   enableSampleData = false,
+  showChoreographerField = false,
 }: PieceDetailsProps) {
   const prefix = index === 0 ? "piece" : `pieces.${index}`
 
   return (
     <>
       <div className="flex items-center justify-between">
-        
-        {canRemove && index > 0 && (
+        {canRemove && (
           <Button
             type="button"
             variant="outline"
@@ -58,14 +60,14 @@ export function PieceDetails({
         <TextField
           form={form}
           name={`${prefix}_company` as Path<EventFormData>}
-          label="Company / Artist Name"
+          label="Company / Artist name"
           required
         />
 
         <TextField
           form={form}
           name={`${prefix}_companyWebsite` as Path<EventFormData>}
-          label="Company / Artist Website"
+          label="Website"
           type="url"
           placeholder="https://..."
         />
@@ -73,20 +75,23 @@ export function PieceDetails({
         <TextField
           form={form}
           name={`${prefix}_title` as Path<EventFormData>}
-          label="Piece Title"
+          label="Piece title"
           required
         />
 
-        <TextField
-          form={form}
-          name={`${prefix}_choreographer` as Path<EventFormData>}
-          label="Choreographer / Creator (if different from company / artist name)"
-        />
+        {showChoreographerField ? (
+          <TextField
+            form={form}
+            name={`${prefix}_choreographer` as Path<EventFormData>}
+            label="Choreographer / Creator (if different from company / artist name)"
+          />
+        ) : null}
 
         <TextAreaField
           form={form}
           name={`${prefix}_description` as Path<EventFormData>}
-          label="Piece Description"
+          label="Piece description"
+          note="Provide a brief description of the work being presented."
           required
           rows={4}
         />
@@ -94,14 +99,11 @@ export function PieceDetails({
         <TextAreaField
           form={form}
           name={`${prefix}_credits` as Path<EventFormData>}
-          label="Credits / Performers"
-          required
-          placeholder="Performers, collaborators, composer, designers..."
+          label="Artist credits (encouraged)"
+          placeholder="Please list all artists and collaborators to be credited for this program. Include names, roles, and associated work titles, if applicable."
           rows={4}
         />
-
       </div>
     </>
   )
 }
-

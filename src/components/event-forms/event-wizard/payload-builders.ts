@@ -371,7 +371,9 @@ export async function buildPerformancePayload(
       website: data.website || null,
       link: data.link ?? null,
       price: data.price ?? null,
-      participants: data.participants ?? null,
+      participants: isPiece
+        ? data.piece_credits?.trim() || data.participants?.trim() || null
+        : data.participants ?? null,
       event_type: data.eventType || null,
       agree_comp_tickets: Boolean(data.agreeCompTickets),
       event_dates_confirmed: Boolean(data.eventDatesConfirmed),

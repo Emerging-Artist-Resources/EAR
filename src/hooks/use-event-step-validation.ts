@@ -39,7 +39,7 @@ export function useEventStepValidation(
       if (!typeValue || (typeValue !== "ORGANIZER" && typeValue !== "PIECE")) {
         form.setError("type", {
           type: "manual",
-          message: "Please select what you are submitting",
+          message: "Please select your role",
         })
         return false
       }

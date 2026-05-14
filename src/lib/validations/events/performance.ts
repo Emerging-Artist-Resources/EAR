@@ -131,7 +131,7 @@ export const performanceFields = z
       ctx.addIssue({
         code: "custom",
         path: ["type"],
-        message: "Please select what you are submitting",
+        message: "Please select your role",
       })
       return // Don't continue with other validations if type is missing
     }
@@ -195,7 +195,10 @@ export const performanceFields = z
         ctx.addIssue({
           code: "custom",
           path: ["organizer"],
-          message: "Organizer is required",
+          message:
+            (data.eventType ?? "SOLO") === "SOLO"
+              ? "Company / artist name is required"
+              : "Organizer / presenting company is required",
         })
       }
       if (!data.link || data.link.trim() === "") {
@@ -219,6 +222,32 @@ export const performanceFields = z
           message: ORGANIZER_OCCURRENCE_USER_MESSAGES.needSchedule,
         })
       }
+
+      if (data.eventType === "SPLIT_BILL" || data.eventType === "FESTIVAL") {
+        if (data.addPiece === true) {
+          if (!data.piece_company || data.piece_company.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              path: ["piece_company"],
+              message: "Company / artist name is required when you are presenting work",
+            })
+          }
+          if (!data.piece_title || data.piece_title.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              path: ["piece_title"],
+              message: "Piece title is required when you are presenting work",
+            })
+          }
+          if (!data.piece_description || data.piece_description.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              path: ["piece_description"],
+              message: "Piece description is required when you are presenting work",
+            })
+          }
+        }
+      }
     }
 
     if (data.type === "PIECE") {
@@ -240,7 +269,7 @@ export const performanceFields = z
           ctx.addIssue({
             code: "custom",
             path: ["parentEventName"],
-            message: "Event/festival name is required",
+            message: "Event title is required",
           })
         }
       }
@@ -355,14 +384,7 @@ export const performanceFields = z
         ctx.addIssue({
           code: "custom",
           path: ["piece_description"],
-          message: "Piece Description is required",
-        })
-      }
-      if (!data.piece_credits || data.piece_credits.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          path: ["piece_credits"],
-          message: "Credits / Performers is required",
+          message: "Piece description is required",
         })
       }
     }

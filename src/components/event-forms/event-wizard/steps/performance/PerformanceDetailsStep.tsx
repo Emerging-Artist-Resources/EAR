@@ -9,7 +9,6 @@ import { SelectBlock } from "@/components/forms/blocks/Select"
 
 import { OrganizerFlow } from "@/components/event-forms/event-wizard/steps/performance/OrganizerFlow"
 import { PieceSubmissionFlow } from "@/components/event-forms/event-wizard/steps/performance/PieceSubmissionFlow"
-import { ShareListingSection } from "@/components/event-forms/event-wizard/steps/performance/ShareListingSection"
 
 type PerfType = "ORGANIZER" | "PIECE"
 
@@ -47,6 +46,7 @@ export function PerformanceDetailsStep({ form }: PerformanceDetailsStepProps) {
       }
       form.setValue("selectedSlots", [] as never, { shouldValidate: false, shouldDirty: true })
       form.setValue("extraOccurrences", [] as never, { shouldValidate: false, shouldDirty: true })
+      form.setValue("organizer", "" as never, { shouldValidate: false })
       form.clearErrors("selectedSlots")
       form.clearErrors("extraOccurrences")
     }
@@ -54,22 +54,28 @@ export function PerformanceDetailsStep({ form }: PerformanceDetailsStepProps) {
   }, [perfType, form])
 
   return (
-    <Section title="Performance submission">
+    <Section title="Select your role">
       <SelectBlock
         form={form}
         name={"type"}
-        label="What are you submitting?"
+        label="Select your role"
         required
         options={[
-          { label: "Organizer/Producer: Submitting my own performance or event", value: "ORGANIZER" },
-          { label: "Participating Artist: Submitting a work within a larger event or festival", value: "PIECE" },
+          {
+            label:
+              "Primary Lister (Organizer / Producer / Presenter) — Submitting the primary event listing. Submitting my own performance or event.",
+            value: "ORGANIZER",
+          },
+          {
+            label:
+              "Participating Artist — Submitting work within an existing performance, shared program, or festival.",
+            value: "PIECE",
+          },
         ]}
       />
 
       {perfType === "ORGANIZER" && <OrganizerFlow form={form} />}
       {perfType === "PIECE" && <PieceSubmissionFlow form={form} />}
-      {(perfType === "ORGANIZER" || perfType === "PIECE") && <ShareListingSection form={form} />}
-
     </Section>
   )
 }

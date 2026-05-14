@@ -143,6 +143,8 @@ export function ownerListingToFormLoad(row: UnknownRecord): OwnerListingLoadResu
       piece_companyWebsite: (piece?.piece_company_website as string) || "",
       piece_description: (piece?.piece_description as string) || "",
       piece_choreographer: (piece?.choreographer as string) || "",
+      piece_credits: (pd?.participants as string) || "",
+      organizer: (pd?.organizer as string) || "",
       artistType: (pd?.artist_type as EventFormData["artistType"]) || undefined,
       listingFeeOption: (pd?.listing_fee_option as EventFormData["listingFeeOption"]) || undefined,
       listingFeeExplanation: (pd?.listing_fee_explanation as string) || undefined,
