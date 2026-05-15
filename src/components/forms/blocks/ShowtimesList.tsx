@@ -201,12 +201,11 @@ export function ShowtimesList<T extends FieldValues>({
     append(row as any)
     const datePath = `${name}.${newIndex}.date` as any
 
-    // Defer to after the new row mounts: focus the date field, then scroll the card.
+    // Defer to after the new row mounts so focus lands on the new date field.
     if (focusNewRowTimeoutRef.current) clearTimeout(focusNewRowTimeoutRef.current)
     focusNewRowTimeoutRef.current = setTimeout(() => {
       focusNewRowTimeoutRef.current = null
       setFocus(datePath, { shouldSelect: true })
-      rowElsRef.current[newIndex]?.scrollIntoView({ block: "nearest", behavior: "smooth" })
     }, 0)
   }, [append, fields.length, getValues, locationConfig, name, requireLocation, setError, setFocus, showTime, showEndTime])
 

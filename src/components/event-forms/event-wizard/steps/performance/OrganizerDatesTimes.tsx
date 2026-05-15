@@ -71,8 +71,6 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
   const prevConfirmedRef = useRef<boolean | undefined>(isConfirmed)
   // Key to force schedule editor remount when entering edit mode with correct defaults
   const editKeyRef = useRef(0)
-  // Ref to scroll back to section after reset to prevent scroll jump
-  const sectionRef = useRef<HTMLDivElement>(null)
   
   // When switching from confirmed to editing, restore the confirmed values to the form
   // This ensures values are restored even if handleEdit timing is off
@@ -227,8 +225,6 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
   const handleEdit = () => {
     if (confirmedEntriesRef.current.length === 0) return
 
-    const scrollY = window.scrollY
-    
     // Deep copy to ensure all fields including location are preserved
     const entriesToRestore = JSON.parse(JSON.stringify(confirmedEntriesRef.current))
     
@@ -299,14 +295,6 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
       const afterLocationSet = form.getValues("occurrences" as Path<EventFormData>) as DateTimeEntry[] | undefined
       console.log("[OrganizerDatesTimes] handleEdit - form values AFTER setting all location fields:", JSON.stringify(afterLocationSet, null, 2))
     }, 50)
-    
-    requestAnimationFrame(() => {
-      if (sectionRef.current) {
-        sectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
-      } else {
-        window.scrollTo(0, scrollY)
-      }
-    })
   }
 
   const confirmActionLabel = "Confirm showtimes"
@@ -326,7 +314,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
   )
 
   return (
-    <div ref={sectionRef}>
+    <div>
       <Section title="Performance times">
       {!needsConfirmation ? (
         // SOLO: show schedule editor directly (no confirmation)

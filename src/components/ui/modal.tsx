@@ -1,5 +1,6 @@
-import React from "react"
+import React, { useLayoutEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
+import { resetScrollAncestors } from "@/lib/reset-scroll-ancestors"
 import { Button } from "./button"
 import { H2 } from "./typography"
 
@@ -37,6 +38,15 @@ export const Modal: React.FC<ModalProps> = ({
   contentClassName,
   overlayClassName,
 }) => {
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    if (!isOpen) return
+    resetScrollAncestors(bodyRef.current)
+    if (overlayRef.current) overlayRef.current.scrollTop = 0
+  }, [isOpen])
+
   if (!isOpen) return null
 
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -47,16 +57,17 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
+      ref={overlayRef}
       className={cn(
         // replacement for variants.modal.overlay
-        "fixed inset-0 bg-ear-black/70 backdrop-blur-[1px] flex items-center justify-center p-4 z-[9999] overflow-y-auto",
+        "fixed inset-0 bg-ear-black/70 backdrop-blur-[1px] flex items-start justify-center p-4 z-[9999] overflow-y-auto",
         overlayClassName,
       )}
       onClick={handleOverlayClick}
     >
       <div
         className={cn(
-          "w-full rounded-md shadow-lg border my-auto max-h-[90vh] flex flex-col",
+          "w-full rounded-md shadow-lg border max-h-[90vh] flex flex-col",
           sizeClasses[size],
           contentClassName ?? "bg-background border-border"
         )}
@@ -85,7 +96,7 @@ export const Modal: React.FC<ModalProps> = ({
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div ref={bodyRef} className="flex-1 overflow-y-auto p-6">
           <div className="relative z-10">{children}</div>
         </div>
       </div>

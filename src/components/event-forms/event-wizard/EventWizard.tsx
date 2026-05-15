@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useLayoutEffect, useRef } from "react"
 import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
+import { useWatch } from "react-hook-form"
 import type { Resolver } from "react-hook-form"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
 import { Button } from "@/components/ui/button"
@@ -29,6 +30,7 @@ import {
 } from "@/lib/organizer-program-pieces"
 import { ownerListingToFormLoad } from "./owner-listing-to-form"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { resetScrollAncestors } from "@/lib/reset-scroll-ancestors"
 
 interface EventWizardProps {
   onSuccess: (info?: { wasApprovedResubmit?: boolean }) => void
@@ -49,18 +51,6 @@ interface ProfileData {
 }
 
 
-
-/** Reset modal / nested scroll positions when the wizard step changes so step 2+ starts at the top. */
-function scrollAncestorsToTop(startEl: HTMLElement | null) {
-  let el: HTMLElement | null = startEl
-  while (el && el !== document.body) {
-    const { overflowY } = window.getComputedStyle(el)
-    if (overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay") {
-      el.scrollTop = 0
-    }
-    el = el.parentElement
-  }
-}
 
 export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1)
@@ -102,10 +92,6 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       cancelled = true
     }
   }, [user])
-
-  useLayoutEffect(() => {
-    scrollAncestorsToTop(wizardRootRef.current)
-  }, [step])
 
   useEffect(() => {
     if (!listingId) {
@@ -188,6 +174,28 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
     shouldUnregister: false,
     shouldFocusError: false, // prevents scroll-to-first-error / focus jumps
   })
+
+  const perfType = useWatch({ control: form.control, name: "type" })
+  const performanceFormat = useWatch({ control: form.control, name: "eventType" })
+  const classWorkshopType = useWatch({ control: form.control, name: "classWorkshopType" })
+
+  const scrollResetKey =
+    step === 2
+      ? `${step}:${eventType}:${perfType}:${performanceFormat}:${classWorkshopType}`
+      : `${step}:${eventType}`
+
+  useLayoutEffect(() => {
+    resetScrollAncestors(wizardRootRef.current)
+  }, [scrollResetKey])
+
+  // ShowtimesList seeds a row after mount; reset scroll once content height settles.
+  useEffect(() => {
+    if (step !== 2) return
+    const id = requestAnimationFrame(() => {
+      resetScrollAncestors(wizardRootRef.current)
+    })
+    return () => cancelAnimationFrame(id)
+  }, [scrollResetKey])
 
   // Hook must be called unconditionally - use PERFORMANCE as default
   // Must be called after form initialization
