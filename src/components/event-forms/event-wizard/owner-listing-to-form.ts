@@ -1,6 +1,7 @@
 import type { EventFormData } from "@/lib/validations/events"
 import type { EventType } from "./EventTypeSelector"
 import { convertUTCToEST } from "@/lib/datetime-utils"
+import { inferLocationModeFromStored } from "@/lib/location-mode"
 import {
   extractPiecePhotosByIdFromDocument,
   normalizeOrganizerProgramPiecesFromDb,
@@ -38,6 +39,7 @@ function occurrenceRowToForm(occ: {
   return {
     date,
     times: [{ time, endTime }],
+    locationMode: inferLocationModeFromStored({ venueName: occ.venue_name }),
     address: occ.address ?? undefined,
     placeId: occ.place_id ?? undefined,
     lat: occ.lat ?? undefined,
@@ -86,6 +88,10 @@ export function ownerListingToFormLoad(row: UnknownRecord): OwnerListingLoadResu
   const baseDefaults: Partial<EventFormData> = {
     company: (listing.company as string) || undefined,
     companyWebsite: (listing.company_website as string) || undefined,
+    locationMode: inferLocationModeFromStored({
+      venueName: listing.venue_name as string | null,
+      meta: listing.meta,
+    }),
     address: (listing.address as string) || undefined,
     placeId: (listing.place_id as string) || undefined,
     lat: listing.lat as number | undefined,

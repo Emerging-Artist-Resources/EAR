@@ -2,6 +2,14 @@ import { EventFormData } from "@/lib/validations/events"
 import { EventType } from "./EventTypeSelector"
 import { convertESTToUTC } from "@/lib/datetime-utils"
 import {
+  LOCATION_MODE_ONLINE,
+  mergeLocationModeIntoMeta,
+  normalizeLocationFieldsForPersist,
+  normalizeLocationMode,
+  type LocationFormFields,
+  type PersistedLocationFields,
+} from "@/lib/location-mode"
+import {
   buildOrganizerProgramPiecesDocumentFromForm,
   type OrganizerProgramPiecesDocument,
 } from "@/lib/organizer-program-pieces"
@@ -66,25 +74,65 @@ export interface UserInfo {
   pronouns?: string | null
 }
 
+function listingLocationFromForm(data: LocationFormFields): PersistedLocationFields {
+  return normalizeLocationFieldsForPersist({
+    locationMode: data.locationMode,
+    address: data.address,
+    placeId: data.placeId,
+    lat: data.lat,
+    lng: data.lng,
+    venueName: data.venueName,
+    locationInstructions: data.locationInstructions,
+  })
+}
+
+function occurrenceLocationFromRow(row: Record<string, unknown>): PersistedLocationFields {
+  return normalizeLocationFieldsForPersist({
+    locationMode: row.locationMode as LocationFormFields["locationMode"],
+    address: row.address as string | undefined,
+    placeId: row.placeId as string | undefined,
+    lat: row.lat as number | undefined,
+    lng: row.lng as number | undefined,
+    venueName: row.venueName as string | undefined,
+    locationInstructions: row.locationInstructions as string | undefined,
+  })
+}
+
+function persistedToOccurrencePayload(loc: PersistedLocationFields) {
+  return {
+    address: loc.address,
+    place_id: loc.place_id,
+    lat: loc.lat,
+    lng: loc.lng,
+    venue_name: loc.venue_name,
+    location_instructions: loc.location_instructions,
+  }
+}
+
 export function buildBasePayload(
   data: EventFormData,
   userInfo: UserInfo
 ): EventPayload["base"] {
+  const loc = listingLocationFromForm(data)
+  const mode = normalizeLocationMode(data.locationMode)
+  const meta =
+    mode === LOCATION_MODE_ONLINE ? mergeLocationModeIntoMeta({}, mode) : undefined
+
   return {
     contact_name: userInfo.name || "",
     pronouns: userInfo.pronouns || null,
     contact_email: userInfo.email || "",
     company: data.company || null,
     company_website: data.companyWebsite || null,
-    address: data.address || null,
-    place_id: data.placeId || null,
-    lat: data.lat || null,
-    lng: data.lng || null,
-    venue_name: data.venueName || null,
-    location_instructions: data.locationInstructions || null,
+    address: loc.address,
+    place_id: loc.place_id,
+    lat: loc.lat,
+    lng: loc.lng,
+    venue_name: loc.venue_name,
+    location_instructions: loc.location_instructions,
     social_handles: data.socialHandles || null,
     notes: data.notes || null,
-    //borough: null,
+    ...(meta ? { meta } : {}),
   }
 }
 
@@ -145,16 +193,19 @@ export async function buildPerformancePayload(
         // Get location from parent occurrence - check time-level first, then date-level
         // Location is stored per time slot in the times array, with date-level as fallback
         const timeSlot = parentOcc?.times?.find((t: any) => t?.time === time) as any
-        const locationData = {
-          // Time-level location takes precedence, fallback to date-level
-          address: timeSlot?.address || parentOcc?.address || null,
-          place_id: timeSlot?.placeId || parentOcc?.placeId || null,
-          venue_name: timeSlot?.venueName || parentOcc?.venueName || null,
-          location_instructions: timeSlot?.instructions || parentOcc?.locationInstructions || null,
-          lat: timeSlot?.lat || parentOcc?.lat || null,
-          lng: timeSlot?.lng || parentOcc?.lng || null,
-        }
-        
+        const locationData = occurrenceLocationFromRow({
+          ...(parentOcc ?? {}),
+          ...(timeSlot ?? {}),
+          locationMode: timeSlot?.locationMode ?? parentOcc?.locationMode,
+          address: timeSlot?.address ?? parentOcc?.address,
+          placeId: timeSlot?.placeId ?? parentOcc?.placeId,
+          venueName: timeSlot?.venueName ?? parentOcc?.venueName,
+          locationInstructions:
+            timeSlot?.locationInstructions ?? timeSlot?.instructions ?? parentOcc?.locationInstructions,
+          lat: timeSlot?.lat ?? parentOcc?.lat,
+          lng: timeSlot?.lng ?? parentOcc?.lng,
+        })
+
         const selectedOcc = {
           date,
           time,
@@ -163,20 +214,13 @@ export async function buildPerformancePayload(
           venue_name: locationData.venue_name,
           location_instructions: locationData.location_instructions,
         }
-        
-        // Store for duplicate checking
+
         selectedOccurrences.push(selectedOcc)
-        
-        // Create occurrence with location fields from parent
+
         occurrences.push(
           occurrenceSlotPayload(date, { time }, {
             occurrence_type: "event",
-            address: locationData.address,
-            place_id: locationData.place_id,
-            lat: locationData.lat,
-            lng: locationData.lng,
-            venue_name: locationData.venue_name,
-            location_instructions: locationData.location_instructions,
+            ...persistedToOccurrencePayload(locationData),
           }),
         )
       }
@@ -226,15 +270,11 @@ export async function buildPerformancePayload(
             continue
           }
           
+          const loc = occurrenceLocationFromRow(d as Record<string, unknown>)
           occurrences.push(
             occurrenceSlotPayload(d.date, t, {
               occurrence_type: "event",
-              address: (d as any).address || null,
-              place_id: (d as any).placeId || null,
-              lat: (d as any).lat || null,
-              lng: (d as any).lng || null,
-              venue_name: (d as any).venueName || null,
-              location_instructions: (d as any).locationInstructions || null,
+              ...persistedToOccurrencePayload(loc),
             }),
           )
         }
@@ -294,25 +334,27 @@ export async function buildPerformancePayload(
       for (const t of d.times) {
         if (!t?.time) continue
         
-        const address = (d as any).address || null
-        const placeId = (d as any).placeId || null
-        const venueName = (d as any).venueName || null
-        const locationInstructions = (d as any).locationInstructions || null
-        
-        // Skip if this duplicates another occurrence in the form
-        if (isDuplicate(d.date, t.time, address, placeId, venueName, locationInstructions, customOccurrences, i)) {
+        const loc = occurrenceLocationFromRow(d as Record<string, unknown>)
+
+        if (
+          isDuplicate(
+            d.date,
+            t.time,
+            loc.address,
+            loc.place_id,
+            loc.venue_name,
+            loc.location_instructions,
+            customOccurrences,
+            i,
+          )
+        ) {
           continue
         }
-        
+
         occurrences.push(
           occurrenceSlotPayload(d.date, t, {
             occurrence_type: "event",
-            address,
-            place_id: placeId,
-            lat: (d as any).lat || null,
-            lng: (d as any).lng || null,
-            venue_name: venueName,
-            location_instructions: locationInstructions,
+            ...persistedToOccurrencePayload(loc),
           }),
         )
       }
@@ -356,13 +398,14 @@ export async function buildPerformancePayload(
     .map((e) => e.trim())
     .filter(Boolean)
   const basePayload = buildBasePayload(data, userInfo)
-  const base =
-    rawShare.length > 0
-      ? {
-          ...basePayload,
-          meta: { share: { recipient_emails: rawShare } },
-        }
-      : basePayload
+  const performanceMeta: Record<string, unknown> = { ...(basePayload.meta ?? {}) }
+  if (rawShare.length > 0) {
+    performanceMeta.share = { recipient_emails: rawShare }
+  }
+  const base = {
+    ...basePayload,
+    ...(Object.keys(performanceMeta).length > 0 ? { meta: performanceMeta } : {}),
+  }
 
   let organizerProgramPieces: OrganizerProgramPiecesDocument | null = null
   if (!isPiece) {
@@ -413,8 +456,8 @@ export function buildAuditionPayload(
   _tz: string // Unused - we always use EST_TIMEZONE for consistency
 ): EventPayload {
   const occurrences: EventPayload["occurrences"] = []
-  
-  // Build event occurrences from the occurrences array
+  const listingLoc = listingLocationFromForm(data)
+
   for (const occ of data.occurrences ?? []) {
     if (!occ?.date || !Array.isArray(occ?.times)) continue
     for (const t of occ.times) {
@@ -422,12 +465,7 @@ export function buildAuditionPayload(
       occurrences.push(
         occurrenceSlotPayload(occ.date, t, {
           occurrence_type: "event",
-          address: (occ as any).address || null,
-          place_id: (occ as any).placeId || null,
-          lat: (occ as any).lat || null,
-          lng: (occ as any).lng || null,
-          venue_name: (occ as any).venueName || null,
-          location_instructions: (occ as any).locationInstructions || null,
+          ...persistedToOccurrencePayload(listingLoc),
         }),
       )
     }
@@ -533,15 +571,11 @@ export function buildClassPayload(
     if (!d?.date || !Array.isArray(d?.times)) continue
     for (const t of d.times) {
       if (!t?.time) continue
+      const loc = occurrenceLocationFromRow(d as Record<string, unknown>)
       occurrences.push(
         occurrenceSlotPayload(d.date, t, {
           occurrence_type: "event",
-          address: (d as any).address || null,
-          place_id: (d as any).placeId || null,
-          lat: (d as any).lat || null,
-          lng: (d as any).lng || null,
-          venue_name: (d as any).venueName || null,
-          location_instructions: (d as any).locationInstructions || null,
+          ...persistedToOccurrencePayload(loc),
         }),
       )
     }
@@ -571,13 +605,14 @@ export function buildClassPayload(
   // Set base location from first occurrence for backwards compatibility
   const basePayload = buildBasePayload(data, userInfo)
   const firstOccurrence = occurrencesData[0]
-  if (firstOccurrence && !basePayload.address) {
-    basePayload.address = (firstOccurrence as any).address || null
-    basePayload.place_id = (firstOccurrence as any).placeId || null
-    basePayload.lat = (firstOccurrence as any).lat || null
-    basePayload.lng = (firstOccurrence as any).lng || null
-    basePayload.venue_name = (firstOccurrence as any).venueName || null
-    basePayload.location_instructions = (firstOccurrence as any).locationInstructions || null
+  if (firstOccurrence && !basePayload.address && !basePayload.venue_name) {
+    const loc = occurrenceLocationFromRow(firstOccurrence as Record<string, unknown>)
+    basePayload.address = loc.address
+    basePayload.place_id = loc.place_id
+    basePayload.lat = loc.lat
+    basePayload.lng = loc.lng
+    basePayload.venue_name = loc.venue_name
+    basePayload.location_instructions = loc.location_instructions
   }
 
   const isWorkshop = (data.classWorkshopType || "CLASS") === "WORKSHOP"
@@ -592,13 +627,14 @@ export function buildClassPayload(
         .map((e) => e.trim())
         .filter(Boolean)
     : []
-  const base =
-    rawShare.length > 0
-      ? {
-          ...basePayload,
-          meta: { share: { recipient_emails: rawShare } },
-        }
-      : basePayload
+  const classMeta: Record<string, unknown> = { ...(basePayload.meta ?? {}) }
+  if (rawShare.length > 0) {
+    classMeta.share = { recipient_emails: rawShare }
+  }
+  const base = {
+    ...basePayload,
+    ...(Object.keys(classMeta).length > 0 ? { meta: classMeta } : {}),
+  }
 
   // Handle parent workshop relationship for CLASS type
   const isClass = (data.classWorkshopType || "CLASS") === "CLASS"

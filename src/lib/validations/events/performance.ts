@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { hasCompleteLocation, locationValidationIssue } from "@/lib/location-mode"
 import { flexibleUrlOrEmptySchema, flexibleUrlOptionalSchema } from "../flexible-url"
 import { extraDateSchema, lenientOccurrenceTimeSlotSchema } from "./base"
 import {
@@ -370,22 +371,17 @@ export const performanceFields = z
             
             if (!hasValidDateTime) return false
             
-            // Check if location is provided (at least one of: address, venueName, or placeId)
-            const hasLocation = (occ?.address && occ.address.trim() !== "") ||
-              (occ?.venueName && occ.venueName.trim() !== "") ||
-              (occ?.placeId && occ.placeId.trim() !== "")
-            
-            return !hasLocation
+            return !hasCompleteLocation(occ)
           })
         
         if (occurrencesWithMissingLocation.length > 0) {
-          // Report error for each occurrence missing location
-          occurrencesWithMissingLocation.forEach(({ index }) => {
-            ctx.addIssue({
-              code: "custom",
-              path: ["extraOccurrences", index, "address"],
-              message: "Location is required for each date & time",
+          occurrencesWithMissingLocation.forEach(({ occ, index }) => {
+            const issue = locationValidationIssue(occ, ["extraOccurrences", index], {
+              inPerson: "Location is required for each date & time",
             })
+            if (issue) {
+              ctx.addIssue({ code: "custom", path: issue.path, message: issue.message })
+            }
           })
         }
       }

@@ -14,6 +14,8 @@ export type LocationConfig = {
   latName?: string
   lngName?: string
   instructionsName?: string
+  /** Form field for IN_PERSON | ONLINE; defaults to `locationMode`. */
+  locationModeName?: string
 }
 
 export interface LocationConfigFull {
@@ -23,6 +25,7 @@ export interface LocationConfigFull {
   latName?: string
   lngName?: string
   instructionsName?: string
+  locationModeName?: string
   label?: string
   note?: string
   instructionsLabel?: string

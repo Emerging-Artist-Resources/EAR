@@ -15,6 +15,7 @@ export type PublicListingDetail = {
   location_instructions?: string | null
   social_handles?: string | Record<string, string> | null
   notes?: string | null
+  meta?: unknown
   listing_occurrences?: Array<{ 
     id: string
     starts_at_utc: string

@@ -1,5 +1,6 @@
 import type { RefinementCtx } from "zod"
 import { pieceFieldPrefix } from "@/lib/organizer-program-pieces"
+import { isOnlineLocationMode } from "@/lib/location-mode"
 import {
   buildOrganizerOccurrenceSlotKeySet,
   indexOfOrganizerRowsMissingLocation,
@@ -56,10 +57,14 @@ export function addOrganizerListingScheduleIssues(
   const requireTime = true
   const missingLocationIndexes = indexOfOrganizerRowsMissingLocation(occs, requireTime)
   for (const index of missingLocationIndexes) {
+    const occ = occs[index]
+    const online = isOnlineLocationMode(occ?.locationMode)
     ctx.addIssue({
       code: "custom",
-      path: ["occurrences", index, "address"],
-      message: ORGANIZER_OCCURRENCE_USER_MESSAGES.locationOnSubmit,
+      path: ["occurrences", index, online ? "locationInstructions" : "address"],
+      message: online
+        ? ORGANIZER_OCCURRENCE_USER_MESSAGES.locationOnlineOnSubmit
+        : ORGANIZER_OCCURRENCE_USER_MESSAGES.locationOnSubmit,
     })
   }
 

@@ -10,6 +10,7 @@ import {
   ORGANIZER_OCCURRENCE_USER_MESSAGES,
 } from "@/lib/validations/events/occurrence-row"
 import { createLocationFields, type DateItem, type LocationConfigFull } from "./DateTime"
+import { isOnlineLocationMode } from "@/lib/location-mode"
 import { ShowtimeRow } from "./ShowtimeRow"
 import { FormFieldTooltip } from "./FormFieldTooltip"
 import { buildEmptyShowtimeRow } from "@/lib/showtimes-empty-row"
@@ -167,12 +168,20 @@ export function ShowtimesList<T extends FieldValues>({
           }
         }
         if (requireLocation && locationConfig && !hasPerOccurrenceLocation(prev)) {
-          const addrPath = `${basePrev}.${locationConfig.addressName}` as any
-          setError(addrPath, {
+          const modeKey = locationConfig.locationModeName ?? "locationMode"
+          const online = isOnlineLocationMode((prev as Record<string, unknown>)[modeKey])
+          const errPath = (
+            online && locationConfig.instructionsName
+              ? `${basePrev}.${locationConfig.instructionsName}`
+              : `${basePrev}.${locationConfig.addressName}`
+          ) as any
+          setError(errPath, {
             type: "manual",
-            message: ORGANIZER_OCCURRENCE_USER_MESSAGES.addAnotherNeedLocation,
+            message: online
+              ? ORGANIZER_OCCURRENCE_USER_MESSAGES.addAnotherNeedOnlineDetails
+              : ORGANIZER_OCCURRENCE_USER_MESSAGES.addAnotherNeedLocation,
           })
-          focusFormFieldNoScroll(form, addrPath)
+          focusFormFieldNoScroll(form, errPath)
           return
         }
       }

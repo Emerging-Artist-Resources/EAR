@@ -119,6 +119,11 @@ export function useEventStepValidation(
           return resolved
         }
       }
+
+      const firstIssue = result.error.issues[0]
+      if (firstIssue?.message) {
+        return firstIssue.message
+      }
     }
 
     // Fallback to form state errors if schema validation passed

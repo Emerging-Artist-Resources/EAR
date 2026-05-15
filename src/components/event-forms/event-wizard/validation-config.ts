@@ -90,6 +90,7 @@ export const eventTypeValidationFields: Record<
     "placeholderStartDate",
     "placeholderEndDate",
     "placeholderWebsiteOrSocial",
+    "locationMode",
     "occurrences",
     "shareRecipientEmails",
   ],

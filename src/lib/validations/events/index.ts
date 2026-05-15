@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { flexibleUrlRequiredSchema } from "../flexible-url"
+import { hasCompleteLocation, isOnlineLocationMode, locationValidationIssue } from "@/lib/location-mode"
 import { baseSchema, refineOccurrenceTimeSlotEndAfterStart } from "./base"
 import { performanceFields } from "./performance"
 import {
@@ -37,14 +38,24 @@ export const eventFormSchema = baseSchema
     const isAudition = hasDeadlineOccurrences && hasAuditionFields && !hasCreativeFields && !data.type
     const isCreative = hasDeadlineOccurrences && hasCreativeFields && !data.type
     
-    // Only require base address for auditions and creative opportunities
+    // Only require base location for auditions and creative opportunities
     // (Performance and class use per-occurrence locations)
-    if ((isAudition || isCreative) && (!data.address || data.address.trim() === "")) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["address"],
-        message: "Location is required",
-      })
+    if (isAudition || isCreative) {
+      const listingLocation = {
+        locationMode: data.locationMode,
+        address: data.address,
+        venueName: data.venueName,
+        placeId: data.placeId,
+        locationInstructions: data.locationInstructions,
+      }
+      if (!hasCompleteLocation(listingLocation)) {
+        const online = isOnlineLocationMode(data.locationMode)
+        ctx.addIssue({
+          code: "custom",
+          path: online ? ["locationInstructions"] : ["address"],
+          message: online ? "Please add how to attend online" : "Location is required",
+        })
+      }
     }
     
     // Only validate extraOccurrences for PERFORMANCE type (legacy field)
@@ -429,22 +440,17 @@ export const performanceStep2Schema = baseSchema
             
             if (!hasValidDateTime) return false
             
-            // Check if location is provided (at least one of: address, venueName, or placeId)
-            const hasLocation = (occ?.address && occ.address.trim() !== "") ||
-              (occ?.venueName && occ.venueName.trim() !== "") ||
-              (occ?.placeId && occ.placeId.trim() !== "")
-            
-            return !hasLocation
+            return !hasCompleteLocation(occ)
           })
         
         if (occurrencesWithMissingLocation.length > 0) {
-          // Report error for each occurrence missing location
-          occurrencesWithMissingLocation.forEach(({ index }) => {
-            ctx.addIssue({
-              code: "custom",
-              path: ["extraOccurrences", index, "address"],
-              message: "Location is required for each date & time",
+          occurrencesWithMissingLocation.forEach(({ occ, index }) => {
+            const issue = locationValidationIssue(occ, ["extraOccurrences", index], {
+              inPerson: "Location is required for each date & time",
             })
+            if (issue) {
+              ctx.addIssue({ code: "custom", path: issue.path, message: issue.message })
+            }
           })
         }
       }
@@ -466,6 +472,7 @@ export const auditionStep2Schema = baseSchema
     fee: true,
     feeAmount: true,
     artistType: true,
+    locationMode: true,
     address: true,
     venueName: true,
     placeId: true,
@@ -545,13 +552,18 @@ export const auditionStep2Schema = baseSchema
         message: "Deadline date or deadline time is required",
       })
     }
-    // Location section
-    if (!data.address || data.address.trim() === "") {
-      ctx.addIssue({
-        code: "custom",
-        path: ["address"],
-        message: "Location is required",
-      })
+    const listingLocIssue = locationValidationIssue(
+      {
+        locationMode: data.locationMode,
+        address: data.address,
+        venueName: data.venueName,
+        placeId: data.placeId,
+        locationInstructions: data.locationInstructions,
+      },
+      [],
+    )
+    if (listingLocIssue) {
+      ctx.addIssue({ code: "custom", path: listingLocIssue.path, message: listingLocIssue.message })
     }
   })
 
@@ -570,6 +582,7 @@ export const creativeStep2Schema = baseSchema
     deadlineOccurrences: true,
     fee: true,
     feeAmount: true,
+    locationMode: true,
     address: true,
     venueName: true,
     placeId: true,
@@ -654,12 +667,18 @@ export const creativeStep2Schema = baseSchema
         })
       }
     }
-    if (!data.address || data.address.trim() === "") {
-      ctx.addIssue({
-        code: "custom",
-        path: ["address"],
-        message: "Location is required",
-      })
+    const listingLocIssue = locationValidationIssue(
+      {
+        locationMode: data.locationMode,
+        address: data.address,
+        venueName: data.venueName,
+        placeId: data.placeId,
+        locationInstructions: data.locationInstructions,
+      },
+      [],
+    )
+    if (listingLocIssue) {
+      ctx.addIssue({ code: "custom", path: listingLocIssue.path, message: listingLocIssue.message })
     }
   })
 
@@ -684,6 +703,7 @@ export const classStep2Schema = baseSchema
     placeholderWebsiteOrSocial: true,
     placeholderStartDate: true,
     placeholderEndDate: true,
+    locationMode: true,
     address: true,
     venueName: true,
     placeId: true,
@@ -853,22 +873,17 @@ export const classStep2Schema = baseSchema
             
             if (!hasValidDateTime) return false
             
-            // Check if location is provided (at least one of: address, venueName, or placeId)
-            const hasLocation = (occ?.address && occ.address.trim() !== "") ||
-              (occ?.venueName && occ.venueName.trim() !== "") ||
-              (occ?.placeId && occ.placeId.trim() !== "")
-            
-            return !hasLocation
+            return !hasCompleteLocation(occ)
           })
         
         if (occurrencesWithMissingLocation.length > 0) {
-          // Report error for each occurrence missing location
-          occurrencesWithMissingLocation.forEach(({ index }) => {
-            ctx.addIssue({
-              code: "custom",
-              path: ["occurrences", index, "address"],
-              message: "Location is required for each date & time",
+          occurrencesWithMissingLocation.forEach(({ occ, index }) => {
+            const issue = locationValidationIssue(occ, ["occurrences", index], {
+              inPerson: "Location is required for each date & time",
             })
+            if (issue) {
+              ctx.addIssue({ code: "custom", path: issue.path, message: issue.message })
+            }
           })
         }
       }

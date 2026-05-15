@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { flexibleUrlOrEmptySchema } from "../flexible-url"
+import { optionalCoercedStringSchema, optionalLocationModeSchema } from "@/lib/location-mode"
 
 /**
  * Map/autocomplete and HTML inputs often yield lat/lng as strings; coerce to number for API + DB.
@@ -20,6 +21,7 @@ export const baseSchema = z.object({
   // Schema alignment: matches listings.company and listings.company_website columns
   company: z.string().optional(),
   companyWebsite: flexibleUrlOrEmptySchema,
+  locationMode: optionalLocationModeSchema,
   address: z.string().optional(),
   placeId: z.string().optional(),
   lat: optionalLatLng,
@@ -95,8 +97,9 @@ export const occurrenceSchema = z.object({
   times: z.array(occurrenceTimeSchema).min(1, "At least one time is required"),
   // Optional location fields (used when locationConfig is provided in DateTimeList)
   // These allow each occurrence to have its own location (for performance/class)
+  locationMode: optionalLocationModeSchema,
   address: z.string().optional(),
-  venueName: z.string().optional(),
+  venueName: optionalCoercedStringSchema,
   placeId: z.string().optional(),
   lat: optionalLatLng,
   lng: optionalLatLng,

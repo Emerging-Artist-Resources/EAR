@@ -118,6 +118,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
         setInitialPersistedStatus(st)
         form.reset({
           agreeCompTickets: false,
+          locationMode: "IN_PERSON",
           address: "",
           extraOccurrences: [],
           occurrences: [],
@@ -158,6 +159,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
     resolver,
     defaultValues: {
       agreeCompTickets: false,
+      locationMode: "IN_PERSON",
       address: "",
       // Only initialize extraOccurrences for performance types (legacy field)
       // For auditions, occurrences and deadlineOccurrences are initialized by ShowtimesList

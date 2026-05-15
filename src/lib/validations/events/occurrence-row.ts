@@ -1,3 +1,5 @@
+import { hasCompleteLocation, type LocationFormFields } from "@/lib/location-mode"
+
 /**
  * Shared rules for one occurrence / showtime row: location + (optional) time gating
  * for organizer list UI and Zod superRefine, so copy stays in sync.
@@ -17,26 +19,21 @@ export const ORGANIZER_OCCURRENCE_USER_MESSAGES = {
     "Complete every custom date & time for this piece (including location), or remove empty rows.",
   /** addIssue on occurrences.n.address when location missing */
   locationOnSubmit: "Select a location for this showtime — use search to pick a venue or address on the map.",
+  locationOnlineOnSubmit: "Add how to attend online for this showtime.",
   /** setError in UI when user adds another showtime without finishing the row above */
   addAnotherNeedDate: "Add a date for this showtime before you add another.",
   addAnotherNeedTime: "Add a time for every slot in this showtime before you add another.",
   addAnotherNeedLocation: "Choose a location before you add another showtime — search the map or type a venue or address.",
+  addAnotherNeedOnlineDetails: "Add how to attend online before you add another showtime.",
 } as const
 
-export type OccurrenceLike = {
+export type OccurrenceLike = LocationFormFields & {
   date?: string
   times?: { time?: string }[]
-  address?: string
-  venueName?: string
-  placeId?: string
 }
 
 export function hasPerOccurrenceLocation(entry: OccurrenceLike | undefined): boolean {
-  if (!entry) return false
-  const a = (entry.address ?? "").trim()
-  const v = (entry.venueName ?? "").trim()
-  const p = (entry.placeId ?? "").trim()
-  return a !== "" || v !== "" || p !== ""
+  return hasCompleteLocation(entry)
 }
 
 /** Matches Zod: at least one time row, and every listed time is non-empty. */

@@ -5,7 +5,7 @@ import { useEffect } from "react"
 import { UseFormReturn, FieldValues, useFieldArray, Path } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { LocationField } from "../LocationField"
+import { LocationSection } from "../LocationSection"
 import type { LocationConfigFull } from "./types"
 
 function getTodayDateString(): string {
@@ -218,8 +218,9 @@ export function DateCard<T extends FieldValues>({
       {locationConfig && !syncLocation && (
         <div className="mt-1 border-t border-primary-200/60 pt-4">
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">Venue for this day</p>
-          <LocationField
+          <LocationSection
             form={form}
+            modeName={`${name}.${index}.${locationConfig.locationModeName ?? "locationMode"}` as Path<T>}
             addressName={`${name}.${index}.${locationConfig.addressName}` as Path<T>}
             venueName={locationConfig.venueName ? `${name}.${index}.${locationConfig.venueName}` as Path<T> : undefined}
             placeIdName={locationConfig.placeIdName ? `${name}.${index}.${locationConfig.placeIdName}` as Path<T> : undefined}

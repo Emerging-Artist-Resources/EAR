@@ -15,19 +15,11 @@ import {
 } from "@/lib/organizer-program-pieces-display"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { FieldRow, PieceDetails } from "./PublicListingDetailSections"
+import { ListingLocationDisplay } from "./ListingLocationDisplay"
+import { listingHasLocationDisplay } from "@/lib/location-display"
 import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
 import { H3, H4, Text } from "@/components/ui/typography"
 import { getListingTitle } from "@/features/events/server/listing-utils"
-
-function getGoogleMapsLink(address: string | null | undefined, placeId: string | null | undefined): string | null {
-  if (placeId) {
-    return `https://www.google.com/maps/place/?q=place_id:${placeId}`
-  }
-  if (address) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
-  }
-  return null
-}
 
 function getOccurrenceLocation(
   occ: NonNullable<PublicListingDetail["listing_occurrences"]>[number] | undefined,
@@ -39,6 +31,7 @@ function getOccurrenceLocation(
     place_id: occ.place_id || fallback.place_id,
     venue_name: occ.venue_name || fallback.venue_name,
     location_instructions: occ.location_instructions || fallback.location_instructions,
+    meta: fallback.meta,
   }
 }
 
@@ -146,37 +139,17 @@ export function OrganizerProgramPieceDetailModal({
           </Card>
         )}
 
-        {((hasSingleLocation && singleLocation && (singleLocation.address || singleLocation.venue_name)) ||
+        {((hasSingleLocation && singleLocation && listingHasLocationDisplay(singleLocation)) ||
           occurrences.length > 0) && (
           <Card className="p-4">
             <H3 className="mb-3 text-text-primary">Dates</H3>
             <div className="space-y-0">
-              {hasSingleLocation && singleLocation && (singleLocation.address || singleLocation.venue_name) && (
+              {hasSingleLocation && singleLocation && listingHasLocationDisplay(singleLocation) && (
                 <div className="grid grid-cols-2 gap-x-6 gap-y-0">
-                  {singleLocation.address && (
-                    <FieldRow
-                      label="Location"
-                      value={
-                        <div>
-                          <span>{singleLocation.address}</span>
-                          {getGoogleMapsLink(singleLocation.address, singleLocation.place_id) && (
-                            <a
-                              href={getGoogleMapsLink(singleLocation.address, singleLocation.place_id)!}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ml-2 text-brand-primary hover:text-brand-primary-hover underline"
-                            >
-                              View on Maps →
-                            </a>
-                          )}
-                        </div>
-                      }
-                    />
-                  )}
-                  {singleLocation.venue_name && <FieldRow label="Venue" value={singleLocation.venue_name} />}
-                  {singleLocation.location_instructions && (
-                    <FieldRow label="Location Instructions" value={singleLocation.location_instructions} />
-                  )}
+                  <ListingLocationDisplay
+                    location={{ ...singleLocation, meta: parentListing?.meta }}
+                    linkifyAddress
+                  />
                 </div>
               )}
 
@@ -192,7 +165,7 @@ export function OrganizerProgramPieceDetailModal({
                           ? singleLocation
                           : null
                       const hasLocation =
-                        occurrenceLocation && (occurrenceLocation.address || occurrenceLocation.venue_name)
+                        occurrenceLocation && listingHasLocationDisplay(occurrenceLocation)
 
                       return (
                         <div
@@ -203,40 +176,11 @@ export function OrganizerProgramPieceDetailModal({
                             {formatOccurrenceRangeEST(o.starts_at_utc, o.ends_at_utc)}
                           </div>
                           {!hasSingleLocation && hasLocation && occurrenceLocation && (
-                            <div className="ml-0 mt-2 space-y-1 font-sans text-sm">
-                              {occurrenceLocation.address && (
-                                <div className="flex items-start gap-2">
-                                  <span className="text-text-muted font-medium">Address:</span>
-                                  <div className="flex-1">
-                                    <span className="text-text-primary">{occurrenceLocation.address}</span>
-                                    {getGoogleMapsLink(
-                                      occurrenceLocation.address,
-                                      occurrenceLocation.place_id,
-                                    ) && (
-                                      <a
-                                        href={
-                                          getGoogleMapsLink(
-                                            occurrenceLocation.address,
-                                            occurrenceLocation.place_id,
-                                          )!
-                                        }
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="ml-2 text-xs text-brand-primary hover:text-brand-primary-hover underline"
-                                      >
-                                        View on Maps →
-                                      </a>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                              {occurrenceLocation.venue_name && (
-                                <div>
-                                  <span className="text-text-muted font-medium">Venue: </span>
-                                  <span className="text-text-primary">{occurrenceLocation.venue_name}</span>
-                                </div>
-                              )}
-                            </div>
+                            <ListingLocationDisplay
+                              location={occurrenceLocation}
+                              linkifyAddress
+                              variant="inline"
+                            />
                           )}
                         </div>
                       )

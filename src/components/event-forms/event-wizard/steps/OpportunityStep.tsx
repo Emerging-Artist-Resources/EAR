@@ -6,7 +6,7 @@ import { Section } from "@/components/forms/blocks/Section"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
-import { LocationField } from "@/components/forms/blocks/LocationField"
+import { LocationSection } from "@/components/forms/blocks/LocationSection"
 import { useEffect } from "react"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { SimpleFeeDisplay } from "@/components/event-forms/event-wizard/shared/SimpleFeeDisplay"
@@ -112,7 +112,7 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
       </Section>
 
       <Section title="Location">
-        <LocationField
+        <LocationSection
           form={form}
           addressName={"address"}
           venueName={"venueName"}
@@ -120,7 +120,6 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
           latName={"lat"}
           lngName={"lng"}
           instructionsName={"locationInstructions"}
-          instructionsNote=""
           required
         />
       </Section>

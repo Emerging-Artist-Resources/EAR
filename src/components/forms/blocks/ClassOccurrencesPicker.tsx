@@ -7,6 +7,7 @@ import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { EventFormData } from "@/lib/validations/events"
 import { apiGet } from "@/lib/fetch-utils"
+import { DEFAULT_LOCATION_MODE } from "@/lib/location-mode"
 
 interface ParentEventData {
   event_occurrences?: Array<{ id: string; starts_at_utc: string; tz: string }>
@@ -152,6 +153,7 @@ export function ClassOccurrencesPicker({ form, label, showEndTime = false }: Cla
         ...datesToAdd.map((date) => ({
           date,
           times: showEndTime ? [{ time: "", endTime: "" }] : [{ time: "" }],
+          locationMode: DEFAULT_LOCATION_MODE,
         })),
       ].sort((a: { date: string }, b: { date: string }) => a.date.localeCompare(b.date))
 

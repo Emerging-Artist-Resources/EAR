@@ -7,7 +7,7 @@ import { Section } from "@/components/forms/blocks/Section"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
-import { LocationField } from "@/components/forms/blocks/LocationField"
+import { LocationSection } from "@/components/forms/blocks/LocationSection"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { ListingWebsiteField } from "@/components/forms/blocks/ListingWebsiteField"
 import { Button } from "@/components/ui/button"
@@ -171,7 +171,7 @@ export function AuditionStep({ form }: AuditionStepProps) {
       </Section>
 
       <Section title="Location">
-        <LocationField
+        <LocationSection
           form={form}
           addressName={"address"}
           venueName={"venueName"}

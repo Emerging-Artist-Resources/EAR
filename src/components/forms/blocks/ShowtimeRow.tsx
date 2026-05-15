@@ -2,10 +2,12 @@
 "use client"
 
 import { useLayoutEffect, forwardRef } from "react"
-import { UseFormReturn, FieldValues, useFieldArray, Path } from "react-hook-form"
+import { UseFormReturn, FieldValues, useFieldArray, Path, useWatch } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { LocationField, LocationFieldInstructions } from "./LocationField"
+import { LocationFieldInstructions } from "./LocationField"
+import { LocationSection } from "./LocationSection"
+import { isOnlineLocationMode } from "@/lib/location-mode"
 import type { LocationConfigFull } from "./DateTime/types"
 import { focusFormFieldNoScroll } from "@/lib/focus-form-field"
 
@@ -153,7 +155,13 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
 
     const hasTime = showTime && times.length > 0
     const hasLocation = Boolean(locationConfig)
-    const hasInstructionsField = Boolean(locationConfig?.instructionsName)
+    const occurrenceMode = useWatch({
+      control: form.control,
+      name: `${name}.${index}.${locationConfig?.locationModeName ?? "locationMode"}` as Path<FieldValues>,
+    })
+    const isOnlineOccurrence = isOnlineLocationMode(occurrenceMode)
+    const hasInstructionsField =
+      Boolean(locationConfig?.instructionsName) && !isOnlineOccurrence
     const gridColsClass = (() => {
       if (!hasTime && !hasLocation) return "md:grid-cols-1"
       if (!hasTime && hasLocation) return "md:grid-cols-2"
@@ -255,8 +263,9 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
             {hasLocation && locationConfig && (
               <>
                 <div className={`min-h-0 min-w-0 md:row-start-1 ${locationColStartClass}`}>
-                  <LocationField
+                  <LocationSection
                     form={form}
+                    modeName={`${name}.${index}.${locationConfig.locationModeName ?? "locationMode"}` as Path<FieldValues>}
                     addressName={`${name}.${index}.${locationConfig.addressName}` as Path<FieldValues>}
                     venueName={locationConfig.venueName ? (`${name}.${index}.${locationConfig.venueName}` as Path<FieldValues>) : undefined}
                     placeIdName={locationConfig.placeIdName ? (`${name}.${index}.${locationConfig.placeIdName}` as Path<FieldValues>) : undefined}

@@ -8,8 +8,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Modal } from "@/components/ui/modal"
 import { Text } from "@/components/ui/typography"
 import { useToast } from "@/contexts/ToastContext"
-import { LocationField } from "./LocationField"
+import { LocationSection } from "./LocationSection"
 import { DateCard, createLocationFields, type DateItem, type TimeItem, type LocationConfigFull } from "./DateTime"
+import { clearedInPersonLocationFields, hasCompleteLocation } from "@/lib/location-mode"
 
 interface DateTimeListProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>
@@ -333,41 +334,58 @@ export function DateTimeList<T extends Record<string, unknown>>({
     const rowCount = Array.isArray(rows) ? rows.length : 0
     if (rowCount < 2) return
 
-    // Read first location from form
+    const modeKey = locationConfig.locationModeName ?? "locationMode"
+    const firstMode = getValues(`${name}.0.${modeKey}` as any) as string | undefined
     const firstAddress = getValues(`${name}.0.${locationConfig.addressName}` as any) as string | undefined
-    const firstVenueName = locationConfig.venueName ? getValues(`${name}.0.${locationConfig.venueName}` as any) as string | undefined : undefined
-    const firstPlaceId = locationConfig.placeIdName ? getValues(`${name}.0.${locationConfig.placeIdName}` as any) as string | undefined : undefined
-    const firstLat = locationConfig.latName ? getValues(`${name}.0.${locationConfig.latName}` as any) as number | undefined : undefined
-    const firstLng = locationConfig.lngName ? getValues(`${name}.0.${locationConfig.lngName}` as any) as number | undefined : undefined
-    const firstInstructions = locationConfig.instructionsName ? getValues(`${name}.0.${locationConfig.instructionsName}` as any) as string | undefined : undefined
+    const firstVenueName = locationConfig.venueName
+      ? (getValues(`${name}.0.${locationConfig.venueName}` as any) as string | undefined)
+      : undefined
+    const firstPlaceId = locationConfig.placeIdName
+      ? (getValues(`${name}.0.${locationConfig.placeIdName}` as any) as string | undefined)
+      : undefined
+    const firstLat = locationConfig.latName
+      ? (getValues(`${name}.0.${locationConfig.latName}` as any) as number | undefined)
+      : undefined
+    const firstLng = locationConfig.lngName
+      ? (getValues(`${name}.0.${locationConfig.lngName}` as any) as number | undefined)
+      : undefined
+    const firstInstructions = locationConfig.instructionsName
+      ? (getValues(`${name}.0.${locationConfig.instructionsName}` as any) as string | undefined)
+      : undefined
 
-    // Only sync if first location has an address
-    if (!firstAddress || firstAddress.trim() === "") return
+    const firstLocation = {
+      locationMode: firstMode,
+      address: firstAddress,
+      venueName: firstVenueName,
+      placeId: firstPlaceId,
+      locationInstructions: firstInstructions,
+    }
+    if (!hasCompleteLocation(firstLocation)) return
 
-    // Apply to all other dates
     for (let i = 1; i < rowCount; i++) {
-      const currentAddress = getValues(`${name}.${i}.${locationConfig.addressName}` as any) as string | undefined
-      
-      // Only update if different
-      if (currentAddress !== firstAddress) {
-        if (firstAddress) {
-          setValue(`${name}.${i}.${locationConfig.addressName}` as any, firstAddress as any, { shouldDirty: true })
-        }
-        if (firstVenueName !== undefined && locationConfig.venueName) {
-          setValue(`${name}.${i}.${locationConfig.venueName}` as any, firstVenueName as any, { shouldDirty: true })
-        }
-        if (firstPlaceId !== undefined && locationConfig.placeIdName) {
-          setValue(`${name}.${i}.${locationConfig.placeIdName}` as any, firstPlaceId as any, { shouldDirty: true })
-        }
-        if (firstLat !== undefined && locationConfig.latName) {
-          setValue(`${name}.${i}.${locationConfig.latName}` as any, firstLat as any, { shouldDirty: true })
-        }
-        if (firstLng !== undefined && locationConfig.lngName) {
-          setValue(`${name}.${i}.${locationConfig.lngName}` as any, firstLng as any, { shouldDirty: true })
-        }
-        if (firstInstructions !== undefined && locationConfig.instructionsName) {
-          setValue(`${name}.${i}.${locationConfig.instructionsName}` as any, firstInstructions as any, { shouldDirty: true })
-        }
+      setValue(`${name}.${i}.${modeKey}` as any, firstMode as any, { shouldDirty: true })
+      if (firstInstructions !== undefined && locationConfig.instructionsName) {
+        setValue(`${name}.${i}.${locationConfig.instructionsName}` as any, firstInstructions as any, {
+          shouldDirty: true,
+        })
+      }
+      const cleared = clearedInPersonLocationFields()
+      if (firstAddress) {
+        setValue(`${name}.${i}.${locationConfig.addressName}` as any, firstAddress as any, { shouldDirty: true })
+      } else {
+        setValue(`${name}.${i}.${locationConfig.addressName}` as any, cleared.address as any, { shouldDirty: true })
+      }
+      if (firstVenueName !== undefined && locationConfig.venueName) {
+        setValue(`${name}.${i}.${locationConfig.venueName}` as any, firstVenueName as any, { shouldDirty: true })
+      }
+      if (firstPlaceId !== undefined && locationConfig.placeIdName) {
+        setValue(`${name}.${i}.${locationConfig.placeIdName}` as any, firstPlaceId as any, { shouldDirty: true })
+      }
+      if (firstLat !== undefined && locationConfig.latName) {
+        setValue(`${name}.${i}.${locationConfig.latName}` as any, firstLat as any, { shouldDirty: true })
+      }
+      if (firstLng !== undefined && locationConfig.lngName) {
+        setValue(`${name}.${i}.${locationConfig.lngName}` as any, firstLng as any, { shouldDirty: true })
       }
     }
   }, [locationConfig, syncLocation, name, getValues, setValue])
@@ -607,8 +625,9 @@ export function DateTimeList<T extends Record<string, unknown>>({
             </p>
           </div>
           {syncLocation && (
-            <LocationField
+            <LocationSection
               form={form}
+              modeName={`${name}.0.${locationConfig.locationModeName ?? "locationMode"}` as any}
               addressName={`${name}.0.${locationConfig.addressName}` as any}
               venueName={locationConfig.venueName ? `${name}.0.${locationConfig.venueName}` as any : undefined}
               placeIdName={locationConfig.placeIdName ? `${name}.0.${locationConfig.placeIdName}` as any : undefined}
@@ -660,8 +679,9 @@ export function DateTimeList<T extends Record<string, unknown>>({
 
             {locationConfig && syncLocation && (
               <div className="rounded-xl border border-dashed border-gray-200 bg-white/80 p-3">
-                <LocationField
+                <LocationSection
                   form={form}
+                  modeName={`${name}.0.${locationConfig.locationModeName ?? "locationMode"}` as any}
                   addressName={`${name}.0.${locationConfig.addressName}` as any}
                   venueName={locationConfig.venueName ? `${name}.0.${locationConfig.venueName}` as any : undefined}
                   placeIdName={locationConfig.placeIdName ? `${name}.0.${locationConfig.placeIdName}` as any : undefined}

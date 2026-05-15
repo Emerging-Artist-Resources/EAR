@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react"
 import { UseFormReturn, Path } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { loadPlacesLibrary } from "@/lib/googleMaps"
+import { coerceLocationFieldString } from "@/lib/location-mode"
 
 export type LocationFieldInstructionsProps<T extends Record<string, unknown>> = {
   form: UseFormReturn<T>
@@ -267,7 +268,9 @@ export function LocationField<T extends Record<string, unknown>>({
             }
 
             const address = place.formattedAddress || place.formatted_address || (place as any)?.Sr || elementValue || ""
-            const venue = place.displayName || place.display_name || (place as any)?.IC || ""
+            const venue = coerceLocationFieldString(
+              place.displayName || place.display_name || (place as any)?.IC || "",
+            )
             const placeId = place.id || place.place_id || (place as any)?.RB || ""
             const loc = place.location || (place as any)?.XC || (place as any)?.vC
 
