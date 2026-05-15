@@ -1,6 +1,10 @@
 import { EventFormData } from "@/lib/validations/events"
 import { EventType } from "./EventTypeSelector"
 import { convertESTToUTC } from "@/lib/datetime-utils"
+import {
+  buildOrganizerProgramPiecesDocumentFromForm,
+  type OrganizerProgramPiecesDocument,
+} from "@/lib/organizer-program-pieces"
 
 const EST_TIMEZONE = 'America/New_York'
 
@@ -360,6 +364,18 @@ export async function buildPerformancePayload(
         }
       : basePayload
 
+  let organizerProgramPieces: OrganizerProgramPiecesDocument | null = null
+  if (!isPiece) {
+    if (
+      (data.eventType === "SPLIT_BILL" || data.eventType === "FESTIVAL") &&
+      data.addPiece === true
+    ) {
+      organizerProgramPieces = buildOrganizerProgramPiecesDocumentFromForm(data as Record<string, unknown>)
+    } else {
+      organizerProgramPieces = null
+    }
+  }
+
   return {
     type: "performance",
     base,
@@ -382,6 +398,7 @@ export async function buildPerformancePayload(
       listing_fee_explanation: data.listingFeeExplanation || null,
       complementary_ticket_info: data.complementaryTicketInfo || null,
       guest_spot_info: null, // Not used for performance, but keep for consistency
+      organizer_program_pieces: organizerProgramPieces,
     },
     occurrences,
     piece_details: pieceDetails,

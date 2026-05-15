@@ -25,6 +25,14 @@ import {
 import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
 import { H3, H4, Text } from "@/components/ui/typography"
 import { getCalendarListingTypeLabel } from "@/lib/listing-type-labels"
+import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/organizer-program-pieces"
+import {
+  buildOccurrencesForOrganizerProgramPiece,
+  firstOrganizerPiecePhotoCredit,
+  firstOrganizerPiecePhotoUrl,
+  organizerProgramPieceDisplayTitle,
+} from "@/lib/organizer-program-pieces-display"
+import { OrganizerProgramPieceDetailModal } from "./OrganizerProgramPieceDetailModal"
 
 function getGoogleMapsLink(address: string | null | undefined, placeId: string | null | undefined): string | null {
   if (placeId) {
@@ -68,6 +76,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
   const [listing, setListing] = useState<PublicListingDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showAllDates, setShowAllDates] = useState(false)
+  const [selectedOrganizerPieceId, setSelectedOrganizerPieceId] = useState<string | null>(null)
   const [childListings, setChildListings] = useState<Array<{
     id: string
     type: string
@@ -103,6 +112,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       setListing(null)
       setError(null)
       setShowAllDates(false)
+      setSelectedOrganizerPieceId(null)
       setChildListings([])
       return
     }
@@ -198,6 +208,18 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
     )
   }, [listing?.listing_photos])
 
+  const organizerProgramPiecesDoc = useMemo(() => {
+    if (listing?.type !== "performance") return null
+    const pd = listing.performance_details
+    if (!pd || pd.subtype !== "ORGANIZER") return null
+    return normalizeOrganizerProgramPiecesFromDb(pd.organizer_program_pieces)
+  }, [listing])
+
+  const selectedOrganizerPiece = useMemo(() => {
+    if (!selectedOrganizerPieceId || !organizerProgramPiecesDoc) return null
+    return organizerProgramPiecesDoc.pieces.find((p) => p.id === selectedOrganizerPieceId) ?? null
+  }, [selectedOrganizerPieceId, organizerProgramPiecesDoc])
+
   const { hasSingleLocation, singleLocation } = useMemo(() => {
     if (!listing?.listing_occurrences || listing.listing_occurrences.length === 0) {
       return { hasSingleLocation: false, singleLocation: null }
@@ -223,6 +245,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
   }, [listing])
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
@@ -520,6 +543,50 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               </Card>
             )}*/}
 
+            {organizerProgramPiecesDoc &&
+              organizerProgramPiecesDoc.pieces.length > 0 &&
+              listing.performance_details?.subtype === "ORGANIZER" && (
+                <HorizontalScrollCards
+                  title={
+                    childListings.length > 0
+                      ? "Program pieces"
+                      : "Pieces in this Performance"
+                  }
+                  cardsPerView={3}
+                  onCardClick={(index) => {
+                    const p = organizerProgramPiecesDoc.pieces[index]
+                    if (p) setSelectedOrganizerPieceId(p.id)
+                  }}
+                >
+                  {organizerProgramPiecesDoc.pieces.map((piece) => (
+                    <ListingCard
+                      key={piece.id}
+                      id={piece.id}
+                      type="performance"
+                      title={organizerProgramPieceDisplayTitle(piece)}
+                      is_piece
+                      piece_company={piece.company?.trim() ? piece.company : null}
+                      piece_company_website={piece.company_website}
+                      piece_description={piece.description?.trim() ? piece.description : null}
+                      choreographer={piece.choreographer}
+                      notes={piece.credits}
+                      occurrences={buildOccurrencesForOrganizerProgramPiece(
+                        piece,
+                        listing.listing_occurrences,
+                      )}
+                      coverImageUrl={firstOrganizerPiecePhotoUrl(piece)}
+                      coverImageAlt={
+                        firstOrganizerPiecePhotoCredit(piece)
+                          ? `Listing photo: ${firstOrganizerPiecePhotoCredit(piece)}`
+                          : `${organizerProgramPieceDisplayTitle(piece)} — photo`
+                      }
+                      enableSave={false}
+                      onClick={() => setSelectedOrganizerPieceId(piece.id)}
+                    />
+                  ))}
+                </HorizontalScrollCards>
+              )}
+
             {/* Child Listings Card */}
             {childListings.length > 0 && (() => {
               const allPieces = childListings.every((child) => child.is_piece)
@@ -628,5 +695,13 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
         )}
       </div>
     </Modal>
+
+    <OrganizerProgramPieceDetailModal
+      isOpen={selectedOrganizerPieceId !== null}
+      onClose={() => setSelectedOrganizerPieceId(null)}
+      piece={selectedOrganizerPiece}
+      parentListing={listing}
+    />
+    </>
   )
 }

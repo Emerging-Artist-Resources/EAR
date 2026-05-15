@@ -1,11 +1,15 @@
 "use client"
 
-import { UseFormReturn, Path } from "react-hook-form"
+import type { MutableRefObject } from "react"
+import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { EventFormData } from "@/lib/validations/events"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { PieceOccurrencesPicker } from "@/components/forms/blocks/PieceOccurrencesPicker"
+import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
+import { PieceExistingImageThumbnails } from "@/components/forms/blocks/PieceExistingImageThumbnails"
 import { Button } from "@/components/ui/button"
+import { piecePromoFilesFieldName, type OrganizerProgramPiecePhoto } from "@/lib/organizer-program-pieces"
 
 interface PieceDetailsProps {
   form: UseFormReturn<EventFormData>
@@ -17,6 +21,9 @@ interface PieceDetailsProps {
   enableSampleData?: boolean
   /** When false, hides choreographer / creator (default piece submission flow). */
   showChoreographerField?: boolean
+  showPieceImageUploader?: boolean
+  namespacedPieceSchedule?: boolean
+  organizerPiecePhotosByIdRef?: MutableRefObject<Record<string, OrganizerProgramPiecePhoto[]>>
 }
 
 export function PieceDetails({
@@ -28,11 +35,28 @@ export function PieceDetails({
   occurrencesMode = "SELECT_FROM_EVENT",
   enableSampleData = false,
   showChoreographerField = false,
+  showPieceImageUploader = false,
+  namespacedPieceSchedule = false,
+  organizerPiecePhotosByIdRef,
 }: PieceDetailsProps) {
   const prefix = index === 0 ? "piece" : `pieces.${index}`
+  const idField = `${prefix}_id` as Path<EventFormData>
+  const promoName = piecePromoFilesFieldName(index)
+
+  const pieceId = useWatch({
+    control: form.control,
+    name: idField,
+  }) as string | undefined
+
+  const existingPaths: string[] =
+    pieceId && organizerPiecePhotosByIdRef?.current?.[pieceId]
+      ? organizerPiecePhotosByIdRef.current[pieceId].map((p) => p.path).filter(Boolean)
+      : []
 
   return (
     <>
+      <input type="hidden" {...form.register(idField)} />
+
       <div className="flex items-center justify-between">
         {canRemove && (
           <Button
@@ -54,6 +78,7 @@ export function PieceDetails({
             label="Which event date(s)/time(s) is this piece in?"
             mode={occurrencesMode}
             enableSampleData={enableSampleData}
+            scheduleKeyPrefix={namespacedPieceSchedule ? prefix : undefined}
           />
         )}
 
@@ -103,6 +128,19 @@ export function PieceDetails({
           placeholder="Please list all artists and collaborators to be credited for this program. Include names, roles, and associated work titles, if applicable."
           rows={4}
         />
+
+        {showPieceImageUploader ? (
+          <div>
+            <PieceExistingImageThumbnails paths={existingPaths} />
+            <PhotoUploader
+              form={form as unknown as UseFormReturn<Record<string, unknown>>}
+              name={promoName}
+              label="Piece images"
+              description="Images specific to this work or program entry (optional, recommended). Upload up to 5 images."
+              max={5}
+            />
+          </div>
+        ) : null}
       </div>
     </>
   )

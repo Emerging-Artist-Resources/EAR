@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import type { MutableRefObject } from "react"
 import { UseFormReturn, Path, useWatch } from "react-hook-form"
 
 import { EventFormData } from "@/lib/validations/events"
@@ -9,14 +10,19 @@ import { SelectBlock } from "@/components/forms/blocks/Select"
 
 import { OrganizerFlow } from "@/components/event-forms/event-wizard/steps/performance/OrganizerFlow"
 import { PieceSubmissionFlow } from "@/components/event-forms/event-wizard/steps/performance/PieceSubmissionFlow"
+import type { OrganizerProgramPiecePhoto } from "@/lib/organizer-program-pieces"
 
 type PerfType = "ORGANIZER" | "PIECE"
 
 interface PerformanceDetailsStepProps {
   form: UseFormReturn<EventFormData>
+  organizerPiecePhotosByIdRef?: MutableRefObject<Record<string, OrganizerProgramPiecePhoto[]>>
 }
 
-export function PerformanceDetailsStep({ form }: PerformanceDetailsStepProps) {
+export function PerformanceDetailsStep({
+  form,
+  organizerPiecePhotosByIdRef,
+}: PerformanceDetailsStepProps) {
   const perfType = useWatch({
     control: form.control,
     name: "type" as Path<EventFormData>,
@@ -74,7 +80,9 @@ export function PerformanceDetailsStep({ form }: PerformanceDetailsStepProps) {
         ]}
       />
 
-      {perfType === "ORGANIZER" && <OrganizerFlow form={form} />}
+      {perfType === "ORGANIZER" && (
+        <OrganizerFlow form={form} organizerPiecePhotosByIdRef={organizerPiecePhotosByIdRef} />
+      )}
       {perfType === "PIECE" && <PieceSubmissionFlow form={form} />}
     </Section>
   )

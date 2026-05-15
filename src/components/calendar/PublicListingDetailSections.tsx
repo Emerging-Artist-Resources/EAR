@@ -37,6 +37,8 @@ export type PublicListingDetail = {
     price?: string | null
     participants?: string | null
     event_type?: "SOLO" | "SPLIT_BILL" | "FESTIVAL" | null
+    /** Versioned JSON from DB; API may attach ephemeral `url` on each photo for display. */
+    organizer_program_pieces?: unknown
   } | null
   piece_details?: {
     parent_listing_id?: string | null

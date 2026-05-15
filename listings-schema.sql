@@ -261,6 +261,9 @@ CREATE TABLE performance_details (
   listing_fee_explanation TEXT,
   complementary_ticket_info TEXT,
   guest_spot_info TEXT,
+
+  -- Organizer split bill / festival: embedded pieces + per-piece assets (see app types OrganizerProgramPiecesDocument)
+  organizer_program_pieces JSONB,
   
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,

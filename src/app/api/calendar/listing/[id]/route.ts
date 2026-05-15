@@ -6,6 +6,7 @@ import { getAuthenticatedUser } from "@/lib/auth-helpers"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { storageService } from "@/services/storage"
+import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/organizer-program-pieces"
 
 export async function GET(
   _req: NextRequest,
@@ -62,6 +63,42 @@ export async function GET(
           }
         })
       )
+    }
+
+    // Organizer embedded program piece promo images (private bucket paths on `event-photos`)
+    if (listingData.type === "performance") {
+      const rawPerf = listingData.performance_details as
+        | Record<string, unknown>
+        | Record<string, unknown>[]
+        | null
+        | undefined
+      const perfDetails = Array.isArray(rawPerf) ? rawPerf[0] : rawPerf
+      const programRaw = perfDetails?.organizer_program_pieces
+      if (perfDetails && typeof perfDetails === "object" && programRaw) {
+        const doc = normalizeOrganizerProgramPiecesFromDb(programRaw)
+        if (doc?.pieces?.length) {
+          const svc = getSupabaseServiceClient()
+          const bucket = "event-photos"
+          const piecesWithUrls = await Promise.all(
+            doc.pieces.map(async (piece) => ({
+              ...piece,
+              photos: await Promise.all(
+                (piece.photos ?? []).map(
+                  async (ph: { path?: string; sort_order?: number; credit?: string | null }) => {
+                    if (!ph?.path) return ph
+                    const { data: signed } = await svc.storage.from(bucket).createSignedUrl(ph.path, 3600)
+                    return { ...ph, url: signed?.signedUrl ?? null }
+                  },
+                ),
+              ),
+            })),
+          )
+          const updated = { ...perfDetails, organizer_program_pieces: { ...doc, pieces: piecesWithUrls } }
+          ;(listingData as { performance_details?: unknown }).performance_details = Array.isArray(rawPerf)
+            ? [updated]
+            : updated
+        }
+      }
     }
     
     // Fetch contact info separately since neither function includes them

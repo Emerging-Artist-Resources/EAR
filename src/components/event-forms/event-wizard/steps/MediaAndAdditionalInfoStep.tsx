@@ -17,6 +17,16 @@ interface MediaAndAdditionalInfoStepProps {
 }
 
 export function MediaAndAdditionalInfoStep({ form, eventType }: MediaAndAdditionalInfoStepProps) {
+  const perfSubtype = useWatch({
+    control: form.control,
+    name: "type" as Path<EventFormData>,
+  }) as "ORGANIZER" | "PIECE" | undefined
+
+  const perfEventType = useWatch({
+    control: form.control,
+    name: "eventType" as Path<EventFormData>,
+  }) as "SOLO" | "SPLIT_BILL" | "FESTIVAL" | undefined
+
   const occurrences = useWatch({
     control: form.control,
     name: "occurrences" as Path<EventFormData>,
@@ -38,8 +48,16 @@ export function MediaAndAdditionalInfoStep({ form, eventType }: MediaAndAddition
   const isClassListing = eventType === "CLASS"
   const isOpportunity = eventType === "CREATIVE"
 
-  const promoImagesDescription =
-    isAudition || isClassListing || isOpportunity
+  const isFestivalOrSplitOrganizer =
+    eventType === "PERFORMANCE" &&
+    perfSubtype === "ORGANIZER" &&
+    (perfEventType === "SPLIT_BILL" || perfEventType === "FESTIVAL")
+
+  const promoImagesLabel = isFestivalOrSplitOrganizer ? "Festival / program images" : "Promotional Images"
+
+  const promoImagesDescription = isFestivalOrSplitOrganizer
+    ? "Promotional images for the overall event, festival, or shared program (not individual pieces). Upload up to 5 images (recommended)."
+    : isAudition || isClassListing || isOpportunity
       ? "Upload up to 5 images (recommended)."
       : "Images are highly encouraged for marketing! Please upload up to 5 images."
 
@@ -49,7 +67,7 @@ export function MediaAndAdditionalInfoStep({ form, eventType }: MediaAndAddition
         <PhotoUploader
           form={form}
           name={"promoFiles"}
-          label="Promotional Images"
+          label={promoImagesLabel}
           description={promoImagesDescription}
         />
         <TextAreaField

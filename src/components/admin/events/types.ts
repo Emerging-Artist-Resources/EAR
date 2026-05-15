@@ -59,6 +59,7 @@ export type AdminEventDetail = {
     listing_fee_explanation?: string | null
     complementary_ticket_info?: string | null
     guest_spot_info?: string | null
+    organizer_program_pieces?: unknown
   } | null
   piece_details?: {
     id?: string

@@ -1,5 +1,6 @@
 import { AdminEventDetail } from "./types"
 import { getBaseListingFeeUsd } from "@/lib/fees/listing-fee-policy"
+import { OrganizerProgramPiecesPreview } from "@/components/admin/events/OrganizerProgramPiecesPreview"
 
 function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   if (value === undefined || value === null || value === "") return null
@@ -117,6 +118,11 @@ function OrganizerPerformanceDetails({
           )}
         </Section>
       )}
+
+      {(details.event_type === "SPLIT_BILL" || details.event_type === "FESTIVAL") &&
+        details.organizer_program_pieces ? (
+        <OrganizerProgramPiecesPreview raw={details.organizer_program_pieces} />
+      ) : null}
     </div>
   )
 }

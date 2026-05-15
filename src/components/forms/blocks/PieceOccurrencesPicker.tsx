@@ -15,18 +15,14 @@ interface PieceOccurrencesPickerProps {
   label: string
   mode: Mode
   enableSampleData?: boolean
+  /**
+   * When set (e.g. `piece` or `pieces.1`), schedule fields are namespaced so each
+   * organizer program piece has its own selectedSlots / extraOccurrences / pieceScheduleMode.
+   * Omit for global fields (PIECE submission flow).
+   */
+  scheduleKeyPrefix?: string
 }
 
-/**
- * Expected fields (suggested):
- * - pieceOccurrenceMode: "FROM_PARENT" | "CUSTOM"
- * - pieceOccurrenceSelections: string[]   // ids or "YYYY-MM-DD|HH:mm"
- * - pieceDate: string
- * - pieceShowTime: string
- * - pieceExtraOccurrences: { date: string; time?: string }[]
- *
- * If you don't have these yet, you can adapt to whatever your schema uses.
- */
 interface ParentEventData {
   listing_occurrences?: Array<{
     id: string
@@ -42,25 +38,38 @@ interface ParentEventData {
   }>
 }
 
-export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPickerProps) {
+function schedulePaths(prefix: string | undefined) {
+  const ns = prefix != null && prefix !== ""
+  return {
+    selectedSlots: (ns ? `${prefix}_selectedSlots` : "selectedSlots") as Path<EventFormData>,
+    pieceScheduleMode: (ns ? `${prefix}_pieceScheduleMode` : "pieceScheduleMode") as Path<EventFormData>,
+    extraOccurrences: (ns ? `${prefix}_extraOccurrences` : "extraOccurrences") as Path<EventFormData>,
+  }
+}
+
+export function PieceOccurrencesPicker({
+  form,
+  label,
+  mode,
+  scheduleKeyPrefix,
+}: PieceOccurrencesPickerProps) {
+  const paths = useMemo(() => schedulePaths(scheduleKeyPrefix), [scheduleKeyPrefix])
   const [useCustomDateTime, setUseCustomDateTime] = useState(false)
   const [loadingParent, setLoadingParent] = useState(false)
   const [customDateTimeKey, setCustomDateTimeKey] = useState(0)
-  
+
   const parentEventId = useWatch({
     control: form.control,
     name: "parentEventId" as Path<EventFormData>,
   }) as string | undefined
-  
-  // For SELECT_FROM_EVENT mode, read from "occurrences" (the confirmed event dates/times)
-  // For other modes, read from "extraOccurrences" (custom piece dates/times)
-  const sourceField = mode === "SELECT_FROM_EVENT" ? "occurrences" : "extraOccurrences"
-  
+
+  const sourceField = mode === "SELECT_FROM_EVENT" ? "occurrences" : paths.extraOccurrences
+
   const extras = (useWatch({
     control: form.control,
     name: sourceField as Path<EventFormData>,
     defaultValue: [],
-  }) as Array<{ 
+  }) as Array<{
     date: string
     times: Array<{ time: string }>
     venueName?: string
@@ -70,7 +79,7 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
     lng?: number
     instructions?: string
   }> | undefined) ?? []
-  
+
   const isConfirmed = useWatch({
     control: form.control,
     name: "eventDatesConfirmed" as Path<EventFormData>,
@@ -78,95 +87,87 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
 
   const selectedSlots = useWatch({
     control: form.control,
-    name: "selectedSlots" as Path<EventFormData>,
+    name: paths.selectedSlots,
+    defaultValue: [],
   }) as string[] | undefined
 
   const pieceScheduleMode = useWatch({
     control: form.control,
-    name: "pieceScheduleMode" as Path<EventFormData>,
+    name: paths.pieceScheduleMode,
   }) as string | undefined
 
   const displayConfirmed = isConfirmed ?? false
 
-  // Set pieceScheduleMode based on what the user has selected
-  // Use a ref to prevent infinite loops
   const scheduleModeSetRef = useRef(false)
   useEffect(() => {
     if (mode === "SELECT_FROM_PARENT" && !scheduleModeSetRef.current) {
-      // Check if user has custom occurrences
-      const currentExtras = form.getValues("extraOccurrences" as Path<EventFormData>) as typeof extras
-      const hasCustomData = Array.isArray(currentExtras) && 
+      const currentExtras = form.getValues(paths.extraOccurrences) as typeof extras
+      const hasCustomData =
+        Array.isArray(currentExtras) &&
         currentExtras.length > 0 &&
         currentExtras.some(
           (d) =>
-            d?.date && d.date.trim() !== "" &&
+            d?.date &&
+            d.date.trim() !== "" &&
             Array.isArray(d?.times) &&
             d.times.length > 0 &&
             d.times.some((t) => t?.time && t.time.trim() !== "")
         )
-      
-      // If user has selected slots, prefer FROM_PARENT mode (even if they also have custom occurrences)
-      // Both can coexist now, but FROM_PARENT is the primary mode when parent selections exist
+
       if (selectedSlots && selectedSlots.length > 0) {
-        form.setValue("pieceScheduleMode" as Path<EventFormData>, "FROM_PARENT" as never)
-        // Show custom view if they have custom data
+        form.setValue(paths.pieceScheduleMode, "FROM_PARENT" as never)
         if (hasCustomData) {
           setUseCustomDateTime(true)
         }
         scheduleModeSetRef.current = true
       } else if (hasCustomData) {
-        // Only custom occurrences, no selected slots
-        form.setValue("pieceScheduleMode" as Path<EventFormData>, "CUSTOM" as never)
+        form.setValue(paths.pieceScheduleMode, "CUSTOM" as never)
         setUseCustomDateTime(true)
         scheduleModeSetRef.current = true
       }
     }
-    // Reset ref when mode changes
     if (mode !== "SELECT_FROM_PARENT") {
       scheduleModeSetRef.current = false
     }
-  }, [selectedSlots, mode, form, extras])
+  }, [selectedSlots, mode, form, paths.extraOccurrences, paths.pieceScheduleMode])
 
-  // Store parent occurrences separately from custom additions
-  const [parentOccurrences, setParentOccurrences] = useState<Array<{ 
-    date: string
-    times: Array<{ time: string }>
-    venueName?: string
-    address?: string
-    placeId?: string
-    lat?: number
-    lng?: number
-    instructions?: string
-  }>>([])
+  const [parentOccurrences, setParentOccurrences] = useState<
+    Array<{
+      date: string
+      times: Array<{ time: string }>
+      venueName?: string
+      address?: string
+      placeId?: string
+      lat?: number
+      lng?: number
+      instructions?: string
+    }>
+  >([])
 
-  // Ensure extraOccurrences is empty when switching to custom mode (but only if it doesn't already have data)
-  // Use a ref to track if we've already initialized to prevent infinite loops
   const hasInitializedRef = useRef(false)
   useEffect(() => {
     if (mode === "SELECT_FROM_PARENT" && useCustomDateTime && !hasInitializedRef.current) {
-      const currentExtras = form.getValues("extraOccurrences" as Path<EventFormData>) as typeof extras
-      // Only clear if it's empty or matches parent structure (user is starting fresh)
-      // If it has custom data, keep it
-      const hasData = Array.isArray(currentExtras) && 
+      const currentExtras = form.getValues(paths.extraOccurrences) as typeof extras
+      const hasData =
+        Array.isArray(currentExtras) &&
         currentExtras.length > 0 &&
         currentExtras.some(
           (d) =>
-            d?.date && d.date.trim() !== "" &&
+            d?.date &&
+            d.date.trim() !== "" &&
             Array.isArray(d?.times) &&
             d.times.length > 0 &&
             d.times.some((t) => t?.time && t.time.trim() !== "")
         )
-      
+
       if (!hasData) {
-        // Only clear if there's no data - this means user is starting fresh
-        form.setValue("extraOccurrences" as Path<EventFormData>, [] as never, { shouldDirty: false })
-        setCustomDateTimeKey(prev => prev + 1)
+        form.setValue(paths.extraOccurrences, [] as never, { shouldDirty: false })
+        setCustomDateTimeKey((prev) => prev + 1)
       }
       hasInitializedRef.current = true
     }
-  }, [useCustomDateTime, mode, form])
+  }, [useCustomDateTime, mode, form, paths.extraOccurrences])
 
-  // Fetch parent event occurrences when parentEventId is set and mode is SELECT_FROM_PARENT
   useEffect(() => {
     if (mode !== "SELECT_FROM_PARENT" || !parentEventId) {
       setParentOccurrences([])
@@ -177,30 +178,31 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
       setLoadingParent(true)
       try {
         const response = await apiGet<{ data: ParentEventData } | ParentEventData>(`/api/events/${parentEventId}`)
-        const data = (response as any)?.data || response
-        
+        const data = (response as { data?: ParentEventData }).data ?? (response as ParentEventData)
+
         if (data?.listing_occurrences && data.listing_occurrences.length > 0) {
-          // Group occurrences by date and transform to form format
-          const occurrencesByDate = new Map<string, Array<{
-            time: string
-            venueName?: string
-            address?: string
-            placeId?: string
-            lat?: number
-            lng?: number
-            instructions?: string
-          }>>()
+          const occurrencesByDate = new Map<
+            string,
+            Array<{
+              time: string
+              venueName?: string
+              address?: string
+              placeId?: string
+              lat?: number
+              lng?: number
+              instructions?: string
+            }>
+          >()
 
           for (const occ of data.listing_occurrences) {
             if (!occ.starts_at_utc) continue
-            
-            // Convert UTC to EST for consistent display
+
             const { date: dateStr, time: estTimeStr } = convertUTCToEST(occ.starts_at_utc)
-            
+
             if (!occurrencesByDate.has(dateStr)) {
               occurrencesByDate.set(dateStr, [])
             }
-            
+
             occurrencesByDate.get(dateStr)!.push({
               time: estTimeStr,
               venueName: occ.venue_name || undefined,
@@ -212,7 +214,6 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
             })
           }
 
-          // Convert to form format: Array<{ date: string, times: Array<{ time: string }>, ...location }>
           const formattedOccurrences = Array.from(occurrencesByDate.entries()).map(([date, times]) => ({
             date,
             times,
@@ -224,12 +225,8 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
             instructions: times[0]?.instructions,
           }))
 
-          // Store parent occurrences separately - NEVER populate extraOccurrences with them
-          // extraOccurrences is only for custom additions, not parent occurrences
           setParentOccurrences(formattedOccurrences)
-          
-          // Mark dates as confirmed so selection dropdown can show
-          // Never populate extraOccurrences - keep it empty until user adds custom dates/times
+
           form.setValue("eventDatesConfirmed" as Path<EventFormData>, true as never)
           if (process.env.NODE_ENV !== "production") {
             console.log("[EAR piece schedule] parent event fetch OK", {
@@ -255,12 +252,9 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
       }
     }
 
-    fetchParentEvent()
+    void fetchParentEvent()
   }, [parentEventId, mode, form])
 
-
-
-  // For selection dropdown, always use parent occurrences when available
   const occurrencesForSelection = useMemo(() => {
     if (mode === "SELECT_FROM_PARENT" && parentOccurrences.length > 0) {
       return parentOccurrences
@@ -273,19 +267,18 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
 
   const derivedOccurrences = useMemo(() => {
     const list: { key: string; label: string }[] = []
-    
+
     for (const ex of occurrencesForSelection) {
       if (!ex?.date || !ex.date.trim()) {
         continue
       }
-      
+
       if (ex.times && ex.times.length > 0) {
         for (const timeItem of ex.times) {
           const time = timeItem?.time ?? ""
           if (time && time.trim() !== "") {
             const key = `${ex.date}|${time}`
             const time12Hour = formatTime12Hour(time)
-            // Get venue name from the entry (prefer venueName, fallback to address)
             const venueName = ex.venueName || ex.address || ""
             const locationDisplay = venueName ? ` · ${venueName}` : ""
             list.push({ key, label: `${ex.date} · ${time12Hour}${locationDisplay}` })
@@ -293,7 +286,7 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
         }
       }
     }
-    
+
     return list
   }, [occurrencesForSelection])
 
@@ -301,14 +294,13 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
     const isSelectFromEvent = mode === "SELECT_FROM_EVENT"
     const isSelectFromParent = mode === "SELECT_FROM_PARENT"
     const isCustomOnly = mode === "CUSTOM_ONLY"
-    
+
     const canSelect = isSelectFromParent || isSelectFromEvent
     const hasParentOccurrences = canSelect && displayConfirmed && derivedOccurrences.length > 0
-    
-    // Show selection dropdown when we have parent occurrences (regardless of custom mode)
+
     const shouldShowSelection = hasParentOccurrences
-    // Show custom ShowtimesList when: custom mode is enabled, OR in CUSTOM_ONLY mode, OR no parent occurrences
-    const shouldShowCustomDateTime = isCustomOnly || useCustomDateTime || (isSelectFromParent && !hasParentOccurrences)
+    const shouldShowCustomDateTime =
+      isCustomOnly || useCustomDateTime || (isSelectFromParent && !hasParentOccurrences)
 
     return {
       isSelectFromEvent,
@@ -325,16 +317,14 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
     if (process.env.NODE_ENV === "production") return
     const v = form.getValues()
     console.log("[EAR piece schedule] PieceOccurrencesPicker snapshot", {
+      scheduleKeyPrefix,
       pickerMode: mode,
       parentEventId,
-      pieceScheduleMode: v.pieceScheduleMode ?? pieceScheduleMode,
-      selectedSlots: v.selectedSlots,
-      selectedSlotsLength: Array.isArray(v.selectedSlots) ? v.selectedSlots.length : 0,
+      pieceScheduleMode: (v as Record<string, unknown>)[String(paths.pieceScheduleMode)] ?? pieceScheduleMode,
+      selectedSlots: (v as Record<string, unknown>)[String(paths.selectedSlots)],
       eventDatesConfirmed: v.eventDatesConfirmed,
       occurrences: v.occurrences,
-      occurrencesLength: Array.isArray(v.occurrences) ? v.occurrences.length : 0,
-      extraOccurrences: v.extraOccurrences,
-      extraOccurrencesLength: Array.isArray(v.extraOccurrences) ? v.extraOccurrences.length : 0,
+      extraOccurrencesScoped: (v as Record<string, unknown>)[String(paths.extraOccurrences)],
       localParentOccurrencesCount: parentOccurrences.length,
       derivedSelectionOptionsCount: derivedOccurrences.length,
       useCustomDateTime,
@@ -342,9 +332,12 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
       flags,
     })
   }, [
+    scheduleKeyPrefix,
     mode,
     parentEventId,
-    selectedSlots,
+    paths.pieceScheduleMode,
+    paths.selectedSlots,
+    paths.extraOccurrences,
     pieceScheduleMode,
     displayConfirmed,
     extras,
@@ -363,7 +356,7 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
         <>
           <SelectBlock
             form={form}
-            name={"selectedSlots" as Path<EventFormData>}
+            name={paths.selectedSlots}
             label={label}
             required
             multiple
@@ -377,7 +370,7 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
               }}
               className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
             >
-              Don't see your date/time?
+              Don&apos;t see your date/time?
             </button>
           )}
         </>
@@ -402,9 +395,7 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
       )}
 
       {flags.isSelectFromParent && !flags.shouldShowSelection && displayConfirmed && derivedOccurrences.length === 0 && (
-        <p className="text-sm text-gray-500">
-          No dates & times available from the event schedule.
-        </p>
+        <p className="text-sm text-gray-500">No dates & times available from the event schedule.</p>
       )}
 
       {flags.shouldShowCustomDateTime && (
@@ -413,7 +404,7 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
             key={customDateTimeKey}
             form={form as unknown as UseFormReturn<Record<string, unknown>>}
             title="Add your piece date(s) & time(s)"
-            name="extraOccurrences"
+            name={paths.extraOccurrences as unknown as string}
             required
             rowLabel="Piece date"
             locationConfig={{
@@ -429,7 +420,7 @@ export function PieceOccurrencesPicker({ form, label, mode }: PieceOccurrencesPi
           />
           {flags.isSelectFromParent && useCustomDateTime && parentOccurrences.length > 0 && (
             <p className="mt-2 text-sm text-gray-500">
-              Your custom dates/times will be added to the parent event's schedule once your piece is approved.
+              Your custom dates/times will be added to the parent event&apos;s schedule once your piece is approved.
             </p>
           )}
         </>

@@ -28,6 +28,7 @@ export const eventTypeValidationFields: Record<
     "price",
     "description",
     "occurrences",
+    "eventDatesConfirmed",
     "addPiece",
     "piece_company",
     "piece_title",

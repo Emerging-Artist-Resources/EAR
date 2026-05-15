@@ -1,15 +1,20 @@
 import { z } from "zod"
 import { flexibleUrlRequiredSchema } from "../flexible-url"
 import { baseSchema, refineOccurrenceTimeSlotEndAfterStart } from "./base"
-import {
-  hasSomeCompleteOrganizerOccurrence,
-  indexOfOrganizerRowsMissingLocation,
-  ORGANIZER_OCCURRENCE_USER_MESSAGES,
-} from "./occurrence-row"
 import { performanceFields } from "./performance"
+import {
+  addOrganizerListingScheduleIssues,
+  addOrganizerMultiProgramPieceSlotAndCustomIssues,
+  resolveOrganizerOccurrencesForValidation,
+} from "./organizer-performance-schedule"
 import { auditionFields } from "./audition"
 import { creativeFields } from "./creative"
 import { classFields } from "./class"
+import {
+  inferOrganizerPieceCount,
+  organizerPieceHasSchedule,
+  pieceFieldPrefix,
+} from "@/lib/organizer-program-pieces"
 
 export const eventFormSchema = baseSchema
   .merge(performanceFields)
@@ -96,8 +101,14 @@ export const eventFormSchema = baseSchema
     // Only validate occurrences for types that definitely need it
     // Skip validation for creative opportunities (they only use deadlineOccurrences)
     // Skip validation for PIECE type - it has its own validation logic that checks extraOccurrences/selectedSlots
+    // Skip ORGANIZER — performanceFields / performanceStep2Schema enforce showtime rows + confirmation
     const isPiece = data.type === "PIECE"
-    if ((isPerformance || isClass || isAudition) && !isCreative && !isPiece) {
+    if (
+      (isPerformance || isClass || isAudition) &&
+      !isCreative &&
+      !isPiece &&
+      data.type !== "ORGANIZER"
+    ) {
       if (!data.occurrences || data.occurrences.length === 0) {
         ctx.addIssue({
           code: "custom",
@@ -152,6 +163,7 @@ export const performanceStep2Schema = baseSchema
     price: true,
     occurrences: true,
     extraOccurrences: true,
+    eventDatesConfirmed: true,
     type: true,
     eventType: true, // Required for ORGANIZER flow
     parentEventMode: true, // Required for PIECE flow to determine validation logic
@@ -170,6 +182,11 @@ export const performanceStep2Schema = baseSchema
     piece_choreographer: true,
     piece_description: true,
     piece_credits: true,
+    pieces: true,
+    piece_id: true,
+    piece_selectedSlots: true,
+    piece_pieceScheduleMode: true,
+    piece_extraOccurrences: true,
     address: true,
     venueName: true,
     placeId: true,
@@ -231,55 +248,67 @@ export const performanceStep2Schema = baseSchema
           message: "Price is required",
         })
       }
-      const occs = data.occurrences
-      if (!Array.isArray(occs) || occs.length === 0) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["occurrences"],
-          message: ORGANIZER_OCCURRENCE_USER_MESSAGES.needSchedule,
-        })
-      } else {
-        const requireTime = true
-        const missingLocationIndexes = indexOfOrganizerRowsMissingLocation(occs, requireTime)
-        for (const index of missingLocationIndexes) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["occurrences", index, "address"],
-            message: ORGANIZER_OCCURRENCE_USER_MESSAGES.locationOnSubmit,
-          })
-        }
-        if (
-          !hasSomeCompleteOrganizerOccurrence(occs, requireTime) &&
-          missingLocationIndexes.length === 0
-        ) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["occurrences"],
-            message: ORGANIZER_OCCURRENCE_USER_MESSAGES.needSchedule,
-          })
-        }
-      }
+      const organizerOccs = resolveOrganizerOccurrencesForValidation(
+        data.occurrences,
+        data.extraOccurrences,
+      )
+      addOrganizerListingScheduleIssues(ctx, {
+        occurrences: organizerOccs,
+        eventType: data.eventType,
+        eventDatesConfirmed: data.eventDatesConfirmed,
+      })
       if (data.eventType === "SPLIT_BILL" || data.eventType === "FESTIVAL") {
         if (data.addPiece === true) {
-          if (!data.piece_company || data.piece_company.trim() === "") {
+          const raw = data as Record<string, unknown>
+          const n = inferOrganizerPieceCount(raw)
+          if (n === 0) {
             ctx.addIssue({
               code: "custom",
-              path: ["piece_company"],
-              message: "Company / artist name is required when you are presenting work",
+              path: ["addPiece"],
+              message: "Add at least one piece or choose No for presenting work",
             })
           }
-          if (!data.piece_title || data.piece_title.trim() === "") {
-            ctx.addIssue({
-              code: "custom",
-              path: ["piece_title"],
-              message: "Piece title is required when you are presenting work",
-            })
+          for (let i = 0; i < n; i++) {
+            const p = pieceFieldPrefix(i)
+            const company = (raw[`${p}_company`] as string | undefined)?.trim() ?? ""
+            const title = (raw[`${p}_title`] as string | undefined)?.trim() ?? ""
+            const description = (raw[`${p}_description`] as string | undefined)?.trim() ?? ""
+            if (!company) {
+              ctx.addIssue({
+                code: "custom",
+                path: [i === 0 ? "piece_company" : `${p}_company`],
+                message: "Company / artist name is required when you are presenting work",
+              })
+            }
+            if (!title) {
+              ctx.addIssue({
+                code: "custom",
+                path: [i === 0 ? "piece_title" : `${p}_title`],
+                message: "Piece title is required when you are presenting work",
+              })
+            }
+            if (!description) {
+              ctx.addIssue({
+                code: "custom",
+                path: [i === 0 ? "piece_description" : `${p}_description`],
+                message: "Piece description is required when you are presenting work",
+              })
+            }
+            if (!organizerPieceHasSchedule(raw, i)) {
+              ctx.addIssue({
+                code: "custom",
+                path: [i === 0 ? "piece_selectedSlots" : `${p}_selectedSlots`],
+                message: "Select at least one date/time for this piece, or add custom dates & times",
+              })
+            }
           }
-          if (!data.piece_description || data.piece_description.trim() === "") {
-            ctx.addIssue({
-              code: "custom",
-              path: ["piece_description"],
-              message: "Piece description is required when you are presenting work",
+          if (n > 0) {
+            addOrganizerMultiProgramPieceSlotAndCustomIssues(ctx, {
+              raw,
+              pieceCount: n,
+              organizerOccurrences: organizerOccs,
+              eventDatesConfirmed: data.eventDatesConfirmed,
+              eventType: data.eventType,
             })
           }
         }

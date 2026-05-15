@@ -1,5 +1,6 @@
 "use client"
 
+import type { MutableRefObject } from "react"
 import { UseFormReturn, useFieldArray, Path, useWatch } from "react-hook-form"
 import { useEffect } from "react"
 
@@ -10,8 +11,15 @@ import { Section } from "@/components/forms/blocks/Section"
 import { Button } from "@/components/ui/button"
 import { PieceDetails } from "@/components/forms/blocks/PieceDetails"
 import { SelectBlock } from "@/components/forms/blocks/Select"
+import { pieceFieldPrefix, type OrganizerProgramPiecePhoto } from "@/lib/organizer-program-pieces"
 
-export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventFormData> }) {
+export function OrganizerMultiProgramForm({
+  form,
+  organizerPiecePhotosByIdRef,
+}: {
+  form: UseFormReturn<EventFormData>
+  organizerPiecePhotosByIdRef?: MutableRefObject<Record<string, OrganizerProgramPiecePhoto[]>>
+}) {
   const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: "pieces" as never,
@@ -34,18 +42,24 @@ export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventF
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wantsToAddPiece, fields.length])
 
+  useEffect(() => {
+    if (!wantsToAddPiece) return
+    for (let i = 0; i < fields.length; i++) {
+      const key = `${pieceFieldPrefix(i)}_id` as Path<EventFormData>
+      const cur = form.getValues(key)
+      if (!cur || String(cur).trim() === "") {
+        const id =
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `${Date.now()}-${i}`
+        form.setValue(key, id as never, { shouldDirty: false })
+      }
+    }
+  }, [wantsToAddPiece, fields, form])
+
   return (
     <>
       <OrganizerDatesTimes form={form} />
-
-      {/* <Section title="Media upload (festival or shared program)">
-        <PhotoUploader
-          form={form}
-          name={"promoFiles"}
-          label="Promotional images"
-          description="Upload images for this festival or shared program (optional but recommended)."
-        />
-      </Section> */}
 
       <Section title="Piece information">
         <SelectBlock
@@ -70,6 +84,9 @@ export function OrganizerMultiProgramForm({ form }: { form: UseFormReturn<EventF
                 onRemove={() => remove(index)}
                 showOccurrences={true}
                 occurrencesMode="SELECT_FROM_EVENT"
+                showPieceImageUploader
+                namespacedPieceSchedule
+                organizerPiecePhotosByIdRef={organizerPiecePhotosByIdRef}
               />
             ))}
 

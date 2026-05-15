@@ -1,6 +1,12 @@
 import type { EventFormData } from "@/lib/validations/events"
 import type { EventType } from "./EventTypeSelector"
 import { convertUTCToEST } from "@/lib/datetime-utils"
+import {
+  extractPiecePhotosByIdFromDocument,
+  normalizeOrganizerProgramPiecesFromDb,
+  pieceFieldPrefix,
+  type OrganizerProgramPiecePhoto,
+} from "@/lib/organizer-program-pieces"
 
 type UnknownRecord = Record<string, unknown>
 
@@ -53,12 +59,15 @@ export type OwnerListingLoadResult = {
   /** Status before user edits (used for approved save confirmation). */
   initialPersistedStatus: string
   existingPhotos: Array<{ path: string; credit?: string | null }>
+  /** Persisted piece promo images keyed by stable piece id (edit flow). */
+  organizerPiecePhotosById: Record<string, OrganizerProgramPiecePhoto[]>
 }
 
 /**
  * Maps GET /api/events/:id/owner payload into EventWizard defaults.
  */
 export function ownerListingToFormLoad(row: UnknownRecord): OwnerListingLoadResult {
+  const emptyPiecePhotos: Record<string, OrganizerProgramPiecePhoto[]> = {}
   const listing = row as UnknownRecord
   const type = listing.type as string
   const status = (listing.status as string) || "pending"
@@ -101,6 +110,34 @@ export function ownerListingToFormLoad(row: UnknownRecord): OwnerListingLoadResu
       const eventOccs = occRows.filter((o) => (o as { occurrence_type?: string }).occurrence_type !== "deadline")
       const occurrences = eventOccs.map((o) => occurrenceRowToForm(o as Parameters<typeof occurrenceRowToForm>[0]))
 
+      const programRaw = pd?.organizer_program_pieces
+      const organizerPiecePhotosById = extractPiecePhotosByIdFromDocument(programRaw)
+      const doc = normalizeOrganizerProgramPiecesFromDb(programRaw)
+
+      const programFlat: Record<string, unknown> = {}
+      if (doc && doc.pieces.length > 0) {
+        programFlat.addPiece = true
+        programFlat.pieces = doc.pieces.map(() => ({}))
+        doc.pieces.forEach((piece, i) => {
+          const p = pieceFieldPrefix(i)
+          programFlat[`${p}_id`] = piece.id
+          programFlat[`${p}_company`] = piece.company ?? ""
+          programFlat[`${p}_companyWebsite`] = piece.company_website ?? ""
+          programFlat[`${p}_title`] = piece.title ?? ""
+          programFlat[`${p}_choreographer`] = piece.choreographer ?? ""
+          programFlat[`${p}_description`] = piece.description ?? ""
+          programFlat[`${p}_credits`] = piece.credits ?? ""
+          programFlat[`${p}_selectedSlots`] = piece.selected_slots ?? []
+          programFlat[`${p}_pieceScheduleMode`] = piece.piece_schedule_mode ?? "FROM_PARENT"
+          programFlat[`${p}_extraOccurrences`] = Array.isArray(piece.extra_occurrences)
+            ? piece.extra_occurrences
+            : []
+        })
+      } else {
+        programFlat.addPiece = false
+        programFlat.pieces = []
+      }
+
       const defaults: Partial<EventFormData> = {
         ...baseDefaults,
         type: "ORGANIZER",
@@ -119,8 +156,15 @@ export function ownerListingToFormLoad(row: UnknownRecord): OwnerListingLoadResu
         listingFeeExplanation: (pd?.listing_fee_explanation as string) || undefined,
         complementaryTicketInfo: (pd?.complementary_ticket_info as string) || undefined,
         occurrences,
+        ...(programFlat as Partial<EventFormData>),
       }
-      return { eventType: "PERFORMANCE", defaults, initialPersistedStatus: status, existingPhotos }
+      return {
+        eventType: "PERFORMANCE",
+        defaults,
+        initialPersistedStatus: status,
+        existingPhotos,
+        organizerPiecePhotosById,
+      }
     }
 
     // PIECE: treat stored occurrences as custom schedule for edit (avoids parent schedule fetch).
@@ -152,7 +196,13 @@ export function ownerListingToFormLoad(row: UnknownRecord): OwnerListingLoadResu
       occurrences: [],
       extraOccurrences,
     }
-    return { eventType: "PERFORMANCE", defaults, initialPersistedStatus: status, existingPhotos }
+    return {
+      eventType: "PERFORMANCE",
+      defaults,
+      initialPersistedStatus: status,
+      existingPhotos,
+      organizerPiecePhotosById: emptyPiecePhotos,
+    }
   }
 
   if (type === "audition") {
@@ -180,7 +230,13 @@ export function ownerListingToFormLoad(row: UnknownRecord): OwnerListingLoadResu
       occurrences,
       deadlineOccurrences,
     }
-    return { eventType: "AUDITION", defaults, initialPersistedStatus: status, existingPhotos }
+    return {
+      eventType: "AUDITION",
+      defaults,
+      initialPersistedStatus: status,
+      existingPhotos,
+      organizerPiecePhotosById: emptyPiecePhotos,
+    }
   }
 
   if (type === "creative") {
@@ -206,7 +262,13 @@ export function ownerListingToFormLoad(row: UnknownRecord): OwnerListingLoadResu
       artistType: (cd?.artist_type as EventFormData["artistType"]) || undefined,
       deadlineOccurrences,
     }
-    return { eventType: "CREATIVE", defaults, initialPersistedStatus: status, existingPhotos }
+    return {
+      eventType: "CREATIVE",
+      defaults,
+      initialPersistedStatus: status,
+      existingPhotos,
+      organizerPiecePhotosById: emptyPiecePhotos,
+    }
   }
 
   if (type === "class") {
@@ -247,7 +309,13 @@ export function ownerListingToFormLoad(row: UnknownRecord): OwnerListingLoadResu
       placeholderContactEmail: (cwd?.parent_workshop_contact_email as string) || undefined,
       occurrences,
     }
-    return { eventType: "CLASS", defaults, initialPersistedStatus: status, existingPhotos }
+    return {
+      eventType: "CLASS",
+      defaults,
+      initialPersistedStatus: status,
+      existingPhotos,
+      organizerPiecePhotosById: emptyPiecePhotos,
+    }
   }
 
   throw new Error(`Unsupported listing type for edit: ${type}`)

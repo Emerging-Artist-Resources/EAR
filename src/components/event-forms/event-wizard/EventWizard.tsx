@@ -22,6 +22,11 @@ import { useToast } from "@/contexts/ToastContext"
 import { apiPost, apiGet, apiPut } from "@/lib/fetch-utils"
 import { supabase } from "@/lib/supabase/client"
 import { storageService } from "@/services/storage"
+import {
+  normalizeOrganizerProgramPiecesFromDb,
+  piecePromoFilesFieldName,
+  type OrganizerProgramPiecePhoto,
+} from "@/lib/organizer-program-pieces"
 import { ownerListingToFormLoad } from "./owner-listing-to-form"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
@@ -67,6 +72,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
   const [showApprovedResubmitConfirm, setShowApprovedResubmitConfirm] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const existingPhotosRef = useRef<Array<{ path: string; credit?: string | null }>>([])
+  const organizerPiecePhotosRef = useRef<Record<string, OrganizerProgramPiecePhoto[]>>({})
   const { user, userName } = useAuth()
   const { showToast } = useToast()
 
@@ -106,6 +112,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       setInitialPersistedStatus(null)
       setLoadError(null)
       existingPhotosRef.current = []
+      organizerPiecePhotosRef.current = {}
       return
     }
 
@@ -116,8 +123,10 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       try {
         const row = await apiGet<Record<string, unknown>>(`/api/events/${listingId}/owner`)
         if (cancelled) return
-        const { eventType: et, defaults, initialPersistedStatus: st, existingPhotos } = ownerListingToFormLoad(row)
+        const { eventType: et, defaults, initialPersistedStatus: st, existingPhotos, organizerPiecePhotosById } =
+          ownerListingToFormLoad(row)
         existingPhotosRef.current = existingPhotos
+        organizerPiecePhotosRef.current = organizerPiecePhotosById
         setEventType(et)
         setInitialPersistedStatus(st)
         form.reset({
@@ -169,6 +178,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       occurrences: [],
       deadlineOccurrences: [],
       shareRecipientEmails: [],
+      pieces: [],
       creativeSubmissionInstructions: "",
       listingWebsite: "",
       classRegistrationDetails: "",
@@ -289,6 +299,66 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       }
 
       const payload = await buildEventPayload(data, eventType, userInfo)
+
+      const details = payload.details as Record<string, unknown> | undefined
+      if (payload.type === "performance" && details) {
+        const doc = normalizeOrganizerProgramPiecesFromDb(details.organizer_program_pieces)
+        if (doc && doc.pieces.length > 0) {
+          const formRec = data as unknown as Record<string, unknown>
+          const credit = data.credits?.trim() || null
+          const bucket = "event-photos"
+          const userId = user.id
+
+          for (let i = 0; i < doc.pieces.length; i++) {
+            const piece = doc.pieces[i]
+            const fieldName = piecePromoFilesFieldName(i)
+            const filesRaw = formRec[fieldName]
+            const files: File[] = Array.isArray(filesRaw)
+              ? filesRaw.filter((f): f is File => f instanceof File)
+              : []
+
+            if (files.length > 0) {
+              const uploaded: OrganizerProgramPiecePhoto[] = []
+              for (let j = 0; j < Math.min(files.length, 5); j++) {
+                const file = files[j]
+                if (!file || !(file instanceof File)) continue
+                try {
+                  const timestamp = Date.now()
+                  const fileExt = file.name.split(".").pop() || "jpg"
+                  const fileName = `${timestamp}-piece-${piece.id}-${j}.${fileExt}`
+                  const filePath = `listings/${userId}/${fileName}`
+
+                  await storageService.uploadFile(supabase, bucket, filePath, file, {
+                    cacheControl: "3600",
+                    upsert: false,
+                  })
+
+                  uploaded.push({
+                    path: filePath,
+                    credit,
+                    sort_order: j,
+                  })
+                } catch (uploadError) {
+                  console.error(`Failed to upload piece photo ${j}:`, uploadError)
+                  const errorMsg =
+                    uploadError instanceof Error ? uploadError.message : "Failed to upload photo"
+                  showToast(`Piece image upload failed: ${errorMsg}`, "error")
+                  setIsSubmitting(false)
+                  return
+                }
+              }
+              piece.photos = uploaded
+            } else if (organizerPiecePhotosRef.current[piece.id]?.length) {
+              piece.photos = organizerPiecePhotosRef.current[piece.id].map((ph, idx) => ({
+                path: ph.path,
+                credit: credit ?? ph.credit ?? null,
+                sort_order: idx,
+              }))
+            }
+          }
+          details.organizer_program_pieces = doc
+        }
+      }
 
       if (photoPaths.length > 0) {
         payload.photos = photoPaths
@@ -491,7 +561,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       )}
       {step === 2 && (
         eventType === 'PERFORMANCE' ? (
-          <PerformanceDetailsStep form={form} />
+          <PerformanceDetailsStep form={form} organizerPiecePhotosByIdRef={organizerPiecePhotosRef} />
         ) : eventType === 'CLASS' ? (
           <ClassesWorkshopsStep form={form} />
         ) : eventType === 'AUDITION' ? (

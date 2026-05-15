@@ -6,6 +6,15 @@
 export const ORGANIZER_OCCURRENCE_USER_MESSAGES = {
   /** addIssue on occurrences when nothing usable yet */
   needSchedule: "Add at least one showtime with a date, a time, and a location.",
+  /** SPLIT_BILL / FESTIVAL: must confirm showtimes before continuing */
+  confirmSchedule: "Confirm your event dates and locations before continuing.",
+  /** Piece links to parent slots before festival schedule is confirmed */
+  confirmBeforePieceSlots: "Confirm the event schedule above before linking this piece to dates.",
+  /** Piece selected slot not in organizer occurrence list */
+  pieceSlotsMustMatch: "Each selected time must match a showtime from your event schedule above.",
+  /** Piece custom ShowtimesList rows incomplete */
+  pieceCustomScheduleIncomplete:
+    "Complete every custom date & time for this piece (including location), or remove empty rows.",
   /** addIssue on occurrences.n.address when location missing */
   locationOnSubmit: "Select a location for this showtime — use search to pick a venue or address on the map.",
   /** setError in UI when user adds another showtime without finishing the row above */
@@ -93,4 +102,23 @@ export function hasSomeCompleteOrganizerOccurrence(
 ): boolean {
   if (!entries?.length) return false
   return entries.some((e) => isOrganizerOccurrenceRowComplete(e, { requireTime, requireLocation }))
+}
+
+/**
+ * Slot keys aligned with PieceOccurrencesPicker: `${date}|${time}` per time row.
+ */
+export function buildOrganizerOccurrenceSlotKeySet(entries: OccurrenceLike[] | undefined): Set<string> {
+  const set = new Set<string>()
+  if (!entries?.length) return set
+  for (const ex of entries) {
+    const date = (ex?.date ?? "").trim()
+    if (!date) continue
+    const times = ex.times
+    if (!Array.isArray(times)) continue
+    for (const t of times) {
+      const time = (t?.time ?? "").trim()
+      if (time) set.add(`${date}|${time}`)
+    }
+  }
+  return set
 }

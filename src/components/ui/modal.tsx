@@ -14,6 +14,8 @@ export interface ModalProps {
   headerClassName?: string
   /** Replaces default `bg-background border-border` on the dialog panel (e.g. light cream shell). */
   contentClassName?: string
+  /** Extra classes on the full-screen overlay (e.g. higher z-index for nested modals). */
+  overlayClassName?: string
 }
 
 const sizeClasses = {
@@ -33,6 +35,7 @@ export const Modal: React.FC<ModalProps> = ({
   closeOnOverlay = true,
   headerClassName,
   contentClassName,
+  overlayClassName,
 }) => {
   if (!isOpen) return null
 
@@ -46,7 +49,8 @@ export const Modal: React.FC<ModalProps> = ({
     <div
       className={cn(
         // replacement for variants.modal.overlay
-        "fixed inset-0 bg-ear-black/70 backdrop-blur-[1px] flex items-center justify-center p-4 z-[9999] overflow-y-auto"
+        "fixed inset-0 bg-ear-black/70 backdrop-blur-[1px] flex items-center justify-center p-4 z-[9999] overflow-y-auto",
+        overlayClassName,
       )}
       onClick={handleOverlayClick}
     >

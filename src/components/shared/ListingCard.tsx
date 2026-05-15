@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { FavoriteButton } from "@/components/ui/favorite-button"
@@ -7,6 +8,7 @@ import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
 import { useSavedListings } from "@/hooks/use-saved-listings"
 import { useAuth } from "@/hooks/use-auth"
 import { getCalendarListingTypeLabel } from "@/lib/listing-type-labels"
+import { cn } from "@/lib/utils"
 
 interface ListingCardProps {
   id: string
@@ -38,10 +40,37 @@ interface ListingCardProps {
   /** First listing photo by sort_order (e.g. admin-chosen cover). */
   coverImageUrl?: string | null
   coverImageAlt?: string | null
+  /**
+   * When false, hide favorites (id may not be a `listings` row — e.g. embedded organizer piece).
+   * @default true
+   */
+  enableSave?: boolean
 }
 
 function getTypeLabel(type: string): string {
   return getCalendarListingTypeLabel(type)
+}
+
+function ListingCardFavoriteBar({ listingId }: { listingId: string }) {
+  const { isAuthed } = useAuth()
+  const { isSaved, loading, saving, toggleSave } = useSavedListings(listingId)
+  if (!isAuthed) return null
+  return (
+    <div className="absolute top-2 right-2 z-10">
+      <FavoriteButton
+        active={isSaved}
+        onToggle={(e) => {
+          e.stopPropagation()
+          if (!saving && !loading) {
+            void toggleSave()
+          }
+        }}
+        size="sm"
+        disabled={saving || loading}
+        aria-label={isSaved ? "Remove from favorites" : "Add to favorites"}
+      />
+    </div>
+  )
 }
 
 export function ListingCard({ 
@@ -68,16 +97,23 @@ export function ListingCard({
   occurrences,
   coverImageUrl,
   coverImageAlt,
+  enableSave = true,
 }: ListingCardProps) {
-  const { isAuthed } = useAuth();
-  const { isSaved, loading, saving, toggleSave } = useSavedListings(id);
-  const sortedOccurrences = occurrences?.sort((a: { starts_at_utc: string }, b: { starts_at_utc: string }) => 
-    new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime()
-  ) || []
+  const sortedOccurrences = useMemo(() => {
+    if (!occurrences?.length) return []
+    return [...occurrences].sort(
+      (a, b) => new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime(),
+    )
+  }, [occurrences])
+
+  const interactive = Boolean(onClick)
 
   return (
     <Card
-      className="p-4 h-full cursor-pointer hover:shadow-md transition-shadow relative"
+      className={cn(
+        "p-4 h-full transition-shadow relative",
+        interactive ? "cursor-pointer hover:shadow-md" : "cursor-default",
+      )}
       onClick={onClick}
     >
       {coverImageUrl && (
@@ -89,28 +125,20 @@ export function ListingCard({
           />
         </div>
       )}
-      {isAuthed && (
-        <div className="absolute top-2 right-2 z-10">
-          <FavoriteButton
-            active={isSaved}
-            onToggle={(e) => {
-              e.stopPropagation();
-              if (!saving && !loading) {
-                void toggleSave();
-              }
-            }}
-            size="sm"
-            disabled={saving || loading}
-            aria-label={isSaved ? "Remove from favorites" : "Add to favorites"}
-          />
-        </div>
-      )}
+      {enableSave ? <ListingCardFavoriteBar listingId={id} /> : null}
       <div className="space-y-2">
         <div className="space-y-1">
           <Badge variant="primary" size="sm" className="inline-block">
             {getTypeLabel(type)}
           </Badge>
-          <h4 className="font-header text-xl font-semibold text-text-primary line-clamp-2 pr-8">{title}</h4>
+          <h4
+            className={cn(
+              "font-header text-xl font-semibold text-text-primary line-clamp-2",
+              enableSave && "pr-8",
+            )}
+          >
+            {title}
+          </h4>
         </div>
         
         {is_piece && sortedOccurrences.length > 0 && (
