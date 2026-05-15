@@ -9,3 +9,15 @@ export function resetScrollAncestors(startEl: HTMLElement | null) {
     el = el.parentElement
   }
 }
+
+/**
+ * Reset modal/wizard scroll and move focus to a top sentinel so date/time/Places
+ * fields do not keep focus and scroll the body into view.
+ */
+export function resetModalFormView(
+  scrollRoot: HTMLElement | null,
+  focusTarget?: HTMLElement | null,
+) {
+  resetScrollAncestors(scrollRoot)
+  focusTarget?.focus({ preventScroll: true })
+}

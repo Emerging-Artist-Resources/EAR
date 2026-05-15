@@ -221,6 +221,16 @@ export function LocationField<T extends Record<string, unknown>>({
         containerRef.current.appendChild(el)
         elementRef.current = el
 
+        // Places can steal focus when its element mounts; avoid scrolling the modal to it.
+        const releasePlacesFocus = () => {
+          const active = document.activeElement
+          if (active instanceof HTMLElement && containerRef.current?.contains(active)) {
+            active.blur()
+          }
+        }
+        queueMicrotask(releasePlacesFocus)
+        requestAnimationFrame(releasePlacesFocus)
+
         const onPlaceSelect = async (evt: any) => {
           const { placePrediction } = evt?.detail ?? evt ?? {}
           

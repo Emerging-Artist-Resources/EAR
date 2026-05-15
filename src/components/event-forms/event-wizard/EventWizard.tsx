@@ -30,7 +30,7 @@ import {
 } from "@/lib/organizer-program-pieces"
 import { ownerListingToFormLoad } from "./owner-listing-to-form"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { resetScrollAncestors } from "@/lib/reset-scroll-ancestors"
+import { resetModalFormView } from "@/lib/reset-scroll-ancestors"
 
 interface EventWizardProps {
   onSuccess: (info?: { wasApprovedResubmit?: boolean }) => void
@@ -55,6 +55,7 @@ interface ProfileData {
 export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const wizardRootRef = useRef<HTMLDivElement>(null)
+  const wizardFocusSentinelRef = useRef<HTMLDivElement>(null)
   const [eventType, setEventType] = useState<EventType | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [profilePronouns, setProfilePronouns] = useState<string | null>(null)
@@ -184,18 +185,19 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       ? `${step}:${eventType}:${perfType}:${performanceFormat}:${classWorkshopType}`
       : `${step}:${eventType}`
 
+  // Runs after child layout effects (e.g. ShowtimesList row seed) so scroll stays at top.
   useLayoutEffect(() => {
-    resetScrollAncestors(wizardRootRef.current)
+    resetModalFormView(wizardRootRef.current, wizardFocusSentinelRef.current)
   }, [scrollResetKey])
 
-  // ShowtimesList seeds a row after mount; reset scroll once content height settles.
+  // Google Places mounts asynchronously and can refocus after layout; reset once it settles.
   useEffect(() => {
     if (step !== 2) return
-    const id = requestAnimationFrame(() => {
-      resetScrollAncestors(wizardRootRef.current)
-    })
-    return () => cancelAnimationFrame(id)
-  }, [scrollResetKey])
+    const id = window.setTimeout(() => {
+      resetModalFormView(wizardRootRef.current, wizardFocusSentinelRef.current)
+    }, 200)
+    return () => window.clearTimeout(id)
+  }, [scrollResetKey, step])
 
   // Hook must be called unconditionally - use PERFORMANCE as default
   // Must be called after form initialization
@@ -519,6 +521,12 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
 
   return (
     <div ref={wizardRootRef} className="space-y-6">
+      <div
+        ref={wizardFocusSentinelRef}
+        tabIndex={-1}
+        aria-hidden
+        className="sr-only outline-none"
+      />
       {loadError && (
         <p className="text-sm text-red-600 text-center" role="alert">
           {loadError}

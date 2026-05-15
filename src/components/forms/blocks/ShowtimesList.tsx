@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, type ReactNode } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from "react"
 import { UseFormReturn, useFieldArray, useWatch, FieldValues } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,6 +12,8 @@ import {
 import { createLocationFields, type DateItem, type LocationConfigFull } from "./DateTime"
 import { ShowtimeRow } from "./ShowtimeRow"
 import { FormFieldTooltip } from "./FormFieldTooltip"
+import { buildEmptyShowtimeRow } from "@/lib/showtimes-empty-row"
+import { focusFormFieldNoScroll } from "@/lib/focus-form-field"
 
 export interface ShowtimesListProps<T extends FieldValues> {
   form: UseFormReturn<T>
@@ -38,22 +40,6 @@ export interface ShowtimesListProps<T extends FieldValues> {
   betweenNoteAndRows?: ReactNode
   /** When true, each slot can include an end time (class/workshop). Default false. */
   showEndTime?: boolean
-}
-
-function buildInitialRow(
-  showTime: boolean,
-  locationConfig: LocationConfigFull | undefined,
-  showEndTime: boolean,
-): DateItem {
-  return {
-    date: "",
-    times: showTime
-      ? showEndTime
-        ? [{ time: "", endTime: "" }]
-        : [{ time: "" }]
-      : [],
-    ...createLocationFields(locationConfig, undefined, true),
-  } as DateItem
 }
 
 function buildNewShowtimeFromPrevious(
@@ -100,8 +86,7 @@ export function ShowtimesList<T extends FieldValues>({
   betweenNoteAndRows,
   showEndTime = false,
 }: ShowtimesListProps<T>) {
-  const { control, getValues, setFocus, setError } = form
-  const initDone = useRef(false)
+  const { control, getValues, setError } = form
   const rowElsRef = useRef<(HTMLDivElement | null)[]>([])
   const focusNewRowTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -142,16 +127,11 @@ export function ShowtimesList<T extends FieldValues>({
         ? undefined
         : defaultHeaderNote
 
-  useEffect(() => {
-    if (initDone.current) return
+  // Seed first row before paint so scroll/focus resets are not beaten by a post-mount append.
+  useLayoutEffect(() => {
     const rows = (getValues(name as any) as unknown[] | undefined) ?? []
-    if (rows.length > 0) {
-      initDone.current = true
-      return
-    }
-    append(buildInitialRow(showTime, locationConfig, showEndTime) as any)
-    initDone.current = true
-    // Intentionally run once on mount: simple empty → one row. No watch/replace/signature.
+    if (rows.length > 0) return
+    append(buildEmptyShowtimeRow({ showTime, showEndTime, locationConfig }) as any)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -170,7 +150,7 @@ export function ShowtimesList<T extends FieldValues>({
             type: "manual",
             message: ORGANIZER_OCCURRENCE_USER_MESSAGES.addAnotherNeedDate,
           })
-          setFocus(`${basePrev}.date` as any, { shouldSelect: true })
+          focusFormFieldNoScroll(form, `${basePrev}.date`, { shouldSelect: true })
           return
         }
         if (showTime && Array.isArray(prev.times)) {
@@ -180,7 +160,9 @@ export function ShowtimesList<T extends FieldValues>({
               type: "manual",
               message: ORGANIZER_OCCURRENCE_USER_MESSAGES.addAnotherNeedTime,
             })
-            setFocus(`${name}.${lastIndex}.times.${emptyTimeIdx}.time` as any, { shouldSelect: true })
+            focusFormFieldNoScroll(form, `${name}.${lastIndex}.times.${emptyTimeIdx}.time`, {
+              shouldSelect: true,
+            })
             return
           }
         }
@@ -190,7 +172,7 @@ export function ShowtimesList<T extends FieldValues>({
             type: "manual",
             message: ORGANIZER_OCCURRENCE_USER_MESSAGES.addAnotherNeedLocation,
           })
-          setFocus(addrPath)
+          focusFormFieldNoScroll(form, addrPath)
           return
         }
       }
@@ -205,9 +187,9 @@ export function ShowtimesList<T extends FieldValues>({
     if (focusNewRowTimeoutRef.current) clearTimeout(focusNewRowTimeoutRef.current)
     focusNewRowTimeoutRef.current = setTimeout(() => {
       focusNewRowTimeoutRef.current = null
-      setFocus(datePath, { shouldSelect: true })
+      focusFormFieldNoScroll(form, datePath, { shouldSelect: true })
     }, 0)
-  }, [append, fields.length, getValues, locationConfig, name, requireLocation, setError, setFocus, showTime, showEndTime])
+  }, [append, fields.length, form, getValues, locationConfig, name, requireLocation, setError, showTime, showEndTime])
 
   useEffect(
     () => () => {

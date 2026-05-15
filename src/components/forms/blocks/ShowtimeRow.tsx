@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useEffect, forwardRef } from "react"
+import { useLayoutEffect, forwardRef } from "react"
 import { UseFormReturn, FieldValues, useFieldArray, Path } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { LocationField, LocationFieldInstructions } from "./LocationField"
 import type { LocationConfigFull } from "./DateTime/types"
+import { focusFormFieldNoScroll } from "@/lib/focus-form-field"
 
 function getTodayDateString(): string {
   const today = new Date()
@@ -103,7 +104,8 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
 
       const date = getValues(dateFieldName as any) as string | undefined
       if (!String(date ?? "").trim()) {
-        setError(dateFieldName as any, { type: "manual", message: "Date is required" }, { shouldFocus: true })
+        setError(dateFieldName as any, { type: "manual", message: "Date is required" })
+        focusFormFieldNoScroll(form, dateFieldName, { shouldSelect: true })
         return
       }
 
@@ -114,11 +116,11 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
           : ""
 
       if (times.length > 0 && !String(lastTime).trim()) {
-        setError(
-          `${name}.${index}.times.${lastIdx}.time` as any,
-          { type: "manual", message: "Time is required" },
-          { shouldFocus: true },
-        )
+        setError(`${name}.${index}.times.${lastIdx}.time` as any, {
+          type: "manual",
+          message: "Time is required",
+        })
+        focusFormFieldNoScroll(form, `${name}.${index}.times.${lastIdx}.time`, { shouldSelect: true })
         return
       }
 
@@ -132,7 +134,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
     // Ensure a first time row exists when the section shows time fields (RHF v7+ stable `append` ref).
     // Guard with getValues: nested useFieldArray can briefly report length 0 right after the parent
     // row is appended (e.g. ShowtimesList seeding times: [{ time: "" }]), which would duplicate times.
-    useEffect(() => {
+    useLayoutEffect(() => {
       if (!showTime) return
       if (times.length > 0) return
       const path = `${name}.${index}.times` as const
