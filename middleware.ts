@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
-import { getUserRole } from "@/lib/authz"
+import { getUserRole, getUserRoleFromProfile } from "@/lib/authz"
 
 function supabaseAuthCodeRedirect(req: NextRequest): NextResponse | null {
   const { pathname, searchParams } = req.nextUrl
@@ -73,7 +73,13 @@ export async function middleware(req: NextRequest) {
   await supabase.auth.getSession()
 
   if (pathname.startsWith("/admin")) {
-    const role = getUserRole(user)
+    if (!user) {
+      return NextResponse.redirect(new URL("/auth/signin", req.url))
+    }
+    let role = getUserRole(user)
+    if (!role) {
+      role = await getUserRoleFromProfile(supabase, user.id)
+    }
     if (role !== "ADMIN") {
       return NextResponse.redirect(new URL("/auth/signin", req.url))
     }
