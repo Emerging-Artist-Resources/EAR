@@ -3,42 +3,39 @@
 import { useFormContext } from "react-hook-form"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { InquiryFieldStep } from "@/components/forms/fiscal-sponsorship-inquiry/steps/InquiryFieldStep"
-import { fiscalSponsorshipInquiryFieldSteps } from "@/lib/fiscal-sponsorship-inquiry-content"
+import { fiscalSponsorshipInquiryPages } from "@/lib/service-inquiries/fiscal-sponsorship-form-config"
 import type { FiscalSponsorshipInquiryFormData } from "@/lib/validations/fiscal-sponsorship-inquiry"
 
-const meta = fiscalSponsorshipInquiryFieldSteps[0]
+const meta = fiscalSponsorshipInquiryPages[0]
 
-const shortAnswerPlaceholder = "Short answer text"
-
-export function InquiryStep2() {
+export function InquiryPage1Contact() {
   const form = useFormContext<FiscalSponsorshipInquiryFormData>()
 
   return (
     <InquiryFieldStep title={meta.title} description={meta.description}>
       <div className="space-y-6">
-        <TextField
-          form={form}
-          name="firstName"
-          label="First Name"
-          required
-          placeholder={shortAnswerPlaceholder}
-          errorMode="always"
-        />
-        <TextField
-          form={form}
-          name="lastName"
-          label="Last Name"
-          required
-          placeholder={shortAnswerPlaceholder}
-          errorMode="always"
-        />
+        <div className="grid gap-6 sm:grid-cols-2">
+          <TextField
+            form={form}
+            name="firstName"
+            label="First Name"
+            required
+            errorMode="always"
+          />
+          <TextField
+            form={form}
+            name="lastName"
+            label="Last Name"
+            required
+            errorMode="always"
+          />
+        </div>
         <TextField
           form={form}
           name="pronouns"
           label="Pronouns"
           required={false}
           showAsterisk={false}
-          placeholder={shortAnswerPlaceholder}
           errorMode="always"
         />
         <TextField
@@ -47,7 +44,6 @@ export function InquiryStep2() {
           label="Email Address"
           type="email"
           required
-          placeholder={shortAnswerPlaceholder}
           errorMode="always"
         />
         <TextField
@@ -55,7 +51,6 @@ export function InquiryStep2() {
           name="artistProjectOrOrgName"
           label="Artist, Project, or Organization Name"
           required
-          placeholder={shortAnswerPlaceholder}
           errorMode="always"
         />
         <TextField
@@ -64,16 +59,14 @@ export function InquiryStep2() {
           label="Website / Social Media / Portfolio"
           required={false}
           showAsterisk={false}
-          placeholder={shortAnswerPlaceholder}
           errorMode="always"
         />
         <TextField
           form={form}
           name="artistLocation"
           label="Where are you based?"
-          note="City and State"
+          note="City & State"
           required
-          placeholder={shortAnswerPlaceholder}
           errorMode="always"
         />
       </div>

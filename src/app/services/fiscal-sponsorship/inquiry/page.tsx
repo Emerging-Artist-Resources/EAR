@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { FiscalSponsorshipInquiryWizard } from "@/components/forms/fiscal-sponsorship-inquiry/FiscalSponsorshipInquiryWizard"
+import { FiscalSponsorshipInquiryForm } from "@/components/forms/fiscal-sponsorship-inquiry/FiscalSponsorshipInquiryForm"
 
 export const metadata: Metadata = {
   title: "Fiscal sponsorship inquiry",
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function FiscalSponsorshipInquiryPage() {
   return (
     <div className="bg-secondary-50 min-h-[60vh]">
-      <FiscalSponsorshipInquiryWizard />
+      <FiscalSponsorshipInquiryForm />
     </div>
   )
 }

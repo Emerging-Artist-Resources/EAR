@@ -1,34 +1,40 @@
-import { useCallback } from "react"
+import { useCallback, useMemo } from "react"
 import type { UseFormReturn } from "react-hook-form"
 import { normalizeErrorMessage } from "@/lib/validation-helpers"
 import {
   fiscalSponsorshipInquiryFieldLabels,
-  fiscalSponsorshipInquirySchema,
-  fiscalSponsorshipInquiryStep2Fields,
+  fiscalSponsorshipInquiryPageFields,
+  fiscalSponsorshipInquiryPageSchemas,
   type FiscalSponsorshipInquiryFormData,
 } from "@/lib/validations/fiscal-sponsorship-inquiry"
+
+export type FiscalSponsorshipInquiryPage = 1 | 2 | 3
 
 function labelFor(field: keyof FiscalSponsorshipInquiryFormData): string {
   return fiscalSponsorshipInquiryFieldLabels[field]
 }
 
-/**
- * Step-2 validation for the fiscal sponsorship inquiry wizard.
- * Mirrors {@link useStepValidation} / event wizard patterns: trigger + getFirstError for UX.
- */
-export function useFiscalSponsorshipInquiryStep2Validation(
+export function useFiscalSponsorshipInquiryStepValidation(
   form: UseFormReturn<FiscalSponsorshipInquiryFormData>,
+  page: FiscalSponsorshipInquiryPage,
 ) {
-  const validateStep2 = useCallback(async (): Promise<boolean> => {
-    const ok = await form.trigger([...fiscalSponsorshipInquiryStep2Fields])
-    if (!ok) return false
-    const parsed = fiscalSponsorshipInquirySchema.safeParse(form.getValues())
-    return parsed.success
-  }, [form])
+  const schema = useMemo(() => fiscalSponsorshipInquiryPageSchemas[page], [page])
 
-  const getFirstStep2Error = useCallback((): string | null => {
+  const fields = useMemo(
+    (): (keyof FiscalSponsorshipInquiryFormData)[] => [...fiscalSponsorshipInquiryPageFields[page]],
+    [page],
+  )
+
+  const validatePage = useCallback(async (): Promise<boolean> => {
+    const ok = await form.trigger(fields)
+    if (!ok) return false
+    const parsed = schema.safeParse(form.getValues())
+    return parsed.success
+  }, [form, fields, schema])
+
+  const getFirstError = useCallback((): string | null => {
     const errors = form.formState.errors
-    for (const field of fiscalSponsorshipInquiryStep2Fields) {
+    for (const field of fields) {
       const error = errors[field]
       if (error && typeof error === "object" && "message" in error) {
         const message = error.message as string
@@ -41,29 +47,32 @@ export function useFiscalSponsorshipInquiryStep2Validation(
       }
     }
 
-    const parsed = fiscalSponsorshipInquirySchema.safeParse(form.getValues())
+    const parsed = schema.safeParse(form.getValues())
     if (!parsed.success && parsed.error?.issues[0]) {
       const issue = parsed.error.issues[0]
       const path = issue.path[0]
       if (path !== undefined && path in fiscalSponsorshipInquiryFieldLabels) {
         const key = path as keyof FiscalSponsorshipInquiryFormData
-        return normalizeErrorMessage(issue.message || "", labelFor(key)) || `${labelFor(key)} is required`
+        return (
+          normalizeErrorMessage(issue.message || "", labelFor(key)) ||
+          `${labelFor(key)} is required`
+        )
       }
     }
 
     return null
-  }, [form])
+  }, [form, fields, schema])
 
-  const getFirstInvalidStep2FieldName = useCallback((): keyof FiscalSponsorshipInquiryFormData | null => {
-    for (const field of fiscalSponsorshipInquiryStep2Fields) {
+  const getFirstInvalidFieldName = useCallback((): keyof FiscalSponsorshipInquiryFormData | null => {
+    for (const field of fields) {
       if (form.getFieldState(field).invalid) return field
     }
     return null
-  }, [form])
+  }, [form, fields])
 
   return {
-    validateStep2,
-    getFirstStep2Error,
-    getFirstInvalidStep2FieldName,
+    validatePage,
+    getFirstError,
+    getFirstInvalidFieldName,
   }
 }
