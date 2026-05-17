@@ -11,6 +11,11 @@ import {
   FISCAL_SPONSORSHIP_INQUIRY_TEMPLATE_CONFIRMATION,
   sendFiscalSponsorshipInquiryTemplatedEmail,
 } from "@/lib/email/sendFiscalSponsorshipInquiryEmail"
+import {
+  formatPostmarkTo,
+  getServiceNotificationRecipients,
+  serviceNotificationRecipientsEnvName,
+} from "@/lib/email/service-notification-recipients"
 
 type QuestionRow = {
   id: string
@@ -34,8 +39,8 @@ export async function trySendFiscalSponsorshipInquiryEmails(params: {
     return
   }
 
-  const adminEmailRaw = process.env.ADMIN_EMAIL ?? process.env.ADMIN_NOTIFICATION_EMAIL ?? ""
-  const adminEmail = adminEmailRaw.trim()
+  const adminRecipients = getServiceNotificationRecipients("fiscal-sponsorship")
+  const adminTo = formatPostmarkTo(adminRecipients)
 
   const submittedAt = new Date()
   const submittedAtLabel = submittedAt.toLocaleString("en-US", {
@@ -89,9 +94,9 @@ export async function trySendFiscalSponsorshipInquiryEmails(params: {
   }
 
   try {
-    if (adminEmail) {
+    if (adminTo) {
       await sendFiscalSponsorshipInquiryTemplatedEmail({
-        to: adminEmail,
+        to: adminTo,
         templateAlias: FISCAL_SPONSORSHIP_INQUIRY_TEMPLATE_ADMIN,
         templateModel: adminModel,
         pdfBytes,
@@ -102,7 +107,7 @@ export async function trySendFiscalSponsorshipInquiryEmails(params: {
       })
     } else {
       console.warn(
-        "[EMAIL] ADMIN_EMAIL / ADMIN_NOTIFICATION_EMAIL not set; skipping fiscal sponsorship admin email",
+        `[EMAIL] ${serviceNotificationRecipientsEnvName("fiscal-sponsorship")} (or ADMIN_EMAIL / ADMIN_NOTIFICATION_EMAIL) not set; skipping fiscal sponsorship admin email`,
       )
     }
 

@@ -8,6 +8,11 @@ import {
   DOCUMENTATION_INQUIRY_TEMPLATE_CONFIRMATION,
   sendDocumentationInquiryTemplatedEmail,
 } from "@/lib/email/sendDocumentationInquiryEmail"
+import {
+  formatPostmarkTo,
+  getServiceNotificationRecipients,
+  serviceNotificationRecipientsEnvName,
+} from "@/lib/email/service-notification-recipients"
 import { splitSubmitterName } from "@/lib/service-inquiries/service-inquiry-pdf-types"
 
 type QuestionRow = {
@@ -31,8 +36,8 @@ export async function trySendDocumentationInquiryEmails(params: {
     return
   }
 
-  const adminEmailRaw = process.env.ADMIN_EMAIL ?? process.env.ADMIN_NOTIFICATION_EMAIL ?? ""
-  const adminEmail = adminEmailRaw.trim()
+  const adminRecipients = getServiceNotificationRecipients("documentation")
+  const adminTo = formatPostmarkTo(adminRecipients)
 
   const submittedAt = new Date()
   const submittedAtLabel = submittedAt.toLocaleString("en-US", {
@@ -81,9 +86,9 @@ export async function trySendDocumentationInquiryEmails(params: {
   }
 
   try {
-    if (adminEmail) {
+    if (adminTo) {
       await sendDocumentationInquiryTemplatedEmail({
-        to: adminEmail,
+        to: adminTo,
         templateAlias: DOCUMENTATION_INQUIRY_TEMPLATE_ADMIN,
         templateModel: adminModel,
         pdfBytes,
@@ -94,7 +99,7 @@ export async function trySendDocumentationInquiryEmails(params: {
       })
     } else {
       console.warn(
-        "[EMAIL] ADMIN_EMAIL / ADMIN_NOTIFICATION_EMAIL not set; skipping documentation admin email",
+        `[EMAIL] ${serviceNotificationRecipientsEnvName("documentation")} (or ADMIN_EMAIL / ADMIN_NOTIFICATION_EMAIL) not set; skipping documentation admin email`,
       )
     }
 

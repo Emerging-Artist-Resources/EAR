@@ -8,6 +8,11 @@ import {
   FISCAL_SERVICES_INQUIRY_TEMPLATE_CONFIRMATION,
   sendFiscalServicesInquiryTemplatedEmail,
 } from "@/lib/email/sendFiscalServicesInquiryEmail"
+import {
+  formatPostmarkTo,
+  getServiceNotificationRecipients,
+  serviceNotificationRecipientsEnvName,
+} from "@/lib/email/service-notification-recipients"
 import { splitSubmitterName } from "@/lib/service-inquiries/service-inquiry-pdf-types"
 
 type QuestionRow = {
@@ -31,8 +36,8 @@ export async function trySendFiscalServicesInquiryEmails(params: {
     return
   }
 
-  const adminEmailRaw = process.env.ADMIN_EMAIL ?? process.env.ADMIN_NOTIFICATION_EMAIL ?? ""
-  const adminEmail = adminEmailRaw.trim()
+  const adminRecipients = getServiceNotificationRecipients("fiscal-services")
+  const adminTo = formatPostmarkTo(adminRecipients)
 
   const submittedAt = new Date()
   const submittedAtLabel = submittedAt.toLocaleString("en-US", {
@@ -81,9 +86,9 @@ export async function trySendFiscalServicesInquiryEmails(params: {
   }
 
   try {
-    if (adminEmail) {
+    if (adminTo) {
       await sendFiscalServicesInquiryTemplatedEmail({
-        to: adminEmail,
+        to: adminTo,
         templateAlias: FISCAL_SERVICES_INQUIRY_TEMPLATE_ADMIN,
         templateModel: adminModel,
         pdfBytes,
@@ -94,7 +99,7 @@ export async function trySendFiscalServicesInquiryEmails(params: {
       })
     } else {
       console.warn(
-        "[EMAIL] ADMIN_EMAIL / ADMIN_NOTIFICATION_EMAIL not set; skipping fiscal services admin email",
+        `[EMAIL] ${serviceNotificationRecipientsEnvName("fiscal-services")} (or ADMIN_EMAIL / ADMIN_NOTIFICATION_EMAIL) not set; skipping fiscal services admin email`,
       )
     }
 
