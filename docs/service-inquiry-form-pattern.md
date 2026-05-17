@@ -1,10 +1,44 @@
-# Service Inquiry Form Pattern (Photography/Videography Reference)
+# Service Inquiry Form Pattern
 
-This guide documents how `DocumentationInquiryForm` works today and turns that implementation into a repeatable pattern for future service forms.
+This guide documents the shared inquiry layout and how service-specific forms plug into it.
 
-Use this when you want to add another service page with a custom inquiry form that stores responses in Supabase and uses the same API + profile visibility flow.
+Use this when you want to add another service inquiry that stores responses in Supabase and uses the same API + profile visibility flow.
+
+## Shared layout (standard chrome)
+
+- `src/components/forms/service-inquiry/ServiceInquiryLayout.tsx` — page chrome, nav strip, title, optional step dots, native `<form>`, card, footer actions
+- `src/components/forms/service-inquiry/ServiceInquirySuccessScreen.tsx` — success state driven by `ServiceInquiryContent`
+- `src/components/forms/service-inquiry/inquiry-layout-spacing.ts` — canonical spacing tokens
+- `src/lib/service-inquiries/inquiry-content-types.ts` — `ServiceInquiryContent` contract
+- `src/hooks/use-service-inquiry-auth-prefill.ts` — first/last name + email prefill
+- `src/hooks/use-service-inquiry-form-errors.ts` — first error message, error banner, focus first invalid field
+
+**Layout rules:**
+
+- Step indicator only when `totalPages > 1`
+- Wizard **Back** only when `currentPage > 1` (hidden on page 1, not disabled)
+- Service nav link in a full-width strip under the site header (left-aligned, same max width as the site header)
+- Form title centered in the page column below the nav strip
+- Card + footer wrapped in a native `<form>` so Enter submits (Continue on wizard steps, Submit inquiry on the last page)
+- Field spacing inside steps uses `inquiryLayoutSpacing` tokens (`cardInner`, `fieldGrid`, `section`, `stepSectionGroups`) — avoid ad-hoc `space-y-*` in inquiry forms
+
+**Reference implementations:**
+
+- Multi-step: `src/components/forms/fiscal-sponsorship-inquiry/FiscalSponsorshipInquiryForm.tsx`
+- Single-page + DB questions: `ServiceInquiryForm` / `DocumentationInquiryForm.tsx` (wrapper)
+
+**Content config (`ServiceInquiryContent`):**
+
+- Per-service file under `src/lib/*-inquiry-content.ts` (success copy, optional `formTitle`, optional `steps`)
+- **Multi-step wizard step titles/descriptions:** define `steps` on the content object (source of truth). Derive page metadata in `*-form-config.ts` from that array — do not duplicate step copy in form-config (see `fiscalSponsorshipInquiryContent.steps` → `fiscalSponsorshipInquiryPages`).
+
+**Validation feedback:**
+
+- Use `useServiceInquiryFormErrors` with an ordered `fieldOrder` (and optional Zod `schema` + `nestedErrorRoots` for dynamic `answers` records).
+- On failed submit/continue: `reportValidationFailure(setShowErrorSummary, showToast)` sets the banner, toasts the first message, and focuses the first invalid field.
 
 ---
+
 
 ## 1) End-to-end architecture
 
@@ -13,7 +47,7 @@ Current photography/videography flow:
 1. Route page renders form component
    - `src/app/services/photography-videography/page.tsx`
 2. Client form loads active service + questions from Supabase and renders dynamic fields
-   - `src/components/services/DocumentationInquiryForm.tsx`
+   - `src/components/forms/documentation-inquiry/DocumentationInquiryForm.tsx`
 3. Form submits to API route
    - `POST /api/service-inquiries`
    - `src/app/api/service-inquiries/route.ts`
@@ -57,30 +91,20 @@ Important behavior:
 
 ## 3) UI/form behavior pattern
 
-Reference file:
-- `src/components/services/DocumentationInquiryForm.tsx`
+Reference files:
+- `src/components/forms/documentation-inquiry/DocumentationInquiryForm.tsx`
+- `src/components/forms/documentation-inquiry/DocumentationInquiryFields.tsx`
 
-How it is set up:
+How documentation inquiry is set up:
 
-- Client component (`"use client"`) because it uses state/effects and interactive inputs.
-- On mount:
-  - query `services` by `slug` + `is_active = true`
-  - query `service_questions` by `service_id`, ordered by `order_index`
-- Prefill:
-  - if signed in, prefill `name` and `email` from `useAuth()`
-- Dynamic rendering by `field_type`:
-  - `textarea` -> `Textarea`
-  - `text` / `date` / `time` -> `Input`
-  - `select` -> native `<select>`
-  - `multiselect` -> list of `Checkbox`
-- Submission:
-  - transform state into `{ question_id, answer_text }[]`
-  - for multiselect, serialize selected values as JSON array string in `answer_text`
-  - send via `apiPost("/api/service-inquiries", { service_slug, name, email, answers })`
-- UX:
-  - loading and load-error states before form render
-  - submit loading state and toast success/error feedback
-  - reset answer state after successful submit
+- Wrapped in `ServiceInquiryLayout` (`totalPages={1}` — no step dots, no wizard Back).
+- Contact: `firstName`, `lastName`, `email` via `TextField` + `useServiceInquiryAuthPrefill`.
+- On mount: load `services` + `service_questions` from Supabase.
+- Dynamic questions: map known `field_type` values to owned blocks (`TextField`, `TextAreaField`, `SelectBlock`) — **not** a full metadata-driven renderer.
+- Options from `src/lib/service-inquiries/documentation-options.ts`.
+- Validation: `src/lib/validations/documentation-inquiry.ts` (Zod + required-answer refine).
+- Submit: `name` = `firstName` + `lastName`; multiselect answers as JSON array strings.
+- Success: `ServiceInquirySuccessScreen` + `src/lib/documentation-inquiry-content.ts`.
 
 ---
 
@@ -123,14 +147,15 @@ Persistence pattern:
 
 ---
 
-## 5) Options pattern (current implementation detail)
+## 5) Options pattern (`service_question_options`)
 
-Reference file:
-- `src/lib/service-inquiries/documentation-options.ts`
+Migration: `supabase/migrations/20260516140000_service_question_options.sql`
 
-Today, option values for select/multiselect are hardcoded in code and selected by question text + field type.
+- Table `service_question_options` — `label`, `value`, `order_index`, `is_other` per `service_questions` row
+- Loaded with questions via `loadServiceInquiryQuestions()` (nested Supabase select)
+- Helpers in `src/lib/service-inquiries/service-inquiry-questions.ts` (`sortedOptionLabels`, `questionOptionsIncludeOther`, answer encoding)
 
-This works for one service, but for scale you should consider adding a `question_options` table and loading options from DB to avoid hardcoded branching per form.
+Seed select/multiselect options in migrations when adding a new service. Per-field helper copy (e.g. budget note) can stay in service-specific `*-options.ts` files until moved to DB.
 
 ---
 
@@ -141,13 +166,11 @@ Use this sequence for new forms (for example: lighting, rehearsal support, etc.)
 1. **Add/seed service + questions in migration**
    - add service row in `services`
    - add ordered `service_questions` rows with valid `field_type`
-2. **Create options source**
-   - short-term: add a new file under `src/lib/service-inquiries/*-options.ts`
-   - long-term: move to DB-backed options
+2. **Seed `service_question_options`** for any select/multiselect questions
 3. **Create form component**
-   - copy structure from `DocumentationInquiryForm`
-   - update service slug constant and option-selection logic
-   - keep `name`/`email` prefill and toast/error states
+   - **Single-page + DB questions:** use `ServiceInquiryForm` with `serviceSlug` + `ServiceInquiryContent` (see documentation wrapper)
+   - **Multi-step / custom fields:** use `ServiceInquiryLayout` + step components (fiscal sponsorship)
+   - Optional: `questionNote`, `partitionQuestions`, section titles on `ServiceInquiryForm`
 4. **Create service page route**
    - page imports and renders the new form component
 5. **Reuse shared API route**
@@ -173,10 +196,20 @@ Use this sequence for new forms (for example: lighting, rehearsal support, etc.)
 
 ---
 
-## 8) Suggested future improvements for easier reuse
+## 8) Generic single-page shell
 
-- Build a generic `ServiceInquiryForm` component that accepts only `serviceSlug` + optional copy overrides.
-- Move select/multiselect options into database (`question_options`) to remove hardcoded logic by question text.
+`src/components/forms/service-inquiry/ServiceInquiryForm.tsx` — pass:
+
+- `serviceSlug`, `content` (`ServiceInquiryContent`), nav labels (`backHref`, `backLabel`, `successBackLabel`)
+- Optional: `title`, `questionNote`, `partitionQuestions`, section titles
+
+Example wrapper: `DocumentationInquiryForm` → thin config over `ServiceInquiryForm`.
+
+Underlying pieces: `loadServiceInquiryQuestions`, `DynamicServiceInquiryFields`, `buildDynamicServiceInquirySchema`, `buildServiceInquiryAnswers`.
+
+## 9) Suggested future improvements
+
 - Add form-level telemetry/logging for failed submissions.
 - Add integration tests for `POST /api/service-inquiries` required-answer edge cases.
+- Move per-field `questionNote` copy into DB (`help_text` on `service_questions`) when needed.
 

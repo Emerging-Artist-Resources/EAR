@@ -21,16 +21,16 @@ export function FiscalServiceSection({
     <section className={cn(className)} aria-labelledby={`fiscal-service-${index}-heading`}>
       <h2
         id={`fiscal-service-${index}-heading`}
-        className="text-foreground mb-6 text-lg font-semibold tracking-wide sm:text-xl"
+        className="text-ear-black mb-6 text-lg font-semibold tracking-wide sm:text-xl"
       >
-        <span className="text-muted-foreground tabular-nums">{label}</span>{" "}
+        <span className="text-ear-baby-blue tabular-nums">{label}</span>{" "}
         <span className="uppercase tracking-wider">{title}</span>
       </h2>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)] lg:items-center lg:gap-10">
         <div className="space-y-4">
           {paragraphs.map((body, i) => (
-            <Text key={`${index}-${i}`} className="text-foreground text-pretty text-base leading-relaxed">
+            <Text key={`${index}-${i}`} className="text-ear-black text-pretty text-base leading-relaxed">
               {body}
             </Text>
           ))}

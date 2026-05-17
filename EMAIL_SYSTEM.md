@@ -14,7 +14,9 @@ src/lib/email/
 ├── sendListingEmail.ts               # Listing-specific email functions
 ├── sendProfileEmail.ts               # Profile-specific email functions
 ├── sendInternalDonationEmail.ts      # Donation artist/admin templates + PDF attachment
-└── trySendInternalDonationNotifications.ts  # Stripe webhook: idempotent internal donation sends
+├── trySendInternalDonationNotifications.ts  # Stripe webhook: idempotent internal donation sends
+├── sendFiscalSponsorshipInquiryEmail.ts   # Fiscal inquiry templates + PDF attachment
+└── trySendFiscalSponsorshipInquiryEmails.ts # service-inquiries API: admin + confirmation
 ```
 
 ### Components
@@ -171,6 +173,22 @@ For each email type, create a template in Postmark with the corresponding alias:
   - `{{donor_name}}`, `{{donor_email}}`, `{{amount}}`, `{{date}}`, optional `{{message}}`
 
 **Admin inbox env:** `ADMIN_NOTIFICATION_EMAIL` or `ADMIN_EMAIL` (if both are set, `ADMIN_EMAIL` wins). At least one must be set for admin notifications to send.
+
+#### Template: `fiscal-sponsorship-inquiry-admin`
+- **Alias**: `fiscal-sponsorship-inquiry-admin`
+- **Subject**: `New fiscal sponsorship inquiry from {{submitter_name}}`
+- **Attachment**: PDF of full inquiry (`Fiscal-Sponsorship-Inquiry-{name}-{YYYY-MM-DD}.pdf`)
+- **Template Variables**: `{{first_name}}`, `{{submitter_name}}`, `{{submitter_email}}`, `{{inquiry_id}}`, `{{submitted_date}}`, `{{artist_project_name}}`
+- **Full HTML copy/paste**: see [`docs/postmark-fiscal-sponsorship-inquiry-templates.md`](docs/postmark-fiscal-sponsorship-inquiry-templates.md)
+
+#### Template: `fiscal-sponsorship-inquiry-confirmation`
+- **Alias**: `fiscal-sponsorship-inquiry-confirmation`
+- **Subject**: `We received your fiscal sponsorship inquiry`
+- **Attachment**: Same PDF as admin email
+- **Template Variables**: same as admin (except `{{is_admin}}` is only set on admin sends)
+- **Full HTML copy/paste**: see [`docs/postmark-fiscal-sponsorship-inquiry-templates.md`](docs/postmark-fiscal-sponsorship-inquiry-templates.md)
+
+**Flow:** `POST /api/service-inquiries` with `service_slug: fiscal-sponsorship` → `trySendFiscalSponsorshipInquiryEmails()` (admin + submitter). Other services still use the simple HTML `trySendServiceInquiryNotification`.
 
 ## Current Implementation
 

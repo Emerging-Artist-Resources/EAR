@@ -94,7 +94,7 @@ export function SelectBlock<T extends Record<string, unknown>>({
             {labelTooltipText ? <FormFieldTooltip text={labelTooltipText} /> : null}
           </div>
           {(note || description) && (
-            <p className="mt-1 text-sm text-text-muted">{note || description}</p>
+            <p className="mt-1 whitespace-pre-line text-sm text-text-muted">{note || description}</p>
           )}
         </div>
       )}    

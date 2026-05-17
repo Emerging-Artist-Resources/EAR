@@ -1,26 +1,22 @@
+import { fiscalSponsorshipInquiryContent } from "@/lib/fiscal-sponsorship-inquiry-content"
 import { FISCAL_SPONSORSHIP_SERVICE_SLUG } from "@/lib/service-inquiries/fiscal-sponsorship-options"
 
 export { FISCAL_SPONSORSHIP_SERVICE_SLUG }
 
-export const FISCAL_SPONSORSHIP_INQUIRY_TOTAL_PAGES = 3
+const inquirySteps = fiscalSponsorshipInquiryContent.steps ?? []
 
-export const fiscalSponsorshipInquiryPages = [
-  {
-    page: 1,
-    title: "Contact information",
-    description: "Tell us how to reach you and where you are based.",
-  },
-  {
-    page: 2,
-    title: "Organization & discipline",
-    description: "Share your entity type and artistic focus.",
-  },
-  {
-    page: 3,
-    title: "Sponsorship needs",
-    description: "Help us understand your budget, goals, and history.",
-  },
-] as const
+/** Derived from `fiscalSponsorshipInquiryContent.steps` (do not duplicate copy here). */
+export const fiscalSponsorshipInquiryPages = inquirySteps.map((step, index) => ({
+  page: index + 1,
+  title: step.title,
+  description: step.description,
+})) as ReadonlyArray<{
+  page: number
+  title: string
+  description?: string
+}>
+
+export const FISCAL_SPONSORSHIP_INQUIRY_TOTAL_PAGES = fiscalSponsorshipInquiryPages.length
 
 export const fiscalSponsorshipInquiryPage3Sections = [
   {

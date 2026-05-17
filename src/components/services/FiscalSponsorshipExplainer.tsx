@@ -25,13 +25,13 @@ export function FiscalSponsorshipExplainer({ title, paragraphs, className }: Fis
           <div className="flex flex-col gap-6">
             <h2
               id="fiscal-sponsorship-explainer-heading"
-              className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl"
+              className="text-ear-black text-2xl font-bold tracking-tight sm:text-3xl"
             >
               {title}
             </h2>
             <div className="space-y-4">
               {paragraphs.map((p, i) => (
-                <Text key={i} className="text-foreground text-pretty text-base leading-relaxed">
+                <Text key={i} className="text-ear-black text-pretty text-base leading-relaxed">
                   {p}
                 </Text>
               ))}

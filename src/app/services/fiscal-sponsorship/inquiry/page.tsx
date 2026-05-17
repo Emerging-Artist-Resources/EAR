@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function FiscalSponsorshipInquiryPage() {
   return (
     <div className="bg-secondary-50 min-h-[60vh]">
-      <FiscalSponsorshipInquiryForm />
+      <FiscalSponsorshipInquiryForm title="Fiscal Sponsorship Inquiry" />
     </div>
   )
 }

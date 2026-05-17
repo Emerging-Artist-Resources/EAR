@@ -5,6 +5,7 @@ import { SelectBlock } from "@/components/forms/blocks/Select"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { InquiryFieldStep } from "@/components/forms/fiscal-sponsorship-inquiry/steps/InquiryFieldStep"
+import { inquiryLayoutSpacing } from "@/components/forms/service-inquiry/inquiry-layout-spacing"
 import { fiscalSponsorshipInquiryPages } from "@/lib/service-inquiries/fiscal-sponsorship-form-config"
 import {
   ADDITIONAL_SERVICES_INTEREST_OPTIONS,
@@ -26,8 +27,8 @@ export function InquiryPage3Sponsorship() {
 
   return (
     <InquiryFieldStep title={meta.title} description={meta.description}>
-      <div className="space-y-10">
-        <section className="space-y-6">
+      <div className={inquiryLayoutSpacing.stepSectionGroups}>
+        <section className={inquiryLayoutSpacing.section}>
           <h3 className="text-lg font-semibold text-foreground">Budget & goals</h3>
           <SelectBlock
             form={form}
@@ -61,7 +62,7 @@ export function InquiryPage3Sponsorship() {
           />
         </section>
 
-        <section className="space-y-6">
+        <section className={inquiryLayoutSpacing.section}>
           <h3 className="text-lg font-semibold text-foreground">Legal & history</h3>
           <SelectBlock
             form={form}
@@ -92,7 +93,7 @@ export function InquiryPage3Sponsorship() {
           ) : null}
         </section>
 
-        <section className="space-y-6">
+        <section className={inquiryLayoutSpacing.section}>
           <h3 className="text-lg font-semibold text-foreground">Additional info</h3>
           <SelectBlock
             form={form}

@@ -22,15 +22,15 @@ export function FiscalSponsorshipHero({ title, subline, className }: FiscalSpons
         <div className="flex flex-col gap-6">
           <H1
             id="fiscal-sponsorship-hero-heading"
-            className="text-background text-4xl font-bold uppercase tracking-wide sm:text-5xl md:text-6xl"
+            className="text-ear-black text-4xl font-bold uppercase tracking-wide sm:text-5xl md:text-6xl"
           >
             {title}
           </H1>
-          <p className="text-lg font-medium uppercase tracking-wide text-secondary-50 sm:text-xl">
+          <p className="text-lg font-medium uppercase tracking-wide text-ear-black sm:text-xl">
             {subline}
           </p>
           <div>
-            <Button asChild variant="outline" className={cn(inquireOnDarkClass, "w-full sm:w-auto")}>
+            <Button asChild variant="outline" className={cn(inquireOnDarkClass, "text-ear-off-white bg-ear-dark-red hover:bg-ear-dark-red/90 w-full sm:w-auto")}>
               <Link href="/services/fiscal-sponsorship/inquiry">Inquire here</Link>
             </Button>
           </div>

@@ -17,12 +17,14 @@ export const metadata: Metadata = {
 export default function FiscalSponsorshipPage() {
   return (
     <main>
-      <FiscalSponsorshipHero title={fiscalSponsorshipHero.title} subline={fiscalSponsorshipHero.subline} />
+      <FiscalSponsorshipHero className="text-ear-black" title={fiscalSponsorshipHero.title} subline={fiscalSponsorshipHero.subline} />
       <FiscalSponsorshipExplainer
+        className="text-ear-black"
         title={fiscalSponsorshipExplainer.title}
         paragraphs={fiscalSponsorshipExplainer.paragraphs}
       />
       <FiscalSponsorshipCtaBand
+        className="text-ear-black"
         overline={fiscalSponsorshipCtaBand.overline}
         headline={fiscalSponsorshipCtaBand.headline}
         body={fiscalSponsorshipCtaBand.body}

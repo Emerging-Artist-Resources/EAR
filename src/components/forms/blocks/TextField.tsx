@@ -56,7 +56,7 @@ export function TextField<T extends Record<string, unknown>>({
           {labelTooltip?.trim() ? <FormFieldTooltip text={labelTooltip.trim()} /> : null}
         </div>
         {note && (
-          <p className="mt-1 text-sm text-gray-500">{note}</p>
+          <p className="mt-1 whitespace-pre-line text-sm text-gray-500">{note}</p>
         )}
       </div>
       <div className="relative">

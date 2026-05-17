@@ -46,7 +46,7 @@ export function TextAreaField<T extends Record<string, unknown>>({
           {label} {required && showAsterisk && <span className="text-error-600">*</span>}
         </label>
         {note && (
-          <p className="mt-1 text-sm text-gray-500">{note}</p>
+          <p className="mt-1 whitespace-pre-line text-sm text-gray-500">{note}</p>
         )}
       </div>
       <Textarea

@@ -13,7 +13,9 @@ import {
   validateAnswersAgainstQuestions,
   type ServiceQuestionRow,
 } from "@/lib/service-inquiries/validateAnswersAgainstQuestions"
+import { trySendFiscalSponsorshipInquiryEmails } from "@/lib/email/trySendFiscalSponsorshipInquiryEmails"
 import { trySendServiceInquiryNotification } from "@/lib/email/trySendServiceInquiryNotification"
+import { FISCAL_SPONSORSHIP_SERVICE_SLUG } from "@/lib/service-inquiries/fiscal-sponsorship-options"
 
 function escapeHtml(s: string): string {
   return s
@@ -48,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     const { data: questionRows, error: qError } = await supabase
       .from("service_questions")
-      .select("id, field_type, is_required, question_text, order_index")
+      .select("id, field_type, is_required, question_text, order_index, question_key")
       .eq("service_id", service.id)
       .order("order_index", { ascending: true })
 
@@ -104,32 +106,42 @@ export async function POST(req: NextRequest) {
       return createErrorResponse(ErrorCodes.INTERNAL_ERROR, "Failed to save answers", undefined, 500)
     }
 
-    const qById = new Map(questionRows.map((q) => [q.id, q]))
-    const answersHtml = data.answers
-      .map((a) => {
-        const q = qById.get(a.question_id)
-        const label = q?.question_text ?? a.question_id
-        let display = a.answer_text
-        if (q?.field_type === "multiselect") {
-          try {
-            const parsed = JSON.parse(a.answer_text) as unknown
-            display = Array.isArray(parsed) ? parsed.join(", ") : a.answer_text
-          } catch {
-            /* keep raw */
-          }
-        }
-        return `<p><strong>${escapeHtml(label)}</strong><br/>${escapeHtml(display)}</p>`
+    if (slugNormalized === FISCAL_SPONSORSHIP_SERVICE_SLUG) {
+      await trySendFiscalSponsorshipInquiryEmails({
+        inquiryId: inquiry.id,
+        submitterName: nameNormalized,
+        submitterEmail: emailNormalized,
+        questions: questionRows,
+        answersByQuestionId: answersMap,
       })
-      .join("")
+    } else {
+      const qById = new Map(questionRows.map((q) => [q.id, q]))
+      const answersHtml = data.answers
+        .map((a) => {
+          const q = qById.get(a.question_id)
+          const label = q?.question_text ?? a.question_id
+          let display = a.answer_text
+          if (q?.field_type === "multiselect") {
+            try {
+              const parsed = JSON.parse(a.answer_text) as unknown
+              display = Array.isArray(parsed) ? parsed.join(", ") : a.answer_text
+            } catch {
+              /* keep raw */
+            }
+          }
+          return `<p><strong>${escapeHtml(label)}</strong><br/>${escapeHtml(display)}</p>`
+        })
+        .join("")
 
-    await trySendServiceInquiryNotification({
-      inquiryId: inquiry.id,
-      serviceTitle: service.title,
-      serviceSlug: service.slug,
-      name: nameNormalized,
-      email: emailNormalized,
-      answersHtml,
-    })
+      await trySendServiceInquiryNotification({
+        inquiryId: inquiry.id,
+        serviceTitle: service.title,
+        serviceSlug: service.slug,
+        name: nameNormalized,
+        email: emailNormalized,
+        answersHtml,
+      })
+    }
 
     return createSuccessResponse({ id: inquiry.id }, 201)
   } catch (error) {

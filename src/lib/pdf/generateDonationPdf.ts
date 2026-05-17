@@ -3,6 +3,7 @@ import path from "path"
 import fontkit from "@pdf-lib/fontkit"
 import type { PDFFont } from "pdf-lib"
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib"
+import { EAR_PDF_LOGO_TITLE_GAP, embedEarPdfLogo, scaleEarPdfLogoSize } from "@/lib/pdf/ear-pdf-logo"
 
 export type GenerateDonationPdfInput = {
   donorName: string
@@ -76,15 +77,6 @@ function wrapMessageLines(text: string, font: PDFFont, fontSize: number, maxWidt
   return lines
 }
 
-async function tryLoadEarLogoPng(): Promise<Uint8Array | null> {
-  try {
-    const logoPath = path.join(process.cwd(), "public", "EAR-logo.png")
-    return await readFile(logoPath)
-  } catch {
-    return null
-  }
-}
-
 async function embedReceiptFonts(
   doc: PDFDocument,
   mode: "noto" | "standard",
@@ -147,28 +139,22 @@ async function buildDonationPdf(input: GenerateDonationPdfInput, fontMode: "noto
   // Start below top margin; decrease y to move down the page.
   let y = PAGE_H - MARGIN
 
-  const logoBytes = await tryLoadEarLogoPng()
-  if (logoBytes) {
-    try {
-      const logo = await doc.embedPng(logoBytes)
-      const maxH = 54
-      const scale = maxH / logo.height
-      const w = logo.width * scale
-      const h = logo.height * scale
-      const imgBottom = y - h
-      page.drawImage(logo, { x: LABEL_X, y: imgBottom, width: w, height: h })
-      y = imgBottom - 22
-    } catch {
-      y -= 6
-    }
+  const receiptTitle = "Donation receipt"
+  const receiptTitleSize = 20
+  const logo = await embedEarPdfLogo(doc)
+  if (logo) {
+    const { width: logoW, height: logoH } = scaleEarPdfLogoSize(logo)
+    const logoBottom = y - logoH
+    page.drawImage(logo, { x: LABEL_X, y: logoBottom, width: logoW, height: logoH })
+    y = logoBottom - EAR_PDF_LOGO_TITLE_GAP
   } else {
     y -= 4
   }
 
-  page.drawText("Donation receipt", {
+  page.drawText(receiptTitle, {
     x: LABEL_X,
     y,
-    size: 20,
+    size: receiptTitleSize,
     font: bold,
     color: color.text,
   })

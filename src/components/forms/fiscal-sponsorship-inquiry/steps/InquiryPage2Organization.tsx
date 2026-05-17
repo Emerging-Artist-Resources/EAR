@@ -4,6 +4,7 @@ import { useFormContext } from "react-hook-form"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { InquiryFieldStep } from "@/components/forms/fiscal-sponsorship-inquiry/steps/InquiryFieldStep"
+import { inquiryLayoutSpacing } from "@/components/forms/service-inquiry/inquiry-layout-spacing"
 import { fiscalSponsorshipInquiryPages } from "@/lib/service-inquiries/fiscal-sponsorship-form-config"
 import {
   ARTISTIC_DISCIPLINE_OPTIONS,
@@ -19,7 +20,7 @@ export function InquiryPage2Organization() {
 
   return (
     <InquiryFieldStep title={meta.title} description={meta.description}>
-      <div className="space-y-6">
+      <div className={inquiryLayoutSpacing.cardInner}>
         <SelectBlock
           form={form}
           name="entityType"
