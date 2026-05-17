@@ -1,7 +1,7 @@
 import type { ServiceInquiryContent } from "@/lib/service-inquiries/inquiry-content-types"
 
 export const fiscalSponsorshipInquiryContent: ServiceInquiryContent = {
-  formTitle: "Inquiry form",
+  formTitle: "Fiscal Sponsorship Inquiry",
   /** Wizard step titles/descriptions — source of truth for multi-step copy. */
   steps: [
     {

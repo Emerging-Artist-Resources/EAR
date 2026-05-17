@@ -61,9 +61,9 @@ export const Header: React.FC<HeaderProps> = ({
               <Image
                 src="/EAR-Logos/EAR LOGOS-12.png"
                 alt="Emerging Artist Resources"
-                width={250}
-                height={250}
-                className="h-25 w-auto md:h-25"
+                width={150}
+                height={150}
+                className="h-15 w-auto md:h-15"
                 priority
               />
             </Link>

@@ -17,12 +17,13 @@ export function HeroSection() {
         <Image
           src={EAR_LOGO_04_SRC}
           alt="EAR"
-          width={560}
-          height={200}
+          width={500}
+          height={500}
           className="h-auto w-[min(88vw,50rem)] md:w-[min(80vw,50rem)]"
           priority
         />
       </div>
     </section>
+    // "h-auto w-[min(88vw,10rem)] md:w-[min(80vw,10rem)]"
   )
 }

@@ -16,6 +16,7 @@ src/lib/email/
 ├── sendInternalDonationEmail.ts      # Donation artist/admin templates + PDF attachment
 ├── trySendInternalDonationNotifications.ts  # Stripe webhook: idempotent internal donation sends
 ├── sendFiscalSponsorshipInquiryEmail.ts   # Fiscal inquiry templates + PDF attachment
+├── sendDocumentationInquiryEmail.ts       # Documentation inquiry templates + PDF attachment
 └── trySendFiscalSponsorshipInquiryEmails.ts # service-inquiries API: admin + confirmation
 ```
 
@@ -188,7 +189,21 @@ For each email type, create a template in Postmark with the corresponding alias:
 - **Template Variables**: same as admin (except `{{is_admin}}` is only set on admin sends)
 - **Full HTML copy/paste**: see [`docs/postmark-fiscal-sponsorship-inquiry-templates.md`](docs/postmark-fiscal-sponsorship-inquiry-templates.md)
 
-**Flow:** `POST /api/service-inquiries` with `service_slug: fiscal-sponsorship` → `trySendFiscalSponsorshipInquiryEmails()` (admin + submitter). Other services still use the simple HTML `trySendServiceInquiryNotification`.
+#### Template: `documentation-inquiry-admin`
+- **Alias**: `documentation-inquiry-admin`
+- **Subject**: `New photography & videography inquiry from {{submitter_name}}`
+- **Attachment**: PDF of full inquiry (`Documentation-Inquiry-{name}-{YYYY-MM-DD}.pdf`)
+- **Template Variables**: `{{first_name}}`, `{{submitter_name}}`, `{{submitter_email}}`, `{{inquiry_id}}`, `{{submitted_date}}`
+- **Full HTML copy/paste**: see [`docs/postmark-documentation-inquiry-templates.md`](docs/postmark-documentation-inquiry-templates.md)
+
+#### Template: `documentation-inquiry-confirmation`
+- **Alias**: `documentation-inquiry-confirmation`
+- **Subject**: (configure in Postmark, e.g. `We received your photography & videography inquiry`)
+- **Attachment**: Same PDF as admin email
+- **Template Variables**: same as admin (except `{{is_admin}}` is only set on admin sends)
+- **Full HTML copy/paste**: see [`docs/postmark-documentation-inquiry-templates.md`](docs/postmark-documentation-inquiry-templates.md)
+
+**Flow:** `POST /api/service-inquiries` with `service_slug: fiscal-sponsorship` → `trySendFiscalSponsorshipInquiryEmails()` (admin + submitter). With `service_slug: documentation` → `trySendDocumentationInquiryEmails()` (admin + submitter + PDF). Other services use the simple HTML `trySendServiceInquiryNotification`.
 
 ## Current Implementation
 

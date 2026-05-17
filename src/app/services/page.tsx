@@ -6,9 +6,9 @@ import { servicesNavItems } from "@/lib/services-nav"
 export default function ServicesPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-      <H1 className="mb-2">Services</H1>
-      <Text className="mb-8">Explore what Emerging Artist Resources offers. More detail coming soon.</Text>
-      <ul className="flex flex-col gap-2">
+      <H1 className="mb-2 text-ear-dark-red">Services</H1>
+      <Text className="mb-8 text-ear-black">Explore what Emerging Artist Resources offers. More detail coming soon.</Text>
+      <ul className="flex flex-col gap-2 text-ear-black">
         {servicesNavItems.map((item) => (
           <li key={item.href}>
             <Button variant="outline" asChild className="w-full justify-start sm:w-auto">

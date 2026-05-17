@@ -1,23 +1,19 @@
 import {
-  formatFiscalSponsorshipAnswerForDisplay,
-  parseFiscalSponsorshipMultiselectItems,
-} from "@/lib/service-inquiries/format-fiscal-sponsorship-answer-display"
+  formatServiceInquiryAnswerForDisplay,
+  parseServiceInquiryMultiselectItems,
+} from "@/lib/service-inquiries/format-service-inquiry-answer-display"
 import { FISCAL_SPONSORSHIP_QUESTION_KEYS } from "@/lib/service-inquiries/fiscal-sponsorship-question-keys"
+import type {
+  ServiceInquiryPdfFieldRow,
+  ServiceInquiryPdfSection,
+} from "@/lib/service-inquiries/service-inquiry-pdf-types"
+import { splitSubmitterName } from "@/lib/service-inquiries/service-inquiry-pdf-types"
 
 export type FiscalSponsorshipPdfFieldVariant = "default" | "long" | "multiselect"
 
-export type FiscalSponsorshipPdfFieldRow = {
-  label: string
-  value: string
-  variant?: FiscalSponsorshipPdfFieldVariant
-  /** Individual values when variant is multiselect (chips / bullets in PDF). */
-  multiselectItems?: string[]
-}
+export type FiscalSponsorshipPdfFieldRow = ServiceInquiryPdfFieldRow
 
-export type FiscalSponsorshipPdfSection = {
-  title: string
-  rows: FiscalSponsorshipPdfFieldRow[]
-}
+export type FiscalSponsorshipPdfSection = ServiceInquiryPdfSection
 
 export type FiscalSponsorshipInquiryPdfInput = {
   inquiryId: string
@@ -27,19 +23,14 @@ export type FiscalSponsorshipInquiryPdfInput = {
   sections: FiscalSponsorshipPdfSection[]
 }
 
+export { splitSubmitterName }
+
 type QuestionRow = {
   id: string
   question_key: string | null
   question_text: string
   field_type: string
   order_index: number
-}
-
-export function splitSubmitterName(fullName: string): { firstName: string; lastName: string } {
-  const t = fullName.trim()
-  const space = t.indexOf(" ")
-  if (space === -1) return { firstName: t, lastName: "" }
-  return { firstName: t.slice(0, space), lastName: t.slice(space + 1).trim() }
 }
 
 function rowForKey(
@@ -51,10 +42,10 @@ function rowForKey(
   const q = questions.find((row) => row.question_key === key)
   const raw = q ? (answersByQuestionId.get(q.id) ?? "") : ""
   const fieldType = q?.field_type ?? "text"
-  const value = formatFiscalSponsorshipAnswerForDisplay(fieldType, raw)
+  const value = formatServiceInquiryAnswerForDisplay(fieldType, raw)
 
   if (fieldType === "multiselect") {
-    const items = parseFiscalSponsorshipMultiselectItems(raw)
+    const items = parseServiceInquiryMultiselectItems(raw)
     if (items.length === 0) {
       return { label, value: "—" }
     }
