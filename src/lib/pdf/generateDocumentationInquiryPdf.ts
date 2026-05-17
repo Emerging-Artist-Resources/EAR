@@ -2,7 +2,7 @@ import { generateServiceInquiryPdf } from "@/lib/pdf/generateServiceInquiryPdf"
 import type { DocumentationInquiryPdfInput } from "@/lib/service-inquiries/documentation-inquiry-pdf-model"
 import { buildServiceInquiryPdfFileName } from "@/lib/service-inquiries/service-inquiry-pdf-types"
 
-const DOCUMENTATION_PDF_TITLE = "Photography & videography inquiry"
+const DOCUMENTATION_PDF_TITLE = "Photography & Videography Inquiry"
 const DOCUMENTATION_PDF_PREFIX = "Documentation-Inquiry"
 
 export function buildDocumentationInquiryPdfFileName(

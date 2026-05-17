@@ -15,9 +15,12 @@ src/lib/email/
 ├── sendProfileEmail.ts               # Profile-specific email functions
 ├── sendInternalDonationEmail.ts      # Donation artist/admin templates + PDF attachment
 ├── trySendInternalDonationNotifications.ts  # Stripe webhook: idempotent internal donation sends
-├── sendFiscalSponsorshipInquiryEmail.ts   # Fiscal inquiry templates + PDF attachment
+├── sendFiscalSponsorshipInquiryEmail.ts   # Fiscal sponsorship inquiry templates + PDF attachment
 ├── sendDocumentationInquiryEmail.ts       # Documentation inquiry templates + PDF attachment
-└── trySendFiscalSponsorshipInquiryEmails.ts # service-inquiries API: admin + confirmation
+├── sendFiscalServicesInquiryEmail.ts      # Fiscal services inquiry templates + PDF attachment
+├── trySendFiscalSponsorshipInquiryEmails.ts # service-inquiries API: fiscal sponsorship
+├── trySendDocumentationInquiryEmails.ts   # service-inquiries API: documentation
+└── trySendFiscalServicesInquiryEmails.ts  # service-inquiries API: fiscal services
 ```
 
 ### Components
@@ -203,7 +206,21 @@ For each email type, create a template in Postmark with the corresponding alias:
 - **Template Variables**: same as admin (except `{{is_admin}}` is only set on admin sends)
 - **Full HTML copy/paste**: see [`docs/postmark-documentation-inquiry-templates.md`](docs/postmark-documentation-inquiry-templates.md)
 
-**Flow:** `POST /api/service-inquiries` with `service_slug: fiscal-sponsorship` → `trySendFiscalSponsorshipInquiryEmails()` (admin + submitter). With `service_slug: documentation` → `trySendDocumentationInquiryEmails()` (admin + submitter + PDF). Other services use the simple HTML `trySendServiceInquiryNotification`.
+#### Template: `fiscal-service-inquiry-admin`
+- **Alias**: `fiscal-service-inquiry-admin`
+- **Subject**: `New fiscal service inquiry from {{submitter_name}}`
+- **Attachment**: PDF of full inquiry (`Fiscal-Service-Inquiry-{name}-{YYYY-MM-DD}.pdf`)
+- **Template Variables**: `{{first_name}}`, `{{submitter_name}}`, `{{submitter_email}}`, `{{inquiry_id}}`, `{{submitted_date}}`
+- **Full HTML copy/paste**: see [`docs/postmark-fiscal-service-inquiry-templates.md`](docs/postmark-fiscal-service-inquiry-templates.md)
+
+#### Template: `fiscal-service-inquiry-confirmation`
+- **Alias**: `fiscal-service-inquiry-confirmation`
+- **Subject**: (configure in Postmark, e.g. `We received your fiscal services inquiry`)
+- **Attachment**: Same PDF as admin email
+- **Template Variables**: same as admin (except `{{is_admin}}` is only set on admin sends)
+- **Full HTML copy/paste**: see [`docs/postmark-fiscal-service-inquiry-templates.md`](docs/postmark-fiscal-service-inquiry-templates.md)
+
+**Flow:** `POST /api/service-inquiries` with `service_slug: fiscal-sponsorship` → `trySendFiscalSponsorshipInquiryEmails()` (admin + submitter + PDF). With `service_slug: documentation` → `trySendDocumentationInquiryEmails()` (admin + submitter + PDF). With `service_slug: fiscal-services` → `trySendFiscalServicesInquiryEmails()` (admin + submitter + PDF). Other services use the simple HTML `trySendServiceInquiryNotification`.
 
 ## Current Implementation
 

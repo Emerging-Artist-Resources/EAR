@@ -178,7 +178,7 @@ Use this sequence for new forms (for example: lighting, rehearsal support, etc.)
 6. **Verify profile visibility**
    - signed-in submission should appear in `ServiceInquiriesSection`
 7. **Verify email notifications**
-   - **Documentation / fiscal sponsorship:** Postmark templated emails + PDF (`documentation-inquiry-*` or `fiscal-sponsorship-inquiry-*` templates — see `docs/postmark-*-inquiry-templates.md`)
+   - **Documentation / fiscal sponsorship / fiscal services:** Postmark templated emails + PDF (`documentation-inquiry-*`, `fiscal-sponsorship-inquiry-*`, or `fiscal-service-inquiry-*` templates — see `docs/postmark-*-inquiry-templates.md`)
    - **Other services:** simple admin HTML via `trySendServiceInquiryNotification`
    - Env: `ADMIN_EMAIL` or `ADMIN_NOTIFICATION_EMAIL`, `POSTMARK_SERVER_TOKEN`, `POSTMARK_FROM_NAME`, `POSTMARK_FROM_EMAIL`
 
@@ -194,7 +194,7 @@ Use this sequence for new forms (for example: lighting, rehearsal support, etc.)
 - New inquiry creates:
   - one `service_inquiries` row
   - `N` `service_answers` rows for `N` questions
-- Documentation/fiscal: admin + submitter Postmark emails with PDF when env config is present.
+- Documentation / fiscal sponsorship / fiscal services: admin + submitter Postmark emails with PDF when env config is present.
 - Other services: admin HTML email when env config is present.
 
 ---

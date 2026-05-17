@@ -2,7 +2,7 @@ import { generateServiceInquiryPdf } from "@/lib/pdf/generateServiceInquiryPdf"
 import type { FiscalSponsorshipInquiryPdfInput } from "@/lib/service-inquiries/fiscal-sponsorship-inquiry-pdf-model"
 import { buildServiceInquiryPdfFileName } from "@/lib/service-inquiries/service-inquiry-pdf-types"
 
-const FISCAL_SPONSORSHIP_PDF_TITLE = "Fiscal sponsorship inquiry"
+const FISCAL_SPONSORSHIP_PDF_TITLE = "Fiscal Sponsorship Inquiry"
 const FISCAL_SPONSORSHIP_PDF_PREFIX = "Fiscal-Sponsorship-Inquiry"
 
 export function buildFiscalSponsorshipInquiryPdfFileName(

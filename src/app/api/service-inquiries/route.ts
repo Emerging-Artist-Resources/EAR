@@ -14,9 +14,11 @@ import {
   type ServiceQuestionRow,
 } from "@/lib/service-inquiries/validateAnswersAgainstQuestions"
 import { trySendDocumentationInquiryEmails } from "@/lib/email/trySendDocumentationInquiryEmails"
+import { trySendFiscalServicesInquiryEmails } from "@/lib/email/trySendFiscalServicesInquiryEmails"
 import { trySendFiscalSponsorshipInquiryEmails } from "@/lib/email/trySendFiscalSponsorshipInquiryEmails"
 import { trySendServiceInquiryNotification } from "@/lib/email/trySendServiceInquiryNotification"
 import { DOCUMENTATION_SERVICE_SLUG } from "@/lib/service-inquiries/documentation-options"
+import { FISCAL_SERVICES_SERVICE_SLUG } from "@/lib/service-inquiries/fiscal-services-options"
 import { FISCAL_SPONSORSHIP_SERVICE_SLUG } from "@/lib/service-inquiries/fiscal-sponsorship-options"
 
 function escapeHtml(s: string): string {
@@ -118,6 +120,19 @@ export async function POST(req: NextRequest) {
       })
     } else if (slugNormalized === DOCUMENTATION_SERVICE_SLUG) {
       await trySendDocumentationInquiryEmails({
+        inquiryId: inquiry.id,
+        submitterName: nameNormalized,
+        submitterEmail: emailNormalized,
+        questions: questionRows.map((q) => ({
+          id: q.id,
+          question_text: q.question_text,
+          field_type: q.field_type,
+          order_index: q.order_index,
+        })),
+        answersByQuestionId: answersMap,
+      })
+    } else if (slugNormalized === FISCAL_SERVICES_SERVICE_SLUG) {
+      await trySendFiscalServicesInquiryEmails({
         inquiryId: inquiry.id,
         submitterName: nameNormalized,
         submitterEmail: emailNormalized,

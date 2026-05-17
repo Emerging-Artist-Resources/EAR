@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Text } from "@/components/ui/typography"
 import { cn } from "@/lib/utils"
@@ -38,13 +39,11 @@ export function FiscalServiceSection({
 
         <div className="flex lg:justify-end">
           <Button
-            type="button"
+            asChild
             variant="default"
-            disabled
-            aria-disabled="true"
-            className="h-auto w-full rounded-full px-8 py-6 text-xs font-semibold uppercase tracking-widest hover:bg-primary disabled:opacity-100 sm:w-auto"
+            className="h-auto w-full rounded-full px-8 py-6 text-xs font-semibold uppercase tracking-widest sm:w-auto"
           >
-            Inquire here
+            <Link href="/services/fiscal-services/inquiry">Inquire here</Link>
           </Button>
         </div>
       </div>
