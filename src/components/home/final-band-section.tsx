@@ -28,7 +28,7 @@ export function FinalBandSection() {
             alt="EAR"
             width={500}
             height={120}
-            className="h-auto w-100 md:w-100"
+            className="h-auto w-64 max-w-full md:w-72"
           />
           <p className="max-w-sm font-sans text-lg font-medium uppercase tracking-[0.18em] text-ear-off-white/95">
             Emerging Artist Resources

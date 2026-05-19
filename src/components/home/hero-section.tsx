@@ -19,11 +19,10 @@ export function HeroSection() {
           alt="EAR"
           width={500}
           height={500}
-          className="h-auto w-[min(88vw,50rem)] md:w-[min(80vw,50rem)]"
+          className="h-auto w-[min(85vw,18rem)] md:w-[min(55vw,24rem)]"
           priority
         />
       </div>
     </section>
-    // "h-auto w-[min(88vw,10rem)] md:w-[min(80vw,10rem)]"
   )
 }
