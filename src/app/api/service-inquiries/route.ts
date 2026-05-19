@@ -20,6 +20,9 @@ import { trySendServiceInquiryNotification } from "@/lib/email/trySendServiceInq
 import { DOCUMENTATION_SERVICE_SLUG } from "@/lib/service-inquiries/documentation-options"
 import { FISCAL_SERVICES_SERVICE_SLUG } from "@/lib/service-inquiries/fiscal-services-options"
 import { FISCAL_SPONSORSHIP_SERVICE_SLUG } from "@/lib/service-inquiries/fiscal-sponsorship-options"
+import { checkRateLimit } from "@/services/rate-limit"
+import { getClientIpFromRequest } from "@/lib/get-client-ip"
+import { rateLimitExceededResponse } from "@/lib/rate-limit-response"
 
 function escapeHtml(s: string): string {
   return s
@@ -31,6 +34,16 @@ function escapeHtml(s: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIpFromRequest(req)
+    const limit = await checkRateLimit({
+      key: `service-inquiry:${ip}`,
+      limit: 5,
+      window: "1 h",
+    })
+    if (!limit.allowed) {
+      return rateLimitExceededResponse(limit.reset)
+    }
+
     const body = await req.json()
     const data = validateRequestBody(body, createServiceInquiryRequestSchema)
 

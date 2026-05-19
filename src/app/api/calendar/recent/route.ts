@@ -55,9 +55,10 @@ export async function GET(req: NextRequest) {
     }
     
     if (!listings || listings.length === 0) {
-      return NextResponse.json({ data: [] }, { 
-        headers: { "Cache-Control": "s-maxage=60" } 
-      })
+      return NextResponse.json(
+        { data: [] },
+        { headers: { "Cache-Control": "public, s-maxage=60" } },
+      )
     }
     
     // Track parent IDs and their most recent child submission dates
@@ -232,9 +233,10 @@ export async function GET(req: NextRequest) {
       now
     ).slice(0, limit)
     
-    return NextResponse.json({ data: recentListings }, { 
-      headers: { "Cache-Control": "s-maxage=300" } 
-    })
+    return NextResponse.json(
+      { data: recentListings },
+      { headers: { "Cache-Control": "public, s-maxage=600, stale-while-revalidate=300" } },
+    )
   } catch (err) {
     console.error("Recent listings GET error:", err instanceof Error ? err.message : String(err))
     return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })

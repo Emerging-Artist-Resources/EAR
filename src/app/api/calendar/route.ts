@@ -1,6 +1,9 @@
 // src/app/api/calendar/route.ts
 import { NextResponse } from "next/server"
 import { listCalendarItemsRepo, listDeadlinesRepo, searchListingsRepo } from "@/features/events/server/repository"
+import { checkRateLimit } from "@/services/rate-limit"
+import { getClientIpFromRequest } from "@/lib/get-client-ip"
+import { rateLimitExceededResponse } from "@/lib/rate-limit-response"
 type EventType = "performance" | "audition" | "creative" | "class" | "funding"
 
 function isoOrDefault(s: string | null, d: Date) {
@@ -17,6 +20,7 @@ function startOfToday() {
 
 export async function GET(req: Request) {
   try {
+    const ip = getClientIpFromRequest(req)
     const url = new URL(req.url)
     // Use start of today for "from" to include deadlines/events that are today
     const from = isoOrDefault(url.searchParams.get("from"), startOfToday())
@@ -32,6 +36,28 @@ export async function GET(req: Request) {
     const q = url.searchParams.get("q")?.trim() ?? null
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 500), 1000)
     const includeDeadlines = url.searchParams.get("includeDeadlines") === "true"
+
+    if (q) {
+      const searchLimit = await checkRateLimit({
+        key: `calendar-search:${ip}`,
+        limit: 30,
+        window: "1 m",
+      })
+      if (!searchLimit.allowed) {
+        console.warn("[rate-limit] calendar search exceeded", { ip })
+        return rateLimitExceededResponse(searchLimit.reset)
+      }
+    } else {
+      const feedLimit = await checkRateLimit({
+        key: `calendar-feed:${ip}`,
+        limit: 120,
+        window: "1 m",
+      })
+      if (!feedLimit.allowed) {
+        console.warn("[rate-limit] calendar feed exceeded", { ip })
+        return rateLimitExceededResponse(feedLimit.reset)
+      }
+    }
 
     // If there's a search query, use searchListingsRepo to get unique listings
     // Otherwise, use listCalendarItemsRepo for calendar view with occurrences
@@ -79,20 +105,22 @@ export async function GET(req: Request) {
       ? deadlines.filter(i => i.title?.toLowerCase().includes(q))
       : deadlines
 
-    // cache for 60s at the edge/CDN
-    // Return wrapped in 'data' to match ApiResponse<T> structure, but include deadlines at top level
+    const cacheControl = q
+      ? "private, no-store"
+      : "public, s-maxage=120, stale-while-revalidate=300"
+
     return NextResponse.json(
-      { 
+      {
         data: {
           data: filteredItems,
-          deadlines: filteredDeadlines
-        }
-      }, 
-      { headers: { "Cache-Control": "s-maxage=60" } }
+          deadlines: filteredDeadlines,
+        },
+      },
+      { headers: { "Cache-Control": cacheControl } },
     )
   } catch (err) {
     console.error("Calendar GET error:", err)
-    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
+    return NextResponse.json({ error: { code: "INTERNAL" } }, { status: 500 })
   }
 }
 

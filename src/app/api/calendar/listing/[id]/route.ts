@@ -134,9 +134,10 @@ export async function GET(
       contact_email: additionalData?.contact_email ?? null,
     }
     
-    return NextResponse.json({ data: result }, { 
-      headers: { "Cache-Control": "s-maxage=60" } 
-    })
+    return NextResponse.json(
+      { data: result },
+      { headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" } },
+    )
   } catch (err) {
     console.error("Listing public GET error:", err instanceof Error ? err.message : String(err))
     if (err instanceof Error && err.message.includes("not found")) {

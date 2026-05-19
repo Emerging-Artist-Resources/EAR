@@ -7,6 +7,7 @@ import type { Resolver } from "react-hook-form"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
 import { Button } from "@/components/ui/button"
 import { type EventType } from "./EventTypeSelector"
+import { debugScheduleLog } from "@/lib/debug-log"
 import { BasicInfoStep } from "./steps/BasicInfoStep"
 import { PerformanceDetailsStep } from "./steps/performance/PerformanceDetailsStep"
 import { ClassesWorkshopsStep } from "./steps/ClassWorkshopStep"
@@ -225,7 +226,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       if (!isValid) {
         if (process.env.NODE_ENV !== "production" && eventType === "PERFORMANCE") {
           const v = form.getValues()
-          console.log("[EAR piece schedule] step 2 Next blocked", {
+          debugScheduleLog("[EAR piece schedule] step 2 Next blocked", {
             toastMessage: validationHook.getFirstError() || DEFAULT_EVENT_ERROR_MESSAGE,
             type: v.type,
             selectedSlots: v.selectedSlots,
@@ -385,7 +386,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       if (eventType === "PERFORMANCE" && payload.occurrences.length === 0) {
         if (process.env.NODE_ENV !== "production") {
           const v = data as Record<string, unknown>
-          console.log("[EAR piece schedule] submit blocked — payload has zero occurrences", {
+          debugScheduleLog("[EAR piece schedule] submit blocked — payload has zero occurrences", {
             formType: v.type,
             selectedSlots: v.selectedSlots,
             pieceScheduleMode: v.pieceScheduleMode,
@@ -503,7 +504,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
     (_errors) => {
       if (process.env.NODE_ENV !== "production" && eventType === "PERFORMANCE") {
         const v = form.getValues()
-        console.log("[EAR piece schedule] final Submit — RHF/zod rejected", {
+        debugScheduleLog("[EAR piece schedule] final Submit — RHF/zod rejected", {
           rhfErrors: _errors,
           type: v.type,
           selectedSlots: v.selectedSlots,

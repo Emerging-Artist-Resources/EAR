@@ -3,6 +3,8 @@ import Stripe from "stripe"
 import { getServerEnv } from "@/lib/env"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { trySendInternalDonationNotifications } from "@/lib/email/trySendInternalDonationNotifications"
+import * as Sentry from "@sentry/nextjs"
+import { isSentryDisabled } from "@/lib/launch-flags"
 
 // Ensure webhook runs in the Node.js runtime (not edge)
 export const runtime = "nodejs"
@@ -428,6 +430,9 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     // 500: Stripe retries. Caveat: `stripe_webhook_events` may already be inserted before this try; retries can hit idempotency and skip re-processing.
     console.error("Error processing webhook:", error)
+    if (!isSentryDisabled()) {
+      Sentry.captureException(error, { tags: { route: "stripe/webhook" } })
+    }
     return new NextResponse("Webhook processing failed", { status: 500 })
   }
 }

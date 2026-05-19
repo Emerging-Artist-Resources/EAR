@@ -6,6 +6,9 @@ import { eventPayloadSchema } from "@/features/events/server/event-payload-schem
 import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamArray, validateRequestBody } from "@/lib/api-utils"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getAuthenticatedUser } from "@/lib/auth-helpers"
+import { checkRateLimit } from "@/services/rate-limit"
+import { getClientIpFromRequest } from "@/lib/get-client-ip"
+import { rateLimitExceededResponse } from "@/lib/rate-limit-response"
 
 const eventTypeSchema = z.enum(["performance", "audition", "creative", "class", "funding"])
 
@@ -36,9 +39,28 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIpFromRequest(req)
+    const ipLimit = await checkRateLimit({
+      key: `events-post:ip:${ip}`,
+      limit: 10,
+      window: "1 h",
+    })
+    if (!ipLimit.allowed) {
+      return rateLimitExceededResponse(ipLimit.reset)
+    }
+
     const auth = await getAuthenticatedUser()
     if (!auth) {
       return NextResponse.json({ error: { code: "UNAUTHORIZED", message: "Authentication required" } }, { status: 401 })
+    }
+
+    const userLimit = await checkRateLimit({
+      key: `events-post:user:${auth.user.id}`,
+      limit: 20,
+      window: "1 h",
+    })
+    if (!userLimit.allowed) {
+      return rateLimitExceededResponse(userLimit.reset)
     }
 
     const body = await req.json()

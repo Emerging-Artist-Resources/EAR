@@ -1,6 +1,8 @@
 "use client"
 
 import React, { Component, type ReactNode } from "react"
+import * as Sentry from "@sentry/nextjs"
+import { isSentryDisabled } from "@/lib/launch-flags"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/typography"
@@ -26,8 +28,12 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to error reporting service in production
     console.error("ErrorBoundary caught an error:", error, errorInfo)
+    if (!isSentryDisabled()) {
+      Sentry.captureException(error, {
+        contexts: { react: { componentStack: errorInfo.componentStack } },
+      })
+    }
   }
 
   handleReset = () => {

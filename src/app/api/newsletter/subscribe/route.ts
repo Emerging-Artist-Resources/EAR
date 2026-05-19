@@ -4,28 +4,24 @@ import {
   handleApiError,
   createSuccessResponse,
   validateRequestBody,
-  createErrorResponse,
-  ErrorCodes,
 } from "@/lib/api-utils"
 import { newsletterSubscribeRequestSchema } from "@/lib/validations/newsletter"
 import { syncNewsletterPreferences } from "@/features/newsletter/server/syncNewsletterPreferences"
 import type { NewsletterSource } from "@/features/newsletter/constants"
-import {
-  checkNewsletterSubscribeRateLimit,
-  getClientIpFromRequest,
-} from "@/features/newsletter/server/rateLimit"
+import { getClientIpFromRequest } from "@/lib/get-client-ip"
+import { checkRateLimit } from "@/services/rate-limit"
+import { rateLimitExceededResponse } from "@/lib/rate-limit-response"
 
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIpFromRequest(req)
-    const { allowed } = checkNewsletterSubscribeRateLimit(ip)
-    if (!allowed) {
-      return createErrorResponse(
-        ErrorCodes.BAD_REQUEST,
-        "Too many requests. Please try again later.",
-        undefined,
-        429,
-      )
+    const rate = await checkRateLimit({
+      key: `newsletter-subscribe:${ip}`,
+      limit: 5,
+      window: "15 m",
+    })
+    if (!rate.allowed) {
+      return rateLimitExceededResponse(rate.reset)
     }
 
     const body = await req.json()

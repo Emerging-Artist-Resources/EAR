@@ -7,6 +7,7 @@ import { SelectBlock } from "@/components/forms/blocks/Select"
 import { EventFormData } from "@/lib/validations/events"
 import { apiGet } from "@/lib/fetch-utils"
 import { convertUTCToEST, formatTime12Hour } from "@/lib/datetime-utils"
+import { debugScheduleLog } from "@/lib/debug-log"
 
 type Mode = "SELECT_FROM_PARENT" | "SELECT_FROM_EVENT" | "CUSTOM_ONLY"
 
@@ -229,7 +230,7 @@ export function PieceOccurrencesPicker({
 
           form.setValue("eventDatesConfirmed" as Path<EventFormData>, true as never)
           if (process.env.NODE_ENV !== "production") {
-            console.log("[EAR piece schedule] parent event fetch OK", {
+            debugScheduleLog("[EAR piece schedule] parent event fetch OK", {
               parentEventId,
               rawListingOccurrences: data.listing_occurrences.length,
               formattedDayGroups: formattedOccurrences.length,
@@ -239,7 +240,7 @@ export function PieceOccurrencesPicker({
         } else {
           setParentOccurrences([])
           if (process.env.NODE_ENV !== "production") {
-            console.log("[EAR piece schedule] parent event fetch — no listing_occurrences", {
+            debugScheduleLog("[EAR piece schedule] parent event fetch — no listing_occurrences", {
               parentEventId,
             })
           }
@@ -316,7 +317,7 @@ export function PieceOccurrencesPicker({
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return
     const v = form.getValues()
-    console.log("[EAR piece schedule] PieceOccurrencesPicker snapshot", {
+    debugScheduleLog("[EAR piece schedule] PieceOccurrencesPicker snapshot", {
       scheduleKeyPrefix,
       pickerMode: mode,
       parentEventId,

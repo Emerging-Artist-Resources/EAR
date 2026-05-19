@@ -9,6 +9,7 @@ import { SessionExpiredModal } from "@/components/auth/SessionExpiredModal"
 import { ToastProvider } from "@/contexts/ToastContext"
 import { ToastContainer } from "@/components/ui/ToastContainer"
 import { AppTooltipProvider } from "@/components/providers/app-tooltip-provider"
+import { Analytics } from "@vercel/analytics/react"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,6 +48,7 @@ export default function RootLayout({
               <FooterGate />
               <SessionExpiredModal />
               <ToastContainer />
+              <Analytics />
             </ErrorBoundary>
           </ToastProvider>
         </AppTooltipProvider>

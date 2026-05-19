@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ZodError } from 'zod'
+import * as Sentry from '@sentry/nextjs'
+import { isSentryDisabled } from '@/lib/launch-flags'
 
 /**
  * Standard API error response structure
@@ -64,9 +66,19 @@ export function createSuccessResponse<T>(
 /**
  * Handles errors in API routes with consistent error responses
  */
-export function handleApiError(error: unknown): NextResponse<ApiResponse> {
-  // Log error for debugging (in production, use proper logging service)
+export function handleApiError(
+  error: unknown,
+  context?: { route?: string },
+): NextResponse<ApiResponse> {
   console.error('API Error:', error)
+
+  if (!isSentryDisabled() && error instanceof Error) {
+    Sentry.captureException(error, {
+      tags: context?.route ? { route: context.route } : undefined,
+    })
+  } else if (!isSentryDisabled() && error) {
+    Sentry.captureException(error)
+  }
 
   // Handle Zod validation errors
   if (error instanceof ZodError) {

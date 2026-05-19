@@ -11,6 +11,7 @@ import { SelectBlock } from "@/components/forms/blocks/Select"
 import { OrganizerFlow } from "@/components/event-forms/event-wizard/steps/performance/OrganizerFlow"
 import { PieceSubmissionFlow } from "@/components/event-forms/event-wizard/steps/performance/PieceSubmissionFlow"
 import type { OrganizerProgramPiecePhoto } from "@/lib/organizer-program-pieces"
+import { debugScheduleLog } from "@/lib/debug-log"
 
 type PerfType = "ORGANIZER" | "PIECE"
 
@@ -34,7 +35,7 @@ export function PerformanceDetailsStep({
     const prev = prevPerfTypeRef.current
     if (perfType === "PIECE" && prev === "ORGANIZER") {
       if (process.env.NODE_ENV !== "production") {
-        console.log("[EAR piece schedule] type switch ORGANIZER → PIECE (resetting organizer schedule fields)", {
+        debugScheduleLog("[EAR piece schedule] type switch ORGANIZER → PIECE (resetting organizer schedule fields)", {
           occurrencesBefore: form.getValues("occurrences"),
           eventDatesConfirmedBefore: form.getValues("eventDatesConfirmed"),
         })
@@ -45,7 +46,7 @@ export function PerformanceDetailsStep({
     }
     if (perfType === "ORGANIZER" && prev === "PIECE") {
       if (process.env.NODE_ENV !== "production") {
-        console.log("[EAR piece schedule] type switch PIECE → ORGANIZER (resetting piece schedule fields)", {
+        debugScheduleLog("[EAR piece schedule] type switch PIECE → ORGANIZER (resetting piece schedule fields)", {
           selectedSlotsBefore: form.getValues("selectedSlots"),
           extraOccurrencesBefore: form.getValues("extraOccurrences"),
         })
