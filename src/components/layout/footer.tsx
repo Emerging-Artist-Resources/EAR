@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Instagram, Linkedin, Youtube } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { NewsletterSignupTrigger } from "@/components/newsletter/NewsletterSignupTrigger"
 
 function trimUrl(url: string | undefined): string | undefined {
   const t = url?.trim()
@@ -34,6 +35,17 @@ export function Footer() {
               <Link className="underline text-ear-baby-blue hover:text-primary" href="/announcement">Announcements</Link>
               <Link className="underline text-ear-baby-blue hover:text-primary" href="/forms">Submit Listing</Link>
               <Link className="underline text-ear-baby-blue hover:text-primary" href="/donate">Donate</Link>
+              <NewsletterSignupTrigger source="footer">
+                {({ onClick }) => (
+                  <button
+                    type="button"
+                    onClick={onClick}
+                    className="underline text-ear-baby-blue hover:text-primary"
+                  >
+                    Newsletters
+                  </button>
+                )}
+              </NewsletterSignupTrigger>
             </nav>
             {(instagramUrl || youtubeUrl || linkedinUrl) && (
               <nav className="flex items-center gap-4" aria-label="Social media">

@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { H3, Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
@@ -8,11 +8,70 @@ import { supabase } from "@/lib/supabase/client"
 import { requestPasswordResetAction } from "@/features/profile/server/requestPasswordReset"
 
 export const ProfileSettings: React.FC = () => {
-  const [earNewsletter, setEarNewsletter] = useState(true)
-  const [artistNewsletter, setArtistNewsletter] = useState(true)
+  const [earNewsletter, setEarNewsletter] = useState(false)
+  const [artistNewsletter, setArtistNewsletter] = useState(false)
+  const [prefsLoading, setPrefsLoading] = useState(true)
+  const [prefsSaving, setPrefsSaving] = useState(false)
+  const [prefsError, setPrefsError] = useState<string | null>(null)
+  const [prefsMessage, setPrefsMessage] = useState<string | null>(null)
   const [changePasswordLoading, setChangePasswordLoading] = useState(false)
   const [changePasswordError, setChangePasswordError] = useState<string | null>(null)
   const [changePasswordMessage, setChangePasswordMessage] = useState<string | null>(null)
+
+  const loadNewsletterPrefs = useCallback(async () => {
+    setPrefsLoading(true)
+    setPrefsError(null)
+    try {
+      const res = await fetch("/api/profile/newsletter")
+      const json = (await res.json()) as {
+        data?: { subscribed_to_newsletter: boolean; subscribed_to_calendar: boolean }
+        error?: { message?: string }
+      }
+      if (!res.ok) {
+        setPrefsError(json.error?.message ?? "Could not load newsletter preferences.")
+        return
+      }
+      if (json.data) {
+        setEarNewsletter(json.data.subscribed_to_newsletter)
+        setArtistNewsletter(json.data.subscribed_to_calendar)
+      }
+    } catch {
+      setPrefsError("Could not load newsletter preferences.")
+    } finally {
+      setPrefsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void loadNewsletterPrefs()
+  }, [loadNewsletterPrefs])
+
+  const handleSaveNewsletterPrefs = async () => {
+    if (prefsSaving) return
+    setPrefsSaving(true)
+    setPrefsError(null)
+    setPrefsMessage(null)
+    try {
+      const res = await fetch("/api/profile/newsletter", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subscribed_to_newsletter: earNewsletter,
+          subscribed_to_calendar: artistNewsletter,
+        }),
+      })
+      const json = (await res.json()) as { error?: { message?: string } }
+      if (!res.ok) {
+        setPrefsError(json.error?.message ?? "Could not save preferences.")
+        return
+      }
+      setPrefsMessage("Newsletter preferences saved.")
+    } catch {
+      setPrefsError("Could not save preferences.")
+    } finally {
+      setPrefsSaving(false)
+    }
+  }
 
   const handleChangePassword = async () => {
     if (changePasswordLoading) return
@@ -40,7 +99,7 @@ export const ProfileSettings: React.FC = () => {
       }
 
       setChangePasswordMessage(
-        "Password reset email sent. Use the link in your inbox to choose a new password."
+        "Password reset email sent. Use the link in your inbox to choose a new password.",
       )
       setChangePasswordLoading(false)
     } catch (error) {
@@ -55,22 +114,44 @@ export const ProfileSettings: React.FC = () => {
       <section>
         <H3 className="mb-3">Notification Preference</H3>
         <Card border="dashed" padding="md" className="space-y-4">
-          <div className="rounded-md bg-gray-50 border border-gray-200 p-4 flex items-start justify-between">
-            <div>
-              <Text className="font-semibold">EAR Newsletter</Text>
-              <Text className="text-sm text-gray-600">Receive monthly updates on EAR</Text>
-            </div>
-            <Checkbox checked={earNewsletter} onChange={(e) => setEarNewsletter((e.target as HTMLInputElement).checked)} />
-          </div>
-          <div className="rounded-md bg-gray-50 border border-gray-200 p-4 flex items-start justify-between">
-            <div>
-              <Text className="font-semibold">Artist Calendar Newsletter</Text>
-              <Text className="text-sm text-gray-600">Weekly summaries of new opportunities and deadlines</Text>
-            </div>
-            <Checkbox checked={artistNewsletter} onChange={(e) => setArtistNewsletter((e.target as HTMLInputElement).checked)} />
-          </div>
+          {prefsLoading ? (
+            <Text className="text-sm text-gray-600">Loading preferences…</Text>
+          ) : (
+            <>
+              <div className="rounded-md bg-gray-50 border border-gray-200 p-4 flex items-start justify-between">
+                <div>
+                  <Text className="font-semibold">EAR Newsletter</Text>
+                  <Text className="text-sm text-gray-600">Receive monthly updates on EAR</Text>
+                </div>
+                <Checkbox
+                  checked={earNewsletter}
+                  onChange={(e) => setEarNewsletter((e.target as HTMLInputElement).checked)}
+                />
+              </div>
+              <div className="rounded-md bg-gray-50 border border-gray-200 p-4 flex items-start justify-between">
+                <div>
+                  <Text className="font-semibold">Artist Calendar Newsletter</Text>
+                  <Text className="text-sm text-gray-600">
+                    Weekly summaries of new opportunities and deadlines
+                  </Text>
+                </div>
+                <Checkbox
+                  checked={artistNewsletter}
+                  onChange={(e) => setArtistNewsletter((e.target as HTMLInputElement).checked)}
+                />
+              </div>
+            </>
+          )}
+          {prefsError && (
+            <Alert variant="error">{prefsError}</Alert>
+          )}
+          {prefsMessage && (
+            <Alert variant="success">{prefsMessage}</Alert>
+          )}
           <div className="pt-2">
-            <Button>Save Preferences</Button>
+            <Button onClick={handleSaveNewsletterPrefs} disabled={prefsLoading || prefsSaving}>
+              {prefsSaving ? "Saving…" : "Save Preferences"}
+            </Button>
           </div>
         </Card>
       </section>
@@ -118,5 +199,3 @@ export const ProfileSettings: React.FC = () => {
     </div>
   )
 }
-
-

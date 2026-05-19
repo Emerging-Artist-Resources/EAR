@@ -1,7 +1,10 @@
+"use client"
+
 import Image from "next/image"
 import Link from "next/link"
 import { Mail } from "lucide-react"
 import { EAR_LOGO_04_SRC } from "@/components/home/constants"
+import { NewsletterSignupTrigger } from "@/components/newsletter/NewsletterSignupTrigger"
 
 export function FinalBandSection() {
   const instagramUrl =
@@ -69,15 +72,23 @@ export function FinalBandSection() {
               </a>
             </span>
           </p>
-          <div className="mt-4 flex flex-col items-start gap-2 md:items-end">
-            <Mail className="h-6 w-6 text-ear-baby-blue md:ml-auto" strokeWidth={1.5} aria-hidden />
-            <span className="text-sm font-medium uppercase tracking-wider text-ear-off-white/90">
-              Join our mailing list
-            </span>
-            <span className="max-w-xs text-sm text-ear-off-white/75">
-              Coming soon — check back or follow us on Instagram for updates.
-            </span>
-          </div>
+          <NewsletterSignupTrigger source="home" sourceContext="final-band">
+            {({ onClick }) => (
+              <div className="mt-4 flex flex-col items-start gap-2 md:items-end">
+                <Mail className="h-6 w-6 text-ear-baby-blue md:ml-auto" strokeWidth={1.5} aria-hidden />
+                <span className="text-sm font-medium uppercase tracking-wider text-ear-off-white/90">
+                  Join our mailing list
+                </span>
+                <button
+                  type="button"
+                  onClick={onClick}
+                  className="text-left text-sm text-ear-baby-blue underline underline-offset-4 hover:text-ear-off-white md:text-right"
+                >
+                  Subscribe to newsletters
+                </button>
+              </div>
+            )}
+          </NewsletterSignupTrigger>
         </div>
       </div>
     </section>

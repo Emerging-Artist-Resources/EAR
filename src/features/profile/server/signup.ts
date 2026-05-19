@@ -5,6 +5,7 @@ import { signupFormSchema, getSignupErrorStepForPath, type SignupErrorStep } fro
 import { createProfileRepo, createEligibilitySubmissionRepo } from "./repository-signup"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { sendNewProfileAdminEmail, sendEmailVerificationEmail } from "./service"
+import { syncNewsletterPreferences } from "@/features/newsletter/server/syncNewsletterPreferences"
 
 export type SignupActionResult =
   | { success: true }
@@ -55,6 +56,18 @@ export async function signupAction(formData: unknown): Promise<SignupActionResul
     try {
       const profile = await createProfileRepo(validatedData, userId)
       await createEligibilitySubmissionRepo(validatedData, profile.id)
+
+      try {
+        await syncNewsletterPreferences({
+          email: validatedData.email,
+          earOptIn: validatedData.newsletter_ear_opt_in,
+          calendarOptIn: validatedData.newsletter_calendar_opt_in,
+          profileId: userId,
+          source: "signup",
+        })
+      } catch (newsletterErr) {
+        console.error("[newsletter] signup sync failed", newsletterErr)
+      }
 
       try {
         await sendNewProfileAdminEmail(
