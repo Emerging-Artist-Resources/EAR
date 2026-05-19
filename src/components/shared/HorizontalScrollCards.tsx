@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from "react"
+import { Children, useState, useRef, useEffect, useCallback, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -10,7 +10,7 @@ export interface HorizontalScrollCardsProps {
   title?: string
   /** Shown under the title (e.g. filter explanation). */
   description?: string
-  children: React.ReactNode[]
+  children: ReactNode
   onCardClick?: (index: number) => void
   cardsPerView?: number
   className?: string
@@ -24,6 +24,11 @@ export function HorizontalScrollCards({
   cardsPerView = 3,
   className,
 }: HorizontalScrollCardsProps) {
+  const cardItems = Children.toArray(children)
+  const gapPx = 16
+  /** Fixed slot width per card (always based on cardsPerView, not how many cards exist). */
+  const slotWidth = `calc(${100 / cardsPerView}% - 0.75rem)`
+
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
@@ -40,15 +45,14 @@ export function HorizontalScrollCards({
     setCanScrollLeft(scrollLeft > 0)
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1)
 
-    if (children.length > 0 && cardWidth === 0) {
+    if (cardItems.length > 0 && cardWidth === 0) {
       const firstCard = container.querySelector('[data-card]') as HTMLElement
       if (firstCard) {
         const computedWidth = firstCard.offsetWidth
-        const gap = 16
-        setCardWidth(computedWidth + gap)
+        setCardWidth(computedWidth + gapPx)
       }
     }
-  }, [children.length, cardWidth])
+  }, [cardItems.length, cardWidth, gapPx])
 
   useEffect(() => {
     updateScrollButtons()
@@ -67,7 +71,7 @@ export function HorizontalScrollCards({
 
   useEffect(() => {
     updateScrollButtons()
-  }, [children, updateScrollButtons])
+  }, [cardItems, updateScrollButtons])
 
   const scroll = useCallback((direction: "left" | "right") => {
     if (!scrollContainerRef.current) return
@@ -81,7 +85,7 @@ export function HorizontalScrollCards({
     })
   }, [cardWidth, cardsPerView])
 
-  if (children.length === 0) {
+  if (cardItems.length === 0) {
     return null
   }
 
@@ -111,20 +115,21 @@ export function HorizontalScrollCards({
         )}
         <div
           ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto scroll-smooth pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          className="flex justify-start items-start gap-4 overflow-x-auto scroll-smooth pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
-          {children.map((child, index) => (
+          {cardItems.map((child, index) => (
             <div
               key={index}
               data-card
-              className="flex-shrink-0"
-              style={{ 
-                width: `calc(${100 / cardsPerView}% - 0.75rem)`,
-                minWidth: "280px"
+              className="flex-shrink-0 text-left"
+              style={{
+                flex: "0 0 auto",
+                width: slotWidth,
+                minWidth: "280px",
               }}
               onClick={() => onCardClick?.(index)}
             >
-              {child}
+              <div className="w-full min-w-0">{child}</div>
             </div>
           ))}
         </div>

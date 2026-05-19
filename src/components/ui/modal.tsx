@@ -13,6 +13,8 @@ export interface ModalProps {
   showCloseButton?: boolean
   closeOnOverlay?: boolean
   headerClassName?: string
+  /** Extra classes on the modal title (e.g. font-title for performance listings). */
+  titleClassName?: string
   /** Replaces default `bg-background border-border` on the dialog panel (e.g. light cream shell). */
   contentClassName?: string
   /** Extra classes on the full-screen overlay (e.g. higher z-index for nested modals). */
@@ -35,6 +37,7 @@ export const Modal: React.FC<ModalProps> = ({
   showCloseButton = true,
   closeOnOverlay = true,
   headerClassName,
+  titleClassName,
   contentClassName,
   overlayClassName,
 }) => {
@@ -76,7 +79,7 @@ export const Modal: React.FC<ModalProps> = ({
             headerClassName ?? "bg-primary text-primary-foreground"
           )}
         >
-          <H2 className="text-center text-primary-foreground">{title}</H2>
+          <H2 className={cn("text-center text-primary-foreground", titleClassName)}>{title}</H2>
 
           {showCloseButton && (
             <Button

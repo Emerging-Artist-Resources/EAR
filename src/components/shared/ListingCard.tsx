@@ -111,7 +111,7 @@ export function ListingCard({
   return (
     <Card
       className={cn(
-        "p-4 h-full transition-shadow relative",
+        "w-full text-left p-4 h-full transition-shadow relative",
         interactive ? "cursor-pointer hover:shadow-md" : "cursor-default",
       )}
       onClick={onClick}
