@@ -7,6 +7,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { storageService } from "@/services/storage"
 import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/organizer-program-pieces"
+import { normalizePublicListingRelations } from "@/lib/listing-display"
 
 export async function GET(
   _req: NextRequest,
@@ -128,7 +129,7 @@ export async function GET(
     }
     
     const result = {
-      ...listingData,
+      ...normalizePublicListingRelations(listingData as import("@/components/calendar/PublicListingDetailSections").PublicListingDetail),
       contact_name: additionalData?.contact_name ?? null,
       pronouns: additionalData?.pronouns ?? null,
       contact_email: additionalData?.contact_email ?? null,

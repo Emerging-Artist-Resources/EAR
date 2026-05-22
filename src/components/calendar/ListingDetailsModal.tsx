@@ -33,6 +33,12 @@ import {
   PerformanceOrganizerDetailContent,
   type ChildListingSummary,
 } from "./PerformanceOrganizerDetailContent"
+import { PerformancePieceDetailContent } from "./PerformancePieceDetailContent"
+import {
+  isOrganizerPerformanceListing,
+  isPiecePerformanceListing,
+  normalizePublicListingRelations,
+} from "@/lib/listing-display"
 
 function getTypeLabel(type: string): string {
   return getCalendarListingTypeLabel(type)
@@ -82,7 +88,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       })
       .then((data) => {
         if (!abortController.signal.aborted) {
-          setListing(data)
+          setListing(normalizePublicListingRelations(data))
           setLoading(false)
         }
       })
@@ -136,9 +142,9 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
 
   const title = listing ? getListingTitle(listing) : "Listing Details"
   const typeLabel = listing ? getTypeLabel(listing.type) : ""
-  const isOrganizerPerformance =
-    listing?.type === "performance" &&
-    listing.performance_details?.subtype === "ORGANIZER"
+  const isOrganizerPerformance = isOrganizerPerformanceListing(listing)
+  const isPiecePerformance = isPiecePerformanceListing(listing)
+  const isPerformanceRedesign = isOrganizerPerformance || isPiecePerformance
 
   const parentListingId =
     listing?.piece_details?.parent_listing_id || listing?.class_workshop_details?.parent_listing_id || null
@@ -172,16 +178,27 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
     return organizerProgramPiecesDoc.pieces.find((p) => p.id === selectedOrganizerPieceId) ?? null
   }, [selectedOrganizerPieceId, organizerProgramPiecesDoc])
 
+  const navigateToListing = (nextListingId: string) => {
+    onListingClick?.(nextListingId)
+  }
+
+  const handleDismissAll = () => {
+    setSelectedOrganizerPieceId(null)
+    onClose()
+  }
+
+  const showOrganizerPieceOverlay = selectedOrganizerPieceId !== null
+
   return (
     <>
     <Modal
-      isOpen={isOpen}
-      onClose={onClose}
+      isOpen={isOpen && !showOrganizerPieceOverlay}
+      onClose={handleDismissAll}
       title={title}
       size="lg"
       headerClassName="bg-primary"
       titleClassName={
-        isOrganizerPerformance
+        isPerformanceRedesign
           ? "font-title text-2xl font-bold tracking-wide md:text-3xl"
           : undefined
       }
@@ -231,9 +248,29 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                   void toggleSave()
                 }
               }}
-              onListingClick={onListingClick}
-              onClose={onClose}
+              onListingClick={navigateToListing}
               onSelectOrganizerPiece={setSelectedOrganizerPieceId}
+              parentListingId={parentListingId}
+              backToParentLabel={backToParentLabel}
+            />
+          ) : isPiecePerformance ? (
+            <PerformancePieceDetailContent
+              listing={listing}
+              typeLabel={typeLabel}
+              sortedPhotos={sortedPhotos}
+              showAllDates={showAllDates}
+              onShowAllDatesChange={setShowAllDates}
+              isAuthed={isAuthed}
+              isSaved={isSaved}
+              saving={saving}
+              savingLoading={savingLoading}
+              saveError={saveError}
+              onToggleSave={() => {
+                if (!saving && !savingLoading) {
+                  void toggleSave()
+                }
+              }}
+              onListingClick={navigateToListing}
               parentListingId={parentListingId}
               backToParentLabel={backToParentLabel}
             />
@@ -269,7 +306,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               <div>
                 <button
                   type="button"
-                  onClick={() => onListingClick(parentListingId)}
+                  onClick={() => navigateToListing(parentListingId)}
                   className="text-sm text-brand-primary hover:text-brand-primary-hover underline"
                 >
                   ← {backToParentLabel}
@@ -346,8 +383,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                   onCardClick={(index) => {
                     const childListing = childListings[index]
                     if (childListing && onListingClick) {
-                      onClose()
-                      onListingClick(childListing.id)
+                      navigateToListing(childListing.id)
                     }
                   }}
                 >
@@ -382,8 +418,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                       }
                       onClick={() => {
                         if (onListingClick) {
-                          onClose()
-                          onListingClick(child.id)
+                          navigateToListing(child.id)
                         }
                       }}
                     />
@@ -440,8 +475,9 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
     </Modal>
 
     <OrganizerProgramPieceDetailModal
-      isOpen={selectedOrganizerPieceId !== null}
-      onClose={() => setSelectedOrganizerPieceId(null)}
+      isOpen={isOpen && showOrganizerPieceOverlay}
+      onClosePiece={() => setSelectedOrganizerPieceId(null)}
+      onDismissAll={handleDismissAll}
       piece={selectedOrganizerPiece}
       parentListing={listing}
     />

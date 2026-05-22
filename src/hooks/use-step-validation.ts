@@ -41,14 +41,20 @@ export function useStepValidation(
         return [
           "self_identifies_emerging",
           "operating_budget_range",
+          "operating_budget_other_text",
           "owns_or_operates_venue",
+          "owns_or_operates_venue_other_text",
           "supported_by_major_institution",
+          "supported_by_major_institution_other_text",
           "classes_hosted_independently",
+          "classes_hosted_independently_other_text",
           "has_501c3",
+          "has_501c3_other_text",
         ]
       case SIGNUP_STEPS.WRAP_UP:
         return [
           "referral_source",
+          "referral_source_other",
           "newsletter_ear_opt_in",
           "newsletter_calendar_opt_in",
         ]

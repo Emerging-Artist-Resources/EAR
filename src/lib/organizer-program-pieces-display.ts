@@ -4,6 +4,8 @@
  */
 
 import { convertESTToUTC, convertUTCToEST } from "@/lib/datetime-utils"
+import { getListingTitle } from "@/features/events/server/listing-utils"
+import { normalizeListingRelation } from "@/lib/listing-display"
 import type { OrganizerProgramPiecePersisted } from "@/lib/organizer-program-pieces"
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
 
@@ -138,6 +140,63 @@ export function organizerProgramPieceToPieceDetails(
     piece_company_website: piece.company_website,
     piece_description: piece.description?.trim() ? piece.description.trim() : null,
     choreographer: piece.choreographer,
+  }
+}
+
+/** Build a `PublicListingDetail` for embedded program pieces (Featured Works modal). */
+export function organizerProgramPieceToPublicListingDetail(
+  piece: OrganizerProgramPiecePersisted,
+  parentListing: PublicListingDetail,
+): PublicListingDetail {
+  const parentPd = normalizeListingRelation(parentListing.performance_details)
+  const parentOccurrences = parentListing.listing_occurrences ?? []
+  const pieceOccurrences = buildOccurrencesForOrganizerProgramPiece(piece, parentOccurrences)
+
+  const listingOccurrences = pieceOccurrences.map((o) => {
+    const parentOcc = parentOccurrences.find((lo) => lo.id === o.id)
+    if (parentOcc) {
+      return {
+        ...parentOcc,
+        starts_at_utc: o.starts_at_utc,
+        ends_at_utc: o.ends_at_utc,
+        tz: o.tz,
+      }
+    }
+    return {
+      id: o.id,
+      starts_at_utc: o.starts_at_utc,
+      ends_at_utc: o.ends_at_utc,
+      tz: o.tz,
+      occurrence_type: o.occurrence_type ?? "event",
+      address: parentListing.address,
+      place_id: parentListing.place_id,
+      venue_name: parentListing.venue_name,
+      location_instructions: parentListing.location_instructions,
+    }
+  })
+
+  return {
+    id: piece.id,
+    type: "performance",
+    social_handles: parentListing.social_handles,
+    notes: null,
+    address: parentListing.address,
+    place_id: parentListing.place_id,
+    venue_name: parentListing.venue_name,
+    location_instructions: parentListing.location_instructions,
+    meta: parentListing.meta,
+    company: parentListing.company,
+    company_website: parentListing.company_website,
+    performance_details: {
+      subtype: "PIECE",
+      price: parentPd?.price ?? null,
+      link: parentPd?.link ?? null,
+      website: parentPd?.website ?? null,
+      participants: piece.credits?.trim() ? piece.credits.trim() : null,
+    },
+    piece_details: organizerProgramPieceToPieceDetails(piece, getListingTitle(parentListing)),
+    listing_photos: organizerProgramPiecePhotosForDisplay(piece),
+    listing_occurrences: listingOccurrences,
   }
 }
 

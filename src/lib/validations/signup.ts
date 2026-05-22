@@ -29,6 +29,9 @@ export const operatingBudgetRangeEnum = z.enum([
 
 export const yesNoOtherEnum = z.enum(["yes", "no", "other"])
 
+/** Must match SelectBlock `otherValue` on signup forms (lowercase — not fiscal/service "OTHER"). */
+export const SIGNUP_OTHER_VALUE = "other" as const
+
 // Validation Helpers
 /**
  * Creates a schema for boolean/string union fields that must be required
@@ -68,6 +71,40 @@ const requiredNullableEnumField = <T extends z.ZodEnum<any>>(
     (val) => val !== null && val !== undefined,
     { message }
   )
+
+function requireOtherTextWhenOther(
+  value: string | null | undefined,
+  otherText: string | null | undefined,
+  message: string
+): z.ZodIssue[] {
+  if (value === SIGNUP_OTHER_VALUE && !otherText?.trim()) {
+    return [{ code: "custom", message, path: [] }]
+  }
+  return []
+}
+
+function withSignupOtherRefinements<T extends z.ZodType>(schema: T) {
+  return schema.superRefine((data, ctx) => {
+    const d = data as Record<string, unknown>
+    for (const [valueKey, otherKey, message] of [
+      ["operating_budget_range", "operating_budget_other_text", "Please describe your operating budget"],
+      ["owns_or_operates_venue", "owns_or_operates_venue_other_text", "Please provide details"],
+      ["supported_by_major_institution", "supported_by_major_institution_other_text", "Please provide details"],
+      ["classes_hosted_independently", "classes_hosted_independently_other_text", "Please provide details"],
+      ["has_501c3", "has_501c3_other_text", "Please provide details"],
+      ["referral_source", "referral_source_other", "Please tell us how you heard about us"],
+    ] as const) {
+      const issues = requireOtherTextWhenOther(
+        d[valueKey] as string | null | undefined,
+        d[otherKey] as string | null | undefined,
+        message
+      )
+      for (const issue of issues) {
+        ctx.addIssue({ ...issue, path: [otherKey] })
+      }
+    }
+  })
+}
 
 /** Coarse wizard step for redirecting after server-side validation errors */
 export type SignupErrorStep = "basic" | "eligibility" | "wrap-up" | "password"
@@ -162,7 +199,9 @@ const passwordFields = z
   })
 
 // Main Schema
-export const signupFormSchema = profileFields.merge(eligibilityFields).merge(passwordFields)
+export const signupFormSchema = withSignupOtherRefinements(
+  profileFields.merge(eligibilityFields).merge(passwordFields)
+)
 
 export type SignupFormData = z.infer<typeof signupFormSchema>
 
@@ -173,12 +212,15 @@ export const basicInfoSchema = profileFields.pick({
   email: true,
 })
 
-export const eligibilitySchema = eligibilityFields
+export const eligibilitySchema = withSignupOtherRefinements(eligibilityFields)
 
-export const wrapUpSchema = z.object({
-  referral_source: requiredNullableEnumField(referralSourceEnum, "Referral source is required"),
-  newsletter_ear_opt_in: requiredBooleanStringField("EAR newsletter preference is required"),
-  newsletter_calendar_opt_in: requiredBooleanStringField("Calendar newsletter preference is required"),
-})
+export const wrapUpSchema = withSignupOtherRefinements(
+  z.object({
+    referral_source: requiredNullableEnumField(referralSourceEnum, "Referral source is required"),
+    newsletter_ear_opt_in: requiredBooleanStringField("EAR newsletter preference is required"),
+    newsletter_calendar_opt_in: requiredBooleanStringField("Calendar newsletter preference is required"),
+    referral_source_other: z.string().optional().nullable(),
+  })
+)
 
 export const passwordSchema = passwordFields

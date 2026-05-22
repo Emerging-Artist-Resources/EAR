@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { FavoriteButton } from "@/components/ui/favorite-button"
@@ -20,6 +19,7 @@ import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { SocialHandles } from "./PublicListingDetailSections"
 import { ClampableText } from "./ClampableText"
 import { ListingOccurrencesSection } from "./ListingOccurrencesSection"
+import { FieldBlock, hasSocialHandlesContent, HeroImageWithLightbox } from "./performance-detail-shared"
 
 export type ChildListingSummary = {
   id: string
@@ -53,97 +53,6 @@ export type ChildListingSummary = {
 
 type ListingPhoto = NonNullable<PublicListingDetail["listing_photos"]>[number]
 
-function hasSocialHandlesContent(socialHandles: unknown): boolean {
-  if (!socialHandles) return false
-  let handles: Record<string, string> | null = null
-  if (typeof socialHandles === "string") {
-    try {
-      handles = JSON.parse(socialHandles) as Record<string, string>
-    } catch {
-      return socialHandles.trim().length > 0
-    }
-  } else if (typeof socialHandles === "object" && socialHandles !== null) {
-    handles = socialHandles as Record<string, string>
-  }
-  return Boolean(handles && Object.keys(handles).length > 0)
-}
-
-function FieldBlock({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="py-2">
-      <div className="font-sans text-sm font-semibold text-text-primary">{label}</div>
-      <div className="mt-0.5 font-sans text-sm text-text-primary">{children}</div>
-    </div>
-  )
-}
-
-function HeroImageWithLightbox({
-  photo,
-  credit,
-}: {
-  photo: ListingPhoto
-  credit: string | null
-}) {
-  const [lightboxOpen, setLightboxOpen] = useState(false)
-
-  useEffect(() => {
-    if (!lightboxOpen) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setLightboxOpen(false)
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [lightboxOpen])
-
-  if (!photo.url) return null
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setLightboxOpen(true)}
-        className="block w-full cursor-pointer overflow-hidden rounded-md border border-border-default text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
-        aria-label={credit ? `View image: ${credit}` : "View performance image"}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={photo.url}
-          alt={credit || "Performance image"}
-          className="aspect-[3/4] w-full object-cover"
-        />
-      </button>
-      {hasDisplayText(credit) && (
-        <p className="mt-2 font-sans text-sm text-text-muted">{credit}</p>
-      )}
-
-      {lightboxOpen && (
-        <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-ear-black/90 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Expanded performance image"
-          onClick={() => setLightboxOpen(false)}
-        >
-          <button
-            type="button"
-            className="absolute right-4 top-4 rounded-md bg-ear-off-white/10 px-3 py-1.5 font-sans text-sm text-ear-off-white hover:bg-ear-off-white/20"
-            onClick={() => setLightboxOpen(false)}
-          >
-            Close
-          </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={photo.url}
-            alt={credit || "Performance image"}
-            className="max-h-[90vh] max-w-full object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
-    </>
-  )
-}
-
 export interface PerformanceOrganizerDetailContentProps {
   listing: PublicListingDetail
   typeLabel: string
@@ -159,7 +68,6 @@ export interface PerformanceOrganizerDetailContentProps {
   saveError: string | null
   onToggleSave: () => void
   onListingClick?: (listingId: string) => void
-  onClose: () => void
   onSelectOrganizerPiece: (pieceId: string) => void
   parentListingId?: string | null
   backToParentLabel?: string | null
@@ -180,7 +88,6 @@ export function PerformanceOrganizerDetailContent({
   saveError,
   onToggleSave,
   onListingClick,
-  onClose,
   onSelectOrganizerPiece,
   parentListingId,
   backToParentLabel,
@@ -300,7 +207,11 @@ export function PerformanceOrganizerDetailContent({
               </FieldBlock>
             )}
             {hasDisplayText(participants) && (
-              <FieldBlock label="Participating Artist/Companies">{participants}</FieldBlock>
+              <FieldBlock label="Participating Artist/Companies">
+                <p className="whitespace-pre-wrap font-sans text-sm leading-6 text-text-primary">
+                  {participants}
+                </p>
+              </FieldBlock>
             )}
             {showSocial && (
               <FieldBlock label="Social Media">
@@ -348,7 +259,6 @@ export function PerformanceOrganizerDetailContent({
               const childIndex = index - embeddedPieces.length
               const child = childListings[childIndex]
               if (child && onListingClick) {
-                onClose()
                 onListingClick(child.id)
               }
             }}
@@ -410,7 +320,6 @@ export function PerformanceOrganizerDetailContent({
                 }
                 onClick={() => {
                   if (onListingClick) {
-                    onClose()
                     onListingClick(child.id)
                   }
                 }}

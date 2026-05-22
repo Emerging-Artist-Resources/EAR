@@ -2,7 +2,7 @@
 
 import { UseFormReturn } from "react-hook-form"
 import { Section } from "@/components/forms/blocks/Section"
-import { SignupFormData } from "@/lib/validations/signup"
+import { SIGNUP_OTHER_VALUE, SignupFormData } from "@/lib/validations/signup"
 import { SelectBlock } from "../forms/blocks/Select"
 
 interface SignUpEligibilityProps {
@@ -37,6 +37,7 @@ export function SignUpEligibility({ form }: SignUpEligibilityProps) {
         name="operating_budget_range"
         label="Operating budget"
         allowOther={true}
+        otherValue={SIGNUP_OTHER_VALUE}
         otherName="operating_budget_other_text"
         required
         options={[
@@ -54,6 +55,7 @@ export function SignUpEligibility({ form }: SignUpEligibilityProps) {
         form={form}
         name="owns_or_operates_venue"
         allowOther={true}
+        otherValue={SIGNUP_OTHER_VALUE}
         otherName="owns_or_operates_venue_other_text"
         required
         label={
@@ -71,6 +73,7 @@ export function SignUpEligibility({ form }: SignUpEligibilityProps) {
         form={form}
         name="supported_by_major_institution"
         allowOther={true}
+        otherValue={SIGNUP_OTHER_VALUE}
         otherName="supported_by_major_institution_other_text"
         required
         label={
@@ -88,6 +91,7 @@ export function SignUpEligibility({ form }: SignUpEligibilityProps) {
         form={form}
         name="classes_hosted_independently"
         allowOther={true}
+        otherValue={SIGNUP_OTHER_VALUE}
         otherName="classes_hosted_independently_other_text"
         required
         label={
@@ -105,6 +109,7 @@ export function SignUpEligibility({ form }: SignUpEligibilityProps) {
         form={form}
         name="has_501c3"
         allowOther={true}
+        otherValue={SIGNUP_OTHER_VALUE}
         otherName="has_501c3_other_text"
         required
         label={isOrg ? `Does ${subj} have 501(c)(3) status?` : "Do you have your 501(c)(3) status?"}
