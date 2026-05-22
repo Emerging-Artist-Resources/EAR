@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { storageService } from "@/services/storage"
-import { ImageWithBlurredFill } from "@/components/shared/ImageWithBlurredFill"
 
 const BUCKET = "event-photos"
 
@@ -41,12 +40,12 @@ export function PieceExistingImageThumbnails({ paths }: { paths: string[] }) {
     <div className="flex flex-wrap gap-2 mt-2">
       <p className="text-xs text-gray-600 w-full">Current images (upload new images below to replace)</p>
       {urls.map((src) => (
-        <ImageWithBlurredFill
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
           key={src}
           src={src}
           alt=""
-          className="rounded-md border border-gray-200"
-          frameClassName="h-20 w-20"
+          className="h-20 w-20 rounded-md object-cover border border-gray-200"
         />
       ))}
     </div>

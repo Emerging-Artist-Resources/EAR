@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { ImageWithBlurredFill } from "@/components/shared/ImageWithBlurredFill"
 
 export interface PhotoThumbnailProps {
   photo: {
@@ -47,27 +46,24 @@ export function PhotoThumbnail({
                 <span className="text-xs text-gray-400">Loading...</span>
               </div>
             )}
-            <div
-              className="h-full w-full"
-              style={{
+            <img 
+              src={photo.url} 
+              alt={photo.credit || `Photo ${photo.sort_order ?? 0}`}
+              className="w-full h-32 object-cover"
+              style={{ 
+                display: imageError ? 'none' : 'block',
                 opacity: imageLoading ? 0 : 1,
-                transition: "opacity 0.2s",
+                transition: 'opacity 0.2s'
               }}
-            >
-              <ImageWithBlurredFill
-                src={photo.url}
-                alt={photo.credit || `Photo ${photo.sort_order ?? 0}`}
-                frameClassName="h-32 w-full"
-                onError={() => {
-                  setImageError(true)
-                  setImageLoading(false)
-                }}
-                onLoad={() => {
-                  setImageLoading(false)
-                  setImageError(false)
-                }}
-              />
-            </div>
+              onError={() => {
+                setImageError(true)
+                setImageLoading(false)
+              }}
+              onLoad={() => {
+                setImageLoading(false)
+                setImageError(false)
+              }}
+            />
           </>
         )}
         {showDownload && !imageError && !imageLoading && onDownload && (

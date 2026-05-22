@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { storageService } from "@/services/storage"
 import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/organizer-program-pieces"
-import { ImageWithBlurredFill } from "@/components/shared/ImageWithBlurredFill"
 
 const PRIVATE_BUCKET = "event-photos"
 
@@ -58,13 +57,8 @@ export function OrganizerProgramPiecesPreview({ raw }: { raw: unknown }) {
           ) : null}
           <div className="flex flex-wrap gap-2 pt-1">
             {(urlsByPiece[piece.id] ?? []).map((src) => (
-              <ImageWithBlurredFill
-                key={src}
-                src={src}
-                alt=""
-                className="rounded border border-[var(--gray-200)]"
-                frameClassName="h-16 w-16"
-              />
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={src} src={src} alt="" className="h-16 w-16 rounded object-cover border border-[var(--gray-200)]" />
             ))}
           </div>
         </div>

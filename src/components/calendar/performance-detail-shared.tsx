@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { hasDisplayText, hasSocialHandlesContent } from "@/lib/listing-display"
-import { ImageWithBlurredFill } from "@/components/shared/ImageWithBlurredFill"
 
 export { hasSocialHandlesContent }
 import type { PublicListingDetail } from "./PublicListingDetailSections"
@@ -51,14 +50,14 @@ export function HeroImageWithLightbox({
       <button
         type="button"
         onClick={() => setLightboxOpen(true)}
-        className="block w-full cursor-pointer rounded-md border border-border-default text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+        className="block w-full cursor-pointer overflow-hidden rounded-md border border-border-default text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
         aria-label={credit ? `View image: ${credit}` : `View ${imageLabel}`}
       >
-        <ImageWithBlurredFill
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src={photo.url}
           alt={credit || imageLabel}
-          className="rounded-md"
-          frameClassName="aspect-[3/4] w-full"
+          className="aspect-[3/4] w-full object-cover"
         />
       </button>
       {hasDisplayText(credit) && (
