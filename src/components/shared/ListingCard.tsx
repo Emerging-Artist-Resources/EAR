@@ -9,6 +9,7 @@ import { useSavedListings } from "@/hooks/use-saved-listings"
 import { useAuth } from "@/hooks/use-auth"
 import { getCalendarListingTypeLabel } from "@/lib/listing-type-labels"
 import { cn } from "@/lib/utils"
+import { ImageWithBlurredFill } from "@/components/shared/ImageWithBlurredFill"
 
 interface ListingCardProps {
   id: string
@@ -117,13 +118,12 @@ export function ListingCard({
       onClick={onClick}
     >
       {coverImageUrl && (
-        <div className="-mx-4 -mt-4 mb-3 overflow-hidden rounded-t-lg border-b border-border-default">
-          <img
-            src={coverImageUrl}
-            alt={coverImageAlt || ""}
-            className="h-36 w-full object-cover"
-          />
-        </div>
+        <ImageWithBlurredFill
+          src={coverImageUrl}
+          alt={coverImageAlt || ""}
+          className="-mx-4 -mt-4 mb-3 rounded-t-lg border-b border-border-default"
+          frameClassName="h-36 w-full"
+        />
       )}
       {enableSave ? <ListingCardFavoriteBar listingId={id} /> : null}
       <div className="space-y-2">

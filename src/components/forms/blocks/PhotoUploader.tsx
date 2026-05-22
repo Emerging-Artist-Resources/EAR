@@ -3,6 +3,7 @@ import { UseFormReturn, Controller, useWatch, useFormState } from "react-hook-fo
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Text } from "@/components/ui/typography"
+import { ImageWithBlurredFill } from "@/components/shared/ImageWithBlurredFill"
 
 interface PhotoUploaderProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>
@@ -253,8 +254,11 @@ function PhotoUploaderInner<T extends Record<string, unknown>>({
                 key={`${f.name}-${f.size}-${f.lastModified}-${idx}`}
                 className="relative rounded-md border border-gray-200 overflow-hidden"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={previewUrls[idx]} alt={f.name} className="h-24 w-full object-cover" />
+                <ImageWithBlurredFill
+                  src={previewUrls[idx]}
+                  alt={f.name}
+                  frameClassName="h-24 w-full"
+                />
                 <div className="absolute top-1 right-1">
                   <Button
                     variant="destructive"

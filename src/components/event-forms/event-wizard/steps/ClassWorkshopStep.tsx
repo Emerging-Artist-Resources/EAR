@@ -213,12 +213,13 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
             />
             <TextField form={form} name={"classWorkshopDuration"} label="Workshop Duration" required />
             <TextField form={form} name={"price"} label="Price" required placeholder="e.g., $30, Free, $20–40 sliding scale" />
-            <TextField
+            <TextAreaField
               form={form}
               name={"classRegistrationDetails"}
-              label="Registration Link"
-              placeholder="https://…"
+              label="Registration Link & Instructions"
+              placeholder="Provide a link and/or sign-up instructions."
               required
+              rows={3}
             />
             <ListingWebsiteField form={form} note="Optional" />
           </Section>

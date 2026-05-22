@@ -24,6 +24,7 @@ import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnel
 import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
 import { Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ImageWithBlurredFill } from "@/components/shared/ImageWithBlurredFill"
 
 const PRESET_AMOUNTS = [25, 50, 100, 250, 500, 1000]
 
@@ -274,27 +275,22 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
       />
     <Card className="max-w-3xl mx-auto px-6 py-5 bg-white">
       {lockedRecipient?.donationPageImageUrl ? (
-        <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-          {/* eslint-disable-next-line @next/next/no-img-element -- public Supabase URL; avoid next/image remote config */}
-          <img
-            src={lockedRecipient.donationPageImageUrl}
-            alt={heroImageAlt}
-            className="w-full max-h-64 object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = "none"
-            }}
-          />
-        </div>
+        <ImageWithBlurredFill
+          src={lockedRecipient.donationPageImageUrl}
+          alt={heroImageAlt}
+          className="mb-4 rounded-lg border border-gray-200 bg-gray-50"
+          frameClassName="aspect-[16/9] w-full max-h-64"
+          hideOnError
+        />
       ) : effectiveOrgHero && orgHeroImageSrc && orgHeroImageReady ? (
-        <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-          {/* eslint-disable-next-line @next/next/no-img-element -- public/ static asset; shown only after preload */}
-          <img
-            src={orgHeroImageSrc}
-            alt={effectiveOrgHero.alt ?? "Emerging Artist Resources"}
-            className="w-full max-h-64 object-cover"
-            onError={() => setOrgHeroImageReady(false)}
-          />
-        </div>
+        <ImageWithBlurredFill
+          src={orgHeroImageSrc}
+          alt={effectiveOrgHero.alt ?? "Emerging Artist Resources"}
+          className="mb-4 rounded-lg border border-gray-200 bg-gray-50"
+          frameClassName="aspect-[16/9] w-full max-h-64"
+          hideOnError
+          onError={() => setOrgHeroImageReady(false)}
+        />
       ) : null}
       <div className="mb-4">
         <H2 className="text-2xl font-bold text-gray-900 mb-1">
