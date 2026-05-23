@@ -73,6 +73,12 @@ export function AuditionStep({ form }: AuditionStepProps) {
     <>
       <Section title="Audition Details">
         <TextField form={form} name={"title"} label="Audition Name" required />
+        <TextField
+          form={form}
+          name={"host"}
+          label="Hosting Organization/Individual(s)"
+          required
+        />
         <ListingWebsiteField form={form} />
         <TextAreaField
           form={form}

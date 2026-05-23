@@ -1,19 +1,11 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { FavoriteButton } from "@/components/ui/favorite-button"
 import { H3, Text } from "@/components/ui/typography"
 import { HorizontalScrollCards } from "@/components/shared/HorizontalScrollCards"
 import { ListingCard } from "@/components/shared/ListingCard"
 import { hasDisplayText } from "@/lib/listing-display"
-import type { OrganizerProgramPiecesDocument } from "@/lib/organizer-program-pieces"
-import {
-  buildOccurrencesForOrganizerProgramPiece,
-  firstOrganizerPiecePhotoCredit,
-  firstOrganizerPiecePhotoUrl,
-  organizerProgramPieceDisplayTitle,
-} from "@/lib/organizer-program-pieces-display"
 import { cn } from "@/lib/utils"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { SocialHandles } from "./PublicListingDetailSections"
@@ -27,45 +19,15 @@ import {
   InlineWebsiteLink,
   ListingTitleGroup,
 } from "./performance-detail-shared"
-
-export type ChildListingSummary = {
-  id: string
-  type: string
-  title: string
-  is_piece?: boolean
-  is_class?: boolean
-  starts_at_utc: string | null
-  ends_at_utc: string | null
-  piece_company?: string | null
-  piece_company_website?: string | null
-  piece_description?: string | null
-  choreographer?: string | null
-  class_title?: string | null
-  class_description?: string | null
-  class_organizer?: string | null
-  class_teachers?: string | null
-  class_price?: string | null
-  class_link?: string | null
-  class_style_category?: string | null
-  notes?: string | null
-  cover_image_url?: string | null
-  cover_image_credit?: string | null
-  occurrences?: Array<{
-    id: string
-    starts_at_utc: string
-    ends_at_utc: string | null
-    tz: string
-  }>
-}
+import type { ChildListingSummary } from "./PerformanceOrganizerDetailContent"
 
 type ListingPhoto = NonNullable<PublicListingDetail["listing_photos"]>[number]
 
-export interface PerformanceOrganizerDetailContentProps {
+export interface WorkshopOrganizerDetailContentProps {
   listing: PublicListingDetail
   typeLabel: string
   sortedPhotos: ListingPhoto[]
   childListings: ChildListingSummary[]
-  organizerProgramPiecesDoc: OrganizerProgramPiecesDocument | null
   showAllDates: boolean
   onShowAllDatesChange: (showAll: boolean) => void
   isAuthed: boolean
@@ -75,17 +37,15 @@ export interface PerformanceOrganizerDetailContentProps {
   saveError: string | null
   onToggleSave: () => void
   onListingClick?: (listingId: string) => void
-  onSelectOrganizerPiece: (pieceId: string) => void
   parentListingId?: string | null
   backToParentLabel?: string | null
 }
 
-export function PerformanceOrganizerDetailContent({
+export function WorkshopOrganizerDetailContent({
   listing,
   typeLabel,
   sortedPhotos,
   childListings,
-  organizerProgramPiecesDoc,
   showAllDates,
   onShowAllDatesChange,
   isAuthed,
@@ -95,39 +55,39 @@ export function PerformanceOrganizerDetailContent({
   saveError,
   onToggleSave,
   onListingClick,
-  onSelectOrganizerPiece,
   parentListingId,
   backToParentLabel,
-}: PerformanceOrganizerDetailContentProps) {
-  const pd = listing.performance_details
+}: WorkshopOrganizerDetailContentProps) {
+  const cwd = listing.class_workshop_details
   const heroPhoto = sortedPhotos[0]?.url ? sortedPhotos[0] : null
   const hasHeroPhoto = Boolean(heroPhoto?.url)
 
-  const title = pd?.title?.trim() ?? ""
-  const presentedBy = (pd?.organizer?.trim() || listing.company?.trim()) ?? ""
-  const ticketPrice = pd?.price?.trim() ?? ""
-  const ticketLink = pd?.link?.trim() ?? ""
-  const description = pd?.description?.trim() ?? ""
-  const participants =
-    pd?.event_type === "SOLO" && hasDisplayText(pd?.participants) ? pd!.participants!.trim() : ""
-  const website = pd?.website?.trim() ?? ""
+  const title = cwd?.title?.trim() ?? ""
+  const presentedBy = (cwd?.organizer?.trim() || listing.company?.trim()) ?? ""
+  const workshopPrice = cwd?.price?.trim() ?? ""
+  const dropInDetails = cwd?.drop_in_classes?.trim() ?? ""
+  const registrationDetails = cwd?.link?.trim() ?? ""
+  const description = cwd?.description?.trim() ?? ""
+  const workDetails = cwd?.workshop_details?.trim() ?? ""
+  const workshopSchedule = cwd?.classes_offered?.trim() ?? ""
+  const website = cwd?.website?.trim() ?? ""
   const notes = listing.notes?.trim() ?? ""
   const showSocial = hasSocialHandlesContent(listing.social_handles)
 
   const hasBodyText =
     hasDisplayText(title) ||
     hasDisplayText(presentedBy) ||
-    hasDisplayText(ticketPrice) ||
-    hasDisplayText(ticketLink) ||
+    hasDisplayText(workshopPrice) ||
+    hasDisplayText(dropInDetails) ||
+    hasDisplayText(registrationDetails) ||
     hasDisplayText(description) ||
-    hasDisplayText(participants) ||
+    hasDisplayText(workDetails) ||
+    hasDisplayText(workshopSchedule) ||
     showSocial ||
     hasDisplayText(website)
 
   const showBodySection = hasBodyText || hasHeroPhoto
-
-  const embeddedPieces = organizerProgramPiecesDoc?.pieces ?? []
-  const hasFeaturedWorks = embeddedPieces.length > 0 || childListings.length > 0
+  const hasFeaturedClasses = childListings.length > 0
 
   return (
     <div className="space-y-6">
@@ -177,32 +137,36 @@ export function PerformanceOrganizerDetailContent({
         >
           <div className="min-w-0 space-y-0">
             <ListingTitleGroup title={title} subtitle={presentedBy} subtitleLabel="Presented by" />
-            {(hasDisplayText(ticketPrice) || hasDisplayText(ticketLink)) && (
+            {(hasDisplayText(workshopPrice) || hasDisplayText(dropInDetails)) && (
               <div className="space-y-0">
-                {hasDisplayText(ticketPrice) && (
-                  <InlineLabelRow label="Price">{ticketPrice}</InlineLabelRow>
+                {hasDisplayText(workshopPrice) && (
+                  <InlineLabelRow label="Price">{workshopPrice}</InlineLabelRow>
                 )}
-                {hasDisplayText(ticketLink) && (
-                  <div className="py-2">
-                    <Button asChild variant="primary" size="default" className="mt-1">
-                      <a href={ticketLink} target="_blank" rel="noopener noreferrer">
-                        Get Tickets
-                      </a>
-                    </Button>
-                  </div>
+                {hasDisplayText(dropInDetails) && (
+                  <FieldBlock label="Drop-in Pricing & Details">
+                    <ClampableText text={dropInDetails} />
+                  </FieldBlock>
                 )}
               </div>
             )}
+            {hasDisplayText(registrationDetails) && (
+              <FieldBlock label="Registration Link & Instructions">
+                <ClampableText text={registrationDetails} />
+              </FieldBlock>
+            )}
             {hasDisplayText(description) && (
-              <FieldBlock label="Performance Description">
+              <FieldBlock label="Workshop Description">
                 <ClampableText text={description} />
               </FieldBlock>
             )}
-            {hasDisplayText(participants) && (
-              <FieldBlock label="Participating Artist/Companies">
-                <p className="whitespace-pre-wrap font-sans text-sm leading-6 text-text-primary">
-                  {participants}
-                </p>
+            {hasDisplayText(workDetails) && (
+              <FieldBlock label="Work Details">
+                <ClampableText text={workDetails} />
+              </FieldBlock>
+            )}
+            {hasDisplayText(workshopSchedule) && (
+              <FieldBlock label="Workshop Schedule">
+                <ClampableText text={workshopSchedule} />
               </FieldBlock>
             )}
             {showSocial && (
@@ -218,6 +182,7 @@ export function PerformanceOrganizerDetailContent({
               <HeroImageWithLightbox
                 photo={heroPhoto}
                 credit={heroPhoto.credit?.trim() ? heroPhoto.credit.trim() : null}
+                ariaLabelPrefix="workshop"
               />
             </div>
           )}
@@ -231,50 +196,18 @@ export function PerformanceOrganizerDetailContent({
         variant="performance"
       />
 
-      {hasFeaturedWorks && (
+      {hasFeaturedClasses && (
         <section className="space-y-3">
-          <H3 className="text-brand-primary">Featured Works</H3>
+          <H3 className="text-brand-primary">Featured Classes</H3>
           <HorizontalScrollCards
             cardsPerView={3}
             onCardClick={(index) => {
-              if (index < embeddedPieces.length) {
-                const p = embeddedPieces[index]
-                if (p) onSelectOrganizerPiece(p.id)
-                return
-              }
-              const childIndex = index - embeddedPieces.length
-              const child = childListings[childIndex]
+              const child = childListings[index]
               if (child && onListingClick) {
                 onListingClick(child.id)
               }
             }}
           >
-            {embeddedPieces.map((piece) => (
-              <ListingCard
-                key={piece.id}
-                id={piece.id}
-                type="performance"
-                title={organizerProgramPieceDisplayTitle(piece)}
-                is_piece
-                piece_company={piece.company?.trim() ? piece.company : null}
-                piece_company_website={piece.company_website}
-                piece_description={piece.description?.trim() ? piece.description : null}
-                choreographer={piece.choreographer}
-                notes={piece.credits}
-                occurrences={buildOccurrencesForOrganizerProgramPiece(
-                  piece,
-                  listing.listing_occurrences,
-                )}
-                coverImageUrl={firstOrganizerPiecePhotoUrl(piece)}
-                coverImageAlt={
-                  firstOrganizerPiecePhotoCredit(piece)
-                    ? `Listing photo: ${firstOrganizerPiecePhotoCredit(piece)}`
-                    : `${organizerProgramPieceDisplayTitle(piece)} — photo`
-                }
-                enableSave={false}
-                onClick={() => onSelectOrganizerPiece(piece.id)}
-              />
-            ))}
             {childListings.map((child) => (
               <ListingCard
                 key={child.id}
@@ -283,11 +216,6 @@ export function PerformanceOrganizerDetailContent({
                 title={child.title}
                 starts_at_utc={child.starts_at_utc}
                 ends_at_utc={child.ends_at_utc}
-                is_piece={child.is_piece}
-                piece_company={child.piece_company}
-                piece_company_website={child.piece_company_website}
-                piece_description={child.piece_description}
-                choreographer={child.choreographer}
                 is_class={child.is_class}
                 class_title={child.class_title}
                 class_description={child.class_description}

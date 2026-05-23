@@ -166,6 +166,7 @@ export function AuditionDetails({ details }: { details: NonNullable<AdminEventDe
   return (
     <div className="grid gap-2">
       <Row label="Title" value={details.title} />
+      <Row label="Hosting Organization/Individual(s)" value={details.host} />
       <Row label="Description" value={details.description} />
       <Row label="Eligibility" value={details.eligibility} />
       <Row label="Compensation" value={details.compensation} />

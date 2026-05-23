@@ -58,6 +58,37 @@ export function isOrganizerPerformanceListing(
   return perf?.subtype === "ORGANIZER"
 }
 
+/** Parent workshop listing (not a class linked to a workshop). */
+export function isOrganizerWorkshopListing(
+  listing: PublicListingDetail | null | undefined,
+): boolean {
+  if (!listing || listing.type !== "class") return false
+  const cwd = normalizeListingRelation(listing.class_workshop_details)
+  if (!cwd || cwd.class_workshop_type !== "WORKSHOP") return false
+  return cwd.parent_listing_id == null
+}
+
+/** Standalone class or class linked to a workshop (not a workshop listing). */
+export function isClassListingDetail(
+  listing: PublicListingDetail | null | undefined,
+): boolean {
+  if (!listing || listing.type !== "class") return false
+  const cwd = normalizeListingRelation(listing.class_workshop_details)
+  return cwd?.class_workshop_type === "CLASS"
+}
+
+export function isAuditionListingDetail(
+  listing: PublicListingDetail | null | undefined,
+): boolean {
+  return listing?.type === "audition"
+}
+
+export function isOpportunityListingDetail(
+  listing: PublicListingDetail | null | undefined,
+): boolean {
+  return listing?.type === "creative"
+}
+
 export function hasSocialHandlesContent(socialHandles: unknown): boolean {
   if (!socialHandles) return false
   let handles: Record<string, string> | null = null

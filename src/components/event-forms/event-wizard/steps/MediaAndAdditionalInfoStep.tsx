@@ -1,9 +1,11 @@
 "use client"
 
+import type { MutableRefObject } from "react"
 import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
+import { PieceExistingImageThumbnails } from "@/components/forms/blocks/PieceExistingImageThumbnails"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { ListingFeeSection } from "./performance/ListingFeeSection"
@@ -14,9 +16,14 @@ import { useMemo } from "react"
 interface MediaAndAdditionalInfoStepProps {
   form: UseFormReturn<EventFormData>
   eventType: EventType
+  existingPhotosRef?: MutableRefObject<Array<{ path: string; credit?: string | null }>>
 }
 
-export function MediaAndAdditionalInfoStep({ form, eventType }: MediaAndAdditionalInfoStepProps) {
+export function MediaAndAdditionalInfoStep({
+  form,
+  eventType,
+  existingPhotosRef,
+}: MediaAndAdditionalInfoStepProps) {
   const perfSubtype = useWatch({
     control: form.control,
     name: "type" as Path<EventFormData>,
@@ -61,15 +68,21 @@ export function MediaAndAdditionalInfoStep({ form, eventType }: MediaAndAddition
       ? "Upload up to 5 images (recommended)."
       : "Images are highly encouraged for marketing! Please upload up to 5 images."
 
+  const existingPhotoPaths =
+    existingPhotosRef?.current?.map((p) => p.path).filter(Boolean) ?? []
+
   return (
     <>
       <Section title="Media Uploads">
-        <PhotoUploader
-          form={form}
-          name={"promoFiles"}
-          label={promoImagesLabel}
-          description={promoImagesDescription}
-        />
+        <div>
+          <PieceExistingImageThumbnails paths={existingPhotoPaths} />
+          <PhotoUploader
+            form={form}
+            name={"promoFiles"}
+            label={promoImagesLabel}
+            description={promoImagesDescription}
+          />
+        </div>
         <TextAreaField
           form={form}
           name={"credits"}

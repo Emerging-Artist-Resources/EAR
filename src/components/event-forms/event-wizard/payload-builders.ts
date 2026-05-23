@@ -493,6 +493,7 @@ export function buildAuditionPayload(
     base: buildBasePayload(data, userInfo),
     details: {
       title: data.title ?? "",
+      host: (data.host ?? "").trim(),
       description: data.description ?? "",
       eligibility: data.eligibility ?? "",
       compensation: data.compensation ?? "",

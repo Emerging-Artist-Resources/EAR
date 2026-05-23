@@ -463,6 +463,7 @@ export const auditionStep2Schema = baseSchema
   .merge(auditionFields)
   .pick({
     title: true,
+    host: true,
     description: true,
     eligibility: true,
     compensation: true,
@@ -490,6 +491,13 @@ export const auditionStep2Schema = baseSchema
         code: "custom",
         path: ["title"],
         message: "Title is required",
+      })
+    }
+    if (!data.host || data.host.trim() === "") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["host"],
+        message: "Hosting organization or individual(s) is required",
       })
     }
     if (!data.description || data.description.trim() === "") {

@@ -1,15 +1,9 @@
 "use client"
 
-import { useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { FavoriteButton } from "@/components/ui/favorite-button"
 import { H3, Text } from "@/components/ui/typography"
-import {
-  hasDisplayText,
-  hasSocialHandlesContent,
-  normalizePublicListingRelations,
-} from "@/lib/listing-display"
+import { hasDisplayText } from "@/lib/listing-display"
 import { cn } from "@/lib/utils"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { SocialHandles } from "./PublicListingDetailSections"
@@ -17,6 +11,7 @@ import { ClampableText } from "./ClampableText"
 import { ListingOccurrencesSection } from "./ListingOccurrencesSection"
 import {
   FieldBlock,
+  hasSocialHandlesContent,
   HeroImageWithLightbox,
   InlineLabelRow,
   InlineWebsiteLink,
@@ -25,7 +20,7 @@ import {
 
 type ListingPhoto = NonNullable<PublicListingDetail["listing_photos"]>[number]
 
-export interface PerformancePieceDetailContentProps {
+export interface ClassDetailContentProps {
   listing: PublicListingDetail
   typeLabel: string
   sortedPhotos: ListingPhoto[]
@@ -38,16 +33,26 @@ export interface PerformancePieceDetailContentProps {
   saveError: string | null
   onToggleSave: () => void
   onListingClick?: (listingId: string) => void
-  /** When set, back link calls this instead of `onListingClick(parentListingId)`. */
-  onBackToParent?: () => void
   parentListingId?: string | null
   backToParentLabel?: string | null
-  /** When false, hides save (e.g. embedded organizer program pieces). */
-  showSave?: boolean
 }
 
-export function PerformancePieceDetailContent({
-  listing: listingInput,
+function formatLedBy(
+  organizer: string,
+  teachers: string,
+  company: string,
+): string {
+  const org = organizer.trim()
+  const teach = teachers.trim()
+  const co = company.trim()
+  if (org && teach && org !== teach) {
+    return `${org}; ${teach}`
+  }
+  return org || teach || co
+}
+
+export function ClassDetailContent({
+  listing,
   typeLabel,
   sortedPhotos,
   showAllDates,
@@ -59,54 +64,45 @@ export function PerformancePieceDetailContent({
   saveError,
   onToggleSave,
   onListingClick,
-  onBackToParent,
   parentListingId,
   backToParentLabel,
-  showSave = true,
-}: PerformancePieceDetailContentProps) {
-  const listing = useMemo(
-    () => normalizePublicListingRelations(listingInput),
-    [listingInput],
-  )
-
-  const piece = listing.piece_details
-  const pd = listing.performance_details
-
+}: ClassDetailContentProps) {
+  const cwd = listing.class_workshop_details
   const heroPhoto = sortedPhotos[0]?.url ? sortedPhotos[0] : null
   const hasHeroPhoto = Boolean(heroPhoto?.url)
 
-  const title = piece?.piece_title?.trim() ?? ""
-  const presentedBy = piece?.piece_company?.trim() ?? ""
-  const ticketPrice = pd?.price?.trim() ?? ""
-  const ticketLink = pd?.link?.trim() ?? ""
-  const description = piece?.piece_description?.trim() ?? ""
-  const artistCredit =
-    (pd?.participants?.trim() || piece?.choreographer?.trim()) ?? ""
-  const website =
-    (pd?.website?.trim() ||
-      piece?.piece_company_website?.trim() ||
-      listing.company_website?.trim()) ??
-    ""
+  const title = cwd?.title?.trim() ?? ""
+  const ledBy = formatLedBy(
+    cwd?.organizer?.trim() ?? "",
+    cwd?.teachers?.trim() ?? "",
+    listing.company?.trim() ?? "",
+  )
+  const price = cwd?.price?.trim() ?? ""
+  const registrationDetails = cwd?.link?.trim() ?? ""
+  const description = cwd?.description?.trim() ?? ""
+  const website = cwd?.website?.trim() ?? ""
   const notes = listing.notes?.trim() ?? ""
   const showSocial = hasSocialHandlesContent(listing.social_handles)
 
   const hasBodyText =
     hasDisplayText(title) ||
-    hasDisplayText(presentedBy) ||
-    hasDisplayText(ticketPrice) ||
-    hasDisplayText(ticketLink) ||
+    hasDisplayText(ledBy) ||
+    hasDisplayText(price) ||
+    hasDisplayText(registrationDetails) ||
     hasDisplayText(description) ||
-    hasDisplayText(artistCredit) ||
     showSocial ||
     hasDisplayText(website)
 
   const showBodySection = hasBodyText || hasHeroPhoto
-  const showBackToParent =
-    Boolean(parentListingId && backToParentLabel && (onBackToParent || onListingClick))
+
+  const showBackToParent = Boolean(
+    parentListingId && backToParentLabel && onListingClick,
+  )
 
   const handleBackToParent = () => {
-    if (onBackToParent) onBackToParent()
-    else if (onListingClick && parentListingId) onListingClick(parentListingId)
+    if (onListingClick && parentListingId) {
+      onListingClick(parentListingId)
+    }
   }
 
   return (
@@ -115,7 +111,7 @@ export function PerformancePieceDetailContent({
         <Badge variant="primary" size="sm">
           {typeLabel}
         </Badge>
-        {(showBackToParent || (showSave && isAuthed)) && (
+        {(showBackToParent || isAuthed) && (
           <div className="flex shrink-0 flex-wrap items-center justify-end gap-3">
             {showBackToParent && (
               <button
@@ -126,7 +122,7 @@ export function PerformancePieceDetailContent({
                 ← {backToParentLabel}
               </button>
             )}
-            {showSave && isAuthed && (
+            {isAuthed && (
               <div className="flex items-center gap-2">
                 {saveError && <Text className="text-status-error-fg">{saveError}</Text>}
                 <FavoriteButton
@@ -157,33 +153,16 @@ export function PerformancePieceDetailContent({
           )}
         >
           <div className="min-w-0 space-y-0">
-            <ListingTitleGroup title={title} subtitle={presentedBy} subtitleLabel="Presented by" />
-            {(hasDisplayText(ticketPrice) || hasDisplayText(ticketLink)) && (
-              <div className="space-y-0">
-                {hasDisplayText(ticketPrice) && (
-                  <InlineLabelRow label="Price">{ticketPrice}</InlineLabelRow>
-                )}
-                {hasDisplayText(ticketLink) && (
-                  <div className="py-2">
-                    <Button asChild variant="primary" size="default" className="mt-1">
-                      <a href={ticketLink} target="_blank" rel="noopener noreferrer">
-                        Get Tickets
-                      </a>
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-            {hasDisplayText(description) && (
-              <FieldBlock label="Piece Description">
-                <ClampableText text={description} />
+            <ListingTitleGroup title={title} subtitle={ledBy} subtitleLabel="Led by" />
+            {hasDisplayText(price) && <InlineLabelRow label="Price">{price}</InlineLabelRow>}
+            {hasDisplayText(registrationDetails) && (
+              <FieldBlock label="Registration Link & Instructions">
+                <ClampableText text={registrationDetails} />
               </FieldBlock>
             )}
-            {hasDisplayText(artistCredit) && (
-              <FieldBlock label="Artist Credit">
-                <p className="whitespace-pre-wrap font-sans text-sm leading-6 text-text-primary">
-                  {artistCredit}
-                </p>
+            {hasDisplayText(description) && (
+              <FieldBlock label="Class Description">
+                <ClampableText text={description} />
               </FieldBlock>
             )}
             {showSocial && (
@@ -199,8 +178,7 @@ export function PerformancePieceDetailContent({
               <HeroImageWithLightbox
                 photo={heroPhoto}
                 credit={heroPhoto.credit?.trim() ? heroPhoto.credit.trim() : null}
-                creditLabel="Image credit"
-                ariaLabelPrefix="piece"
+                ariaLabelPrefix="class"
               />
             </div>
           )}

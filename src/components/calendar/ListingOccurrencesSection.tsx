@@ -9,6 +9,7 @@ import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { FieldRow } from "./PublicListingDetailSections"
 import { ListingLocationDisplay } from "./ListingLocationDisplay"
 import { H3, H4 } from "@/components/ui/typography"
+import { DetailAccentPanel, DetailSectionCard } from "./performance-detail-shared"
 
 function getOccurrenceLocation(
   occ: NonNullable<PublicListingDetail["listing_occurrences"]>[number] | undefined,
@@ -74,6 +75,8 @@ export interface ListingOccurrencesSectionProps {
   onShowAllDatesChange: (showAll: boolean) => void
   opportunityDatesSummary?: string | null
   variant?: ListingOccurrencesSectionVariant
+  /** When true, deadline occurrences are omitted (e.g. shown in audition application section). */
+  hideDeadlines?: boolean
   className?: string
 }
 
@@ -83,6 +86,7 @@ export function ListingOccurrencesSection({
   onShowAllDatesChange,
   opportunityDatesSummary = null,
   variant = "legacy",
+  hideDeadlines = false,
   className,
 }: ListingOccurrencesSectionProps) {
   const { hasSingleLocation, singleLocation } = useMemo(
@@ -95,7 +99,6 @@ export function ListingOccurrencesSection({
   }
 
   const isPerformance = variant === "performance"
-  const occurrenceBorderClass = isPerformance ? "border-brand-primary" : "border-primary-300"
 
   const inner = (
     <div className="space-y-0">
@@ -118,7 +121,9 @@ export function ListingOccurrencesSection({
       {listing.listing_occurrences && listing.listing_occurrences.length > 0 && (
         <div className={isPerformance ? undefined : "mt-4"}>
           {(() => {
-            const deadlines = listing.listing_occurrences
+            const deadlines = hideDeadlines
+              ? []
+              : listing.listing_occurrences
               .filter((o) => o.occurrence_type === "deadline")
               .sort(
                 (a, b) =>
@@ -141,14 +146,11 @@ export function ListingOccurrencesSection({
                 occurrenceLocation && listingHasLocationDisplay(occurrenceLocation)
 
               return (
-                <div
+                <DetailAccentPanel
                   key={o.id}
-                  className={cn(
-                    "border-l-4 pl-4 py-2 bg-surface-panel rounded-r",
-                    occurrenceBorderClass,
-                  )}
+                  className={cn("space-y-1", !isPerformance && "border-primary-300")}
                 >
-                  <div className="font-header text-xl font-semibold text-text-primary mb-1">
+                  <div className="mb-1 font-header text-xl font-semibold text-text-primary">
                     {formatOccurrenceRangeEST(o.starts_at_utc, o.ends_at_utc)}
                   </div>
                   {!hasSingleLocation && hasLocation && occurrenceLocation && (
@@ -158,7 +160,7 @@ export function ListingOccurrencesSection({
                       variant={isPerformance ? "performance-inline" : "inline"}
                     />
                   )}
-                </div>
+                </DetailAccentPanel>
               )
             }
 
@@ -208,10 +210,9 @@ export function ListingOccurrencesSection({
 
   if (isPerformance) {
     return (
-      <section className={cn("space-y-3", className)}>
-        <H3 className="text-brand-primary">Dates &amp; Times</H3>
-        <div className="border border-border-default rounded-md bg-surface-panel p-4">{inner}</div>
-      </section>
+      <DetailSectionCard title="Dates & Times" className={className}>
+        {inner}
+      </DetailSectionCard>
     )
   }
 

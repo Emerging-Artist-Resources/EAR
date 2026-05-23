@@ -591,7 +591,11 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
         )
       )}
       {step === 3 && eventType && (
-        <MediaAndAdditionalInfoStep form={form} eventType={eventType} />
+        <MediaAndAdditionalInfoStep
+          form={form}
+          eventType={eventType}
+          existingPhotosRef={listingId ? existingPhotosRef : undefined}
+        />
       )}
 
       <div className="flex items-center justify-between">

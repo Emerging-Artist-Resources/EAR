@@ -52,11 +52,14 @@ export type PublicListingDetail = {
   } | null
   audition_details?: {
     title?: string
+    host?: string | null
     description?: string
     eligibility?: string
     compensation?: string
     instructions?: string
     website?: string | null
+    pre_audition_classes?: string | null
+    fee_amount?: string | null
   } | null
   creative_details?: {
     title?: string
@@ -67,12 +70,16 @@ export type PublicListingDetail = {
     requirements?: string
     link?: string
     website?: string | null
+    fee?: "PAY_FEE" | "PROVIDE" | "EXPLAIN" | null
+    fee_amount?: string | null
+    artist_type?: "ESTABLISHED" | "EMERGING" | null
   } | null
   class_workshop_details?: {
     class_workshop_type?: "CLASS" | "WORKSHOP"
     title?: string
     description?: string
     organizer?: string
+    teachers?: string | null
     price?: string | null
     link?: string | null
     website?: string | null
@@ -85,11 +92,30 @@ export type PublicListingDetail = {
   } | null
 }
 
-export function FieldRow({ label, value }: { label: string; value?: React.ReactNode }) {
+function formatFieldLabel(label: string): string {
+  return label.endsWith(":") ? label : `${label}:`
+}
+
+export function FieldRow({
+  label,
+  value,
+  inline = false,
+}: {
+  label: string
+  value?: React.ReactNode
+  inline?: boolean
+}) {
   if (value === undefined || value === null || value === "") return null
+  if (inline) {
+    return (
+      <p className="py-2 font-sans text-sm text-text-primary">
+        <span className="font-semibold">{formatFieldLabel(label)}</span> {value}
+      </p>
+    )
+  }
   return (
     <div className="py-2">
-      <div className="font-sans text-sm text-text-muted mb-1">{label}:</div>
+      <div className="font-sans text-sm text-text-muted mb-1">{formatFieldLabel(label)}</div>
       <div className="font-sans text-sm text-text-primary">{value}</div>
     </div>
   )
@@ -103,6 +129,7 @@ export function WebsiteLinkRow({ label, href }: { label: string; href?: string |
   return (
     <FieldRow
       label={label}
+      inline
       value={
         <a className={linkClass} href={url} target="_blank" rel="noopener noreferrer">
           {url}
@@ -131,21 +158,7 @@ export function PieceDetails({ details }: { details: NonNullable<PublicListingDe
       )}
       <FieldRow label="Piece Title" value={details.piece_title} />
       <FieldRow label="Company/Artist Name" value={details.piece_company} />
-      <FieldRow 
-        label="Company/Artist Website" 
-        value={
-          details.piece_company_website ? (
-            <a 
-              className="text-primary-600 hover:text-primary-700 underline" 
-              href={details.piece_company_website} 
-              target="_blank" 
-              rel="noopener noreferrer"
-            >
-              {details.piece_company_website}
-            </a>
-          ) : undefined
-        } 
-      />
+      <WebsiteLinkRow label="Company/Artist Website" href={details.piece_company_website} />
       <FieldRow label="Piece Description" value={details.piece_description} />
       <FieldRow label="Choreographer/Creator" value={details.choreographer} />
     </>
@@ -174,7 +187,7 @@ export function ClassDetails({ details }: { details: NonNullable<PublicListingDe
       <FieldRow label="Title" value={details.title} />
       <FieldRow label="Description" value={details.description} />
       <FieldRow label="Duration" value={details.duration} />
-      <FieldRow label="Price" value={details.price} />
+      <FieldRow label="Price" value={details.price} inline />
       <FieldRow 
         label="Registration link" 
         value={
@@ -224,21 +237,7 @@ export function PerformanceDetails({ details }: { details: NonNullable<PublicLis
       />
       <FieldRow label="Name" value={details.title} />
       <FieldRow label="Organizer / Presenting Company" value={details.organizer} />
-      <FieldRow 
-        label="Website" 
-        value={
-          details.website ? (
-            <a 
-              className="text-primary-600 hover:text-primary-700 underline" 
-              href={details.website} 
-              target="_blank" 
-              rel="noopener noreferrer"
-            >
-              {details.website}
-            </a>
-          ) : undefined
-        } 
-      />
+      <WebsiteLinkRow label="Website" href={details.website} />
       <FieldRow 
         label="Ticket Link" 
         value={
@@ -254,7 +253,7 @@ export function PerformanceDetails({ details }: { details: NonNullable<PublicLis
           ) : undefined
         } 
       />
-      <FieldRow label="Ticket Cost" value={details.price} />
+      <FieldRow label="Price" value={details.price} inline />
       <FieldRow label="Short Show Description" value={details.description} />
     </>
   )
@@ -284,7 +283,7 @@ export function WorkshopDetails({ details }: { details: NonNullable<PublicListin
       <FieldRow label="Description" value={details.description} />
       <FieldRow label="Duration" value={details.duration} />
       <FieldRow label="Organizer" value={details.organizer} />
-      <FieldRow label="Price" value={details.price} />
+      <FieldRow label="Price" value={details.price} inline />
       <FieldRow 
         label="Registration link" 
         value={
@@ -312,6 +311,7 @@ export function WorkshopDetails({ details }: { details: NonNullable<PublicListin
 export function AuditionDetails({ details }: { details: NonNullable<PublicListingDetail['audition_details']> }) {
   const hasContent = 
     details.title ||
+    details.host ||
     details.description ||
     details.eligibility ||
     details.compensation ||
@@ -323,6 +323,9 @@ export function AuditionDetails({ details }: { details: NonNullable<PublicListin
   return (
     <>
       <FieldRow label="Title" value={details.title} />
+      {details.host ? (
+        <p className="py-2 font-sans text-sm text-text-primary">{details.host}</p>
+      ) : null}
       <FieldRow label="Description" value={details.description} />
       <FieldRow label="Eligibility" value={details.eligibility} />
       <FieldRow label="Compensation" value={details.compensation} />
@@ -350,7 +353,9 @@ export function CreativeDetails({ details }: { details: NonNullable<PublicListin
     <>
       <FieldRow label="Opportunity Name" value={details.title} />
       <FieldRow label="Opportunity Description" value={details.description} />
-      <FieldRow label="Hosting Organization/Individual(s)" value={details.host} />
+      {details.host ? (
+        <p className="py-2 font-sans text-sm text-text-primary">{details.host}</p>
+      ) : null}
       <WebsiteLinkRow label="Website" href={details.website} />
       <FieldRow label="Opportunity Dates" value={details.dates} />
       <FieldRow label="What is Offered" value={details.compensation} />

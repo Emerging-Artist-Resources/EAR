@@ -35,10 +35,18 @@ import {
 } from "./PerformanceOrganizerDetailContent"
 import { PerformancePieceDetailContent } from "./PerformancePieceDetailContent"
 import {
+  isAuditionListingDetail,
+  isOpportunityListingDetail,
+  isClassListingDetail,
   isOrganizerPerformanceListing,
+  isOrganizerWorkshopListing,
   isPiecePerformanceListing,
   normalizePublicListingRelations,
 } from "@/lib/listing-display"
+import { WorkshopOrganizerDetailContent } from "./WorkshopOrganizerDetailContent"
+import { ClassDetailContent } from "./ClassDetailContent"
+import { AuditionDetailContent } from "./AuditionDetailContent"
+import { OpportunityDetailContent } from "./OpportunityDetailContent"
 
 function getTypeLabel(type: string): string {
   return getCalendarListingTypeLabel(type)
@@ -144,7 +152,17 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
   const typeLabel = listing ? getTypeLabel(listing.type) : ""
   const isOrganizerPerformance = isOrganizerPerformanceListing(listing)
   const isPiecePerformance = isPiecePerformanceListing(listing)
-  const isPerformanceRedesign = isOrganizerPerformance || isPiecePerformance
+  const isOrganizerWorkshop = isOrganizerWorkshopListing(listing)
+  const isClassDetail = isClassListingDetail(listing)
+  const isAuditionDetail = isAuditionListingDetail(listing)
+  const isOpportunityDetail = isOpportunityListingDetail(listing)
+  const isPerformanceRedesign =
+    isOrganizerPerformance ||
+    isPiecePerformance ||
+    isOrganizerWorkshop ||
+    isClassDetail ||
+    isAuditionDetail ||
+    isOpportunityDetail
 
   const parentListingId =
     listing?.piece_details?.parent_listing_id || listing?.class_workshop_details?.parent_listing_id || null
@@ -253,6 +271,28 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               parentListingId={parentListingId}
               backToParentLabel={backToParentLabel}
             />
+          ) : isOrganizerWorkshop ? (
+            <WorkshopOrganizerDetailContent
+              listing={listing}
+              typeLabel={typeLabel}
+              sortedPhotos={sortedPhotos}
+              childListings={childListings}
+              showAllDates={showAllDates}
+              onShowAllDatesChange={setShowAllDates}
+              isAuthed={isAuthed}
+              isSaved={isSaved}
+              saving={saving}
+              savingLoading={savingLoading}
+              saveError={saveError}
+              onToggleSave={() => {
+                if (!saving && !savingLoading) {
+                  void toggleSave()
+                }
+              }}
+              onListingClick={navigateToListing}
+              parentListingId={parentListingId}
+              backToParentLabel={backToParentLabel}
+            />
           ) : isPiecePerformance ? (
             <PerformancePieceDetailContent
               listing={listing}
@@ -260,6 +300,67 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               sortedPhotos={sortedPhotos}
               showAllDates={showAllDates}
               onShowAllDatesChange={setShowAllDates}
+              isAuthed={isAuthed}
+              isSaved={isSaved}
+              saving={saving}
+              savingLoading={savingLoading}
+              saveError={saveError}
+              onToggleSave={() => {
+                if (!saving && !savingLoading) {
+                  void toggleSave()
+                }
+              }}
+              onListingClick={navigateToListing}
+              parentListingId={parentListingId}
+              backToParentLabel={backToParentLabel}
+            />
+          ) : isClassDetail ? (
+            <ClassDetailContent
+              listing={listing}
+              typeLabel={typeLabel}
+              sortedPhotos={sortedPhotos}
+              showAllDates={showAllDates}
+              onShowAllDatesChange={setShowAllDates}
+              isAuthed={isAuthed}
+              isSaved={isSaved}
+              saving={saving}
+              savingLoading={savingLoading}
+              saveError={saveError}
+              onToggleSave={() => {
+                if (!saving && !savingLoading) {
+                  void toggleSave()
+                }
+              }}
+              onListingClick={navigateToListing}
+              parentListingId={parentListingId}
+              backToParentLabel={backToParentLabel}
+            />
+          ) : isAuditionDetail ? (
+            <AuditionDetailContent
+              listing={listing}
+              typeLabel={typeLabel}
+              sortedPhotos={sortedPhotos}
+              showAllDates={showAllDates}
+              onShowAllDatesChange={setShowAllDates}
+              isAuthed={isAuthed}
+              isSaved={isSaved}
+              saving={saving}
+              savingLoading={savingLoading}
+              saveError={saveError}
+              onToggleSave={() => {
+                if (!saving && !savingLoading) {
+                  void toggleSave()
+                }
+              }}
+              onListingClick={navigateToListing}
+              parentListingId={parentListingId}
+              backToParentLabel={backToParentLabel}
+            />
+          ) : isOpportunityDetail ? (
+            <OpportunityDetailContent
+              listing={listing}
+              typeLabel={typeLabel}
+              sortedPhotos={sortedPhotos}
               isAuthed={isAuthed}
               isSaved={isSaved}
               saving={saving}
@@ -435,7 +536,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                 <div className="space-y-0">
                   {sortedPhotos.length > 0 && (
                     <div className="py-2 col-span-2">
-                      <Text className="text-text-muted mb-2">Photos</Text>
+                      <Text className="text-text-muted mb-2">Photos:</Text>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {sortedPhotos.map((photo) => (
                           <PhotoThumbnail
