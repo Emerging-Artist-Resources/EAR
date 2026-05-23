@@ -8,7 +8,7 @@ import { listingHasLocationDisplay } from "@/lib/location-display"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { FieldRow } from "./PublicListingDetailSections"
 import { ListingLocationDisplay } from "./ListingLocationDisplay"
-import { H3, H4 } from "@/components/ui/typography"
+import { H4 } from "@/components/ui/typography"
 import { DetailAccentPanel, DetailSectionCard } from "./performance-detail-shared"
 
 function getOccurrenceLocation(
