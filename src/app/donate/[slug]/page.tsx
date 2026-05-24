@@ -1,10 +1,33 @@
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { DonationForm } from "@/components/donations/DonationForm"
 import { getProfileBySlugForDonationRepo } from "@/features/profile/server/repository"
+import { buildArtistDonationMetadata } from "@/lib/site-metadata"
 
 type PageProps = {
   params: Promise<{ slug: string }>
   searchParams: Promise<{ success?: string; canceled?: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  const profile = await getProfileBySlugForDonationRepo(slug)
+
+  if (!profile) {
+    return { title: "Not Found" }
+  }
+
+  const displayName = profile.donation_recipient_display_name?.trim() || "this artist"
+  const description =
+    profile.donation_page_message?.trim() ||
+    `Support ${displayName} through Emerging Artist Resources fiscal sponsorship.`
+
+  return buildArtistDonationMetadata({
+    displayName,
+    description,
+    slug: profile.slug,
+    imageUrl: profile.donation_page_image_url,
+  })
 }
 
 export default async function DonateToArtistPage({ params, searchParams }: PageProps) {
