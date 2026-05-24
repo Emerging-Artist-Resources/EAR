@@ -8,10 +8,7 @@ import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
 import { PieceExistingImageThumbnails } from "@/components/forms/blocks/PieceExistingImageThumbnails"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { TextField } from "@/components/forms/blocks/TextField"
-import { ListingFeeSection } from "./performance/ListingFeeSection"
-import { ClassWorkshopListingFeeSection } from "./class-workshop/ClassWorkshopListingFeeSection"
 import { type EventType } from "../EventTypeSelector"
-import { useMemo } from "react"
 
 interface MediaAndAdditionalInfoStepProps {
   form: UseFormReturn<EventFormData>
@@ -34,23 +31,6 @@ export function MediaAndAdditionalInfoStep({
     name: "eventType" as Path<EventFormData>,
   }) as "SOLO" | "SPLIT_BILL" | "FESTIVAL" | undefined
 
-  const occurrences = useWatch({
-    control: form.control,
-    name: "occurrences" as Path<EventFormData>,
-  }) as Array<{ date: string; times: Array<{ time: string }> }> | undefined
-
-  const classWorkshopType = useWatch({
-    control: form.control,
-    name: "classWorkshopType",
-  }) as "CLASS" | "WORKSHOP" | undefined
-
-  const occurrenceCount = useMemo(() => {
-    if (!occurrences || !Array.isArray(occurrences)) return 0
-    return occurrences.length
-  }, [occurrences])
-
-  const isWorkshop = classWorkshopType === "WORKSHOP"
-  const showListingFee = eventType === "PERFORMANCE" || eventType === "CLASS"
   const isAudition = eventType === "AUDITION"
   const isClassListing = eventType === "CLASS"
   const isOpportunity = eventType === "CREATIVE"
@@ -97,19 +77,6 @@ export function MediaAndAdditionalInfoStep({
           placeholder="@username"
         />
       </Section>
-
-      {showListingFee && (
-        <>
-          {eventType === "PERFORMANCE" && <ListingFeeSection form={form} />}
-          {eventType === "CLASS" && (
-            <ClassWorkshopListingFeeSection
-              form={form}
-              isWorkshop={isWorkshop}
-              occurrenceCount={occurrenceCount}
-            />
-          )}
-        </>
-      )}
 
       <Section title="Additional Information">
         <TextAreaField

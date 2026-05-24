@@ -19,9 +19,7 @@ export const auditionFields = z
     /** Company / project website (DB: audition_details.website) */
     listingWebsite: flexibleUrlOptionalSchema,
     /**
-     * Listing fee fields (only shown if fee === "FEE")
-     * Established artists: $25
-     * Emerging artists: $35
+     * Artist type metadata (profile-driven). Platform listing fee applies only when fee === "FEE".
      */
     artistType: z.enum(["ESTABLISHED", "EMERGING"]).optional(),
   })

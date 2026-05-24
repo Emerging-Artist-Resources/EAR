@@ -111,9 +111,8 @@ export const performanceFields = z
     selectedSlots: z.array(z.string()).optional(), // keys like "YYYY-MM-DD|HH:mm" for now
 
     /**
-     * Platform listing fee fields (ORGANIZER)
-     * Established: fee path via PAY_FEE / automatic display.
-     * Emerging: waived; server forces these to null for EMERGING.
+     * Platform listing fee fields (ORGANIZER). Performance listings are currently free;
+     * server clears these via listing fee policy.
      */
     artistType: z.enum(["ESTABLISHED", "EMERGING"]).optional(),
     listingFeeOption: z.enum(["PAY_FEE", "PROVIDE", "EXPLAIN"]).optional(),

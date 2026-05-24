@@ -1,9 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
-import {
-  enforceEstablishedPlatformListingFeeFields,
-  nullEmergingPlatformListingFeeFields,
-  validateClassParentConstraint,
-} from "./create"
+import { applyPlatformListingFeePolicy } from "@/lib/fees/listing-fee-policy"
+import { validateClassParentConstraint } from "./create"
 import { calculateListingFee } from "./fee-calculator"
 import { buildPersistableListingMeta } from "./listing-meta-share"
 import type { CreateListingInput, ListingType, OccurrenceType } from "./repository-types"
@@ -135,8 +132,7 @@ export async function replaceOwnedListingRepo(
     }
   }
 
-  enforceEstablishedPlatformListingFeeFields(input.type, details)
-  nullEmergingPlatformListingFeeFields(input.type, details)
+  applyPlatformListingFeePolicy(input.type, details)
   if (input.type === "class") validateClassParentConstraint(details)
 
   const { error: detailErr } = await supabase.from(tbl).update(scrubDetailRow(details)).eq("listing_id", listingId)

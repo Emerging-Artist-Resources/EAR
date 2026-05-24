@@ -1,42 +1,27 @@
 "use client"
 
 import { UseFormReturn, Path } from "react-hook-form"
-import { useEffect } from "react"
 import { EventFormData } from "@/lib/validations/events"
-import { useProfileEligibility } from "@/hooks/use-profile-eligibility"
 import { Text } from "@/components/ui/typography"
 import { Section } from "@/components/forms/blocks/Section"
-import { AUDITION_CREATIVE_FEE_USD } from "@/lib/fees/listing-fee-policy"
-
-export type OrganizerFeeVariant = "audition" | "creative"
+import { useSyncArtistTypeFromProfile } from "@/hooks/use-sync-artist-type-from-profile"
 
 interface SimpleFeeDisplayProps {
   form: UseFormReturn<EventFormData>
   artistTypeFieldName: Path<EventFormData>
-  feeVariant: OrganizerFeeVariant
+  amountUsd: number
 }
 
 /**
  * EAR listing fee for audition / creative when the listing includes a participant fee (fee === FEE).
- * Amount is fixed ($25); organizer-entered feeAmount describes their own fee on the listing, not this charge.
+ * Organizer-entered feeAmount describes their own fee on the listing, not this charge.
  */
-export function SimpleFeeDisplay({ form, artistTypeFieldName }: SimpleFeeDisplayProps) {
-  const { artistStatus, isLoading } = useProfileEligibility()
-
-  const artistType: "ESTABLISHED" | "EMERGING" | undefined =
-    artistStatus === "established"
-      ? "ESTABLISHED"
-      : artistStatus === "emerging"
-        ? "EMERGING"
-        : undefined
-
-  useEffect(() => {
-    if (artistType && !isLoading) {
-      form.setValue(artistTypeFieldName, artistType as unknown as never)
-    }
-  }, [artistType, isLoading, form, artistTypeFieldName])
-
-  const feeUsd = AUDITION_CREATIVE_FEE_USD
+export function SimpleFeeDisplay({
+  form,
+  artistTypeFieldName,
+  amountUsd,
+}: SimpleFeeDisplayProps) {
+  const { artistType, isLoading } = useSyncArtistTypeFromProfile(form, artistTypeFieldName)
 
   if (isLoading) {
     return (
@@ -62,11 +47,9 @@ export function SimpleFeeDisplay({ form, artistTypeFieldName }: SimpleFeeDisplay
   return (
     <Section title="Fee">
       <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md space-y-2">
-        <Text className="text-sm font-medium text-gray-900">
-          Listing fee: ${feeUsd} 
-        </Text>
+        <Text className="text-sm font-medium text-gray-900">Listing fee: ${amountUsd}</Text>
         <Text className="text-xs text-gray-700">
-          You will be asked to pay ${feeUsd} after submitting.
+          You will be asked to pay ${amountUsd} after submitting.
         </Text>
       </div>
     </Section>

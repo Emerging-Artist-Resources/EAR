@@ -141,7 +141,7 @@ export const eventFormSchema = baseSchema
           message: "Artist type is required",
         })
       }
-      // Emerging artists: platform listing fee waived (no listingFeeOption / comp / waiver).
+      // Platform listing fees are waived for all artist types; server clears listingFeeOption fields.
     }
     
     // Ticket link format is enforced by flexible URL preprocessing + zod on performanceFields.link

@@ -109,9 +109,8 @@ export const classFields = z
     shortDescription: z.string().optional(), // Legacy
 
     /**
-     * Class/Workshop listing fee fields (shared field names)
-     * Established: platform listing fee (automatic).
-     * Emerging: waived server-side; these fields stay null for EMERGING profiles.
+     * Class/Workshop listing fee fields (shared field names).
+     * Class listings are currently free; server clears these via listing fee policy.
      */
     artistType: z.enum(["ESTABLISHED", "EMERGING"]).optional(),
     listingFeeOption: z.enum(["PAY_FEE", "PROVIDE", "EXPLAIN"]).optional(),

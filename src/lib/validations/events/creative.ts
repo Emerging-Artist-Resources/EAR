@@ -22,9 +22,7 @@ export const creativeFields = z
     fee: z.enum(["FEE", "NO_FEE"]).optional(),
     feeAmount: z.string().optional(),
     /**
-     * Listing fee fields (only shown if fee === "FEE")
-     * Established artists: $25
-     * Emerging artists: $35
+     * Artist type metadata (profile-driven). Platform listing fee applies only when fee === "FEE".
      */
     artistType: z.enum(["ESTABLISHED", "EMERGING"]).optional(),
     /** Host / project website (DB: creative_details.website; distinct from link = submission instructions) */

@@ -12,12 +12,15 @@ import { FestivalAssociationSection } from "./class-workshop/FestivalAssociation
 import { ClassOccurrencesPicker } from "@/components/forms/blocks/ClassOccurrencesPicker"
 import { ListingWebsiteField } from "@/components/forms/blocks/ListingWebsiteField"
 import { ShareListingSection } from "@/components/event-forms/event-wizard/steps/performance/ShareListingSection"
+import { useSyncArtistTypeFromProfile } from "@/hooks/use-sync-artist-type-from-profile"
 
 interface ClassesWorkshopsStepProps {
   form: UseFormReturn<EventFormData>
 }
 
 export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
+  useSyncArtistTypeFromProfile(form, "artistType")
+
   const classWorkshopType = useWatch({
     control: form.control,
     name: "classWorkshopType",
