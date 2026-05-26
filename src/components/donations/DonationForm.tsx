@@ -301,7 +301,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
           {lockedRecipient ? `Support ${recipientLabel}` : "Make a Donation"}
         </H2>
         {lockedRecipient || effectiveOrgHero ? (
-          <Text className="text-gray-600">Your gift is tax-deductible to the extent permitted by law.</Text>
+          <Text className="text-gray-600">Emerging Artist Resources x mignolo is a 501(c)(3) tax-exempt organization. <br />Your gift is tax-deductible to the extent permitted by law.</Text>
         ) : (
           <Text className="text-gray-600">
             Your support helps us continue providing resources for emerging artists.
