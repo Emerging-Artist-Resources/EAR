@@ -110,15 +110,15 @@ export const ProfileSettings: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <section>
-        <H3 className="mb-3">Notification Preference</H3>
-        <Card border="dashed" padding="md" className="space-y-4">
+    <div className="space-y-4">
+      <Card border="dashed" padding="md">
+        <H3 className="mb-4 text-gray-900">Notification Preference</H3>
+        <div className="space-y-3">
           {prefsLoading ? (
             <Text className="text-sm text-gray-600">Loading preferences…</Text>
           ) : (
             <>
-              <div className="rounded-md bg-gray-50 border border-gray-200 p-4 flex items-start justify-between">
+              <div className="flex items-start justify-between rounded-md border border-gray-200 bg-gray-50 p-4">
                 <div>
                   <Text className="font-semibold">EAR Newsletter</Text>
                   <Text className="text-sm text-gray-600">Receive monthly updates on EAR</Text>
@@ -128,7 +128,7 @@ export const ProfileSettings: React.FC = () => {
                   onChange={(e) => setEarNewsletter((e.target as HTMLInputElement).checked)}
                 />
               </div>
-              <div className="rounded-md bg-gray-50 border border-gray-200 p-4 flex items-start justify-between">
+              <div className="flex items-start justify-between rounded-md border border-gray-200 bg-gray-50 p-4">
                 <div>
                   <Text className="font-semibold">Artist Calendar Newsletter</Text>
                   <Text className="text-sm text-gray-600">
@@ -142,23 +142,17 @@ export const ProfileSettings: React.FC = () => {
               </div>
             </>
           )}
-          {prefsError && (
-            <Alert variant="error">{prefsError}</Alert>
-          )}
-          {prefsMessage && (
-            <Alert variant="success">{prefsMessage}</Alert>
-          )}
-          <div className="pt-2">
-            <Button onClick={handleSaveNewsletterPrefs} disabled={prefsLoading || prefsSaving}>
-              {prefsSaving ? "Saving…" : "Save Preferences"}
-            </Button>
-          </div>
-        </Card>
-      </section>
+          {prefsError && <Alert variant="error">{prefsError}</Alert>}
+          {prefsMessage && <Alert variant="success">{prefsMessage}</Alert>}
+          <Button onClick={handleSaveNewsletterPrefs} disabled={prefsLoading || prefsSaving}>
+            {prefsSaving ? "Saving…" : "Save Preferences"}
+          </Button>
+        </div>
+      </Card>
 
-      <section>
-        <H3 className="mb-3">Account Settings</H3>
-        <Card border="dashed" padding="md" className="space-y-6">
+      <Card border="dashed" padding="md">
+        <H3 className="mb-4 text-gray-900">Account Settings</H3>
+        <div className="space-y-4">
           <div>
             <Text className="font-semibold">Security</Text>
             <div className="mt-2">
@@ -184,7 +178,7 @@ export const ProfileSettings: React.FC = () => {
 
           <div className="border-t border-gray-200 pt-4">
             <Text className="font-semibold text-error-500">Danger Zone</Text>
-            <div className="mt-3 rounded-md bg-error-50 border border-red-200 p-4">
+            <div className="mt-2 rounded-md border border-red-200 bg-error-50 p-4">
               <Text className="font-semibold text-error-700">Delete Account</Text>
               <Text className="text-sm text-error-600">
                 Permanently delete your account and all associated data. This action cannot be undone.
@@ -194,8 +188,8 @@ export const ProfileSettings: React.FC = () => {
               </div>
             </div>
           </div>
-        </Card>
-      </section>
+        </div>
+      </Card>
     </div>
   )
 }

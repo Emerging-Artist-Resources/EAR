@@ -107,7 +107,7 @@ export const MyInfoTab: React.FC = () => {
 
   if (loading) {
     return (
-      <section className="mt-6">
+      <section>
         <Card border="dashed" padding="md">
           <Text>Loading profile...</Text>
         </Card>
@@ -117,7 +117,7 @@ export const MyInfoTab: React.FC = () => {
 
   if (!profile) {
     return (
-      <section className="mt-6">
+      <section>
         <Card border="dashed" padding="md">
           <Text>Profile not found</Text>
         </Card>
@@ -131,12 +131,12 @@ export const MyInfoTab: React.FC = () => {
   }
 
   return (
-    <section className="mt-6">
+    <section>
       <Card border="dashed" padding="md" className="relative">
         <div className="mb-4 flex items-center justify-between">
           <H3 className="text-gray-900">Personal Info</H3>
           {!isEditing ? (
-            <Button variant="secondary" onClick={() => setIsEditing(true)}>
+            <Button variant="secondary" className="hover:text-ear-dark-red" onClick={() => setIsEditing(true)}>
               Edit Profile
             </Button>
           ) : (

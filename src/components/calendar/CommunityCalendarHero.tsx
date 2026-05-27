@@ -11,6 +11,7 @@ export default function CommunityCalendarHero() {
         alt=""
         fill
         priority
+        sizes="100vw"
         className="object-cover object-[left_0%_top_20%] opacity-60"
       />
 

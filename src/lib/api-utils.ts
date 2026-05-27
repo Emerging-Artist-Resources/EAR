@@ -85,6 +85,10 @@ export function handleApiError(error: unknown): NextResponse<ApiResponse> {
       return createErrorResponse(ErrorCodes.UNAUTHORIZED, error.message, undefined, 401)
     }
 
+    if (error.message === 'Forbidden') {
+      return createErrorResponse(ErrorCodes.FORBIDDEN, error.message, undefined, 403)
+    }
+
     if (error.message.includes('not found') || error.message.includes('Not Found')) {
       return createErrorResponse(ErrorCodes.NOT_FOUND, error.message, undefined, 404)
     }

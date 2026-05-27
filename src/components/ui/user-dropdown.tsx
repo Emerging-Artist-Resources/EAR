@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
-import { VscAccount } from "react-icons/vsc";
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { ROUTES } from "@/lib/constants"
 
 interface UserDropdownProps {
   userName: string
@@ -66,22 +66,21 @@ export function UserDropdown({ userName, isMobile = false, onDarkSurface = false
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-fit bg-surface-panel justify-center rounded-md shadow-lg py-1 z-50 border border-border-default">
+        <div className="absolute right-0 mt-2 min-w-[10rem] bg-surface-panel rounded-md shadow-lg py-1 z-50 border border-border-default">
           <button
             onClick={() => {
-              router.push("/profile")
+              router.push(ROUTES.PROFILE)
               setIsOpen(false)
             }}
-              className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-ear-orange"
-            >
-              {/* hover:bg-surface-panel-alt */}
-              <VscAccount className="w-5 h-5" />
+            className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-ear-orange"
+          >
+            Dashboard
           </button>
-         
+
           <button
             onClick={handleSignOut}
-              className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-ear-orange"
-            >
+            className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-ear-orange"
+          >
             Sign Out
           </button>
         </div>
