@@ -1,7 +1,7 @@
 "use client"
 
 import { ServiceInquiryForm } from "@/components/forms/service-inquiry/ServiceInquiryForm"
-import { documentationInquiryContent } from "@/lib/documentation-inquiry-content"
+import { documentationInquiryContent } from "@/lib/content/documentation-inquiry"
 import {
   DOCUMENTATION_SERVICE_SLUG,
   documentationQuestionNote,

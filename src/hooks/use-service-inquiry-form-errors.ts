@@ -5,7 +5,7 @@ import {
   getFieldErrorAtPath,
   hasErrorsInFieldOrder,
 } from "@/lib/service-inquiries/form-error-path"
-import { normalizeErrorMessage } from "@/lib/validation-helpers"
+import { normalizeErrorMessage } from "@/lib/forms/validation-helpers"
 
 type UseServiceInquiryFormErrorsOptions = {
   /** Field paths in display order (supports dot paths, e.g. `answers.${questionId}`). */

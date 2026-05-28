@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Text, H2 } from "@/components/ui/typography"
-import { apiGet } from "@/lib/fetch-utils"
+import { apiGet } from "@/lib/client/fetch-utils"
 import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnelTrustHeader"
 
 /** Matches GET /api/donations/[id] — only fields needed for success polling. */

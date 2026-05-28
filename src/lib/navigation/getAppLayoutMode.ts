@@ -1,4 +1,4 @@
-import { ROUTES } from "@/lib/constants"
+import { ROUTES } from "@/lib/config/constants"
 
 export type ContentPadding = "none" | "admin" | "dashboard" | "standard"
 

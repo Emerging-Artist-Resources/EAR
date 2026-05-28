@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { FISCAL_SPONSORSHIP_INQUIRY_HREF } from "@/lib/fiscal-sponsorship-content"
+import { FISCAL_SPONSORSHIP_INQUIRY_HREF } from "@/lib/content/fiscal-sponsorship"
 import { cn } from "@/lib/utils"
 
 type FiscalSponsorshipFaqApplySectionProps = {

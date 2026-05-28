@@ -1,4 +1,4 @@
-// src/lib/googleMaps.ts
+// Google Maps Places library loader (client-side only).
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader"
 
 let placesPromise: Promise<google.maps.PlacesLibrary> | null = null

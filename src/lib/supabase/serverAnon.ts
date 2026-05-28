@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { getClientEnv } from '@/lib/env'
+import { getClientEnv } from '@/lib/config/env'
 
 export function getSupabaseServerClientAnon() {
   const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY } = getClientEnv()

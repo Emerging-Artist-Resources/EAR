@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { listMyListingsRepo } from "@/features/events/server/read";
-import { getAuthenticatedUser } from "@/lib/auth-helpers";
-import { handleApiError, createSuccessResponse, getQueryParamNumber } from "@/lib/api-utils";
+import { getAuthenticatedUser } from "@/lib/auth/helpers";
+import { handleApiError, createSuccessResponse, getQueryParamNumber } from "@/lib/api/utils";
 
 export async function GET(request: NextRequest) {
   try {

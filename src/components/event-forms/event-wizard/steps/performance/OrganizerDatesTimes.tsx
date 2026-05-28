@@ -7,7 +7,7 @@ import { Section } from "@/components/forms/blocks/Section"
 import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import type { LocationConfigFull } from "@/components/forms/blocks/DateTime/types"
 import { Button } from "@/components/ui/button"
-import { formatTime12Hour } from "@/lib/datetime-utils"
+import { formatTime12Hour } from "@/lib/datetime/utils"
 import {
   isEveryOrganizerOccurrenceRowComplete,
   isOrganizerOccurrenceRowComplete,

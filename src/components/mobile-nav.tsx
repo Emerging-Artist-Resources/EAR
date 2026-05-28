@@ -7,8 +7,9 @@ import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/use-auth"
-import { ROUTES } from "@/lib/constants"
-import { servicesNavItems } from "@/lib/services-nav"
+import { ROUTES } from "@/lib/config/constants"
+import { publicNavItems } from "@/lib/navigation/public-nav"
+import { servicesNavItems } from "@/lib/navigation/services-nav"
 import { dashboardNavItems } from "@/lib/navigation/dashboard-nav"
 import { Heart } from "lucide-react"
 
@@ -29,10 +30,10 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
   const [isOpen, setIsOpen] = useState(false)
   const { isAuthed, userName, role } = useAuth()
 
-  const publicNavigation = [
-    { name: "Calendar", href: "/calendar" },
-    { name: "Announcements", href: "/announcement" },
-  ]
+  const publicNavigation = publicNavItems.map((item) => ({
+    name: item.label,
+    href: item.href,
+  }))
 
   const adminNavigation = role === "ADMIN" ? [
     { name: "Analytics", href: "/admin/analytics" },
@@ -88,12 +89,13 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
               </Link>
             ))}
 
+            {/* TEMPORARY DISABLED DONATE BUTTON 
             <Link href="/donate" className="block" onClick={() => setIsOpen(false)}>
               <Button variant="default" className="mt-1 w-full justify-start text-ear-off-white">
                 <Heart className="mr-2 h-4 w-4 text-ear-off-white" />
                 Support Artists
               </Button>
-            </Link>
+            </Link> */}
 
             <div className="border-t border-border-default my-2" />
             <div className="px-2 py-1">

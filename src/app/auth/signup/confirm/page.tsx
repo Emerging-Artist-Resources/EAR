@@ -8,6 +8,12 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle2 } from "lucide-react"
 import { Alert } from "@/components/ui/alert"
 import { resendVerificationEmailAction } from "@/features/profile/server/resendVerification"
+import {
+  AUTH_LINK_CLASS,
+  AUTH_MUTED_TEXT_CLASS,
+  AUTH_PAGE_CARD_CLASS,
+  AUTH_PAGE_SHELL_CLASS,
+} from "@/lib/auth/page-styles"
 
 export default function SignUpConfirmPage() {
   const [email, setEmail] = useState("")
@@ -43,18 +49,18 @@ export default function SignUpConfirmPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
+    <div className={AUTH_PAGE_SHELL_CLASS}>
       <div className="max-w-md w-full">
-        <Card border="none" className="shadow-none">
-          <CardContent className="pt-8 pb-8 px-6">
-            <div className="text-center space-y-6">
+        <Card border="solid" className={AUTH_PAGE_CARD_CLASS}>
+          <CardContent className="px-6 pb-8 pt-8">
+            <div className="space-y-6 text-center">
               <div className="flex justify-center">
-                <CheckCircle2 className="h-16 w-16 text-green-600" />
+                <CheckCircle2 className="h-16 w-16 text-ear-dark-sage" />
               </div>
 
               <div className="space-y-2">
-                <H2>Account created successfully</H2>
-                <Text className="text-gray-600">
+                <H2 className="text-ear-black">Account created successfully</H2>
+                <Text className={AUTH_MUTED_TEXT_CLASS}>
                   Check your email to verify your account. Once verified, you can sign in.
                 </Text>
               </div>
@@ -81,9 +87,9 @@ export default function SignUpConfirmPage() {
                 </Button>
               </div>
 
-              <Text className="text-sm text-gray-500">
+              <Text className={`text-sm ${AUTH_MUTED_TEXT_CLASS}`}>
                 Didn&apos;t receive an email? Check your spam folder or{" "}
-                <Link href="/auth/signin" className="text-primary hover:underline">
+                <Link href="/auth/signin" className={`${AUTH_LINK_CLASS} underline`}>
                   try signing in
                 </Link>
                 .

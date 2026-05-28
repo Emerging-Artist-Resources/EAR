@@ -24,7 +24,7 @@ import {
   subWeeks,
   addDays,
 } from "date-fns"
-import { convertUTCToEST, formatOccurrenceRangeEST } from "@/lib/datetime-utils"
+import { convertUTCToEST, formatOccurrenceRangeEST } from "@/lib/datetime/utils"
 import { filterCalendarItems, getItemsForDate, handleMonthChange } from "./calendar-utils"
 import { getEventTypeColor } from "./event-colors"
 

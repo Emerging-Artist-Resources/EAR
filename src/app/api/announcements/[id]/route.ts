@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAnnouncement, updateAnnouncement, deleteAnnouncement } from "@/features/announcements/server/service"
-import { requireRole } from "@/lib/auth-helpers"
-import { createSuccessResponse, handleApiError } from "@/lib/api-utils"
+import { requireRole } from "@/lib/auth/helpers"
+import { createSuccessResponse, handleApiError } from "@/lib/api/utils"
 
 export async function GET(
   _request: NextRequest,

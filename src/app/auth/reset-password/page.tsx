@@ -9,6 +9,13 @@ import { H2, Text } from "@/components/ui/typography"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
+import { Card, CardContent } from "@/components/ui/card"
+import {
+  AUTH_LINK_CLASS,
+  AUTH_MUTED_TEXT_CLASS,
+  AUTH_PAGE_CARD_CLASS,
+  AUTH_PAGE_SHELL_CLASS,
+} from "@/lib/auth/page-styles"
 
 /**
  * After `resetPasswordForEmail`, Supabase sends users through `/auth/callback` (PKCE),
@@ -115,23 +122,23 @@ export default function ResetPasswordPage() {
 
   if (sessionReady === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <Text className="text-gray-600">Loading…</Text>
+      <div className={AUTH_PAGE_SHELL_CLASS}>
+        <Text className={AUTH_MUTED_TEXT_CLASS}>Loading…</Text>
       </div>
     )
   }
 
   if (sessionReady === false) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 gap-6">
-        <H2 className="text-center">Link invalid or expired</H2>
-        <Text className="text-gray-600 text-center max-w-md">
+      <div className={`${AUTH_PAGE_SHELL_CLASS} flex-col gap-6`}>
+        <H2 className="text-center text-ear-black">Link invalid or expired</H2>
+        <Text className={`text-center max-w-md ${AUTH_MUTED_TEXT_CLASS}`}>
           Request a new password reset link and try again.
         </Text>
         <Button asChild variant="primary">
           <Link href="/auth/forgot-password">Request new link</Link>
         </Button>
-        <Link href="/auth/signin" className="text-primary text-sm hover:opacity-80">
+        <Link href="/auth/signin" className={`text-sm ${AUTH_LINK_CLASS}`}>
           Back to sign in
         </Link>
       </div>
@@ -139,11 +146,13 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
+    <div className={AUTH_PAGE_SHELL_CLASS}>
       <div className="max-w-md w-full space-y-8">
-        <H2 className="text-center">Choose a new password</H2>
+        <H2 className="text-center text-ear-black">Choose a new password</H2>
 
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+        <Card className={AUTH_PAGE_CARD_CLASS}>
+          <CardContent className="pt-6">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="relative">
             <label htmlFor="password" className="sr-only">
               New password
@@ -163,7 +172,7 @@ export default function ResetPasswordPage() {
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ear-black/50 hover:text-ear-black focus:outline-none"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -193,9 +202,11 @@ export default function ResetPasswordPage() {
             {loading ? "Updating…" : "Update password"}
           </Button>
         </form>
+          </CardContent>
+        </Card>
 
         <div className="text-center">
-          <Link href="/auth/signin" className="text-primary text-sm hover:opacity-80">
+          <Link href="/auth/signin" className={`text-sm ${AUTH_LINK_CLASS}`}>
             Back to sign in
           </Link>
         </div>

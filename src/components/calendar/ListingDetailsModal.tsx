@@ -22,8 +22,8 @@ import {
 } from "./PublicListingDetailSections"
 import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
 import { H3, Text } from "@/components/ui/typography"
-import { getCalendarListingTypeLabel } from "@/lib/listing-type-labels"
-import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/organizer-program-pieces"
+import { getCalendarListingTypeLabel } from "@/lib/listings/type-labels"
+import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/listings/organizer-program-pieces"
 import { OrganizerProgramPieceDetailModal } from "./OrganizerProgramPieceDetailModal"
 import {
   ListingOccurrencesSection,
@@ -42,7 +42,7 @@ import {
   isOrganizerWorkshopListing,
   isPiecePerformanceListing,
   normalizePublicListingRelations,
-} from "@/lib/listing-display"
+} from "@/lib/listings/display"
 import { WorkshopOrganizerDetailContent } from "./WorkshopOrganizerDetailContent"
 import { ClassDetailContent } from "./ClassDetailContent"
 import { AuditionDetailContent } from "./AuditionDetailContent"

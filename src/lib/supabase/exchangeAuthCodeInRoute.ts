@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { createServerClient } from "@supabase/ssr"
-import { getClientEnv } from "@/lib/env"
+import { getClientEnv } from "@/lib/config/env"
 
 /**
  * PKCE code exchange for App Router GET handlers. Writes session cookies onto `redirectResponse`.

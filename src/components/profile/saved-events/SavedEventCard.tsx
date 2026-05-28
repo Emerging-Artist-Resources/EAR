@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { FavoriteButton } from "@/components/ui/favorite-button";
 import { useState, useMemo, useEffect } from "react";
 import { useSavedListings } from "@/hooks/use-saved-listings";
-import { apiPatch } from "@/lib/fetch-utils";
+import { apiPatch } from "@/lib/client/fetch-utils";
 
 interface SavedEventCardProps {
   event: SavedEvent;

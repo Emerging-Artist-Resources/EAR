@@ -16,8 +16,8 @@ import {
 import { ReviewActions } from "./ReviewActions"
 import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
 import { useAuth } from "@/hooks/use-auth"
-import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
-import { OPPORTUNITY_LISTING_TYPE_LABEL } from "@/lib/listing-type-labels"
+import { formatOccurrenceRangeEST } from "@/lib/datetime/utils"
+import { OPPORTUNITY_LISTING_TYPE_LABEL } from "@/lib/listings/type-labels"
 
 function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   if (value === undefined || value === null || value === "") return null

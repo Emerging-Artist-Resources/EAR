@@ -5,8 +5,8 @@ import {
   markProfileReviewed,
   updateFiscalSponsorshipStatus,
 } from "@/features/users/server/service"
-import { requireRole } from "@/lib/auth-helpers"
-import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api-utils"
+import { requireRole } from "@/lib/auth/helpers"
+import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api/utils"
 import { z } from "zod"
 
 const updateProfileSchema = z.object({

@@ -7,7 +7,7 @@ import {
   documentationBio,
   documentationHero,
   documentationServiceRows,
-} from "@/lib/documentation-content"
+} from "@/lib/content/documentation"
 
 export const metadata: Metadata = {
   title: "Photography & Videography",

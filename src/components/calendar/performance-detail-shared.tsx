@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { H3, Text } from "@/components/ui/typography"
-import { hasDisplayText, hasSocialHandlesContent } from "@/lib/listing-display"
+import { hasDisplayText, hasSocialHandlesContent } from "@/lib/listings/display"
 import { cn } from "@/lib/utils"
 
 export { hasSocialHandlesContent }

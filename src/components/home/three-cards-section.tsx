@@ -6,7 +6,7 @@ export function ThreeCardsSection() {
       {/* Space for tape overlapping above each card */}
       <div className="mx-auto grid max-w-7xl gap-6 pt-6 md:grid-cols-3 md:gap-4 md:pt-8 lg:gap-6">
         <NavCard
-          href="/announcement"
+          href="/about-us"
           title="About us"
           imageSrc="/images/home-about-us.png"
           tapeSrc="/accents/tape.png"

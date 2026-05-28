@@ -10,7 +10,7 @@ import { SelectBlock } from "@/components/forms/blocks/Select"
 
 import { OrganizerFlow } from "@/components/event-forms/event-wizard/steps/performance/OrganizerFlow"
 import { PieceSubmissionFlow } from "@/components/event-forms/event-wizard/steps/performance/PieceSubmissionFlow"
-import type { OrganizerProgramPiecePhoto } from "@/lib/organizer-program-pieces"
+import type { OrganizerProgramPiecePhoto } from "@/lib/listings/organizer-program-pieces"
 
 type PerfType = "ORGANIZER" | "PIECE"
 

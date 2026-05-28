@@ -1,6 +1,6 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { getUserRole, getUserRoleFromProfile } from "@/lib/authz"
-import { createErrorResponse, ErrorCodes } from "@/lib/api-utils"
+import { getUserRole, getUserRoleFromProfile } from "@/lib/auth/authz"
+import { createErrorResponse, ErrorCodes } from "@/lib/api/utils"
 import type { User } from "@supabase/supabase-js"
 
 export type UserRole = "ADMIN" | "REVIEWER" | "EDITOR" | "USER" | undefined

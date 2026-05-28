@@ -9,7 +9,12 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PageNumbers } from "@/components/forms/blocks/PageNumbers"
 import { signupFormSchema } from "@/lib/validations/signup"
 import { zodResolver } from "@/lib/vendor/react-hook-form-zod"
-import { ROUTES } from "@/lib/constants"
+import { ROUTES } from "@/lib/config/constants"
+import {
+  AUTH_LINK_CLASS,
+  AUTH_PAGE_CARD_CLASS,
+  AUTH_PAGE_SHELL_CLASS,
+} from "@/lib/auth/page-styles"
 
 interface LayoutProps {
   children: React.ReactNode
@@ -59,25 +64,27 @@ export default function SignUpWizardLayout({ children }: LayoutProps) {
 
   return (
     <FormProvider {...methods}>
-      <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
+      <div className={AUTH_PAGE_SHELL_CLASS}>
         <div className="mx-auto w-full max-w-2xl">
-          <Card>
-            <div className="relative -mx-6 -mt-6 mb-4 px-6 py-4 rounded-t-md bg-primary space-y-3">
-              <H2 className="text-center text-white">Create an EAR Account</H2>
-              <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-white/95">
-                <Link href={ROUTES.HOME} className="underline underline-offset-2 hover:text-white">
+          <Card padding="none" className={`overflow-hidden ${AUTH_PAGE_CARD_CLASS}`}>
+            <div className="bg-primary px-6 py-3.5 text-center">
+              <H2 className="text-lg font-semibold leading-tight text-primary-foreground sm:text-xl">
+                Create an EAR Account
+              </H2>
+            </div>
+            <CardContent className="space-y-5 px-6 pb-6 pt-5">
+              <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-ear-black/70 sm:text-sm">
+                <Link href={ROUTES.HOME} className={`${AUTH_LINK_CLASS} underline underline-offset-2`}>
                   Back to home
                 </Link>
-                <span className="opacity-70 hidden sm:inline" aria-hidden>
+                <span className="hidden sm:inline" aria-hidden>
                   ·
                 </span>
-                <Link href="/auth/signin" className="underline underline-offset-2 hover:text-white">
+                <Link href="/auth/signin" className={`${AUTH_LINK_CLASS} underline underline-offset-2`}>
                   Already have an account? Sign in
                 </Link>
               </div>
-            </div>
-            <CardContent>
-              <div className="flex items-center justify-center pb-5 text-sm">
+              <div className="flex items-center justify-center text-sm">
                 <PageNumbers current={step} total={4} />
               </div>
               {children}

@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { flexibleUrlOrEmptySchema } from "../flexible-url"
-import { optionalCoercedStringSchema, optionalLocationModeSchema } from "@/lib/location-mode"
+import { optionalCoercedStringSchema, optionalLocationModeSchema } from "@/lib/location/mode"
 
 /**
  * Map/autocomplete and HTML inputs often yield lat/lng as strings; coerce to number for API + DB.

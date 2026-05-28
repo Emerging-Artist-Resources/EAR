@@ -1,6 +1,6 @@
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import type { SignupFormData } from "@/lib/validations/signup"
-import { pickUniqueProfileSlug, profileSlugBaseFromName } from "@/lib/profile-slug"
+import { pickUniqueProfileSlug, profileSlugBaseFromName } from "@/lib/profile/slug"
 
 export async function createProfileRepo(data: SignupFormData, userId: string) {
   const supabase = getSupabaseServiceClient()

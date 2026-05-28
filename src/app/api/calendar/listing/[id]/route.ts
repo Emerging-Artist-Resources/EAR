@@ -2,12 +2,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getListingPublicRepo, getListingForOwnerRepo } from "@/features/events/server/read"
 import { getSupabaseServerClientAnon } from "@/lib/supabase/serverAnon"
-import { getAuthenticatedUser } from "@/lib/auth-helpers"
+import { getAuthenticatedUser } from "@/lib/auth/helpers"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { storageService } from "@/services/storage"
-import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/organizer-program-pieces"
-import { normalizePublicListingRelations } from "@/lib/listing-display"
+import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/listings/organizer-program-pieces"
+import { normalizePublicListingRelations } from "@/lib/listings/display"
 
 export async function GET(
   _req: NextRequest,

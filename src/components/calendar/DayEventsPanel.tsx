@@ -5,7 +5,7 @@ import { Modal } from "@/components/ui/modal"
 import type { CalendarItem } from "@/hooks/use-calendar"
 import { isPastCalendarDate } from "./calendar-utils"
 import { getEventTypeColor } from "./event-colors"
-import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
+import { formatOccurrenceRangeEST } from "@/lib/datetime/utils"
 import { Text } from "@/components/ui/typography"
 
 interface DayEventsPanelProps {

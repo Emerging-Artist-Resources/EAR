@@ -2,9 +2,9 @@
 
 import { useMemo } from "react"
 import { cn } from "@/lib/utils"
-import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
-import { getCalendarListingTypeLabel } from "@/lib/listing-type-labels"
-import { listingHasLocationDisplay } from "@/lib/location-display"
+import { formatOccurrenceRangeEST } from "@/lib/datetime/utils"
+import { getCalendarListingTypeLabel } from "@/lib/listings/type-labels"
+import { listingHasLocationDisplay } from "@/lib/location/display"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { FieldRow } from "./PublicListingDetailSections"
 import { ListingLocationDisplay } from "./ListingLocationDisplay"

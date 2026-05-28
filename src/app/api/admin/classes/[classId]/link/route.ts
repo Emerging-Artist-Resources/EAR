@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
-import { requireRole, hasRole } from "@/lib/auth-helpers"
-import { handleApiError, createSuccessResponse, createErrorResponse, ErrorCodes, validateRequestBody } from "@/lib/api-utils"
+import { requireRole, hasRole } from "@/lib/auth/helpers"
+import { handleApiError, createSuccessResponse, createErrorResponse, ErrorCodes, validateRequestBody } from "@/lib/api/utils"
 import { updateClassParentLinkRepo } from "@/features/events/server/admin"
 import { z } from "zod"
 

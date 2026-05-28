@@ -1,7 +1,7 @@
 // src/app/api/admin/events/[id]/reject/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { rejectEventRepo } from "@/features/events/server/repository"
-import { getAuthenticatedUser, hasRole } from "@/lib/auth-helpers"
+import { getAuthenticatedUser, hasRole } from "@/lib/auth/helpers"
 
 export async function POST(
   req: NextRequest,

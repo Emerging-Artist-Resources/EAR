@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
-import { getServerEnv } from "@/lib/env"
+import { getServerEnv } from "@/lib/config/env"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { trySendInternalDonationNotifications } from "@/lib/email/trySendInternalDonationNotifications"
 

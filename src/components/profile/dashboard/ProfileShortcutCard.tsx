@@ -1,6 +1,6 @@
 import { VscAccount } from "react-icons/vsc"
 import { DashboardSummaryCard } from "./DashboardSummaryCard"
-import { ROUTES } from "@/lib/constants"
+import { ROUTES } from "@/lib/config/constants"
 
 export function ProfileShortcutCard() {
   return (

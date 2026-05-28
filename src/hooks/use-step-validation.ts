@@ -8,8 +8,8 @@ import {
   passwordSchema,
   SIGNUP_STEPS,
 } from "@/lib/validations/signup"
-import { getFieldLabel } from "@/lib/form-helpers"
-import { normalizeErrorMessage } from "@/lib/validation-helpers"
+import { getFieldLabel } from "@/lib/forms/helpers"
+import { normalizeErrorMessage } from "@/lib/forms/validation-helpers"
 
 type Step = 1 | 2 | 3 | 4
 

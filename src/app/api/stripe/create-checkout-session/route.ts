@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
-import { getServerEnv } from "@/lib/env"
+import { getServerEnv } from "@/lib/config/env"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { getAuthenticatedUser } from "@/lib/auth-helpers"
-import { getUserRoleFromProfile } from "@/lib/authz"
-import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api-utils"
+import { getAuthenticatedUser } from "@/lib/auth/helpers"
+import { getUserRoleFromProfile } from "@/lib/auth/authz"
+import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api/utils"
 import { z } from "zod"
 
 const requestSchema = z.object({

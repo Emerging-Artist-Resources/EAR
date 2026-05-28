@@ -1,6 +1,6 @@
 import { format, startOfMonth, endOfMonth } from "date-fns"
 import type { CalendarItem } from "@/hooks/use-calendar"
-import { convertUTCToEST, getTodayESTDateString } from "@/lib/datetime-utils"
+import { convertUTCToEST, getTodayESTDateString } from "@/lib/datetime/utils"
 
 /** True when the calendar cell date is before today (EST). */
 export function isPastCalendarDate(date: Date): boolean {

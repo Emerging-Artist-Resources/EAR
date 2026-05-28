@@ -9,7 +9,7 @@ import { PieceOccurrencesPicker } from "@/components/forms/blocks/PieceOccurrenc
 import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
 import { PieceExistingImageThumbnails } from "@/components/forms/blocks/PieceExistingImageThumbnails"
 import { Button } from "@/components/ui/button"
-import { piecePromoFilesFieldName, type OrganizerProgramPiecePhoto } from "@/lib/organizer-program-pieces"
+import { piecePromoFilesFieldName, type OrganizerProgramPiecePhoto } from "@/lib/listings/organizer-program-pieces"
 
 interface PieceDetailsProps {
   form: UseFormReturn<EventFormData>

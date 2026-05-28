@@ -2,9 +2,9 @@ import {
   isOnlineLocationDisplay,
   listingHasLocationDisplay,
   type LocationDisplaySource,
-} from "@/lib/location-display"
-import { getGoogleMapsLink } from "@/lib/google-maps-link"
-import { ONLINE_VENUE_LABEL } from "@/lib/location-mode"
+} from "@/lib/location/display"
+import { getGoogleMapsLink } from "@/lib/location/google-maps-link"
+import { ONLINE_VENUE_LABEL } from "@/lib/location/mode"
 import { FieldRow } from "@/components/calendar/PublicListingDetailSections"
 
 type ListingLocationDisplayProps = {

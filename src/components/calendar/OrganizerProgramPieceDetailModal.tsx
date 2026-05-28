@@ -2,14 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Modal } from "@/components/ui/modal"
-import { getCalendarListingTypeLabel } from "@/lib/listing-type-labels"
-import type { OrganizerProgramPiecePersisted } from "@/lib/organizer-program-pieces"
+import { getCalendarListingTypeLabel } from "@/lib/listings/type-labels"
+import type { OrganizerProgramPiecePersisted } from "@/lib/listings/organizer-program-pieces"
 import {
   organizerProgramPieceDisplayTitle,
   organizerProgramPiecePhotosForDisplay,
   organizerProgramPieceToPublicListingDetail,
-} from "@/lib/organizer-program-pieces-display"
-import { normalizePublicListingRelations } from "@/lib/listing-display"
+} from "@/lib/listings/organizer-program-pieces-display"
+import { normalizePublicListingRelations } from "@/lib/listings/display"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { PerformancePieceDetailContent } from "./PerformancePieceDetailContent"
 

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { saveListing, checkListingSaved } from "@/features/profile/server/service";
-import { getAuthenticatedUser } from "@/lib/auth-helpers";
-import { handleApiError, createSuccessResponse, validateRequestBody, getQueryParam } from "@/lib/api-utils";
+import { getAuthenticatedUser } from "@/lib/auth/helpers";
+import { handleApiError, createSuccessResponse, validateRequestBody, getQueryParam } from "@/lib/api/utils";
 import { saveListingSchema } from "@/lib/validations/profile";
 
 export async function POST(request: NextRequest) {

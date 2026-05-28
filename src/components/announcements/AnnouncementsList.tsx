@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { H3, Text } from "@/components/ui/typography"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { getNotificationTypeColor } from "@/lib/constants"
+import { getNotificationTypeColor } from "@/lib/config/constants"
 
 export type Announcement = {
   id: string

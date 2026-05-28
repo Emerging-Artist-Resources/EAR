@@ -1,10 +1,10 @@
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
-import { getGoogleMapsLink } from "@/lib/google-maps-link"
+import { getGoogleMapsLink } from "@/lib/location/google-maps-link"
 import {
   isOnlineLocationDisplay,
   type LocationDisplaySource,
-} from "@/lib/location-display"
-import { ONLINE_VENUE_LABEL } from "@/lib/location-mode"
+} from "@/lib/location/display"
+import { ONLINE_VENUE_LABEL } from "@/lib/location/mode"
 import {
   getListingCardDescription,
   getListingCardHost,
@@ -12,7 +12,7 @@ import {
   isOpportunityListingDetail,
   normalizeListingRelation,
   normalizePublicListingRelations,
-} from "@/lib/listing-display"
+} from "@/lib/listings/display"
 
 export type ListingCardOccurrence = {
   id: string

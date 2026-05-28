@@ -8,7 +8,7 @@
  * @see EMAIL_SYSTEM.md for setup, usage, and best practices
  */
 
-import { getPublicAppUrl } from "@/lib/app-url"
+import { getPublicAppUrl } from "@/lib/config/app-url"
 import { postmarkClient } from "./postmark"
 
 type ProfileEmailType =

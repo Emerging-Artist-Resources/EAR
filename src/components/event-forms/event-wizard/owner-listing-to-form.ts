@@ -1,13 +1,13 @@
 import type { EventFormData } from "@/lib/validations/events"
 import type { EventType } from "./EventTypeSelector"
-import { convertUTCToEST } from "@/lib/datetime-utils"
-import { inferLocationModeFromStored } from "@/lib/location-mode"
+import { convertUTCToEST } from "@/lib/datetime/utils"
+import { inferLocationModeFromStored } from "@/lib/location/mode"
 import {
   extractPiecePhotosByIdFromDocument,
   normalizeOrganizerProgramPiecesFromDb,
   pieceFieldPrefix,
   type OrganizerProgramPiecePhoto,
-} from "@/lib/organizer-program-pieces"
+} from "@/lib/listings/organizer-program-pieces"
 
 type UnknownRecord = Record<string, unknown>
 

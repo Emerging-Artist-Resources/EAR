@@ -3,10 +3,10 @@
  * (e.g. ListingCard) aligned with PieceOccurrencesPicker slot keys `YYYY-MM-DD|HH:mm` in EST.
  */
 
-import { convertESTToUTC, convertUTCToEST } from "@/lib/datetime-utils"
+import { convertESTToUTC, convertUTCToEST } from "@/lib/datetime/utils"
 import { getListingTitle } from "@/features/events/server/listing-utils"
-import { normalizeListingRelation } from "@/lib/listing-display"
-import type { OrganizerProgramPiecePersisted } from "@/lib/organizer-program-pieces"
+import { normalizeListingRelation } from "@/lib/listings/display"
+import type { OrganizerProgramPiecePersisted } from "@/lib/listings/organizer-program-pieces"
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
 
 const EST_TZ = "America/New_York"

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { H3, Text } from "@/components/ui/typography"
-import { apiGet } from "@/lib/fetch-utils"
+import { apiGet } from "@/lib/client/fetch-utils"
 import type { ServiceInquirySummary } from "@/features/profile/server/types"
 import { useAuth } from "@/hooks/use-auth"
 

@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Text } from "@/components/ui/typography"
-import { FISCAL_SPONSORSHIP_FAQ_HREF } from "@/lib/fiscal-sponsorship-content"
+import { FISCAL_SPONSORSHIP_FAQ_HREF } from "@/lib/content/fiscal-sponsorship"
 import { cn } from "@/lib/utils"
 
 type FiscalSponsorshipExplainerProps = {

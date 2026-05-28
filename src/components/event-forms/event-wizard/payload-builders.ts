@@ -1,6 +1,6 @@
 import { EventFormData } from "@/lib/validations/events"
 import { EventType } from "./EventTypeSelector"
-import { convertESTToUTC } from "@/lib/datetime-utils"
+import { convertESTToUTC } from "@/lib/datetime/utils"
 import {
   LOCATION_MODE_ONLINE,
   mergeLocationModeIntoMeta,
@@ -8,11 +8,11 @@ import {
   normalizeLocationMode,
   type LocationFormFields,
   type PersistedLocationFields,
-} from "@/lib/location-mode"
+} from "@/lib/location/mode"
 import {
   buildOrganizerProgramPiecesDocumentFromForm,
   type OrganizerProgramPiecesDocument,
-} from "@/lib/organizer-program-pieces"
+} from "@/lib/listings/organizer-program-pieces"
 
 const EST_TIMEZONE = 'America/New_York'
 

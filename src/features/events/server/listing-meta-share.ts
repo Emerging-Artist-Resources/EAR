@@ -1,4 +1,4 @@
-import { normalizeShareRecipientEmails } from "@/lib/listing-share"
+import { normalizeShareRecipientEmails } from "@/lib/listings/share"
 
 /**
  * Merge client-provided listing meta into existing. Never applies client `share.sent_at`.

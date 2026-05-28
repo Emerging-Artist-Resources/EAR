@@ -1,5 +1,5 @@
 import { Text } from "@/components/ui/typography"
-import type { FiscalSponsorshipFaqAnswer } from "@/lib/fiscal-sponsorship-faq-content"
+import type { FiscalSponsorshipFaqAnswer } from "@/lib/content/fiscal-sponsorship-faq"
 
 type FiscalSponsorshipFaqAnswerProps = {
   answer: FiscalSponsorshipFaqAnswer

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { ROUTES } from "@/lib/constants"
+import { ROUTES } from "@/lib/config/constants"
 
 interface UserDropdownProps {
   userName: string

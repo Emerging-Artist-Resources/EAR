@@ -9,7 +9,7 @@ import {
   hasDisplayText,
   hasSocialHandlesContent,
   normalizePublicListingRelations,
-} from "@/lib/listing-display"
+} from "@/lib/listings/display"
 import { cn } from "@/lib/utils"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { SocialHandles } from "./PublicListingDetailSections"

@@ -15,7 +15,7 @@ import {
   ServiceInquirySummary,
 } from "./types";
 import { sendProfileEmail } from "@/lib/email/sendProfileEmail";
-import { getPublicAppUrl } from "@/lib/app-url";
+import { getPublicAppUrl } from "@/lib/config/app-url";
 import { normalizeSupabaseVerifyActionLink } from "@/lib/supabase/normalizeVerifyActionLink";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
 

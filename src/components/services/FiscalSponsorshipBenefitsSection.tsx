@@ -1,5 +1,5 @@
 import { Text } from "@/components/ui/typography"
-import type { FiscalSponsorshipBenefit } from "@/lib/fiscal-sponsorship-content"
+import type { FiscalSponsorshipBenefit } from "@/lib/content/fiscal-sponsorship"
 import { cn } from "@/lib/utils"
 
 type FiscalSponsorshipBenefitsSectionProps = {

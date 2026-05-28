@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getActivityOverview } from "@/features/profile/server/service";
-import { getAuthenticatedUser } from "@/lib/auth-helpers";
-import { handleApiError, createSuccessResponse } from "@/lib/api-utils";
+import { getAuthenticatedUser } from "@/lib/auth/helpers";
+import { handleApiError, createSuccessResponse } from "@/lib/api/utils";
 
 export async function GET(_request: NextRequest) {
   try {

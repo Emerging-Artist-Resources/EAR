@@ -1,4 +1,4 @@
-import { fiscalSponsorshipFaqSections } from "./fiscal-sponsorship-faq-content"
+import { fiscalSponsorshipFaqSections } from "./fiscal-sponsorship-faq"
 import { filterFaqSections, getFaqAnswerSearchText } from "./fiscal-sponsorship-faq-search"
 
 describe("fiscal-sponsorship-faq-search", () => {

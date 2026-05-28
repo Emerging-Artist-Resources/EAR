@@ -7,8 +7,8 @@ import {
   filterBySubmittedWithinLastDays,
   getRecentlyAddedCutoff,
   RECENTLY_ADDED_MAX_AGE_DAYS,
-} from "@/lib/recently-added-listings"
-import { getListingCardSummary } from "@/lib/listing-card-display"
+} from "@/lib/listings/recently-added"
+import { getListingCardSummary } from "@/lib/listings/card-display"
 
 function buildRecentListingCard(listing: any) {
   const listingDetail: PublicListingDetail = {

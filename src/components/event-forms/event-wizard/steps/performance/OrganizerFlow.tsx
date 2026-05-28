@@ -7,7 +7,7 @@ import { useSyncArtistTypeFromProfile } from "@/hooks/use-sync-artist-type-from-
 import { OrganizerBasics } from "@/components/event-forms/event-wizard/steps/performance/OrganizerBasics"
 import { OrganizerSoloForm } from "@/components/event-forms/event-wizard/steps/performance/OrganizerSoloForm"
 import { OrganizerMultiProgramForm } from "@/components/event-forms/event-wizard/steps/performance/OrganizerMultiProgramForm"
-import type { OrganizerProgramPiecePhoto } from "@/lib/organizer-program-pieces"
+import type { OrganizerProgramPiecePhoto } from "@/lib/listings/organizer-program-pieces"
 
 type EventType = "SOLO" | "SPLIT_BILL" | "FESTIVAL"
 

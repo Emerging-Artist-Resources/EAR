@@ -7,8 +7,8 @@ import { Text } from "@/components/ui/typography"
 import {
   fiscalSponsorshipFaqSections,
   type FiscalSponsorshipFaqSection as FaqSection,
-} from "@/lib/fiscal-sponsorship-faq-content"
-import { filterFaqSections } from "@/lib/fiscal-sponsorship-faq-search"
+} from "@/lib/content/fiscal-sponsorship-faq"
+import { filterFaqSections } from "@/lib/content/fiscal-sponsorship-faq-search"
 
 type FiscalSponsorshipFaqContentProps = {
   sections?: readonly FaqSection[]

@@ -8,7 +8,7 @@ import { ListingDetailsModal } from "@/components/calendar/ListingDetailsModal"
 import { DashboardPageLayout } from "./DashboardPageLayout"
 import { Button } from "@/components/ui/button"
 import PerformanceModal from "@/components/performance-modal"
-import { ROUTES } from "@/lib/constants"
+import { ROUTES } from "@/lib/config/constants"
 
 export function ListingsPage() {
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null)

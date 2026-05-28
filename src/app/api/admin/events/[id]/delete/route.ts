@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { deleteListingRepo } from "@/features/events/server/repository"
-import { getAuthenticatedUser } from "@/lib/auth-helpers"
+import { getAuthenticatedUser } from "@/lib/auth/helpers"
 
 export async function POST(
   _req: NextRequest,

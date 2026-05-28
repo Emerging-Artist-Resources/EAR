@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { flexibleUrlRequiredSchema } from "../flexible-url"
-import { hasCompleteLocation, isOnlineLocationMode, locationValidationIssue } from "@/lib/location-mode"
+import { hasCompleteLocation, isOnlineLocationMode, locationValidationIssue } from "@/lib/location/mode"
 import { baseSchema, refineOccurrenceTimeSlotEndAfterStart } from "./base"
 import { performanceFields } from "./performance"
 import {
@@ -15,7 +15,7 @@ import {
   inferOrganizerPieceCount,
   organizerPieceHasSchedule,
   pieceFieldPrefix,
-} from "@/lib/organizer-program-pieces"
+} from "@/lib/listings/organizer-program-pieces"
 
 export const eventFormSchema = baseSchema
   .merge(performanceFields)

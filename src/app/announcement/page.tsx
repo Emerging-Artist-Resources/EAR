@@ -5,10 +5,9 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { H1, H3, Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ROUTES } from "@/lib/constants"
 import { supabase } from "@/lib/supabase/client"
 import PerformanceModal from "@/components/performance-modal"
-import { Modal } from "@/components/ui/modal"
+import { SignInRequiredModal } from "@/components/auth/SignInRequiredModal"
 import { AnnouncementsList } from "@/components/announcements/AnnouncementsList"
 
 export default function AnnouncementsPage() {
@@ -97,25 +96,12 @@ export default function AnnouncementsPage() {
         onSuccess={handleModalSuccess}
       />
 
-      <Modal
+      <SignInRequiredModal
         isOpen={authPromptOpen}
         onClose={() => setAuthPromptOpen(false)}
-        title="Sign in required"
-      >
-        <div className="space-y-5">
-          <Text className="text-sm text-gray-700">
-            You must be signed in to submit an event.
-          </Text>
-          <div className="flex justify-between">
-            <Link href="/auth/signin?returnTo=/announcement">
-              <Button variant="primary">Sign in</Button>
-            </Link>
-            <Link href={ROUTES.SIGN_UP}>
-              <Button variant="outline">Create account</Button>
-            </Link>
-          </div>
-        </div>
-      </Modal>
+        returnTo="/announcement"
+        message="You must be signed in to submit an event."
+      />
     </div>
   )
 }

@@ -11,7 +11,7 @@ import { normalizeSupabaseRelation } from "./admin-utils"
 import { getListingTitle } from "./listing-utils"
 import type { CreateListingInput } from "./repository-types"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { normalizeShareRecipientEmails } from "@/lib/listing-share"
+import { normalizeShareRecipientEmails } from "@/lib/listings/share"
 import { mergeListingMetaWithServerShareSentAt } from "./listing-meta-share"
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
 

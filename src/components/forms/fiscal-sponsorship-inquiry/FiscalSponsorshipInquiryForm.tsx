@@ -14,14 +14,14 @@ import {
   useFiscalSponsorshipInquiryStepValidation,
   type FiscalSponsorshipInquiryPage,
 } from "@/hooks/use-fiscal-sponsorship-inquiry-step-validation"
-import { fiscalSponsorshipInquiryContent } from "@/lib/fiscal-sponsorship-inquiry-content"
+import { fiscalSponsorshipInquiryContent } from "@/lib/content/fiscal-sponsorship-inquiry"
 import { FISCAL_SPONSORSHIP_INQUIRY_TOTAL_PAGES } from "@/lib/service-inquiries/fiscal-sponsorship-form-config"
 import { FISCAL_SPONSORSHIP_SERVICE_SLUG } from "@/lib/service-inquiries/fiscal-sponsorship-options"
 import {
   buildFiscalSponsorshipAnswers,
   fetchFiscalSponsorshipQuestionIdMap,
 } from "@/lib/service-inquiries/build-fiscal-sponsorship-answers"
-import { apiPost } from "@/lib/fetch-utils"
+import { apiPost } from "@/lib/client/fetch-utils"
 import {
   fiscalSponsorshipInquiryDefaultValues,
   fiscalSponsorshipInquirySchema,

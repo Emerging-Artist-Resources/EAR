@@ -93,7 +93,7 @@ TypeScript path aliases (see `tsconfig.json`):
 
 ## 8. Talking to the backend from the browser
 
-- Use **`apiFetch` / `apiGet` / `apiPost`** from `@/lib/fetch-utils` for JSON APIs that return the project’s `ApiResponse` shape. They centralize `Content-Type`, error parsing, and typed unwrap.
+- Use **`apiFetch` / `apiGet` / `apiPost`** from `@/lib/client/fetch-utils` for JSON APIs that return the project’s `ApiResponse` shape. They centralize `Content-Type`, error parsing, and typed unwrap.
 - Keep URLs relative (`/api/...`) unless there is a deliberate cross-origin need.
 
 **Rule:** After mutations, surface failures with **`showToast`** (see below) or inline `Alert` components; avoid silent failures except for genuinely optional background fetches (log in development).

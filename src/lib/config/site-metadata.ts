@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { getPublicAppUrl } from "@/lib/app-url"
+import { getPublicAppUrl } from "@/lib/config/app-url"
 
 export const SITE_NAME = "EAR"
 export const DEFAULT_TITLE = "Emerging Artist Resources"

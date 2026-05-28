@@ -3,7 +3,7 @@
  * @see EMAIL_SYSTEM.md
  */
 
-import { getPublicAppUrl } from "@/lib/app-url"
+import { getPublicAppUrl } from "@/lib/config/app-url"
 
 export const LISTING_SHARE_SUPPORT_EMAIL = "info@eararts.org"
 

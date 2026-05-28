@@ -1,6 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { buildSiteMetadata } from "@/lib/site-metadata";
+import { buildSiteMetadata } from "@/lib/config/site-metadata";
 import HeaderGate from "@/components/layout/header-gate"
 import FooterGate from "@/components/layout/footer-gate"
 import { ErrorBoundary } from "@/components/error-boundary"

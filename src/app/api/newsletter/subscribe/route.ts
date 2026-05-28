@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server"
-import { getAuthenticatedUser } from "@/lib/auth-helpers"
+import { getAuthenticatedUser } from "@/lib/auth/helpers"
 import {
   handleApiError,
   createSuccessResponse,
   validateRequestBody,
   createErrorResponse,
   ErrorCodes,
-} from "@/lib/api-utils"
+} from "@/lib/api/utils"
 import { newsletterSubscribeRequestSchema } from "@/lib/validations/newsletter"
 import { syncNewsletterPreferences } from "@/features/newsletter/server/syncNewsletterPreferences"
 import type { NewsletterSource } from "@/features/newsletter/constants"

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Text, H2 } from "@/components/ui/typography"
-import { apiGet } from "@/lib/fetch-utils"
+import { apiGet } from "@/lib/client/fetch-utils"
 
 function PaymentSuccessContent() {
   const router = useRouter()

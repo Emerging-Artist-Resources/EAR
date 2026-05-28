@@ -28,7 +28,7 @@ export function SignUpWrapUp({ form }: SignUpWrapUpProps) {
             />
 
             <div className="space-y-4">
-                <p className="text-sm font-medium text-gray-700">Newsletter Preferences</p>
+                <p className="text-sm font-medium text-ear-black">Newsletter Preferences</p>
                 <SelectBlock 
                     form={form} 
                     name="newsletter_ear_opt_in" 

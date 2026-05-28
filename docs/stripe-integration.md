@@ -271,9 +271,9 @@ Create a new route (e.g., `/api/stripe/create-donation-session/route.ts`):
 
 ```typescript
 import Stripe from "stripe"
-import { getServerEnv } from "@/lib/env"
+import { getServerEnv } from "@/lib/config/env"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { getAuthenticatedUser } from "@/lib/auth-helpers"
+import { getAuthenticatedUser } from "@/lib/auth/helpers"
 
 export async function POST(req: NextRequest) {
   const auth = await getAuthenticatedUser()
@@ -434,9 +434,9 @@ To add programmatic refunds, create an API route:
 ```typescript
 // /api/stripe/refund/route.ts
 import Stripe from "stripe"
-import { getServerEnv } from "@/lib/env"
+import { getServerEnv } from "@/lib/config/env"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { requireRole } from "@/lib/auth-helpers"
+import { requireRole } from "@/lib/auth/helpers"
 
 export async function POST(req: NextRequest) {
   // Require admin role

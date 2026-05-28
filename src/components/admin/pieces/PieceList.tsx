@@ -4,7 +4,7 @@ import { PieceNeedingLink } from "./types"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
+import { formatOccurrenceRangeEST } from "@/lib/datetime/utils"
 
 interface PieceListProps {
   pieces: PieceNeedingLink[]

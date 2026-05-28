@@ -3,7 +3,7 @@ import { getSupabaseServerClientAnon } from "@/lib/supabase/serverAnon"
 import { getListingTitle } from "@/features/events/server/listing-utils"
 import { normalizeSupabaseRelation, isLinkedPiece, isLinkedClass } from "@/features/events/server/admin-utils"
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
-import { getListingCardSummary } from "@/lib/listing-card-display"
+import { getListingCardSummary } from "@/lib/listings/card-display"
 
 export async function GET(
   _req: NextRequest,

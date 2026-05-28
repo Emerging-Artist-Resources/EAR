@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Text } from "@/components/ui/typography"
-import { DOCUMENTATION_INQUIRY_HREF } from "@/lib/documentation-content"
+import { DOCUMENTATION_INQUIRY_HREF } from "@/lib/content/documentation"
 import { cn } from "@/lib/utils"
 
 type DocumentationServiceRowProps = {

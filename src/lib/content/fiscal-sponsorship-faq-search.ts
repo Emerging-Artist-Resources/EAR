@@ -2,7 +2,7 @@ import type {
   FiscalSponsorshipFaqAnswer,
   FiscalSponsorshipFaqItem,
   FiscalSponsorshipFaqSection,
-} from "@/lib/fiscal-sponsorship-faq-content"
+} from "@/lib/content/fiscal-sponsorship-faq"
 
 export function getFaqAnswerSearchText(answer: FiscalSponsorshipFaqAnswer): string {
   if (answer.type === "paragraphs") {

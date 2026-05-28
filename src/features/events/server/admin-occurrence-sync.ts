@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { convertUTCToEST } from "@/lib/datetime-utils"
+import { convertUTCToEST } from "@/lib/datetime/utils"
 import { isOccurrenceDuplicate } from "./admin-utils"
 import {
   tryInsertWithSourceColumn,

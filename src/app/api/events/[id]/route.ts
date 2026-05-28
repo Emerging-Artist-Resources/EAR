@@ -4,7 +4,7 @@ import { getEventPublicRepo } from "@/features/events/server/repository"
 import { z, ZodError } from "zod"
 import { flexibleUrlNullableSchema } from "@/lib/validations/flexible-url"
 import { updatePendingEventRepo } from "@/features/events/server/repository"
-import { getAuthenticatedUser } from "@/lib/auth-helpers"
+import { getAuthenticatedUser } from "@/lib/auth/helpers"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import {
   createErrorResponse,
@@ -12,7 +12,7 @@ import {
   ErrorCodes,
   handleApiError,
   validateRequestBody,
-} from "@/lib/api-utils"
+} from "@/lib/api/utils"
 import { eventPayloadSchema } from "@/features/events/server/event-payload-schema"
 import { replaceOwnedListingRepo } from "@/features/events/server/replace-owned-listing"
 import type { CreateListingInput } from "@/features/events/server/repository"

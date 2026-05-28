@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react"
 
 import { Modal } from "@/components/ui/modal"
+import { AUTH_MODAL_CONTENT_CLASS } from "@/components/auth/SignInRequiredModal"
 import { Button } from "@/components/ui/button"
-import { resetSessionExpiredModalFlag } from "@/lib/fetch-utils"
+import { resetSessionExpiredModalFlag } from "@/lib/client/fetch-utils"
 import { supabase } from "@/lib/supabase/client"
-import { ROUTES } from "@/lib/constants"
+import { ROUTES } from "@/lib/config/constants"
 
 type SessionExpiredEventDetail = {
   next?: string
@@ -74,14 +75,20 @@ export function SessionExpiredModal() {
       title="Session Expired"
       size="sm"
       closeOnOverlay={false}
-      headerClassName="bg-primary text-white"
+      contentClassName={AUTH_MODAL_CONTENT_CLASS}
     >
       <div className="space-y-4">
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-ear-black/70">
           Your session expired. Please log in or continue as guest.
         </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-          <Button type="button" variant="outline" onClick={handleContinueAsGuest} disabled={guestLoading}>
+          <Button
+            type="button"
+            variant="outline"
+            className="border-ear-black/20 bg-white text-ear-black hover:bg-ear-black/5"
+            onClick={handleContinueAsGuest}
+            disabled={guestLoading}
+          >
             {guestLoading ? "Switching to guest..." : "Continue as guest"}
           </Button>
           <Button type="button" onClick={handleLogin}>

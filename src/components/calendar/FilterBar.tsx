@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { OPPORTUNITY_LISTING_TYPE_LABEL } from "@/lib/listing-type-labels"
+import { OPPORTUNITY_LISTING_TYPE_LABEL } from "@/lib/listings/type-labels"
 import { cn } from "@/lib/utils"
 import { getFilterTypeColor } from "./event-colors"
 

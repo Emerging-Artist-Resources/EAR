@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
-import { getOptionalEnv } from "@/lib/env"
-import { createErrorResponse, createSuccessResponse, ErrorCodes, handleApiError } from "@/lib/api-utils"
+import { getOptionalEnv } from "@/lib/config/env"
+import { createErrorResponse, createSuccessResponse, ErrorCodes, handleApiError } from "@/lib/api/utils"
 import { retryPendingNewsletterSyncs } from "@/features/newsletter/server/mailchimp"
 
 export async function POST(req: NextRequest) {

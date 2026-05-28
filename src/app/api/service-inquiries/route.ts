@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server"
-import { getAuthenticatedUser } from "@/lib/auth-helpers"
+import { getAuthenticatedUser } from "@/lib/auth/helpers"
 import {
   handleApiError,
   createSuccessResponse,
   validateRequestBody,
   createErrorResponse,
   ErrorCodes,
-} from "@/lib/api-utils"
+} from "@/lib/api/utils"
 import { createServiceInquiryRequestSchema } from "@/lib/validations/service-inquiries"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import {

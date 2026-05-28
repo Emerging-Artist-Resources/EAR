@@ -9,7 +9,8 @@ import MobileNav from "@/components/mobile-nav"
 import { useAuth } from "@/hooks/use-auth"
 import { WavyLine } from "@/components/ui/wavy-line"
 import { ServicesNav } from "@/components/layout/services-nav"
-import { Heart } from "lucide-react"
+import { publicNavItems } from "@/lib/navigation/public-nav"
+//import { Heart } from "lucide-react"
 
 export interface HeaderProps {
   showSubmitButton?: boolean
@@ -70,14 +71,18 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="hidden lg:flex items-center space-x-4">
             {/* Public Navigation */}
-            <NavLink href="/calendar">Calendar</NavLink>
-            <NavLink href="/announcement">Announcements</NavLink>
+            {publicNavItems.map((item) => (
+              <NavLink key={item.href} href={item.href}>
+                {item.label}
+              </NavLink>
+            ))}
             <ServicesNav onDarkSurface={onDarkSurface} />
 
+            {/* TEMPORARY DISABLED DONATE BUTTON IN HEADER
             <Button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium hover:scale-[1.03] hover:shadow-md transition-all duration-200">
               <Heart className="mr-2 h-4 w-4 text-primary-foreground" />
               <Link href="/donate">Support Artists</Link>
-            </Button>
+            </Button> */}
 
             {!isLoading && isAuthed ? (
               <>

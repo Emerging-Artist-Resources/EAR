@@ -1,4 +1,4 @@
-import { getOptionalEnv } from "@/lib/env"
+import { getOptionalEnv } from "@/lib/config/env"
 
 export type MailchimpEnv = {
   apiKey: string

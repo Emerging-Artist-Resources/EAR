@@ -2,7 +2,7 @@ import { DonationForm, type OrgDonationHero } from "@/components/donations/Donat
 import {
   buildOrgDonationMetadata,
   ORG_DONATION_HERO_MESSAGE,
-} from "@/lib/site-metadata"
+} from "@/lib/config/site-metadata"
 
 export const metadata = buildOrgDonationMetadata()
 

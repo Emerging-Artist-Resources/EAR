@@ -10,11 +10,11 @@ import {
   ORGANIZER_OCCURRENCE_USER_MESSAGES,
 } from "@/lib/validations/events/occurrence-row"
 import { createLocationFields, type DateItem, type LocationConfigFull } from "./DateTime"
-import { isOnlineLocationMode } from "@/lib/location-mode"
+import { isOnlineLocationMode } from "@/lib/location/mode"
 import { ShowtimeRow } from "./ShowtimeRow"
 import { FormFieldTooltip } from "./FormFieldTooltip"
-import { buildEmptyShowtimeRow } from "@/lib/showtimes-empty-row"
-import { focusFormFieldNoScroll } from "@/lib/focus-form-field"
+import { buildEmptyShowtimeRow } from "@/lib/datetime/showtimes-empty-row"
+import { focusFormFieldNoScroll } from "@/lib/forms/focus-field"
 
 export interface ShowtimesListProps<T extends FieldValues> {
   form: UseFormReturn<T>

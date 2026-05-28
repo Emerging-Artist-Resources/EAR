@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { flexibleUrlOrEmptySchema, flexibleUrlRequiredSchema } from "./validations/flexible-url"
+import { flexibleUrlOrEmptySchema, flexibleUrlRequiredSchema } from "./flexible-url"
 
 // Performance submission fields (stored in events base + details jsonb)
 const ticketLinkRequired = flexibleUrlRequiredSchema("Enter a valid URL", "Ticket link is required")

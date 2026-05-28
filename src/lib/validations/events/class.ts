@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { hasCompleteLocation, locationValidationIssue } from "@/lib/location-mode"
+import { hasCompleteLocation, locationValidationIssue } from "@/lib/location/mode"
 import { flexibleUrlOptionalSchema } from "../flexible-url"
 import {
   occurrenceSchema,

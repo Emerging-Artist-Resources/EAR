@@ -1,6 +1,6 @@
 import { FiscalSponsorshipFaqAnswerContent } from "@/components/services/FiscalSponsorshipFaqAnswer"
 import { ReadMore } from "@/components/shared/ReadMore"
-import type { FiscalSponsorshipFaqSection as FaqSection } from "@/lib/fiscal-sponsorship-faq-content"
+import type { FiscalSponsorshipFaqSection as FaqSection } from "@/lib/content/fiscal-sponsorship-faq"
 import { cn } from "@/lib/utils"
 
 type FiscalSponsorshipFaqSectionProps = {

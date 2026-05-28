@@ -6,7 +6,7 @@ import { ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { WavyLine } from "@/components/ui/wavy-line"
 import { cn } from "@/lib/utils"
-import { servicesNavItems } from "@/lib/services-nav"
+import { servicesNavItems } from "@/lib/navigation/services-nav"
 
 export function ServicesNav({ onDarkSurface = false }: { onDarkSurface?: boolean }) {
   const pathname = usePathname()

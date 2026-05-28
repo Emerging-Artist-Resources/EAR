@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { SavedEvent } from "@/features/profile/server/types";
-import { apiGet } from "@/lib/fetch-utils";
+import { apiGet } from "@/lib/client/fetch-utils";
 import { SavedEventsFilters } from "./SavedEventsFilters";
 import { SavedEventsGrid } from "./SavedEventsGrid";
 import { ListingDetailsModal } from "@/components/calendar/ListingDetailsModal";

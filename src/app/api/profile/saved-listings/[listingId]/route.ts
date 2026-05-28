@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { unsaveListing, updateAttendanceStatus } from "@/features/profile/server/service";
-import { getAuthenticatedUser } from "@/lib/auth-helpers";
-import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api-utils";
+import { getAuthenticatedUser } from "@/lib/auth/helpers";
+import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api/utils";
 import { updateAttendanceSchema } from "@/lib/validations/profile";
 
 export async function DELETE(

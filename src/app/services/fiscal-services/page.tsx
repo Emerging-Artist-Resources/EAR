@@ -5,7 +5,7 @@ import {
   FISCAL_SERVICES_INQUIRY_HREF,
   fiscalServiceSections,
   fiscalServicesHero,
-} from "@/lib/fiscal-services-content"
+} from "@/lib/content/fiscal-services"
 
 export const metadata: Metadata = {
   title: "Fiscal Services",

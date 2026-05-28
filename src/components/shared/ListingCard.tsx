@@ -3,7 +3,7 @@
 import { useMemo, type ReactNode } from "react"
 import { Card } from "@/components/ui/card"
 import { FavoriteButton } from "@/components/ui/favorite-button"
-import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
+import { formatOccurrenceRangeEST } from "@/lib/datetime/utils"
 import { useSavedListings } from "@/hooks/use-saved-listings"
 import { useAuth } from "@/hooks/use-auth"
 import { getEventTypeColor } from "@/components/calendar/event-colors"
@@ -12,8 +12,8 @@ import type {
   ListingCardLinkDisplay,
   ListingCardOccurrence,
   ListingCardVenue,
-} from "@/lib/listing-card-display"
-import { splitListingCardOccurrences } from "@/lib/listing-card-display"
+} from "@/lib/listings/card-display"
+import { splitListingCardOccurrences } from "@/lib/listings/card-display"
 import { cn } from "@/lib/utils"
 
 const MAX_EVENT_DATES_SHOWN = 3

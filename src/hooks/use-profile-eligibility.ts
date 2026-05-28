@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "./use-auth"
-import { apiGet } from "@/lib/fetch-utils"
+import { apiGet } from "@/lib/client/fetch-utils"
 
 export interface ProfileEligibility {
   artistStatus: "emerging" | "established" | null

@@ -6,15 +6,15 @@ import { FavoriteButton } from "@/components/ui/favorite-button"
 import { H3, Text } from "@/components/ui/typography"
 import { HorizontalScrollCards } from "@/components/shared/HorizontalScrollCards"
 import { ListingCard } from "@/components/shared/ListingCard"
-import { hasDisplayText } from "@/lib/listing-display"
-import type { OrganizerProgramPiecesDocument } from "@/lib/organizer-program-pieces"
+import { hasDisplayText } from "@/lib/listings/display"
+import type { OrganizerProgramPiecesDocument } from "@/lib/listings/organizer-program-pieces"
 import {
   buildOccurrencesForOrganizerProgramPiece,
   organizerProgramPieceDisplayTitle,
   organizerProgramPieceToPublicListingDetail,
-} from "@/lib/organizer-program-pieces-display"
-import { getListingCardSummary } from "@/lib/listing-card-display"
-import type { ListingCardLinkDisplay, ListingCardVenue } from "@/lib/listing-card-display"
+} from "@/lib/listings/organizer-program-pieces-display"
+import { getListingCardSummary } from "@/lib/listings/card-display"
+import type { ListingCardLinkDisplay, ListingCardVenue } from "@/lib/listings/card-display"
 import { cn } from "@/lib/utils"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { SocialHandles } from "./PublicListingDetailSections"

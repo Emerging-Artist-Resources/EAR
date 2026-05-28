@@ -1,7 +1,7 @@
 import { ServiceOverviewCard } from "@/components/services/ServiceOverviewCard"
 import { ServicesHero } from "@/components/services/ServicesHero"
 import { Text } from "@/components/ui/typography"
-import { serviceOverviewItems } from "@/lib/services-overview-content"
+import { serviceOverviewItems } from "@/lib/content/services-overview"
 
 export default function ServicesPage() {
   return (

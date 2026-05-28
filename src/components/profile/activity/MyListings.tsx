@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { H3, H4, Text } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback } from "react";
-import { apiGet, apiPost } from "@/lib/fetch-utils";
+import { apiGet, apiPost } from "@/lib/client/fetch-utils";
 import type { MyListing } from "@/features/profile/server/types";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import PerformanceModal from "@/components/performance-modal";
@@ -28,7 +28,7 @@ function listingBadgeLabel(listing: MyListing): string {
   return listing.status;
 }
 
-import { getCalendarListingTypeLabel } from "@/lib/listing-type-labels";
+import { getCalendarListingTypeLabel } from "@/lib/listings/type-labels";
 
 function getTypeLabel(type: string): string {
   return getCalendarListingTypeLabel(type);

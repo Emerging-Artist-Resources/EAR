@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
-import { resetModalFormView } from "@/lib/reset-scroll-ancestors"
+import { resetModalFormView } from "@/lib/forms/reset-scroll-ancestors"
 import { Button } from "./button"
 import { H2 } from "./typography"
 

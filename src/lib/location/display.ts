@@ -1,4 +1,4 @@
-import { isOnlineVenueName, locationModeFromMeta } from "@/lib/location-mode"
+import { isOnlineVenueName, locationModeFromMeta } from "@/lib/location/mode"
 
 export type LocationDisplaySource = {
   address?: string | null

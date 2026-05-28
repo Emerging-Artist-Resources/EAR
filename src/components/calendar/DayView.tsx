@@ -2,7 +2,7 @@
 
 import { format } from "date-fns"
 import { Card } from "@/components/ui/card"
-import { formatTimeEST12Hour } from "@/lib/datetime-utils"
+import { formatTimeEST12Hour } from "@/lib/datetime/utils"
 import type { CalendarItem } from "@/hooks/use-calendar"
 import { isPastCalendarDate } from "./calendar-utils"
 import { getEventTypeColor } from "./event-colors"

@@ -1,4 +1,4 @@
-import { MAX_SHARE_RECIPIENT_EMAILS, normalizeShareRecipientEmails } from "./listing-share"
+import { MAX_SHARE_RECIPIENT_EMAILS, normalizeShareRecipientEmails } from "./share"
 
 describe("normalizeShareRecipientEmails", () => {
   it("trims, lowercases, dedupes, excludes submitter", () => {

@@ -1,7 +1,7 @@
 "use client"
 
 import { CollapsibleSidebar } from "@/components/shared/CollapsibleSidebar"
-import { ROUTES } from "@/lib/constants"
+import { ROUTES } from "@/lib/config/constants"
 import { dashboardNavItems } from "@/lib/navigation/dashboard-nav"
 
 const DASHBOARD_SIDEBAR_STORAGE_KEY = "dashboard-sidebar-collapsed"

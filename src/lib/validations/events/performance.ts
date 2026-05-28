@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { hasCompleteLocation, locationValidationIssue } from "@/lib/location-mode"
+import { hasCompleteLocation, locationValidationIssue } from "@/lib/location/mode"
 import { flexibleUrlOrEmptySchema, flexibleUrlOptionalSchema } from "../flexible-url"
 import { extraDateSchema, lenientOccurrenceTimeSlotSchema } from "./base"
 import {
@@ -7,12 +7,12 @@ import {
   addOrganizerMultiProgramPieceSlotAndCustomIssues,
   resolveOrganizerOccurrencesForValidation,
 } from "./organizer-performance-schedule"
-import { MAX_SHARE_RECIPIENT_EMAILS } from "@/lib/listing-share"
+import { MAX_SHARE_RECIPIENT_EMAILS } from "@/lib/listings/share"
 import {
   inferOrganizerPieceCount,
   organizerPieceHasSchedule,
   pieceFieldPrefix,
-} from "@/lib/organizer-program-pieces"
+} from "@/lib/listings/organizer-program-pieces"
 
 /**
  * Performance-only fields

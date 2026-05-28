@@ -2,7 +2,7 @@
  * Utilities for making API requests with proper error handling and type safety
  */
 
-import type { ApiResponse } from "./api-utils"
+import type { ApiResponse } from "@/lib/api/utils"
 
 let sessionExpiredModalShown = false
 

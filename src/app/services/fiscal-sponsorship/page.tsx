@@ -11,7 +11,7 @@ import {
   fiscalSponsorshipExplainer,
   fiscalSponsorshipHero,
   fiscalSponsorshipPartnership,
-} from "@/lib/fiscal-sponsorship-content"
+} from "@/lib/content/fiscal-sponsorship"
 
 export const metadata: Metadata = {
   title: "Fiscal Sponsorship",

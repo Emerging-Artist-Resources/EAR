@@ -62,7 +62,7 @@ Standard shape is defined in `src/lib/api-utils.ts`:
 
 1. Prefer **`createSuccessResponse` / `createErrorResponse`** so clients and `apiFetch` in the frontend stay consistent.
 2. Wrap handler bodies in **`try/catch`** and return **`handleApiError(error)`** in the `catch` block (unless you intentionally handle specific errors earlier).
-3. For **403 Forbidden**, return **`forbiddenResponse()`** from `@/lib/auth-helpers` (or `createErrorResponse(..., FORBIDDEN, ..., 403)`) explicitly. Thrown `Error("Forbidden")` is **not** mapped to 403 by `handleApiError` today—it becomes a 500—so avoid relying on throwing `"Forbidden"` alone.
+3. For **403 Forbidden**, return **`forbiddenResponse()`** from `@/lib/auth/helpers` (or `createErrorResponse(..., FORBIDDEN, ..., 403)`) explicitly. Thrown `Error("Forbidden")` is **not** mapped to 403 by `handleApiError` today—it becomes a 500—so avoid relying on throwing `"Forbidden"` alone.
 
 **Legacy note:** Some routes still return `NextResponse.json({ error: "..." }, { status })` without the `error.code` shape. New routes should use the helpers above; consider aligning old ones when touching them.
 

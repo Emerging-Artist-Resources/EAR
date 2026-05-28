@@ -79,7 +79,7 @@ export function SignUpBasicInfo({ form }: SignUpBasicInfoProps) {
       />
 
       {isOrg && (
-        <Text className="text-sm text-gray-600 -mt-2">
+        <Text className="-mt-2 text-sm text-ear-black/70">
           The questions in the next step apply to your organization.
         </Text>
       )}

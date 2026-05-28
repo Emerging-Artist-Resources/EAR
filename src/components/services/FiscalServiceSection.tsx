@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Text } from "@/components/ui/typography"
-import { FISCAL_SERVICES_INQUIRY_HREF } from "@/lib/fiscal-services-content"
+import { FISCAL_SERVICES_INQUIRY_HREF } from "@/lib/content/fiscal-services"
 import { cn } from "@/lib/utils"
 
 type FiscalServiceSectionProps = {

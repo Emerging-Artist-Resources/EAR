@@ -9,15 +9,12 @@ import { useCalendar } from "@/hooks/use-calendar"
 import { useAuth } from "@/hooks/use-auth"
 import { Calendar } from "@/components/calendar/calendar"
 import { Text } from "@/components/ui/typography"
-import { Modal } from "@/components/ui/modal"
-import { Button } from "@/components/ui/button"
+import { SignInRequiredModal } from "@/components/auth/SignInRequiredModal"
 import { Card } from "@/components/ui/card"
 import { HorizontalScrollCards } from "@/components/shared/HorizontalScrollCards"
 import { ListingCard } from "@/components/shared/ListingCard"
 import { ListingDetailsModal } from "@/components/calendar/ListingDetailsModal"
-import Link from "next/link"
-import { ROUTES } from "@/lib/constants"
-import type { ListingCardLinkDisplay, ListingCardVenue } from "@/lib/listing-card-display"
+import type { ListingCardLinkDisplay, ListingCardVenue } from "@/lib/listings/card-display"
 import CommunityCalendarHero from "@/components/calendar/CommunityCalendarHero"
 
 function CalendarViewContent() {
@@ -184,25 +181,12 @@ function CalendarViewContent() {
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleModalSuccess}
       />
-      <Modal
+      <SignInRequiredModal
         isOpen={authPromptOpen}
         onClose={() => setAuthPromptOpen(false)}
-        title="Sign in required"
-      >
-        <div className="space-y-5">
-          <Text className="text-sm text-text-muted">
-            You must be signed in to submit a listing.
-          </Text>
-          <div className="flex justify-between">
-            <Link href="/auth/signin?returnTo=/calendar">
-              <Button variant="primary">Sign in</Button>
-            </Link>
-            <Link href={ROUTES.SIGN_UP}>
-              <Button variant="outline">Create account</Button>
-            </Link>
-          </div>
-        </div>
-      </Modal>
+        returnTo="/calendar"
+        message="You must be signed in to submit a listing."
+      />
       <ListingDetailsModal
         isOpen={selectedListingId !== null}
         onClose={handleModalClose}

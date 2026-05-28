@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { H3, H4, Text } from "@/components/ui/typography";
 import { useState, useEffect } from "react";
-import { apiGet } from "@/lib/fetch-utils";
+import { apiGet } from "@/lib/client/fetch-utils";
 import type { ActivityOverview } from "@/features/profile/server/types";
 
 export const MyOverview = () => {

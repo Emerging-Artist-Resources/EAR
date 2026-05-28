@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { DonationForm } from "@/components/donations/DonationForm"
 import { getProfileBySlugForDonationRepo } from "@/features/profile/server/repository"
-import { buildArtistDonationMetadata } from "@/lib/site-metadata"
+import { buildArtistDonationMetadata } from "@/lib/config/site-metadata"
 
 type PageProps = {
   params: Promise<{ slug: string }>

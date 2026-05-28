@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { FiscalSponsorshipFaqApplySection } from "@/components/services/FiscalSponsorshipFaqApplySection"
 import { FiscalSponsorshipFaqContent } from "@/components/services/FiscalSponsorshipFaqContent"
 import { H1 } from "@/components/ui/typography"
-import { fiscalSponsorshipFaqApply, fiscalSponsorshipFaqPage } from "@/lib/fiscal-sponsorship-faq-content"
+import { fiscalSponsorshipFaqApply, fiscalSponsorshipFaqPage } from "@/lib/content/fiscal-sponsorship-faq"
 
 export const metadata: Metadata = {
   title: "Fiscal Sponsorship FAQ",

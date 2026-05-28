@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
-import { getUserRole, getUserRoleFromProfile } from "@/lib/authz"
+import { getUserRole, getUserRoleFromProfile } from "@/lib/auth/authz"
 
 function supabaseAuthCodeRedirect(req: NextRequest): NextResponse | null {
   const { pathname, searchParams } = req.nextUrl

@@ -1,7 +1,7 @@
 // src/app/api/admin/events/[id]/approve/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { approveEventRepo } from "@/features/events/server/repository"
-import { getAuthenticatedUser, hasRole } from "@/lib/auth-helpers"
+import { getAuthenticatedUser, hasRole } from "@/lib/auth/helpers"
 
 export async function POST(
   _req: NextRequest,

@@ -3,8 +3,8 @@ import { UseFormReturn } from "react-hook-form"
 import type { EventFormData } from "@/lib/validations/events"
 import { getStep2Schema } from "@/lib/validations/events/step-schemas"
 import { eventTypeValidationFields } from "@/components/event-forms/event-wizard/validation-config"
-import { getEventFieldLabel } from "@/lib/form-helpers"
-import { normalizeErrorMessage } from "@/lib/validation-helpers"
+import { getEventFieldLabel } from "@/lib/forms/helpers"
+import { normalizeErrorMessage } from "@/lib/forms/validation-helpers"
 import type { EventType } from "@/components/event-forms/event-wizard/EventTypeSelector"
 
 function debugPieceSchedule(label: string, payload: unknown) {

@@ -1,16 +1,16 @@
 import { NextRequest } from "next/server"
-import { notificationSchema } from "@/lib/validations"
+import { notificationSchema } from "@/lib/validations/legacy-schemas"
 import {
   listAnnouncements,
   listAnnouncementsAdmin,
   createAnnouncement,
 } from "@/features/announcements/server/service"
-import { requireRole } from "@/lib/auth-helpers"
+import { requireRole } from "@/lib/auth/helpers"
 import {
   createSuccessResponse,
   getQueryParam,
   handleApiError,
-} from "@/lib/api-utils"
+} from "@/lib/api/utils"
 
 export async function GET(request: NextRequest) {
   try {

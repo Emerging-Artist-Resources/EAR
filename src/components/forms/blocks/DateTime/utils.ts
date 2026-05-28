@@ -1,4 +1,4 @@
-import { DEFAULT_LOCATION_MODE } from "@/lib/location-mode"
+import { DEFAULT_LOCATION_MODE } from "@/lib/location/mode"
 import { DateItem, LocationConfig } from "./types"
 
 export function createLocationFields(
