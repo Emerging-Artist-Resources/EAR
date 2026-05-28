@@ -1,9 +1,37 @@
-import { DocumentationInquiryForm } from "@/components/forms/documentation-inquiry/DocumentationInquiryForm"
+import type { Metadata } from "next"
+import { DocumentationBioSection } from "@/components/services/DocumentationBioSection"
+import { DocumentationServiceRow } from "@/components/services/DocumentationServiceRow"
+import { ServicesHero } from "@/components/services/ServicesHero"
+import {
+  documentationBio,
+  documentationHero,
+  documentationServiceRows,
+} from "@/lib/documentation-content"
+
+export const metadata: Metadata = {
+  title: "Photography & Videography",
+  description:
+    "Professional photography and videography for performances, rehearsals, and events—documentary-style documentation through Emerging Artist Resources.",
+}
 
 export default function PhotographyVideographyPage() {
   return (
-    <div className="bg-secondary-50 min-h-[60vh]">
-      <DocumentationInquiryForm title="Photography & Videography Inquiry" />
-    </div>
+    <main>
+      <ServicesHero title={documentationHero.title} />
+      {documentationServiceRows.map((row) => (
+        <DocumentationServiceRow
+          key={row.id}
+          title={row.title}
+          priceLabel={row.priceLabel}
+          body={row.body}
+          imagePosition={row.imagePosition}
+        />
+      ))}
+      <DocumentationBioSection
+        sectionTitle={documentationBio.sectionTitle}
+        studioName={documentationBio.studioName}
+        paragraphs={documentationBio.paragraphs}
+      />
+    </main>
   )
 }
