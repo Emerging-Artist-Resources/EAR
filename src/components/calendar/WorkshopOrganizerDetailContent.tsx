@@ -214,24 +214,19 @@ export function WorkshopOrganizerDetailContent({
                 id={child.id}
                 type={child.type}
                 title={child.title}
+                host={child.host}
+                description={child.description}
+                venue={child.venue}
+                price={child.price}
+                link={child.link}
+                submittedAt={child.submitted_at}
                 starts_at_utc={child.starts_at_utc}
                 ends_at_utc={child.ends_at_utc}
                 is_class={child.is_class}
-                class_title={child.class_title}
                 class_description={child.class_description}
                 class_organizer={child.class_organizer}
                 class_teachers={child.class_teachers}
-                class_price={child.class_price}
-                class_link={child.class_link}
-                class_style_category={child.class_style_category}
-                notes={child.notes}
                 occurrences={child.occurrences}
-                coverImageUrl={child.cover_image_url}
-                coverImageAlt={
-                  child.cover_image_credit
-                    ? `Listing photo: ${child.cover_image_credit}`
-                    : `${child.title} — photo`
-                }
                 onClick={() => {
                   if (onListingClick) {
                     onListingClick(child.id)

@@ -3,7 +3,7 @@ import { getSupabaseServerClientAnon } from "@/lib/supabase/serverAnon"
 import { getListingTitle } from "@/features/events/server/listing-utils"
 import { normalizeSupabaseRelation, isLinkedPiece, isLinkedClass } from "@/features/events/server/admin-utils"
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
-import { getCoverPhotoPublic } from "@/lib/listing-photo-cover"
+import { getListingCardSummary } from "@/lib/listing-card-display"
 
 export async function GET(
   _req: NextRequest,
@@ -25,6 +25,11 @@ export async function GET(
           status,
           submitted_at,
           notes,
+          company,
+          address,
+          place_id,
+          venue_name,
+          meta,
           performance_details (*),
           audition_details (*),
           creative_details (*),
@@ -34,9 +39,12 @@ export async function GET(
             id,
             starts_at_utc,
             ends_at_utc,
-            tz
-          ),
-          listing_photos ( id, path, credit, sort_order )
+            tz,
+            occurrence_type,
+            address,
+            place_id,
+            venue_name
+          )
         )
       `)
       .eq("parent_listing_id", id)
@@ -77,6 +85,11 @@ export async function GET(
         const listingDetail: PublicListingDetail = {
           id: listing.id,
           type: listing.type,
+          company: listing.company ?? null,
+          address: listing.address ?? null,
+          place_id: listing.place_id ?? null,
+          venue_name: listing.venue_name ?? null,
+          meta: listing.meta ?? null,
           performance_details: listing.performance_details,
           audition_details: listing.audition_details,
           creative_details: listing.creative_details,
@@ -84,37 +97,31 @@ export async function GET(
           piece_details: listing.piece_details,
           listing_occurrences: listing.listing_occurrences || [],
         }
-        
+
         const title = getListingTitle(listingDetail)
-        
-        const earliestOccurrence = listing.listing_occurrences
-          ?.filter((occ: any) => occ.starts_at_utc)
-          .sort((a: any, b: any) => 
-            new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime()
-          )[0]
-        
+        const summary = getListingCardSummary(listingDetail)
         const pieceLinked = isLinkedPiece(listing)
         const classLinked = isLinkedClass(listing)
-        
         const pieceDetails = normalizeSupabaseRelation(listing.piece_details)
         const classDetails = normalizeSupabaseRelation(listing.class_workshop_details)
-        
+        const earliestEvent = summary.events[0]
+
         if (pieceLinked) {
           console.log(`[Children Route] Processing piece ${listing.id} - title: ${title}, parent_listing_id: ${pieceDetails?.parent_listing_id}`)
         }
-        
+
         if (classLinked) {
           console.log(`[Children Route] Processing class ${listing.id} - title: ${title}, parent_listing_id: ${classDetails?.parent_listing_id}`)
         }
-        
-        const allOccurrences = listing.listing_occurrences
-          ?.filter((occ: any) => occ.starts_at_utc)
-          .sort((a: any, b: any) => 
-            new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime()
-          ) || []
 
-        const cover = getCoverPhotoPublic(listing.listing_photos)
-        
+        const occurrences = [...summary.deadlines, ...summary.events].map((occ) => ({
+          id: occ.id,
+          starts_at_utc: occ.starts_at_utc,
+          ends_at_utc: occ.ends_at_utc,
+          tz: occ.tz ?? "UTC",
+          occurrence_type: occ.occurrence_type ?? "event",
+        }))
+
         return {
           id: listing.id,
           type: listing.type,
@@ -122,32 +129,26 @@ export async function GET(
           relationship_type: rel.relationship_type,
           is_piece: pieceLinked,
           is_class: classLinked,
-          parent_listing_id: pieceLinked ? pieceDetails?.parent_listing_id : 
-                            classLinked ? classDetails?.parent_listing_id : 
-                            undefined,
-          starts_at_utc: earliestOccurrence?.starts_at_utc || null,
-          ends_at_utc: earliestOccurrence?.ends_at_utc || null,
-          tz: earliestOccurrence?.tz || null,
+          parent_listing_id: pieceLinked
+            ? pieceDetails?.parent_listing_id
+            : classLinked
+              ? classDetails?.parent_listing_id
+              : undefined,
+          submitted_at: listing.submitted_at,
+          host: summary.host,
+          description: summary.description,
+          venue: summary.venue,
+          price: summary.price,
+          link: summary.link,
+          starts_at_utc: earliestEvent?.starts_at_utc ?? null,
+          ends_at_utc: earliestEvent?.ends_at_utc ?? null,
           piece_company: pieceLinked ? pieceDetails?.piece_company || null : null,
-          piece_company_website: pieceLinked ? pieceDetails?.piece_company_website || null : null,
           piece_description: pieceLinked ? pieceDetails?.piece_description || null : null,
           choreographer: pieceLinked ? pieceDetails?.choreographer || null : null,
-          class_title: classLinked ? classDetails?.title || null : null,
           class_description: classLinked ? classDetails?.description || null : null,
           class_organizer: classLinked ? classDetails?.organizer || null : null,
           class_teachers: classLinked ? classDetails?.teachers || null : null,
-          class_price: classLinked ? classDetails?.price || null : null,
-          class_link: classLinked ? classDetails?.link || null : null,
-          class_style_category: classLinked ? classDetails?.style_category || null : null,
-          notes: listing.notes || null,
-          cover_image_url: cover?.url ?? null,
-          cover_image_credit: cover?.credit ?? null,
-          occurrences: allOccurrences.map((occ: any) => ({
-            id: occ.id,
-            starts_at_utc: occ.starts_at_utc,
-            ends_at_utc: occ.ends_at_utc || null,
-            tz: occ.tz,
-          })),
+          occurrences,
         }
       })
       .filter((listing: any) => listing !== null)

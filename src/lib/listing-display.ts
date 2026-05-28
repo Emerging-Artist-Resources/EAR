@@ -89,6 +89,77 @@ export function isOpportunityListingDetail(
   return listing?.type === "creative"
 }
 
+/** Host or individual name for listing cards (recent feed, piece/class cards, etc.). */
+export function getListingCardHost(listing: PublicListingDetail): string | null {
+  const normalized = normalizePublicListingRelations(listing)
+
+  if (isPiecePerformanceListing(normalized)) {
+    const piece = normalizeListingRelation(normalized.piece_details)
+    return (
+      piece?.piece_company?.trim() ||
+      piece?.choreographer?.trim() ||
+      null
+    )
+  }
+
+  if (normalized.type === "performance") {
+    const perf = normalizeListingRelation(normalized.performance_details)
+    return perf?.organizer?.trim() || listing.company?.trim() || null
+  }
+
+  if (normalized.type === "audition") {
+    const audition = normalizeListingRelation(normalized.audition_details)
+    return audition?.host?.trim() || null
+  }
+
+  if (normalized.type === "creative") {
+    const creative = normalizeListingRelation(normalized.creative_details)
+    return creative?.host?.trim() || null
+  }
+
+  if (normalized.type === "class") {
+    const cwd = normalizeListingRelation(normalized.class_workshop_details)
+    if (cwd?.class_workshop_type === "CLASS") {
+      return cwd.organizer?.trim() || cwd.teachers?.trim() || null
+    }
+    return cwd?.organizer?.trim() || listing.company?.trim() || null
+  }
+
+  return null
+}
+
+/** Short description for listing cards. */
+export function getListingCardDescription(listing: PublicListingDetail): string | null {
+  const normalized = normalizePublicListingRelations(listing)
+
+  if (isPiecePerformanceListing(normalized)) {
+    const piece = normalizeListingRelation(normalized.piece_details)
+    return piece?.piece_description?.trim() || null
+  }
+
+  if (normalized.type === "performance") {
+    const perf = normalizeListingRelation(normalized.performance_details)
+    return perf?.description?.trim() || null
+  }
+
+  if (normalized.type === "audition") {
+    const audition = normalizeListingRelation(normalized.audition_details)
+    return audition?.description?.trim() || null
+  }
+
+  if (normalized.type === "creative") {
+    const creative = normalizeListingRelation(normalized.creative_details)
+    return creative?.description?.trim() || null
+  }
+
+  if (normalized.type === "class") {
+    const cwd = normalizeListingRelation(normalized.class_workshop_details)
+    return cwd?.description?.trim() || null
+  }
+
+  return null
+}
+
 export function hasSocialHandlesContent(socialHandles: unknown): boolean {
   if (!socialHandles) return false
   let handles: Record<string, string> | null = null

@@ -123,6 +123,11 @@ export function convertUTCToEST(utcISOString: string): { date: string; time: str
   return { date: formattedDate, time: formattedTime }
 }
 
+/** Today's date (YYYY-MM-DD) in EST, aligned with calendar occurrence bucketing. */
+export function getTodayESTDateString(): string {
+  return convertUTCToEST(new Date().toISOString()).date
+}
+
 /**
  * Formats a 24-hour time string (HH:mm) to 12-hour format (h:mm AM/PM)
  * @param time24 - Time string in HH:mm format (24-hour)

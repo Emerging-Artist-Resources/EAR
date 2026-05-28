@@ -3,21 +3,9 @@ import {
   listingHasLocationDisplay,
   type LocationDisplaySource,
 } from "@/lib/location-display"
+import { getGoogleMapsLink } from "@/lib/google-maps-link"
 import { ONLINE_VENUE_LABEL } from "@/lib/location-mode"
 import { FieldRow } from "@/components/calendar/PublicListingDetailSections"
-
-function getGoogleMapsLink(
-  address: string | null | undefined,
-  placeId: string | null | undefined,
-): string | null {
-  if (placeId) {
-    return `https://www.google.com/maps/place/?q=place_id:${placeId}`
-  }
-  if (address) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
-  }
-  return null
-}
 
 type ListingLocationDisplayProps = {
   location: LocationDisplaySource | null | undefined

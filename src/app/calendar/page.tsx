@@ -18,6 +18,7 @@ import { ListingDetailsModal } from "@/components/calendar/ListingDetailsModal"
 import Link from "next/link"
 import { ROUTES } from "@/lib/constants"
 import { RECENTLY_ADDED_MAX_AGE_DAYS } from "@/lib/recently-added-listings"
+import type { ListingCardLinkDisplay, ListingCardVenue } from "@/lib/listing-card-display"
 import CommunityCalendarHero from "@/components/calendar/CommunityCalendarHero"
 
 function CalendarViewContent() {
@@ -30,10 +31,21 @@ function CalendarViewContent() {
     id: string
     type: string
     title: string
+    submitted_at: string
+    host?: string | null
+    description?: string | null
+    venue?: ListingCardVenue | null
+    price?: string | null
+    link?: ListingCardLinkDisplay | null
     starts_at_utc: string | null
     ends_at_utc: string | null
-    cover_image_url?: string | null
-    cover_image_credit?: string | null
+    occurrences?: Array<{
+      id: string
+      starts_at_utc: string
+      ends_at_utc: string | null
+      tz: string
+      occurrence_type?: string | null
+    }>
   }>>([])
   const { isAuthed } = useAuth()
   const { items, deadlines, loading, fetchCalendar } = useCalendar()
@@ -134,7 +146,7 @@ function CalendarViewContent() {
               <Card className="p-6 shadow-md">
                 <HorizontalScrollCards
                   title="Recently Added"
-                  description={`Submitted in the last ${RECENTLY_ADDED_MAX_AGE_DAYS} days`}
+                  // description={`Submitted in the last ${RECENTLY_ADDED_MAX_AGE_DAYS} days`}
                   cardsPerView={4}
                   onCardClick={(index) => {
                     const listing = recentListings[index]
@@ -149,14 +161,16 @@ function CalendarViewContent() {
                       id={listing.id}
                       type={listing.type}
                       title={listing.title}
+                      host={listing.host}
+                      description={listing.description}
+                      venue={listing.venue}
+                      price={listing.price}
+                      link={listing.link}
+                      submittedAt={listing.submitted_at}
                       starts_at_utc={listing.starts_at_utc}
                       ends_at_utc={listing.ends_at_utc}
-                      coverImageUrl={listing.cover_image_url}
-                      coverImageAlt={
-                        listing.cover_image_credit
-                          ? `Listing photo: ${listing.cover_image_credit}`
-                          : `${listing.title} — photo`
-                      }
+                      occurrences={listing.occurrences}
+                      onClick={() => setSelectedListingId(listing.id)}
                     />
                   ))}
                 </HorizontalScrollCards>

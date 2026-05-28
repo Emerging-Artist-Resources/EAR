@@ -28,45 +28,71 @@ const CALENDAR_COLOR_BY_TYPE = {
   },
 } as const
 
-export const getEventTypeColor = (type: CalendarItem["type"]) => {
+type EventTypeColors = (typeof CALENDAR_COLOR_BY_TYPE)[keyof typeof CALENDAR_COLOR_BY_TYPE]
+
+function muteEventTypeColors(colors: EventTypeColors): EventTypeColors {
+  return {
+    bg: `color-mix(in srgb, ${colors.bg} 40%, var(--surface-panel))`,
+    // Light label colors (e.g. off-white) wash out on muted backgrounds — use a darker type tint.
+    text: `color-mix(in srgb, ${colors.border} 72%, var(--text-primary))`,
+    border: `color-mix(in srgb, ${colors.border} 50%, var(--border-default))`,
+  }
+}
+
+export const getEventTypeColor = (
+  type: CalendarItem["type"],
+  options?: { muted?: boolean },
+) => {
+  let colors: EventTypeColors
   switch (type) {
     case "performance":
-      return CALENDAR_COLOR_BY_TYPE.performance
+      colors = CALENDAR_COLOR_BY_TYPE.performance
+      break
     case "class":
-      return CALENDAR_COLOR_BY_TYPE.class
+      colors = CALENDAR_COLOR_BY_TYPE.class
+      break
     case "audition":
-      return CALENDAR_COLOR_BY_TYPE.audition
+      colors = CALENDAR_COLOR_BY_TYPE.audition
+      break
     case "creative":
-      return CALENDAR_COLOR_BY_TYPE.creative
+      colors = CALENDAR_COLOR_BY_TYPE.creative
+      break
     default:
-      return CALENDAR_COLOR_BY_TYPE.default
+      colors = CALENDAR_COLOR_BY_TYPE.default
   }
+  return options?.muted ? muteEventTypeColors(colors) : colors
 }
 
 export const getFilterTypeColor = (type: string) => {
   switch (type) {
     case "PERFORMANCE":
       return {
+        accent: CALENDAR_COLOR_BY_TYPE.performance.border,
         bg: CALENDAR_COLOR_BY_TYPE.performance.bg,
         text: CALENDAR_COLOR_BY_TYPE.performance.text,
       }
     case "CLASS":
       return {
+        accent: CALENDAR_COLOR_BY_TYPE.class.border,
         bg: CALENDAR_COLOR_BY_TYPE.class.bg,
         text: CALENDAR_COLOR_BY_TYPE.class.text,
       }
     case "AUDITION":
       return {
+        accent: CALENDAR_COLOR_BY_TYPE.audition.border,
         bg: CALENDAR_COLOR_BY_TYPE.audition.bg,
         text: CALENDAR_COLOR_BY_TYPE.audition.text,
       }
     case "CREATIVE":
       return {
+        accent: CALENDAR_COLOR_BY_TYPE.creative.border,
         bg: CALENDAR_COLOR_BY_TYPE.creative.bg,
         text: CALENDAR_COLOR_BY_TYPE.creative.text,
+        outlineText: CALENDAR_COLOR_BY_TYPE.creative.text,
       }
     default:
       return {
+        accent: CALENDAR_COLOR_BY_TYPE.default.border,
         bg: CALENDAR_COLOR_BY_TYPE.default.bg,
         text: CALENDAR_COLOR_BY_TYPE.default.text,
       }

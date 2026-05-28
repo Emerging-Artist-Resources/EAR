@@ -10,10 +10,11 @@ import { hasDisplayText } from "@/lib/listing-display"
 import type { OrganizerProgramPiecesDocument } from "@/lib/organizer-program-pieces"
 import {
   buildOccurrencesForOrganizerProgramPiece,
-  firstOrganizerPiecePhotoCredit,
-  firstOrganizerPiecePhotoUrl,
   organizerProgramPieceDisplayTitle,
+  organizerProgramPieceToPublicListingDetail,
 } from "@/lib/organizer-program-pieces-display"
+import { getListingCardSummary } from "@/lib/listing-card-display"
+import type { ListingCardLinkDisplay, ListingCardVenue } from "@/lib/listing-card-display"
 import { cn } from "@/lib/utils"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { SocialHandles } from "./PublicListingDetailSections"
@@ -34,27 +35,26 @@ export type ChildListingSummary = {
   title: string
   is_piece?: boolean
   is_class?: boolean
+  submitted_at?: string | null
+  host?: string | null
+  description?: string | null
+  venue?: ListingCardVenue | null
+  price?: string | null
+  link?: ListingCardLinkDisplay | null
   starts_at_utc: string | null
   ends_at_utc: string | null
   piece_company?: string | null
-  piece_company_website?: string | null
   piece_description?: string | null
   choreographer?: string | null
-  class_title?: string | null
   class_description?: string | null
   class_organizer?: string | null
   class_teachers?: string | null
-  class_price?: string | null
-  class_link?: string | null
-  class_style_category?: string | null
-  notes?: string | null
-  cover_image_url?: string | null
-  cover_image_credit?: string | null
   occurrences?: Array<{
     id: string
     starts_at_utc: string
     ends_at_utc: string | null
     tz: string
+    occurrence_type?: string | null
   }>
 }
 
@@ -249,61 +249,53 @@ export function PerformanceOrganizerDetailContent({
               }
             }}
           >
-            {embeddedPieces.map((piece) => (
-              <ListingCard
-                key={piece.id}
-                id={piece.id}
-                type="performance"
-                title={organizerProgramPieceDisplayTitle(piece)}
-                is_piece
-                piece_company={piece.company?.trim() ? piece.company : null}
-                piece_company_website={piece.company_website}
-                piece_description={piece.description?.trim() ? piece.description : null}
-                choreographer={piece.choreographer}
-                notes={piece.credits}
-                occurrences={buildOccurrencesForOrganizerProgramPiece(
-                  piece,
-                  listing.listing_occurrences,
-                )}
-                coverImageUrl={firstOrganizerPiecePhotoUrl(piece)}
-                coverImageAlt={
-                  firstOrganizerPiecePhotoCredit(piece)
-                    ? `Listing photo: ${firstOrganizerPiecePhotoCredit(piece)}`
-                    : `${organizerProgramPieceDisplayTitle(piece)} — photo`
-                }
-                enableSave={false}
-                onClick={() => onSelectOrganizerPiece(piece.id)}
-              />
-            ))}
+            {embeddedPieces.map((piece) => {
+              const pieceDetail = organizerProgramPieceToPublicListingDetail(piece, listing)
+              const summary = getListingCardSummary(pieceDetail)
+              const pieceOccurrences = buildOccurrencesForOrganizerProgramPiece(
+                piece,
+                listing.listing_occurrences,
+              )
+              return (
+                <ListingCard
+                  key={piece.id}
+                  id={piece.id}
+                  type="performance"
+                  title={organizerProgramPieceDisplayTitle(piece)}
+                  host={summary.host}
+                  description={summary.description}
+                  venue={summary.venue}
+                  price={summary.price}
+                  link={summary.link}
+                  occurrences={pieceOccurrences}
+                  enableSave={false}
+                  onClick={() => onSelectOrganizerPiece(piece.id)}
+                />
+              )
+            })}
             {childListings.map((child) => (
               <ListingCard
                 key={child.id}
                 id={child.id}
                 type={child.type}
                 title={child.title}
+                host={child.host}
+                description={child.description}
+                venue={child.venue}
+                price={child.price}
+                link={child.link}
+                submittedAt={child.submitted_at}
                 starts_at_utc={child.starts_at_utc}
                 ends_at_utc={child.ends_at_utc}
                 is_piece={child.is_piece}
                 piece_company={child.piece_company}
-                piece_company_website={child.piece_company_website}
                 piece_description={child.piece_description}
                 choreographer={child.choreographer}
                 is_class={child.is_class}
-                class_title={child.class_title}
                 class_description={child.class_description}
                 class_organizer={child.class_organizer}
                 class_teachers={child.class_teachers}
-                class_price={child.class_price}
-                class_link={child.class_link}
-                class_style_category={child.class_style_category}
-                notes={child.notes}
                 occurrences={child.occurrences}
-                coverImageUrl={child.cover_image_url}
-                coverImageAlt={
-                  child.cover_image_credit
-                    ? `Listing photo: ${child.cover_image_credit}`
-                    : `${child.title} — photo`
-                }
                 onClick={() => {
                   if (onListingClick) {
                     onListingClick(child.id)
