@@ -3,6 +3,7 @@ import { DocumentationBioSection } from "@/components/services/DocumentationBioS
 import { DocumentationServiceRow } from "@/components/services/DocumentationServiceRow"
 import { ServicesHero } from "@/components/services/ServicesHero"
 import {
+  DOCUMENTATION_INQUIRY_HREF,
   documentationBio,
   documentationHero,
   documentationServiceRows,
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 export default function PhotographyVideographyPage() {
   return (
     <main>
-      <ServicesHero title={documentationHero.title} />
+      <ServicesHero title={documentationHero.title} inquiryHref={DOCUMENTATION_INQUIRY_HREF} />
       {documentationServiceRows.map((row) => (
         <DocumentationServiceRow
           key={row.id}

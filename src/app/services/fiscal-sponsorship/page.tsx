@@ -1,11 +1,16 @@
 import type { Metadata } from "next"
+import { FiscalSponsorshipBenefitsSection } from "@/components/services/FiscalSponsorshipBenefitsSection"
 import { FiscalSponsorshipCtaBand } from "@/components/services/FiscalSponsorshipCtaBand"
 import { FiscalSponsorshipExplainer } from "@/components/services/FiscalSponsorshipExplainer"
-import { FiscalSponsorshipHero } from "@/components/services/FiscalSponsorshipHero"
+import { FiscalSponsorshipPartnershipSection } from "@/components/services/FiscalSponsorshipPartnershipSection"
+import { ServicesHero } from "@/components/services/ServicesHero"
 import {
+  FISCAL_SPONSORSHIP_INQUIRY_HREF,
+  fiscalSponsorshipBenefits,
   fiscalSponsorshipCtaBand,
   fiscalSponsorshipExplainer,
   fiscalSponsorshipHero,
+  fiscalSponsorshipPartnership,
 } from "@/lib/fiscal-sponsorship-content"
 
 export const metadata: Metadata = {
@@ -17,18 +22,21 @@ export const metadata: Metadata = {
 export default function FiscalSponsorshipPage() {
   return (
     <main>
-      <FiscalSponsorshipHero className="text-ear-black" title={fiscalSponsorshipHero.title} subline={fiscalSponsorshipHero.subline} />
+      <ServicesHero title={fiscalSponsorshipHero.title} inquiryHref={FISCAL_SPONSORSHIP_INQUIRY_HREF} />
       <FiscalSponsorshipExplainer
-        className="text-ear-black"
         title={fiscalSponsorshipExplainer.title}
-        paragraphs={fiscalSponsorshipExplainer.paragraphs}
+        body={fiscalSponsorshipExplainer.body}
+      />
+      <FiscalSponsorshipBenefitsSection
+        sectionTitle={fiscalSponsorshipBenefits.sectionTitle}
+        columns={fiscalSponsorshipBenefits.columns}
       />
       <FiscalSponsorshipCtaBand
-        className="text-ear-black"
         overline={fiscalSponsorshipCtaBand.overline}
         headline={fiscalSponsorshipCtaBand.headline}
         body={fiscalSponsorshipCtaBand.body}
       />
+      <FiscalSponsorshipPartnershipSection paragraphs={fiscalSponsorshipPartnership.paragraphs} />
     </main>
   )
 }

@@ -1,3 +1,9 @@
+export const fiscalServicesHero = {
+  title: "Fiscal Services",
+} as const
+
+export const FISCAL_SERVICES_INQUIRY_HREF = "/services/fiscal-services/inquiry" as const
+
 export type FiscalServiceBlock = {
   index: number
   title: string

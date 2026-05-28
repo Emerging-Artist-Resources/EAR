@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Text } from "@/components/ui/typography"
+import { FISCAL_SERVICES_INQUIRY_HREF } from "@/lib/fiscal-services-content"
 import { cn } from "@/lib/utils"
 
 type FiscalServiceSectionProps = {
@@ -43,7 +44,7 @@ export function FiscalServiceSection({
             variant="default"
             className="h-auto w-full rounded-full px-8 py-6 text-xs font-semibold uppercase tracking-widest sm:w-auto"
           >
-            <Link href="/services/fiscal-services/inquiry">Inquire here</Link>
+            <Link href={FISCAL_SERVICES_INQUIRY_HREF}>Inquire here</Link>
           </Button>
         </div>
       </div>
