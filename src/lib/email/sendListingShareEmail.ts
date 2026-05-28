@@ -1,22 +1,51 @@
 /**
  * Postmark templates: listing-share-festival (performance organizer + multi-day workshop),
- * listing-share-piece (piece).
+ * listing-share-piece (piece inviting primary lister).
  * @see EMAIL_SYSTEM.md
  */
 
-import { getPublicAppUrl } from "@/lib/app-url"
+import {
+  buildListingShareFestivalTemplateModel,
+  buildListingSharePieceTemplateModel,
+} from "@/lib/email/listing-share-email-model"
 import { postmarkClient } from "./postmark"
 
 export type ListingShareTemplateAlias = "listing-share-festival" | "listing-share-piece"
 
-export async function sendListingShareTemplatedEmail(args: {
-  template: ListingShareTemplateAlias
+export type ListingShareFestivalEmailArgs = {
+  template: "listing-share-festival"
   to: string
   listingTitle: string
   listingId: string
   inviterName: string
   inviterEmail: string
-}): Promise<void> {
+}
+
+export type ListingSharePieceEmailArgs = {
+  template: "listing-share-piece"
+  to: string
+  companyArtistName: string
+  eventTitle: string
+}
+
+export type ListingShareEmailArgs = ListingShareFestivalEmailArgs | ListingSharePieceEmailArgs
+
+function buildTemplateModel(args: ListingShareEmailArgs): Record<string, string> {
+  if (args.template === "listing-share-piece") {
+    return buildListingSharePieceTemplateModel({
+      companyArtistName: args.companyArtistName,
+      eventTitle: args.eventTitle,
+    })
+  }
+  return buildListingShareFestivalTemplateModel({
+    listingTitle: args.listingTitle,
+    listingId: args.listingId,
+    inviterName: args.inviterName,
+    inviterEmail: args.inviterEmail,
+  })
+}
+
+export async function sendListingShareTemplatedEmail(args: ListingShareEmailArgs): Promise<void> {
   if (process.env.DISABLE_EMAILS === "true") {
     console.log(`[EMAIL] Email sending disabled. Would send ${args.template} to ${args.to}`)
     return
@@ -38,19 +67,11 @@ export async function sendListingShareTemplatedEmail(args: {
   }
 
   const fromAddress = `${process.env.POSTMARK_FROM_NAME} <${process.env.POSTMARK_FROM_EMAIL}>`
-  const baseUrl = getPublicAppUrl()
-  const publicCalendarUrl = `${baseUrl}/calendar?listingId=${encodeURIComponent(args.listingId)}`
 
   await postmarkClient.sendEmailWithTemplate({
     From: fromAddress,
     To: args.to,
     TemplateAlias: args.template,
-    TemplateModel: {
-      listing_title: args.listingTitle,
-      public_calendar_url: publicCalendarUrl,
-      inviter_name: args.inviterName,
-      inviter_email: args.inviterEmail,
-      platform_name: "EAR",
-    },
+    TemplateModel: buildTemplateModel(args),
   })
 }

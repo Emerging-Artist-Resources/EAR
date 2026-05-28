@@ -17,7 +17,6 @@ import { ListingCard } from "@/components/shared/ListingCard"
 import { ListingDetailsModal } from "@/components/calendar/ListingDetailsModal"
 import Link from "next/link"
 import { ROUTES } from "@/lib/constants"
-import { RECENTLY_ADDED_MAX_AGE_DAYS } from "@/lib/recently-added-listings"
 import type { ListingCardLinkDisplay, ListingCardVenue } from "@/lib/listing-card-display"
 import CommunityCalendarHero from "@/components/calendar/CommunityCalendarHero"
 

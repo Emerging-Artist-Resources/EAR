@@ -28,7 +28,11 @@ const CALENDAR_COLOR_BY_TYPE = {
   },
 } as const
 
-type EventTypeColors = (typeof CALENDAR_COLOR_BY_TYPE)[keyof typeof CALENDAR_COLOR_BY_TYPE]
+type EventTypeColors = {
+  bg: string
+  text: string
+  border: string
+}
 
 function muteEventTypeColors(colors: EventTypeColors): EventTypeColors {
   return {

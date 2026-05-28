@@ -17,7 +17,6 @@ import { splitListingCardOccurrences } from "@/lib/listing-card-display"
 import { cn } from "@/lib/utils"
 
 const MAX_EVENT_DATES_SHOWN = 3
-const LINK_TRUNCATE_LENGTH = 48
 
 interface ListingCardProps {
   id: string
@@ -84,11 +83,6 @@ function resolveDescription(props: ListingCardProps): string | null {
   return null
 }
 
-function truncateLinkText(text: string): string {
-  if (text.length <= LINK_TRUNCATE_LENGTH) return text
-  return `${text.slice(0, LINK_TRUNCATE_LENGTH - 1)}…`
-}
-
 function formatAddedDate(iso: string): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return ""
@@ -134,27 +128,6 @@ function VenueRow({ venue }: { venue: ListingCardVenue }) {
   )
 }
 
-function LinkRow({ link }: { link: ListingCardLinkDisplay }) {
-  const display = truncateLinkText(link.text)
-  return (
-    <CardDetailRow label="Link">
-      {link.href ? (
-        <a
-          href={link.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-brand-primary hover:text-brand-primary-hover underline break-all"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {display}
-        </a>
-      ) : (
-        <span className="break-all">{display}</span>
-      )}
-    </CardDetailRow>
-  )
-}
-
 export function ListingCard({
   id,
   type,
@@ -165,8 +138,6 @@ export function ListingCard({
   host,
   description,
   venue,
-  price,
-  link,
   submittedAt,
   is_piece,
   piece_company,
@@ -228,7 +199,6 @@ export function ListingCard({
     is_class,
     class_description,
   })
-  const displayPrice = price?.trim() || null
   const addedLabel = submittedAt ? formatAddedDate(submittedAt) : null
   const hasSchedule = visibleDeadlines.length > 0 || visibleEvents.length > 0
   const interactive = Boolean(onClick)
@@ -262,8 +232,6 @@ export function ListingCard({
 
         <div className="mt-4 flex min-h-[7.5rem] flex-1 flex-col gap-2">
           {venue ? <VenueRow venue={venue} /> : null}
-          {/* {displayPrice ? <CardDetailRow label="Price">{displayPrice}</CardDetailRow> : null}
-          {link ? <LinkRow link={link} /> : null} */}
           {displayDescription ? (
             <p className="font-sans text-sm leading-snug text-text-muted line-clamp-3">
               {displayDescription}
