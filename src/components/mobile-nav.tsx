@@ -11,7 +11,6 @@ import { ROUTES } from "@/lib/config/constants"
 import { publicNavItems } from "@/lib/navigation/public-nav"
 import { servicesNavItems } from "@/lib/navigation/services-nav"
 import { dashboardNavItems } from "@/lib/navigation/dashboard-nav"
-import { Heart } from "lucide-react"
 
 interface MobileNavProps {
   onSubmitPerformance?: () => void

@@ -1,6 +1,6 @@
 import { AboutUsProfileRow } from "@/components/about-us/AboutUsProfileRow"
 import { TapeAccentCard } from "@/components/shared/TapeAccentCard"
-import { H1, H2, Text } from "@/components/ui/typography"
+import { H2, Text } from "@/components/ui/typography"
 import { cn } from "@/lib/utils"
 import { aboutUsAdvisoryBoard } from "@/lib/content/about-us"
 
