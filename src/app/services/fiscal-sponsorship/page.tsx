@@ -6,6 +6,9 @@ import { FiscalSponsorshipPartnershipSection } from "@/components/services/Fisca
 import { ServicesHero } from "@/components/services/ServicesHero"
 import {
   FISCAL_SPONSORSHIP_INQUIRY_HREF,
+  FISCAL_SPONSORSHIP_EXPLAINER_IMAGE,
+  FISCAL_SPONSORSHIP_HERO_IMAGE,
+  FISCAL_SPONSORSHIP_PARTNERSHIP_IMAGE,
   fiscalSponsorshipBenefits,
   fiscalSponsorshipCtaBand,
   fiscalSponsorshipExplainer,
@@ -22,10 +25,12 @@ export const metadata: Metadata = {
 export default function FiscalSponsorshipPage() {
   return (
     <main>
-      <ServicesHero title={fiscalSponsorshipHero.title} inquiryHref={FISCAL_SPONSORSHIP_INQUIRY_HREF} />
+      <ServicesHero title={fiscalSponsorshipHero.title} inquiryHref={FISCAL_SPONSORSHIP_INQUIRY_HREF} image={FISCAL_SPONSORSHIP_HERO_IMAGE}/>
       <FiscalSponsorshipExplainer
         title={fiscalSponsorshipExplainer.title}
         body={fiscalSponsorshipExplainer.body}
+        imageSrc={FISCAL_SPONSORSHIP_EXPLAINER_IMAGE}
+        imageAlt="Artists supported through fiscal sponsorship"
       />
       <FiscalSponsorshipBenefitsSection
         sectionTitle={fiscalSponsorshipBenefits.sectionTitle}
@@ -36,7 +41,11 @@ export default function FiscalSponsorshipPage() {
         headline={fiscalSponsorshipCtaBand.headline}
         body={fiscalSponsorshipCtaBand.body}
       />
-      <FiscalSponsorshipPartnershipSection paragraphs={fiscalSponsorshipPartnership.paragraphs} />
+      <FiscalSponsorshipPartnershipSection
+        paragraphs={fiscalSponsorshipPartnership.paragraphs}
+        imageSrc={FISCAL_SPONSORSHIP_PARTNERSHIP_IMAGE}
+        imageAlt="mignolo arts center"
+      />
     </main>
   )
 }

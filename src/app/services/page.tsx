@@ -1,12 +1,16 @@
 import { ServiceOverviewCard } from "@/components/services/ServiceOverviewCard"
 import { ServicesHero } from "@/components/services/ServicesHero"
 import { Text } from "@/components/ui/typography"
-import { serviceOverviewItems } from "@/lib/content/services-overview"
+import {
+  SERVICES_OVERVIEW_HERO_IMAGE,
+  serviceOverviewItems,
+  servicesOverviewHero,
+} from "@/lib/content/services-overview"
 
 export default function ServicesPage() {
   return (
     <main>
-      <ServicesHero title="Services" />
+      <ServicesHero title={servicesOverviewHero.title} image={SERVICES_OVERVIEW_HERO_IMAGE} />
       <section className="bg-ear-off-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <Text className="mx-auto mb-4 max-w-3xl text-center text-lg text-ear-black md:text-xl">

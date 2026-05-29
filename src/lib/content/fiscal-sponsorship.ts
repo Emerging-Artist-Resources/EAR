@@ -59,3 +59,11 @@ export const fiscalSponsorshipPartnership = {
 export const FISCAL_SPONSORSHIP_INQUIRY_HREF = "/services/fiscal-sponsorship/inquiry" as const
 
 export const FISCAL_SPONSORSHIP_FAQ_HREF = "/services/fiscal-sponsorship/faq" as const
+
+export const FISCAL_SPONSORSHIP_HERO_IMAGE = "/images/fiscal-sponsorship/hero-image.JPG" as const
+
+export const FISCAL_SPONSORSHIP_EXPLAINER_IMAGE =
+  "/images/fiscal-sponsorship/fiscal-sponsorshop-image.JPG" as const
+
+export const FISCAL_SPONSORSHIP_PARTNERSHIP_IMAGE =
+  "/images/fiscal-sponsorship/mignolo-image.png" as const

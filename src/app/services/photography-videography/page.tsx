@@ -3,7 +3,9 @@ import { DocumentationBioSection } from "@/components/services/DocumentationBioS
 import { DocumentationServiceRow } from "@/components/services/DocumentationServiceRow"
 import { ServicesHero } from "@/components/services/ServicesHero"
 import {
+  DOCUMENTATION_BIO_SECTION_SRC,
   DOCUMENTATION_INQUIRY_HREF,
+  DOCUMENTATION_HERO_IMAGE,
   documentationBio,
   documentationHero,
   documentationServiceRows,
@@ -18,13 +20,15 @@ export const metadata: Metadata = {
 export default function PhotographyVideographyPage() {
   return (
     <main>
-      <ServicesHero title={documentationHero.title} inquiryHref={DOCUMENTATION_INQUIRY_HREF} />
+      <ServicesHero title={documentationHero.title} inquiryHref={DOCUMENTATION_INQUIRY_HREF} image={DOCUMENTATION_HERO_IMAGE}/>
       {documentationServiceRows.map((row) => (
         <DocumentationServiceRow
           key={row.id}
           title={row.title}
           priceLabel={row.priceLabel}
           body={row.body}
+          imageSrc={row.imageSrc}
+          imageAlt={row.imageAlt}
           imagePosition={row.imagePosition}
         />
       ))}
@@ -32,6 +36,8 @@ export default function PhotographyVideographyPage() {
         sectionTitle={documentationBio.sectionTitle}
         studioName={documentationBio.studioName}
         paragraphs={documentationBio.paragraphs}
+        backgroundSrc={DOCUMENTATION_BIO_SECTION_SRC}
+        backgroundAlt="Samzen, photographer at Samzen Studios"
       />
     </main>
   )

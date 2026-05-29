@@ -3,6 +3,7 @@ import { FiscalServiceSection } from "@/components/services/FiscalServiceSection
 import { ServicesHero } from "@/components/services/ServicesHero"
 import {
   FISCAL_SERVICES_INQUIRY_HREF,
+  FISCAL_SERVICES_HERO_IMAGE,
   fiscalServiceSections,
   fiscalServicesHero,
 } from "@/lib/content/fiscal-services"
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 export default function FiscalServicesPage() {
   return (
     <main>
-      <ServicesHero title={fiscalServicesHero.title} inquiryHref={FISCAL_SERVICES_INQUIRY_HREF} />
+      <ServicesHero title={fiscalServicesHero.title} inquiryHref={FISCAL_SERVICES_INQUIRY_HREF} image={FISCAL_SERVICES_HERO_IMAGE}/>
       <div className="min-h-[60vh]">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
           <div className="space-y-16 text-ear-black">

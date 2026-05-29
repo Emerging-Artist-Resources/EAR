@@ -2,17 +2,20 @@ import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { H1 } from "@/components/ui/typography"
+import { MARKETING_IMAGE_QUALITY, SERVICES_HERO_IMAGE_SIZES } from "@/lib/images"
 
 type ServicesHeroProps = {
   title: string
   inquiryHref?: string
   inquiryLabel?: string
+  image: string
 }
 
 export function ServicesHero({
   title,
   inquiryHref,
   inquiryLabel = "Inquire here",
+  image,
 }: ServicesHeroProps) {
   return (
     <section
@@ -20,12 +23,13 @@ export function ServicesHero({
       aria-labelledby="services-hero-heading"
     >
       <Image
-        src="/images/service-hero.png"
+        src={image}
         alt=""
         fill
         priority
+        quality={MARKETING_IMAGE_QUALITY}
         className="object-cover object-center opacity-90"
-        sizes="100vw"
+        sizes={SERVICES_HERO_IMAGE_SIZES}
       />
       <div
         className="absolute inset-0 bg-gradient-to-b from-ear-black/40 via-ear-black/20 to-ear-black/50"

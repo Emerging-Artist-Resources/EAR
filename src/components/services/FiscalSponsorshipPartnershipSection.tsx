@@ -1,23 +1,18 @@
+import Image from "next/image"
 import { Text } from "@/components/ui/typography"
 import { cn } from "@/lib/utils"
 
 type FiscalSponsorshipPartnershipSectionProps = {
   paragraphs: readonly string[]
+  imageSrc: string
+  imageAlt: string
   className?: string
-}
-
-function PartnershipBackgroundPlaceholder() {
-  return (
-    <div
-      className="absolute inset-0 bg-muted"
-      role="img"
-      aria-label="mignolo arts center — image coming soon"
-    />
-  )
 }
 
 export function FiscalSponsorshipPartnershipSection({
   paragraphs,
+  imageSrc,
+  imageAlt,
   className,
 }: FiscalSponsorshipPartnershipSectionProps) {
   return (
@@ -25,11 +20,14 @@ export function FiscalSponsorshipPartnershipSection({
       className={cn("relative overflow-hidden px-4 py-16 sm:px-6 lg:px-8 lg:py-24", className)}
       aria-labelledby="fiscal-sponsorship-partnership-heading"
     >
-      <PartnershipBackgroundPlaceholder />
-      <div
-        className="absolute inset-0 bg-ear-black/20"
-        aria-hidden
+      <Image
+        src={imageSrc}
+        alt={imageAlt}
+        fill
+        className="object-cover object-center"
+        sizes="100vw"
       />
+      <div className="absolute inset-0 bg-ear-black/20" aria-hidden />
 
       <div className="relative z-10 mx-auto max-w-4xl">
         <div className="bg-ear-black px-6 py-10 sm:px-10 sm:py-12 lg:px-14 lg:py-16">
