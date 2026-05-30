@@ -72,7 +72,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
       errorMode,
       labelIndex,
       locationConfig,
-      rowLabel = "Showtime",
+      rowLabel = "Date & Time",
       showLabelIndex = true,
       onRemove,
       canRemove,

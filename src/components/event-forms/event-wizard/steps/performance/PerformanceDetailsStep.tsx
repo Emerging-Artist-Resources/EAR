@@ -69,12 +69,12 @@ export function PerformanceDetailsStep({
         options={[
           {
             label:
-              "Primary Lister (Organizer / Producer / Presenter) — Submitting the primary event listing. Submitting my own performance or event.",
+              "Primary Lister (Organizer, Producer, Presenter) - I am the primary event lister submitting my own performance or event.",
             value: "ORGANIZER",
           },
           {
             label:
-              "Participating Artist — Submitting work within an existing performance, shared program, or festival.",
+              "Participating Artist - I am submitting my own work that's part of a larger performance, shared program, or festival.",
             value: "PIECE",
           },
         ]}

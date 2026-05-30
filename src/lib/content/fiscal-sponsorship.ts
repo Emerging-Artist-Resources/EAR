@@ -20,7 +20,7 @@ export const fiscalSponsorshipBenefits = {
       id: "fee",
       title: "Low 5.5% Fee",
       paragraphs: [
-        "With one of the lowest fees in the greater Metropolitan area, keep more of your funding with a competitive 5.5% fee and transparent financial reporting that keeps you in complete control.",
+        "With one of the lowest fees in the greater NYC Metropolitan area, keep more of your funding with a competitive 5.5% fee and transparent financial reporting that keeps you in complete control.",
         "With no membership or overhead fees, there is no risk to signing up.",
       ],
     },

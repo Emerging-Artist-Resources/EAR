@@ -36,30 +36,29 @@ export function FestivalAssociationSection({
           eventType="CLASS"
           eventIdField={"parentEventId" as Path<EventFormData>}
           eventModeField={"parentEventMode" as Path<EventFormData>}
-          label="Search for Event"
-          placeholder="Start typing the event name…"
+          label="Search for EAR event"
+          placeholder="Start typing the event title..."
           showCantLocateButton={true}
-          cantLocateButtonLabel="Can't find event? Enter manually"
+          cantLocateButtonLabel="Event not listed with EAR? Enter manually."
           onCantLocate={() => setShowPlaceholder(true)}
         />
       )}
 
       {showPlaceholder && (
         <Section title="Enter event manually">
-          <TextField form={form} name={"placeholderTitle"} label="Event Title" required />
-          <TextField form={form} name={"placeholderOrganizerName"} label="Organizer Name" required />
+          <TextField form={form} name={"placeholderTitle"} label="Event title" required />
+          <TextField form={form} name={"placeholderOrganizerName"} label="Organizer name" required />
           <TextField
             form={form}
             name={"placeholderContactEmail"}
-            label="Organizer Email"
+            label="Organizer email"
             placeholder="name@email.com"
             required
           />
           <TextField
             form={form}
             name={"placeholderWebsiteOrSocial"}
-            label="Website / Social"
-            note="Optional"
+            label="Website or social"
             placeholder="Link or @handle"
           />
           <TextField
