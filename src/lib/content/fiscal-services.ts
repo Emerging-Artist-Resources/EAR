@@ -4,7 +4,7 @@ export const fiscalServicesHero = {
 
 export const FISCAL_SERVICES_INQUIRY_HREF = "/services/fiscal-services/inquiry" as const
 
-export const FISCAL_SERVICES_HERO_IMAGE = "/images/service-hero.png" as const
+export const FISCAL_SERVICES_HERO_IMAGE = "/images/service-hero.JPG" as const
 
 export type FiscalServiceBlock = {
   index: number

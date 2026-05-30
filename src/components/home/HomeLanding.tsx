@@ -1,4 +1,4 @@
-import { FinalBandSection } from "@/components/home/final-band-section"
+//import { FinalBandSection } from "@/components/home/final-band-section"
 import { HeroSection } from "@/components/home/hero-section"
 import { ThreeCardsSection } from "@/components/home/three-cards-section"
 import { WhoWeAreSection } from "@/components/home/who-we-are-section"
@@ -9,7 +9,7 @@ export function HomeLanding() {
       <HeroSection />
       <WhoWeAreSection />
       <ThreeCardsSection />
-      <FinalBandSection />
+      {/* <FinalBandSection /> */}
     </main>
   )
 }

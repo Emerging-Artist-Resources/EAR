@@ -2,7 +2,7 @@ export function WhoWeAreSection() {
   return (
     <section
       id="who-we-are"
-      className="bg-ear-off-white px-4 py-16 sm:px-8 md:py-24 lg:px-12"
+      className="bg-ear-off-white px-4 py-8 sm:px-8 md:py-12 lg:px-12"
     >
       <h2 className="font-header text-center text-4xl font-bold tracking-tight text-ear-black md:text-5xl lg:text-6xl">
         WHO WE ARE

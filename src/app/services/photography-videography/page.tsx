@@ -3,6 +3,7 @@ import { DocumentationBioSection } from "@/components/services/DocumentationBioS
 import { DocumentationServiceRow } from "@/components/services/DocumentationServiceRow"
 import { ServicesHero } from "@/components/services/ServicesHero"
 import {
+  DOCUMENTATION_BIO_PORTRAIT,
   DOCUMENTATION_BIO_SECTION_SRC,
   DOCUMENTATION_INQUIRY_HREF,
   DOCUMENTATION_HERO_IMAGE,
@@ -38,6 +39,10 @@ export default function PhotographyVideographyPage() {
         paragraphs={documentationBio.paragraphs}
         backgroundSrc={DOCUMENTATION_BIO_SECTION_SRC}
         backgroundAlt="Samzen, photographer at Samzen Studios"
+        portraitSrc={DOCUMENTATION_BIO_PORTRAIT.src}
+        portraitAlt={DOCUMENTATION_BIO_PORTRAIT.alt}
+        portraitWidth={DOCUMENTATION_BIO_PORTRAIT.width}
+        portraitHeight={DOCUMENTATION_BIO_PORTRAIT.height}
       />
     </main>
   )

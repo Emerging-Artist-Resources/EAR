@@ -3,7 +3,7 @@ import { EAR_LOGO_04_SRC } from "@/components/home/constants"
 
 export function HeroSection() {
   return (
-    <section className="relative top-0 min-h-[75dvh] w-full overflow-hidden bg-ear-black">
+    <section className="relative top-0 min-h-[100dvh] w-full overflow-hidden bg-ear-black">
       <Image
         src="/images/home/home-page.png"
         alt=""

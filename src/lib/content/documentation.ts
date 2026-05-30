@@ -13,6 +13,17 @@ export const DOCUMENTATION_PACKAGE_IMAGE =
 
 export const DOCUMENTATION_BIO_SECTION_SRC = "/images/photo-video-service/behind-sam.jpg" as const
 
+export const DOCUMENTATION_BIO_PORTRAIT_SRC =
+  "/images/photo-video-service/sam-image.jpeg" as const
+
+/** Native pixel dimensions — use for sharp rendering at natural aspect ratio. */
+export const DOCUMENTATION_BIO_PORTRAIT = {
+  src: DOCUMENTATION_BIO_PORTRAIT_SRC,
+  alt: "Samzen, photographer at Samzen Studios",
+  width: 1284,
+  height: 1794,
+} as const
+
 export type DocumentationServiceBlock = {
   id: string
   title: string

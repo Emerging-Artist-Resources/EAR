@@ -9,7 +9,7 @@ export const PAGE_HERO_CONTENT_PADDING_CLASS =
   "px-6 py-10 sm:px-10 lg:px-14 lg:py-12"
 
 export const PAGE_HERO_TITLE_CLASS =
-  "text-4xl font-bold uppercase tracking-wide text-ear-off-white sm:text-5xl lg:text-6xl"
+  "text-4xl font-bold uppercase tracking-wide leading-[1.3] text-ear-off-white sm:text-5xl lg:text-6xl"
 
 export const PAGE_HERO_TAGLINE_CLASS =
   "mt-4 text-xl font-sans font-bold uppercase tracking-widest text-ear-baby-blue sm:text-2xl"

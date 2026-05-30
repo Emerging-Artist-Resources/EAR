@@ -2,7 +2,7 @@ export const servicesOverviewHero = {
   title: "Services",
 } as const
 
-export const SERVICES_OVERVIEW_HERO_IMAGE = "/images/service-hero.png" as const
+export const SERVICES_OVERVIEW_HERO_IMAGE = "/images/service-hero.JPG" as const
 
 export type ServiceOverviewItem = {
   title: string
