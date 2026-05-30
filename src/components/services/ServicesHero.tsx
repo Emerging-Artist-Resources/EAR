@@ -1,14 +1,13 @@
-import Image from "next/image"
 import Link from "next/link"
+import { BackgroundPageHero } from "@/components/shared/BackgroundPageHero"
 import { Button } from "@/components/ui/button"
-import { H1 } from "@/components/ui/typography"
-import { MARKETING_IMAGE_QUALITY, SERVICES_HERO_IMAGE_SIZES } from "@/lib/images"
 
 type ServicesHeroProps = {
   title: string
   inquiryHref?: string
   inquiryLabel?: string
   image: string
+  headingId?: string
 }
 
 export function ServicesHero({
@@ -16,41 +15,18 @@ export function ServicesHero({
   inquiryHref,
   inquiryLabel = "Inquire here",
   image,
+  headingId = "services-hero-heading",
 }: ServicesHeroProps) {
   return (
-    <section
-      className="relative w-full min-h-[90dvh] overflow-hidden bg-ear-black"
-      aria-labelledby="services-hero-heading"
-    >
-      <Image
-        src={image}
-        alt=""
-        fill
-        priority
-        quality={MARKETING_IMAGE_QUALITY}
-        className="object-cover object-center opacity-90"
-        sizes={SERVICES_HERO_IMAGE_SIZES}
-      />
-      <div
-        className="absolute inset-0 bg-gradient-to-b from-ear-black/40 via-ear-black/20 to-ear-black/50"
-        aria-hidden
-      />
-      <div className="relative z-10 mx-auto flex min-h-[90dvh] max-w-5xl flex-col items-center justify-center gap-8 px-6 pb-24 pt-16 text-center">
-        <H1
-          id="services-hero-heading"
-          className="text-6xl font-bold uppercase tracking-wide text-ear-off-white sm:text-7xl md:text-8xl"
+    <BackgroundPageHero headingId={headingId} title={title} imageSrc={image}>
+      {inquiryHref ? (
+        <Button
+          asChild
+          className="h-auto rounded-none bg-ear-dark-red px-8 py-4 text-xs font-semibold uppercase tracking-widest text-ear-off-white hover:bg-ear-dark-red/90"
         >
-          {title}
-        </H1>
-        {inquiryHref ? (
-          <Button
-            asChild
-            className="h-auto rounded-none bg-ear-dark-red px-8 py-4 text-xs font-semibold uppercase tracking-widest text-ear-off-white hover:bg-ear-dark-red/90"
-          >
-            <Link href={inquiryHref}>{inquiryLabel}</Link>
-          </Button>
-        ) : null}
-      </div>
-    </section>
+          <Link href={inquiryHref}>{inquiryLabel}</Link>
+        </Button>
+      ) : null}
+    </BackgroundPageHero>
   )
 }

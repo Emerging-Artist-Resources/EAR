@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { WavyLine } from "@/components/ui/wavy-line"
 import { ServicesNav } from "@/components/layout/services-nav"
 import { publicNavItems } from "@/lib/navigation/public-nav"
+import { cn } from "@/lib/utils"
 //import { Heart } from "lucide-react"
 
 export interface HeaderProps {
@@ -32,11 +33,15 @@ export const Header: React.FC<HeaderProps> = ({
       <Link href={href} className="relative inline-flex flex-col items-center">
         <Button
           variant="none"
-          className="text-ear-baby-blue hover:text-ear-baby-blue/80"
+          className={cn(
+            isActive
+              ? "text-ear-baby-blue hover:text-ear-baby-blue/80"
+              : "text-ear-off-white hover:text-ear-off-white/80"
+          )}
         >
           {children}
         </Button>
-        {isActive && (
+        {isActive && href !== "/calendar" && (
           <div className="absolute -bottom-1 left-0 right-0">
             <WavyLine 
               color={onDarkSurface ? "var(--ear-off-white)" : "var(--ear-black)"} 
@@ -92,16 +97,17 @@ export const Header: React.FC<HeaderProps> = ({
                   </Button>
                 )}
                 
-                <UserDropdown 
-                  userName={userName || "User"} 
-                  onDarkSurface={onDarkSurface}
-                />
+                <UserDropdown userName={userName || "User"} />
               </>
             ) : (
               <Link href="/auth/signin">
                 <Button
-                  variant="ghost"
-                  className="text-ear-baby-blue hover:bg-ear-baby-blue/10 hover:text-ear-baby-blue"
+                  variant="none"
+                  className={cn(
+                    pathname?.startsWith("/auth/signin")
+                      ? "text-ear-baby-blue hover:text-ear-baby-blue/80"
+                      : "text-ear-off-white hover:text-ear-off-white/80"
+                  )}
                 >
                   Sign In
                 </Button>

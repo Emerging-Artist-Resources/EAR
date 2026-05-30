@@ -9,3 +9,7 @@ export const DOCUMENTATION_SERVICE_IMAGE_SIZES =
 export const DOCUMENTATION_BIO_SECTION_SIZES = "100vw" as const
 
 export const SERVICES_HERO_IMAGE_SIZES = "100vw" as const
+
+/** Half-width column in a 2-col split page hero; full width on mobile. */
+export const SPLIT_PAGE_HERO_IMAGE_SIZES =
+  "(max-width: 1024px) 100vw, 50vw" as const

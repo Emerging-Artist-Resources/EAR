@@ -1,4 +1,4 @@
-export const ABOUT_US_HERO_IMAGE_SRC = "/images/about-us/hero-image.png" as const
+export const ABOUT_US_HERO_IMAGE_SRC = "/images/about-us/hero-image.JPG" as const
 
 export const ABOUT_US_STAY_IN_TOUCH_SRC = "/images/about-us/stay-in-touch-v4.png" as const
 
@@ -58,7 +58,7 @@ export const aboutUsTeam = {
       imageAlt: "Portrait of Kayla Laufer",
       imagePosition: "left",
       paragraphs: [
-        "Kayla Laufer (she/her) is the Director of Technology and founding member of Emerging Artist Resources (EAR), where she leads the development of the platform that supports artists, festivals, and opportunities across the dance community. Blending her background in computer science and dance, she designs clear, accessible tools that make it easier for artists to share their work and stay connected. Before joining EAR, Kayla worked at Addinex Technologies, a health-tech startup, and earned her M.S. in Computer Science from Fordham University and her BFA in Dance from the Peabody Conservatory of Johns Hopkins University. She is passionate about building technology that empowers artists. In addition to her work at EAR, Kayla is a freelance artist and currently dances with Eryc Taylor Dance, where she also serves as Rehearsal Director.",
+        "Kayla Laufer (she/her) is the Co-Founder and Director of Technology at Emerging Artist Resources (EAR), where she leads the development of the platform that supports artists, festivals, and opportunities across the dance community. Blending her background in computer science and dance, she designs clear, accessible tools that make it easier for artists to share their work and stay connected. Before joining EAR, Kayla worked at Addinex Technologies, a health-tech startup, and earned her M.S. in Computer Science from Fordham University and her BFA in Dance from the Peabody Conservatory of Johns Hopkins University. She is passionate about building technology that empowers artists. In addition to her work at EAR, Kayla is a freelance artist and currently dances with Eryc Taylor Dance, where she also serves as Rehearsal Director.",
       ],
     },
   ] satisfies AboutUsProfile[],
@@ -101,7 +101,7 @@ export const aboutUsAdvisoryBoard = {
       ],
     },
     {
-      name: "NATALIA NITKIN",
+      name: "NATALIA NIKITIN",
       role: "FOUNDING ADVISORY BOARD MEMBER",
       imageSrc: "/images/about-us/natalia-headshot.png",
       imageAlt: "Portrait of Natalia Nikitin",

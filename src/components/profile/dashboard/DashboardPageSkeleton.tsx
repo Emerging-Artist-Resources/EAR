@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card"
+import { dashboardPageShellClass } from "./DashboardPageLayout"
 
 function DashboardHeaderSkeleton() {
   return (
@@ -12,7 +13,7 @@ function DashboardHeaderSkeleton() {
 
 export function DashboardPageSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-8 animate-pulse">
+    <div className={`${dashboardPageShellClass} animate-pulse`}>
       <DashboardHeaderSkeleton />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
@@ -36,7 +37,7 @@ export function DashboardPageSkeleton() {
 
 export function ListingsPageSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-8 animate-pulse">
+    <div className={`${dashboardPageShellClass} animate-pulse`}>
       <DashboardHeaderSkeleton />
       {Array.from({ length: 5 }).map((_, i) => (
         <Card key={i} className="p-4">
@@ -55,7 +56,7 @@ export function ListingsPageSkeleton() {
 
 export function SavedPageSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-8 animate-pulse">
+    <div className={`${dashboardPageShellClass} animate-pulse`}>
       <DashboardHeaderSkeleton />
       <div className="flex gap-2">
         {Array.from({ length: 3 }).map((_, i) => (
@@ -75,7 +76,7 @@ export function SavedPageSkeleton() {
 
 export function AccountPageSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-8 animate-pulse">
+    <div className={`${dashboardPageShellClass} animate-pulse`}>
       <DashboardHeaderSkeleton />
       <Card className="space-y-4 p-6">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -91,7 +92,7 @@ export function AccountPageSkeleton() {
 
 export function SettingsPageSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-8 animate-pulse">
+    <div className={`${dashboardPageShellClass} animate-pulse`}>
       <DashboardHeaderSkeleton />
       <Card className="space-y-4 p-6">
         {Array.from({ length: 4 }).map((_, i) => (

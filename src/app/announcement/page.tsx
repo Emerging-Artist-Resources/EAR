@@ -81,7 +81,7 @@ export default function AnnouncementsPage() {
                     Submit an Event
                   </Button>
                   <Button variant="secondary" className="w-full">
-                    Join Our Newsletter
+                    Join our Newsletters
                   </Button>
                 </div>
               </CardContent>

@@ -2,21 +2,21 @@
 
 import { useState, useRef, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { ROUTES } from "@/lib/config/constants"
 
 interface UserDropdownProps {
   userName: string
   isMobile?: boolean
-  /** Light text for dark header backgrounds (e.g. calendar hero) */
-  onDarkSurface?: boolean
 }
 
-export function UserDropdown({ userName, isMobile = false, onDarkSurface = false }: UserDropdownProps) {
+export function UserDropdown({ userName, isMobile = false }: UserDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const pathname = usePathname()
+  const isActive = pathname?.startsWith("/profile") ?? false
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -48,9 +48,9 @@ export function UserDropdown({ userName, isMobile = false, onDarkSurface = false
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium focus:outline-none",
-          onDarkSurface
+          isActive
             ? "text-ear-baby-blue hover:text-ear-baby-blue/80"
-            : "text-ear-baby-blue hover:text-ear-baby-blue",
+            : "text-ear-off-white hover:text-ear-off-white/80",
           isMobile && "text-base"
         )}
       >
