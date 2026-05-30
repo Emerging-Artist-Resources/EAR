@@ -702,7 +702,6 @@ export const classStep2Schema = baseSchema
     teachers: true,
     occurrences: true,
     classWorkshopType: true,
-    classWorkshopDuration: true,
     isPartOfFestivalOrWorkshop: true,
     parentEventId: true,
     placeholderTitle: true,
@@ -753,15 +752,6 @@ export const classStep2Schema = baseSchema
         code: "custom",
         path: ["description"],
         message: "Description is required",
-      })
-    }
-
-    const duration = data.classWorkshopDuration?.trim() ?? ""
-    if (!duration) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["classWorkshopDuration"],
-        message: "Duration is required",
       })
     }
 

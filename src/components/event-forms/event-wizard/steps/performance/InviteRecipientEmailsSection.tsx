@@ -79,7 +79,7 @@ export function InviteRecipientEmailsSection({
         </Button>
       )}
       <p className="text-xs text-muted-foreground mt-2">
-        Up to {MAX_SHARE_RECIPIENT_EMAILS} addresses. Your own contact email is skipped automatically.
+        Add up to {MAX_SHARE_RECIPIENT_EMAILS} addresses.
       </p>
     </Section>
   )

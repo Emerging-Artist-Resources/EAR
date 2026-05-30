@@ -40,26 +40,22 @@ export function OrganizerBasics({ form }: { form: UseFormReturn<EventFormData> }
 
       {isMulti ? (
         <>
-          <TextField form={form} name={"title"} label="Performance Name" required />
+          <TextField form={form} name={"title"} label="Performance title" required />
           <TextField
             form={form}
             name={"organizer"}
-            label="Organizer / Presenting Company"
+            label="Company or artist name"
             labelTooltip={SPLIT_FESTIVAL_ORGANIZER_TOOLTIP}
             required
           />
           <TextField
             form={form}
             name={"website"}
-            label="Organizer / Presenting Company Website"
+            label="Company or artist website"
             type="url"
             placeholder="https://..."
           />
-          <InviteRecipientEmailsSection
-            form={form}
-            title={INVITE_PARTICIPATING_ARTISTS_TITLE}
-            description={INVITE_PARTICIPATING_ARTISTS_DESCRIPTION}
-          />
+         
           <TextField
             form={form}
             name={"link"}
@@ -71,27 +67,32 @@ export function OrganizerBasics({ form }: { form: UseFormReturn<EventFormData> }
           <TextField
             form={form}
             name={"price"}
-            label="Ticket Price"
+            label="Ticket price"
             placeholder="e.g., $20 / Free / Sliding scale"
             required
           />
           <TextAreaField
             form={form}
             name={"description"}
-            label="Short Performance Description"
+            label="Short performance description"
             required
             rows={4}
+          />
+           <InviteRecipientEmailsSection
+            form={form}
+            title={INVITE_PARTICIPATING_ARTISTS_TITLE}
+            description={INVITE_PARTICIPATING_ARTISTS_DESCRIPTION}
           />
         </>
       ) : (
         <>
-          <TextField form={form} name={"title"} label="Performance Name" required />
-          <TextField form={form} name={"organizer"} label="Company / Artist Name" required />
-          <TextField form={form} name={"website"} label="Website" type="url" placeholder="https://..." />
+          <TextField form={form} name={"title"} label="Performance title" required />
+          <TextField form={form} name={"organizer"} label="Company or artist name" required />
+          <TextField form={form} name={"website"} label="Company or artist website" type="url" placeholder="https://..." />
           <TextField
             form={form}
             name={"link"}
-            label="Ticket Link"
+            label="Ticket link"
             type="url"
             placeholder="https://..."
             required
@@ -99,14 +100,14 @@ export function OrganizerBasics({ form }: { form: UseFormReturn<EventFormData> }
           <TextField
             form={form}
             name={"price"}
-            label="Ticket Price"
+            label="Ticket price"
             placeholder="e.g., $20 / Free / Sliding scale"
             required
           />
           <TextAreaField
             form={form}
             name={"description"}
-            label="Short Performance Description"
+            label="Short performance description"
             required
             rows={4}
           />

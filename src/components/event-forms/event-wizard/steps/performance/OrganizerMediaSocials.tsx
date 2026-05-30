@@ -14,11 +14,11 @@ export function OrganizerMediaSocials({ form }: { form: UseFormReturn<EventFormD
       <TextAreaField
         form={form}
         name={"credits"}
-        label="Image Description / Photo Credit"
+        label="Image description/photo credit"
         placeholder="Describe the images and provide photo credit"
         rows={3}
       />
-      <TextField form={form} name={"socialHandles"} label="Social Media Handles" placeholder="@..."                  />
+      <TextField form={form} name={"socialHandles"} label="Social media handle(s)" placeholder="@..."                  />
     </Section>
   )
 }

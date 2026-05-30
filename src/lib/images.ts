@@ -8,4 +8,12 @@ export const DOCUMENTATION_SERVICE_IMAGE_SIZES =
 /** Full-bleed bio section background. */
 export const DOCUMENTATION_BIO_SECTION_SIZES = "100vw" as const
 
+/** Portrait beside the bio card — max display width ~400px on desktop. */
+export const DOCUMENTATION_BIO_PORTRAIT_SIZES =
+  "(max-width: 1024px) 100vw, 400px" as const
+
 export const SERVICES_HERO_IMAGE_SIZES = "100vw" as const
+
+/** Half-width column in a 2-col split page hero; full width on mobile. */
+export const SPLIT_PAGE_HERO_IMAGE_SIZES =
+  "(max-width: 1024px) 100vw, 50vw" as const

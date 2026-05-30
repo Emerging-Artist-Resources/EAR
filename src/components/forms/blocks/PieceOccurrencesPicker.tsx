@@ -403,10 +403,10 @@ export function PieceOccurrencesPicker({
           <ShowtimesList
             key={customDateTimeKey}
             form={form as unknown as UseFormReturn<Record<string, unknown>>}
-            title="Add your piece date(s) & time(s)"
+            title="Add your performance date(s) & time(s)"
             name={paths.extraOccurrences as unknown as string}
             required
-            rowLabel="Piece date"
+            rowLabel="Performance date"
             locationConfig={{
               addressName: "address",
               venueName: "venueName",

@@ -18,6 +18,8 @@ export type PerformanceDetailsForShareEmail = {
   title?: string | null
 }
 
+const LISTING_SHARE_INVITER_FALLBACK = "An artist"
+
 /** Company / artist name shown to the invited organizer (piece flow). */
 export function resolveCompanyArtistName(args: {
   pieceDetails: PieceDetailsForShareEmail | null
@@ -28,7 +30,22 @@ export function resolveCompanyArtistName(args: {
   if (fromPiece) return fromPiece
   const fromContact = args.contactName?.trim()
   if (fromContact) return fromContact
-  return "An artist"
+  return LISTING_SHARE_INVITER_FALLBACK
+}
+
+/** Company / artist name shown to invited participating artists (festival / organizer flow). */
+export function resolveFestivalCompanyArtistName(args: {
+  organizerName?: string | null
+  company?: string | null
+  contactName?: string | null
+}): string {
+  const fromOrganizer = args.organizerName?.trim()
+  if (fromOrganizer) return fromOrganizer
+  const fromCompany = args.company?.trim()
+  if (fromCompany) return fromCompany
+  const fromContact = args.contactName?.trim()
+  if (fromContact) return fromContact
+  return LISTING_SHARE_INVITER_FALLBACK
 }
 
 /** Event title for the parent performance (piece invite flow). */
@@ -53,7 +70,7 @@ export function buildSubmitListingUrl(): string {
   return `${getPublicAppUrl()}/forms`
 }
 
-export function buildListingSharePieceTemplateModel(args: {
+export function buildListingShareTemplateModel(args: {
   companyArtistName: string
   eventTitle: string
 }): Record<string, string> {
@@ -61,22 +78,15 @@ export function buildListingSharePieceTemplateModel(args: {
     company_artist_name: args.companyArtistName,
     event_title: args.eventTitle,
     submit_listing_url: buildSubmitListingUrl(),
-    support_email: LISTING_SHARE_SUPPORT_EMAIL,
   }
 }
 
-export function buildListingShareFestivalTemplateModel(args: {
-  listingTitle: string
-  listingId: string
-  inviterName: string
-  inviterEmail: string
+export function buildListingSharePieceTemplateModel(args: {
+  companyArtistName: string
+  eventTitle: string
 }): Record<string, string> {
-  const baseUrl = getPublicAppUrl()
   return {
-    listing_title: args.listingTitle,
-    public_calendar_url: `${baseUrl}/calendar?listingId=${encodeURIComponent(args.listingId)}`,
-    inviter_name: args.inviterName,
-    inviter_email: args.inviterEmail,
-    platform_name: "EAR",
+    ...buildListingShareTemplateModel(args),
+    support_email: LISTING_SHARE_SUPPORT_EMAIL,
   }
 }

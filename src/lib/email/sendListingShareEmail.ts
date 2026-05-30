@@ -5,44 +5,38 @@
  */
 
 import {
-  buildListingShareFestivalTemplateModel,
   buildListingSharePieceTemplateModel,
+  buildListingShareTemplateModel,
 } from "@/lib/email/listing-share-email-model"
 import { postmarkClient } from "./postmark"
 
 export type ListingShareTemplateAlias = "listing-share-festival" | "listing-share-piece"
 
-export type ListingShareFestivalEmailArgs = {
-  template: "listing-share-festival"
-  to: string
-  listingTitle: string
-  listingId: string
-  inviterName: string
-  inviterEmail: string
-}
-
-export type ListingSharePieceEmailArgs = {
-  template: "listing-share-piece"
+export type ListingShareEmailPayload = {
   to: string
   companyArtistName: string
   eventTitle: string
 }
 
+export type ListingShareFestivalEmailArgs = ListingShareEmailPayload & {
+  template: "listing-share-festival"
+}
+
+export type ListingSharePieceEmailArgs = ListingShareEmailPayload & {
+  template: "listing-share-piece"
+}
+
 export type ListingShareEmailArgs = ListingShareFestivalEmailArgs | ListingSharePieceEmailArgs
 
 function buildTemplateModel(args: ListingShareEmailArgs): Record<string, string> {
-  if (args.template === "listing-share-piece") {
-    return buildListingSharePieceTemplateModel({
-      companyArtistName: args.companyArtistName,
-      eventTitle: args.eventTitle,
-    })
+  const payload = {
+    companyArtistName: args.companyArtistName,
+    eventTitle: args.eventTitle,
   }
-  return buildListingShareFestivalTemplateModel({
-    listingTitle: args.listingTitle,
-    listingId: args.listingId,
-    inviterName: args.inviterName,
-    inviterEmail: args.inviterEmail,
-  })
+  if (args.template === "listing-share-piece") {
+    return buildListingSharePieceTemplateModel(payload)
+  }
+  return buildListingShareTemplateModel(payload)
 }
 
 export async function sendListingShareTemplatedEmail(args: ListingShareEmailArgs): Promise<void> {

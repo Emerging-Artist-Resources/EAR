@@ -66,14 +66,14 @@ export function MediaAndAdditionalInfoStep({
         <TextAreaField
           form={form}
           name={"credits"}
-          label="Image Description / Photo Credit"
+          label="Image description/photo credit"
           placeholder={isAudition || isClassListing || isOpportunity ? undefined : "Describe the images and provide photo credit"}
           rows={3}
         />
         <TextField
           form={form}
           name={"socialHandles"}
-          label="Social Media Handles"
+          label="Social media handle(s)"
           placeholder="@username"
         />
       </Section>

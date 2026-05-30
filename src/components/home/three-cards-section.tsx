@@ -8,21 +8,21 @@ export function ThreeCardsSection() {
         <NavCard
           href="/about-us"
           title="About us"
-          imageSrc="/images/home-about-us.png"
+          imageSrc="/images/home/home-about-us.png"
           tapeSrc="/accents/tape.png"
           imageAlt="Performers seated on stage"
         />
         <NavCard
           href="/calendar"
           title="Community calendar"
-          imageSrc="/images/home-about-us.png"
+          imageSrc="/images/home/home-calendar.png"
           tapeSrc="/accents/tape.png"
           imageAlt="Community calendar"
         />
         <NavCard
           href="/services"
           title="Services"
-          imageSrc="/images/home-services.png"
+          imageSrc="/images/home/home-services.png"
           tapeSrc="/accents/tape.png"
           imageAlt="Performer on stage"
         />

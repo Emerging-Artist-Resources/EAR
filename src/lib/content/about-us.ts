@@ -1,4 +1,4 @@
-export const ABOUT_US_HERO_IMAGE_SRC = "/images/about-us/hero-image.png" as const
+export const ABOUT_US_HERO_IMAGE_SRC = "/images/about-us/hero-image.JPG" as const
 
 export const ABOUT_US_STAY_IN_TOUCH_SRC = "/images/about-us/stay-in-touch-v4.png" as const
 
@@ -7,8 +7,8 @@ export const aboutUsHero = {
   tagline: "COMMUNITY DRIVEN. SOLUTION ORIENTED. ARTIST CENTERED.",
   paragraphs: [
     "We're excited to share the launch of Emerging Artist Resources (EAR)!",
-    "Emerging Artist Resources (EAR) is a new wave of arts administration designed to help artists navigate the administrative side of their creative careers with clarity and transparency. Based in the NYC metropolitan community, EAR supports individual artists, collectives, and organizations through shared resources, professional development, and artist-centered initiatives.",
-    "Our team is made up of active, working artists with backgrounds in arts administration. We understand the realities of what it takes to sustain a creative practice and design systems that are practical, accessible, and sustainable. We view administration as a creative practice itself, one that shapes who gets to make work, how that work is supported, and who is included in the cultural ecosystem. Rather than treating logistics as a barrier, we approach it as a tool that can open doors and create stability.",
+    "Emerging Artist Resources (EAR) is a new wave of arts administration designed to help artists navigate the administrative side of their creative careers with clarity and transparency. Based in the NYC Metropolitan community, EAR supports individual artists, collectives, and organizations through shared resources, professional development, and artist-centered initiatives.",
+    "Our team is made up of active, working artists with backgrounds in arts administration. We understand the realities of what it takes to both sustain a creative practice and design systems that are practical, accessible, and sustainable. We view administration as a creative practice itself, one that shapes who gets to create work, how that work is supported, and who is included in the cultural ecosystem. Rather than treating logistics as a barrier, we approach them with tools that can open doors and provide stability.",
     "As part of this soft launch, our primary focus is fiscal services, including fiscal sponsorship, bookkeeping, and fiscal mentorship, alongside creative support in video and photography.",
     "Through our fiscal sponsorship program, artists and projects can access grants, receive tax-deductible donations, and operate within a supportive administrative framework without needing to establish their own nonprofit.",
     "EAR is guided by a long-term vision of becoming a one-stop shop for all artists' needs, offering both the infrastructure and visibility needed to sustain and expand creative practices.",
@@ -58,7 +58,7 @@ export const aboutUsTeam = {
       imageAlt: "Portrait of Kayla Laufer",
       imagePosition: "left",
       paragraphs: [
-        "Kayla Laufer (she/her) is the Director of Technology and founding member of Emerging Artist Resources (EAR), where she leads the development of the platform that supports artists, festivals, and opportunities across the dance community. Blending her background in computer science and dance, she designs clear, accessible tools that make it easier for artists to share their work and stay connected. Before joining EAR, Kayla worked at Addinex Technologies, a health-tech startup, and earned her M.S. in Computer Science from Fordham University and her BFA in Dance from the Peabody Conservatory of Johns Hopkins University. She is passionate about building technology that empowers artists. In addition to her work at EAR, Kayla is a freelance artist and currently dances with Eryc Taylor Dance, where she also serves as Rehearsal Director.",
+        "Kayla Laufer (she/her) is the Co-Founder and Director of Technology at Emerging Artist Resources (EAR), where she leads the development of the platform that supports artists, festivals, and opportunities across the dance community. Blending her background in computer science and dance, she designs clear, accessible tools that make it easier for artists to share their work and stay connected. Before joining EAR, Kayla worked at Addinex Technologies, a health-tech startup, and earned her M.S. in Computer Science from Fordham University and her BFA in Dance from the Peabody Conservatory of Johns Hopkins University. She is passionate about building technology that empowers artists. In addition to her work at EAR, Kayla is a freelance artist and currently dances with Eryc Taylor Dance, where she also serves as Rehearsal Director.",
       ],
     },
   ] satisfies AboutUsProfile[],
@@ -67,7 +67,7 @@ export const aboutUsTeam = {
 export const aboutUsAdvisoryBoard = {
   sectionTitle: "FOUNDING ADVISORY BOARD",
   introParagraphs: [
-    "EAR's Advisory Council is made up of seasoned arts administrators and cultural leaders, alongside working artists, including dancers, who understand firsthand how challenging it can be to build a sustainable path in the arts. They also recognize the importance of supporting other artists along the way. Each member brings a distinct perspective and a shared commitment to helping artists sustain their practices, build meaningful connections, and thrive.",
+    "EAR’s Advisory Council is made up of seasoned arts administrators and cultural leaders, alongside working artists and dancers, who understand the challenges of building a sustainable path in the arts. They also recognize the importance of supporting other artists along the way. Each member brings a distinct perspective and shared commitment to helping artists sustain their practices, build meaningful connections, and thrive.",
     "As partners, the council plays a critical role in shaping EAR's direction, offering strategic guidance and ensuring that our work remains grounded in the evolving needs of the community we serve.",
   ],
   members: [
@@ -101,7 +101,7 @@ export const aboutUsAdvisoryBoard = {
       ],
     },
     {
-      name: "NATALIA NITKIN",
+      name: "NATALIA NIKITIN",
       role: "FOUNDING ADVISORY BOARD MEMBER",
       imageSrc: "/images/about-us/natalia-headshot.png",
       imageAlt: "Portrait of Natalia Nikitin",

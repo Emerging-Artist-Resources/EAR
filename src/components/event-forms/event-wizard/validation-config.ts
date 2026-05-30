@@ -75,7 +75,6 @@ export const eventTypeValidationFields: Record<
     "title",
     "organizer",
     "description",
-    "classWorkshopDuration",
     "price",
     "classRegistrationDetails",
     "listingWebsite",

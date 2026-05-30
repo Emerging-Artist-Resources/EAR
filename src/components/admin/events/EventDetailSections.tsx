@@ -282,21 +282,21 @@ export function PieceDetails({
         {details.parent_listing_id && (
           <Row label="Parent Listing ID" value={details.parent_listing_id} />
         )}
-        <Row label="Parent Event Website" value={
+        <Row label="Parent event website" value={
           details.parent_event_website ? <a className="underline text-[var(--primary-600)]" href={details.parent_event_website} target="_blank">{details.parent_event_website}</a> : undefined
         }/>
-        <Row label="Parent Event Ticket Link" value={
+        <Row label="Parent event ticket link" value={
           details.parent_event_ticket_link ? <a className="underline text-[var(--primary-600)]" href={details.parent_event_ticket_link} target="_blank">{details.parent_event_ticket_link}</a> : undefined
         }/>
-        <Row label="Parent Event Contact" value={details.parent_event_contact_email} />
-        <Row label="Piece Title" value={details.piece_title} />
-        <Row label="Company/Artist Name" value={details.piece_company} />
-        <Row label="Company/Artist Website" value={
+        <Row label="Parent event contact" value={details.parent_event_contact_email} />
+        <Row label="Piece title" value={details.piece_title} />
+        <Row label="Company or artist name" value={details.piece_company} />
+        <Row label="Company or artist website" value={
           details.piece_company_website ? <a className="underline text-[var(--primary-600)]" href={details.piece_company_website} target="_blank">{details.piece_company_website}</a> : undefined
         }/>
-        <Row label="Piece Description" value={details.piece_description} />
-        <Row label="Choreographer/Creator" value={details.choreographer} />
-        <Row label="Schedule Mode" value={details.piece_schedule_mode} />
+        <Row label="Piece description" value={details.piece_description} />
+        <Row label="Choreographer or creator" value={details.choreographer} />
+        <Row label="Schedule mode" value={details.piece_schedule_mode} />
       </div>
     </div>
   )

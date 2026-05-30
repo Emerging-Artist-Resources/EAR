@@ -1,6 +1,8 @@
 import {
   buildListingSharePieceTemplateModel,
+  buildListingShareTemplateModel,
   resolveCompanyArtistName,
+  resolveFestivalCompanyArtistName,
   resolvePieceEventTitle,
 } from "./listing-share-email-model"
 
@@ -64,6 +66,45 @@ describe("resolvePieceEventTitle", () => {
         performanceDetails: {},
       })
     ).toBe("this performance")
+  })
+})
+
+describe("resolveFestivalCompanyArtistName", () => {
+  it("prefers organizer over company and contact", () => {
+    expect(
+      resolveFestivalCompanyArtistName({
+        organizerName: "Festival Co",
+        company: "EAR",
+        contactName: "Jane",
+      })
+    ).toBe("Festival Co")
+  })
+
+  it("falls back to company then contact name", () => {
+    expect(
+      resolveFestivalCompanyArtistName({
+        company: "EAR",
+        contactName: "Jane",
+      })
+    ).toBe("EAR")
+    expect(
+      resolveFestivalCompanyArtistName({
+        contactName: "Jane",
+      })
+    ).toBe("Jane")
+  })
+})
+
+describe("buildListingShareTemplateModel", () => {
+  it("includes expected Postmark variables for festival template", () => {
+    const model = buildListingShareTemplateModel({
+      companyArtistName: "Festival Co",
+      eventTitle: "Spring Gala",
+    })
+    expect(model.company_artist_name).toBe("Festival Co")
+    expect(model.event_title).toBe("Spring Gala")
+    expect(model.submit_listing_url).toMatch(/\/forms$/)
+    expect(model).not.toHaveProperty("support_email")
   })
 })
 

@@ -149,15 +149,6 @@ export const classFields = z
       })
     }
 
-    const duration = data.classWorkshopDuration?.trim() ?? ""
-    if (!duration) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["classWorkshopDuration"],
-        message: "Duration is required",
-      })
-    }
-
     // CLASS-specific fields
     if (isClass) {
       if (!data.price || data.price.trim() === "") {

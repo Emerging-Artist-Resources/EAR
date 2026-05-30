@@ -315,7 +315,7 @@ export function OrganizerDatesTimes({ form }: { form: UseFormReturn<EventFormDat
 
   return (
     <div>
-      <Section title="Performance times">
+      <Section title="Performance schedule">
       {!needsConfirmation ? (
         // SOLO: show schedule editor directly (no confirmation)
         scheduleEditor

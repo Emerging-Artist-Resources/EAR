@@ -70,16 +70,16 @@ export const fiscalSponsorshipFaqSections: readonly FiscalSponsorshipFaqSection[
         answer: {
           type: "paragraphs",
           paragraphs: [
-            "EAR offers type-C fiscal sponsorship. Type C sponsorship, also known as a regranting model, is a structure where a nonprofit (like EAR) receives funds on behalf of an artist or project and then distributes those funds to their respective artist. Through this relationship, artists are able to raise tax-deductible donations and apply for funding opportunities using EAR's 501(c)(3) status. Type C allows artists to still operate as an independent project while partnering with EAR solely for fundraising and grant access.",
+            "EAR offers Type-C fiscal sponsorship. Type-C sponsorship, also known as a regranting model, is a structure where a nonprofit (like EAR) receives funds on behalf of an artist or project and then distributes those funds to their respective artist. Through this relationship, artists are able to raise tax-deductible donations and apply for funding opportunities using EAR's 501(c)(3) status. Type C allows artists to still operate as an independent project while partnering with EAR solely for fundraising and grant access.",
           ],
         },
       },
       {
         number: "05",
-        question: "What are the benefits of Type C fiscal sponsorship?",
+        question: "What are the benefits of Type-C fiscal sponsorship?",
         answer: {
           type: "list",
-          intro: "Type C fiscal sponsorship is designed to be flexible and low barrier, making it especially useful for emerging artists. Key benefits include:",
+          intro: "Type-C fiscal sponsorship is designed to be flexible and low barrier, making it especially useful for emerging artists. Key benefits include:",
           items: [
             "Access to funding — Raise tax-deductible donations and apply for grants that require a 501(c)(3) partner.",
             "Creative autonomy — You maintain control over your project's vision, direction, and execution.",
@@ -225,7 +225,7 @@ export const fiscalSponsorshipFaqSections: readonly FiscalSponsorshipFaqSection[
         answer: {
           type: "paragraphs",
           paragraphs: [
-            "No, projects do not need to be incorporated or have a formal legal structure to apply for Model C fiscal sponsorship. EAR can sponsor individuals, collectives, and unincorporated projects.",
+            "No, projects do not need to be incorporated or have a formal legal structure to apply for Type-C fiscal sponsorship. EAR can sponsor individuals, collectives, and unincorporated projects.",
           ],
         },
       },

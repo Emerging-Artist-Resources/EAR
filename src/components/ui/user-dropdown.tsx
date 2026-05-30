@@ -1,38 +1,28 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import Link from "next/link"
+import { useRouter, usePathname } from "next/navigation"
+import { ChevronDown } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { ROUTES } from "@/lib/config/constants"
+import { Button } from "@/components/ui/button"
+import {
+  HeaderHoverDropdown,
+  headerDropdownMenuItemClass,
+} from "@/components/layout/header-hover-dropdown"
 
 interface UserDropdownProps {
   userName: string
   isMobile?: boolean
-  /** Light text for dark header backgrounds (e.g. calendar hero) */
-  onDarkSurface?: boolean
 }
 
-export function UserDropdown({ userName, isMobile = false, onDarkSurface = false }: UserDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+export function UserDropdown({ userName, isMobile = false }: UserDropdownProps) {
   const router = useRouter()
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
+  const pathname = usePathname()
+  const isActive = pathname?.startsWith("/profile") ?? false
 
   const handleSignOut = async () => {
-    setIsOpen(false)
     try {
       await supabase.auth.signOut()
       router.push("/auth/signin")
@@ -43,48 +33,41 @@ export function UserDropdown({ userName, isMobile = false, onDarkSurface = false
   }
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium focus:outline-none",
-          onDarkSurface
-            ? "text-ear-baby-blue hover:text-ear-baby-blue/80"
-            : "text-ear-baby-blue hover:text-ear-baby-blue",
-          isMobile && "text-base"
-        )}
-      >
-        <span>Welcome, {userName}</span>
-        <svg
-          className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+    <HeaderHoverDropdown
+      align="right"
+      trigger={
+        <button
+          type="button"
+          className={cn(
+            "inline-flex items-center gap-1 px-3 py-2 text-sm font-medium focus:outline-none",
+            isActive
+              ? "text-ear-baby-blue hover:text-ear-baby-blue/80"
+              : "text-ear-off-white hover:text-ear-off-white/80",
+            isMobile && "text-base"
+          )}
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+          <span>Welcome, {userName}</span>
+          <ChevronDown
+            className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:rotate-180"
+            aria-hidden
+          />
+        </button>
+      }
+    >
+      <Button asChild variant="ghost" className={headerDropdownMenuItemClass}>
+        <Link href={ROUTES.PROFILE} role="menuitem">
+          Dashboard
+        </Link>
+      </Button>
 
-      {isOpen && (
-        <div className="absolute right-0 mt-2 min-w-[10rem] bg-surface-panel rounded-md shadow-lg py-1 z-50 border border-border-default">
-          <button
-            onClick={() => {
-              router.push(ROUTES.PROFILE)
-              setIsOpen(false)
-            }}
-            className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-ear-orange"
-          >
-            Dashboard
-          </button>
-
-          <button
-            onClick={handleSignOut}
-            className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-ear-orange"
-          >
-            Sign Out
-          </button>
-        </div>
-      )}
-    </div>
+      <Button
+        variant="ghost"
+        className={headerDropdownMenuItemClass}
+        onClick={handleSignOut}
+        role="menuitem"
+      >
+        Sign Out
+      </Button>
+    </HeaderHoverDropdown>
   )
 }

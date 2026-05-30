@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { sendListingEmail } from "@/lib/email/sendListingEmail"
 import {
   resolveCompanyArtistName,
+  resolveFestivalCompanyArtistName,
   resolvePieceEventTitle,
 } from "@/lib/email/listing-share-email-model"
 import { sendListingShareTemplatedEmail } from "@/lib/email/sendListingShareEmail"
@@ -196,7 +197,7 @@ export async function sendListingShareEmailsAfterApproval(listingId: string): Pr
       .from("listings")
       .select(
         `
-        id, type, contact_name, contact_email, meta,
+        id, type, contact_name, contact_email, company, meta,
         performance_details (*),
         audition_details (*),
         creative_details (*),
@@ -255,8 +256,6 @@ export async function sendListingShareEmailsAfterApproval(listingId: string): Pr
     const useFestivalTemplate = isWorkshopListing || subtype === "ORGANIZER"
     const listingForTitle = listingData as unknown as PublicListingDetail
     const listingTitle = getListingTitle(listingForTitle)
-    const inviterName = listingData.contact_name || "Someone"
-    const inviterEmail = listingData.contact_email || ""
 
     const pieceDetails = normalizeSupabaseRelation(
       listingData.piece_details as
@@ -278,13 +277,40 @@ export async function sendListingShareEmailsAfterApproval(listingId: string): Pr
       listingData.performance_details as { title?: string | null } | { title?: string | null }[] | null
     )
 
-    let pieceShareContext: { companyArtistName: string; eventTitle: string } | null = null
-    if (!useFestivalTemplate) {
+    let shareContext: { companyArtistName: string; eventTitle: string } | null = null
+    if (useFestivalTemplate) {
+      let organizerName: string | null | undefined = null
+      if (listingData.type === "performance") {
+        const perfForOrg = normalizeSupabaseRelation(
+          listingData.performance_details as
+            | { organizer?: string | null }
+            | { organizer?: string | null }[]
+            | null
+        )
+        organizerName = perfForOrg?.organizer
+      } else if (isWorkshopListing) {
+        const cwdForOrg = normalizeSupabaseRelation(
+          listingData.class_workshop_details as
+            | { organizer?: string | null }
+            | { organizer?: string | null }[]
+            | null
+        )
+        organizerName = cwdForOrg?.organizer
+      }
+      shareContext = {
+        companyArtistName: resolveFestivalCompanyArtistName({
+          organizerName,
+          company: listingData.company,
+          contactName: listingData.contact_name,
+        }),
+        eventTitle: listingTitle,
+      }
+    } else {
       const parentPerformanceTitle = await fetchParentPerformanceTitle(
         supabase,
         pieceDetails?.parent_listing_id
       )
-      pieceShareContext = {
+      shareContext = {
         companyArtistName: resolveCompanyArtistName({
           pieceDetails,
           contactName: listingData.contact_name,
@@ -299,21 +325,12 @@ export async function sendListingShareEmailsAfterApproval(listingId: string): Pr
 
     for (const to of normalized) {
       try {
-        if (useFestivalTemplate) {
+        if (shareContext) {
           await sendListingShareTemplatedEmail({
-            template: "listing-share-festival",
+            template: useFestivalTemplate ? "listing-share-festival" : "listing-share-piece",
             to,
-            listingTitle,
-            listingId,
-            inviterName,
-            inviterEmail,
-          })
-        } else if (pieceShareContext) {
-          await sendListingShareTemplatedEmail({
-            template: "listing-share-piece",
-            to,
-            companyArtistName: pieceShareContext.companyArtistName,
-            eventTitle: pieceShareContext.eventTitle,
+            companyArtistName: shareContext.companyArtistName,
+            eventTitle: shareContext.eventTitle,
           })
         }
       } catch (e) {
