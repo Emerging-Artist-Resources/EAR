@@ -18,6 +18,7 @@ import {
   HeroImageWithLightbox,
   InlineLabelRow,
   InlineWebsiteLink,
+  ListingBodyText,
   ListingTitleGroup,
 } from "./performance-detail-shared"
 import type { ChildListingSummary } from "./PerformanceOrganizerDetailContent"
@@ -242,7 +243,7 @@ export function WorkshopOrganizerDetailContent({
       {hasDisplayText(notes) && (
         <section className="space-y-3">
           <H3 className="text-brand-primary">Additional Information</H3>
-          <p className="whitespace-pre-wrap font-sans text-sm leading-6 text-text-primary">{notes}</p>
+          <ListingBodyText text={notes} />
         </section>
       )}
     </div>

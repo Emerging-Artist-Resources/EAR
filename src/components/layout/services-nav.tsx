@@ -55,16 +55,29 @@ export function ServicesNav({ onDarkSurface = false }: { onDarkSurface?: boolean
       }
     >
       {servicesNavItems.map((item) => (
-        <Button
-          key={item.href}
-          asChild
-          variant="ghost"
-          className={headerDropdownMenuItemClass}
-        >
-          <Link href={item.href} role="menuitem">
-            {item.label}
-          </Link>
-        </Button>
+        <div key={item.href}>
+          <Button
+            asChild
+            variant="ghost"
+            className={headerDropdownMenuItemClass}
+          >
+            <Link href={item.href} role="menuitem">
+              {item.label}
+            </Link>
+          </Button>
+          {item.subItems?.map((subItem) => (
+            <Button
+              key={subItem.href}
+              asChild
+              variant="ghost"
+              className={cn(headerDropdownMenuItemClass, "pl-8 text-text-muted")}
+            >
+              <Link href={subItem.href} role="menuitem">
+                {subItem.label}
+              </Link>
+            </Button>
+          ))}
+        </div>
       ))}
     </HeaderHoverDropdown>
   )

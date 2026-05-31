@@ -21,6 +21,7 @@ import {
   HeroImageWithLightbox,
   InlineLabelRow,
   InlineWebsiteLink,
+  ListingBodyText,
   ListingTitleGroup,
 } from "./performance-detail-shared"
 
@@ -182,9 +183,7 @@ export function PerformancePieceDetailContent({
             )}
             {hasDisplayText(artistCredit) && (
               <FieldBlock label="Artist Credit">
-                <p className="whitespace-pre-wrap font-sans text-sm leading-6 text-text-primary">
-                  {artistCredit}
-                </p>
+                <ListingBodyText text={artistCredit} />
               </FieldBlock>
             )}
             {showSocial && (
@@ -218,7 +217,7 @@ export function PerformancePieceDetailContent({
       {hasDisplayText(notes) && (
         <section className="space-y-3">
           <H3 className="text-brand-primary">Additional Information</H3>
-          <p className="whitespace-pre-wrap font-sans text-sm leading-6 text-text-primary">{notes}</p>
+          <ListingBodyText text={notes} />
         </section>
       )}
     </div>

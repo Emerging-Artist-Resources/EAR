@@ -4,6 +4,7 @@ import { ServiceInquiryForm } from "@/components/forms/service-inquiry/ServiceIn
 import { fiscalServicesInquiryContent } from "@/lib/content/fiscal-services-inquiry"
 import {
   FISCAL_SERVICES_SERVICE_SLUG,
+  fiscalServicesQuestionNote,
   partitionFiscalServicesQuestions,
 } from "@/lib/service-inquiries/fiscal-services-options"
 
@@ -26,6 +27,7 @@ export function FiscalServicesInquiryForm({ title }: FiscalServicesInquiryFormPr
       successBackLabel={SUCCESS_BACK_LABEL}
       title={title}
       partitionQuestions={partitionFiscalServicesQuestions}
+      questionNote={fiscalServicesQuestionNote}
       projectSectionTitle="Fiscal services"
       projectSectionDescription="Tell us about your budget and which services you need."
     />

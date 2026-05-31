@@ -1,51 +1,75 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Text } from "@/components/ui/typography"
-import { FISCAL_SERVICES_INQUIRY_HREF } from "@/lib/content/fiscal-services"
+import type { FiscalServiceAction } from "@/lib/content/fiscal-services"
 import { cn } from "@/lib/utils"
 
+const fiscalServiceButtonClass =
+  "h-auto w-full rounded-none bg-ear-black px-8 py-4 text-xs font-semibold uppercase tracking-widest text-ear-off-white hover:bg-ear-black/90 sm:w-auto sm:min-w-[12rem] lg:min-w-[14rem]"
+
 type FiscalServiceSectionProps = {
-  index: number
+  id: string
   title: string
-  paragraphs: string[]
+  subheading: string
+  servicesIntro: string
+  services: readonly string[]
+  action: FiscalServiceAction
   className?: string
 }
 
-export function FiscalServiceSection({
-  index,
-  title,
-  paragraphs,
-  className,
-}: FiscalServiceSectionProps) {
-  const label = String(index).padStart(2, "0")
+function FiscalServiceActionButton({ action }: { action: FiscalServiceAction }) {
+  if (action.type === "link") {
+    return (
+      <Button asChild className={fiscalServiceButtonClass}>
+        <Link href={action.href}>{action.label}</Link>
+      </Button>
+    )
+  }
 
   return (
-    <section className={cn(className)} aria-labelledby={`fiscal-service-${index}-heading`}>
-      <h2
-        id={`fiscal-service-${index}-heading`}
-        className="text-ear-black mb-6 text-lg font-semibold tracking-wide sm:text-xl"
-      >
-        <span className="text-ear-baby-blue tabular-nums">{label}</span>{" "}
-        <span className="uppercase tracking-wider">{title}</span>
-      </h2>
+    <Button type="button" aria-disabled="true" className={cn(fiscalServiceButtonClass, "cursor-default")}>
+      {action.label}
+    </Button>
+  )
+}
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)] lg:items-center lg:gap-10">
-        <div className="space-y-4">
-          {paragraphs.map((body, i) => (
-            <Text key={`${index}-${i}`} className="text-ear-black text-pretty text-base leading-relaxed">
-              {body}
-            </Text>
-          ))}
+export function FiscalServiceSection({
+  id,
+  title,
+  subheading,
+  servicesIntro,
+  services,
+  action,
+  className,
+}: FiscalServiceSectionProps) {
+  return (
+    <section
+      className={cn("border-b border-ear-black/10 py-12 last:border-b-0 sm:py-16", className)}
+      aria-labelledby={`fiscal-service-${id}-heading`}
+    >
+      <div className="space-y-5">
+        <h2
+          id={`fiscal-service-${id}-heading`}
+          className="font-header text-2xl font-bold uppercase tracking-tight text-ear-black sm:text-3xl"
+        >
+          {title}
+        </h2>
+
+        <Text className="text-ear-black text-pretty text-base font-bold leading-relaxed">{subheading}</Text>
+
+        <div className="space-y-3">
+          <Text className="text-ear-black text-pretty text-base leading-relaxed">{servicesIntro}</Text>
+          <ul className="list-disc space-y-2 pl-5 font-sans text-base leading-relaxed text-ear-black">
+            {services.map((item) => (
+              <li key={item} className="text-pretty">
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="flex lg:justify-end">
-          <Button
-            asChild
-            variant="default"
-            className="h-auto w-full rounded-full px-8 py-6 text-xs font-semibold uppercase tracking-widest sm:w-auto"
-          >
-            <Link href={FISCAL_SERVICES_INQUIRY_HREF}>Inquire here</Link>
-          </Button>
+        <div className="flex justify-end pt-3">
+          <FiscalServiceActionButton action={action} />
         </div>
       </div>
     </section>

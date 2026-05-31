@@ -56,9 +56,10 @@
   --ear-black: #000000;
   --ear-off-white: #f6f5ec;
   --ear-baby-blue: #c3d5ee;
+  --ear-dark-blue: #3b6a87;
   --ear-dark-red: #5a1b0e;
   --ear-orange: #d05435;
-  --ear-dark-sage: #4e5a4f;
+  --ear-dark-sage: #556b2f;
   --ear-cream-brown: #c1b49a;
 
   /* Keep existing token structure for compatibility */
@@ -250,6 +251,7 @@
   --color-ear-black: var(--ear-black);
   --color-ear-off-white: var(--ear-off-white);
   --color-ear-baby-blue: var(--ear-baby-blue);
+  --color-ear-dark-blue: var(--ear-dark-blue);
   --color-ear-dark-red: var(--ear-dark-red);
   --color-ear-orange: var(--ear-orange);
   --color-ear-dark-sage: var(--ear-dark-sage);
@@ -363,6 +365,28 @@ body {
 
 .border-accent {
   border-color: var(--accent-600);
+}
+
+/* Calendar page chrome: black accents instead of brand red; listing type colors unchanged. */
+.calendar-chrome {
+  --primary: var(--ear-black);
+  --primary-foreground: var(--ear-off-white);
+  --primary-500: var(--ear-black);
+  --primary-600: var(--ear-black);
+  --primary-700: #333333;
+  --brand-primary: var(--ear-black);
+  --brand-primary-hover: #333333;
+}
+
+/* Modals always use brand red accents, even when opened from calendar-chrome. */
+.modal-chrome {
+  --primary: var(--ear-dark-red);
+  --primary-foreground: var(--ear-off-white);
+  --primary-500: var(--ear-dark-red);
+  --primary-600: var(--ear-dark-red);
+  --primary-700: #43150a;
+  --brand-primary: var(--ear-dark-red);
+  --brand-primary-hover: #43150a;
 }
 
 .shadow-custom {

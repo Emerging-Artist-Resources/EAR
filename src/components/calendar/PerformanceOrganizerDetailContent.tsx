@@ -27,6 +27,7 @@ import {
   HeroImageWithLightbox,
   InlineLabelRow,
   InlineWebsiteLink,
+  ListingBodyText,
   ListingTitleGroup,
 } from "./performance-detail-shared"
 
@@ -201,9 +202,7 @@ export function PerformanceOrganizerDetailContent({
             )}
             {hasDisplayText(participants) && (
               <FieldBlock label="Participating Artist/Companies">
-                <p className="whitespace-pre-wrap font-sans text-sm leading-6 text-text-primary">
-                  {participants}
-                </p>
+                <ListingBodyText text={participants} />
               </FieldBlock>
             )}
             {showSocial && (
@@ -311,7 +310,7 @@ export function PerformanceOrganizerDetailContent({
       {hasDisplayText(notes) && (
         <section className="space-y-3">
           <H3 className="text-brand-primary">Additional Information</H3>
-          <p className="whitespace-pre-wrap font-sans text-sm leading-6 text-text-primary">{notes}</p>
+          <ListingBodyText text={notes} />
         </section>
       )}
     </div>

@@ -8,11 +8,10 @@ export default function CommunityCalendarHero() {
       title={calendarHero.title}
       imageSrc={CALENDAR_HERO_IMAGE_SRC}
       imagePosition="left"
+      growWithContent
+      compact
     >
-      <PageHeroParagraphs
-        lead={calendarHero.lead}
-        paragraphs={calendarHero.paragraphs}
-      />
+      <PageHeroParagraphs compact paragraphs={calendarHero.paragraphs} />
     </SplitPageHero>
   )
 }

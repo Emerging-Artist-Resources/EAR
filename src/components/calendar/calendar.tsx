@@ -267,10 +267,10 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
                   className="group w-full rounded-r-md border-l-4 pl-3 py-1.5 text-left transition-colors hover:bg-surface-panel-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   style={{ borderLeftColor: typeColor.border }}
                 >
-                  <div className="font-header text-base font-semibold text-text-muted group-hover:text-text-primary">
+                  <div className="font-header text-base font-semibold text-ear-black group-hover:text-text-primary">
                     {it.title || "Untitled"}
                   </div>
-                  <Text className="text-sm text-text-muted">
+                  <Text className="text-sm text-ear-black">
                     {formatOccurrenceRangeEST(String(it.start), it.endsAt)}
                   </Text>
                 </button>

@@ -4,42 +4,91 @@ export const fiscalServicesHero = {
 
 export const FISCAL_SERVICES_INQUIRY_HREF = "/services/fiscal-services/inquiry" as const
 
-export const FISCAL_SERVICES_HERO_IMAGE = "/images/service-hero.JPG" as const
+export const FISCAL_SERVICES_HERO_IMAGE = "/images/fiscal-service/hero-image.JPG" as const
+
+export const FISCAL_SERVICES_FINAL_IMAGE = "/images/fiscal-service/final-image.JPG" as const
+
+export type FiscalServiceAction =
+  | { type: "link"; label: string; href: string }
+  | { type: "static"; label: string }
 
 export type FiscalServiceBlock = {
-  index: number
+  id: string
   title: string
-  paragraphs: string[]
+  subheading: string
+  servicesIntro: string
+  services: readonly string[]
+  action: FiscalServiceAction
 }
 
 export const fiscalServiceSections: FiscalServiceBlock[] = [
   {
-    index: 1,
-    title: "Bookkeeping",
-    paragraphs: [
-      "Strong financial systems are essential for sustaining creative work. Our bookkeeping services help artists, collectives, and small arts organizations stay organized, transparent, and prepared for growth.",
-      "We provide ongoing bookkeeping support to help you track income and expenses, maintain accurate financial records, and understand the financial health of your work. Whether you are managing project-based funding, performance income, grants, or donations, we help ensure your finances are documented clearly and consistently.",
-      "Our goal is not only to maintain your records, but also to make financial systems more accessible and understandable. With clear bookkeeping practices in place, you’ll be better equipped to manage budgets, prepare grant reports, and plan for future projects.",
-      "This service is designed for emerging artists and small organizations who want reliable financial infrastructure without the cost of a full accounting department.",
+    id: "hourly",
+    title: "Hourly Fiscal Services",
+    subheading:
+      "Professional bookkeeping services tailored to artists, fiscally sponsored projects, and small nonprofit organizations.",
+    servicesIntro: "Services are customizable to include:",
+    services: [
+      "Establishment of a Chart of Accounts (ongoing modifications)",
+      "Posting of receipts and disbursements from bank account",
+      "Posting of credit card charges and reconciliation of monthly statement",
+      "Financial reporting to include: Profit & Loss, Profit & Loss Detail, Year-to-Date vs. Budget, Balance Sheet",
+      "Accounts Payable and Accounts Receivable (Pledges/Grants Receivable)",
+      "Reconciliation of Bank, Brokerage, and third-party Accounts (PayPal, Stripe, etc.)",
+      "Facilitation and administration of Fiscal Year-End Reporting",
     ],
+    action: {
+      type: "link",
+      label: "Inquire here",
+      href: FISCAL_SERVICES_INQUIRY_HREF,
+    },
   },
   {
-    index: 2,
-    title: "Fiscal mentorship",
-    paragraphs: [
-      "Managing your own finances is an essential skill for sustaining creative work, but it can be challenging without guidance. Our Fiscal Mentorship program is designed to help artists, collectives, and small creative projects set up and maintain their own bookkeeping and financial systems.",
-      "Each month, we provide two hours of dedicated review and support, walking you through best practices for tracking income and expenses, organizing project budgets, and understanding your financial health. Our goal is to give you the tools and confidence to manage your finances independently, while ensuring accuracy and transparency.",
-      "This program is ideal for emerging artists and small organizations who want reliable financial infrastructure, clearer records, and the knowledge to make informed decisions about their work and projects.",
+    id: "mentorship",
+    title: "Fiscal Mentorship | Coming Soon",
+    subheading:
+      "Build the foundation for a financially organized creative practice or organization. A one-on-one or small-group mentorship program focused on establishing the financial and operational systems needed for sustainability, so you can focus on your artistry.",
+    servicesIntro: "Services are customizable to include:",
+    services: [
+      "Designing a Chart of Accounts (COA)",
+      "Choosing an Accounting System",
+      "Understanding financial responsibilities for your staff & independent contractors",
+      "Insurance Compliance",
+      "Selecting donation and fundraising platforms",
+      "Establishing organizational bank accounts",
+      "Creating operating and project budgets",
+      "Financial policies and procedures",
+      "Revenue tracking and reporting systems",
     ],
+    action: {
+      type: "static",
+      label: "Application opens June 15th",
+    },
   },
   {
-    index: 3,
-    title: "Hourly fiscal services",
-    paragraphs: [
-      "Strong financial systems are essential for sustaining creative work. Our bookkeeping services help artists, collectives, and small arts organizations stay organized, transparent, and prepared for growth.",
-      "We provide ongoing bookkeeping support to help you track income and expenses, maintain accurate financial records, and understand the financial health of your work. Whether you are managing project-based funding, performance income, grants, or donations, we help ensure your finances are documented clearly and consistently.",
-      "Our goal is not only to maintain your records, but also to make financial systems more accessible and understandable. With clear bookkeeping practices in place, you’ll be better equipped to manage budgets, prepare grant reports, and plan for future projects.",
-      "This service is designed for emerging artists and small organizations who want reliable financial infrastructure without the cost of a full accounting department.",
+    id: "bookkeeping",
+    title: "Bookkeeping | Coming Soon",
+    subheading: "Receive guidance on selecting and implementing financial management tools.",
+    servicesIntro: "Services Include:",
+    services: [
+      "Accounting software setup and configuration",
+      "Payroll processor selection and setup",
+      "Financial reporting systems",
+      "Donation tracking systems",
+      "Expense management workflows",
+      "Recordkeeping best practices",
+      "Grant Preparation Assistance",
     ],
+    action: {
+      type: "link",
+      label: "Inquire here",
+      href: FISCAL_SERVICES_INQUIRY_HREF,
+    },
   },
 ]
+
+export const fiscalServicesCustomSupport = {
+  title: "Need Customized Support?",
+  body: "We also offer individualized services tailored to the unique needs of artists, collectives, and small nonprofit organizations. Contact us to discuss your project and goals.",
+  actionLabel: "Contact us",
+} as const

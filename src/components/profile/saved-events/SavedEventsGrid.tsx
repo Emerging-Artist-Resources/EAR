@@ -7,9 +7,15 @@ interface SavedEventsGridProps {
   events: SavedEvent[];
   isLoading?: boolean;
   onListingClick?: (listingId: string) => void;
+  isFiltered?: boolean;
 }
 
-export const SavedEventsGrid = ({ events, isLoading, onListingClick }: SavedEventsGridProps) => {
+export const SavedEventsGrid = ({
+  events,
+  isLoading,
+  onListingClick,
+  isFiltered = false,
+}: SavedEventsGridProps) => {
   if (isLoading) {
     return <Text className="mt-4 text-sm text-gray-600">Loading events…</Text>;
   }
@@ -17,7 +23,11 @@ export const SavedEventsGrid = ({ events, isLoading, onListingClick }: SavedEven
   if (!events.length) {
     return (
       <Card className="mt-4 p-4">
-        <Text className="text-sm text-gray-600">You haven't saved any events yet.</Text>
+        <Text className="text-sm text-gray-600">
+          {isFiltered
+            ? "No saved events match the selected listing types."
+            : "You haven't saved any events yet."}
+        </Text>
       </Card>
     );
   }

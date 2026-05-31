@@ -60,16 +60,16 @@ export const Modal: React.FC<ModalProps> = ({
   return (
     <div
       className={cn(
-        "fixed inset-0 bg-ear-black/70 backdrop-blur-[1px] flex items-start justify-center p-4 z-[9999] overflow-hidden",
+        "modal-chrome fixed inset-0 bg-ear-black/70 backdrop-blur-[1px] flex items-start justify-center p-4 z-[9999] overflow-hidden",
         overlayClassName,
       )}
       onClick={handleOverlayClick}
     >
       <div
         className={cn(
-          "w-full rounded-md shadow-lg border max-h-[90vh] flex flex-col",
+          "w-full min-w-0 rounded-md shadow-lg border max-h-[90vh] flex flex-col",
           sizeClasses[size],
-          contentClassName ?? "bg-background border-border"
+          contentClassName ?? "bg-surface-modal-warm border-border"
         )}
         onClick={(e) => e.stopPropagation()}
       >
@@ -81,7 +81,7 @@ export const Modal: React.FC<ModalProps> = ({
         >
           <H2
             className={cn(
-              "text-center text-primary-foreground",
+              "m-0 text-center leading-none text-primary-foreground",
               showCloseButton && "px-11",
               titleClassName,
             )}
@@ -104,14 +104,14 @@ export const Modal: React.FC<ModalProps> = ({
           )}
         </div>
 
-        <div ref={bodyRef} className="flex-1 overflow-y-auto p-6">
+        <div ref={bodyRef} className="flex-1 overflow-y-auto overflow-x-hidden p-6">
           <div
             ref={focusSentinelRef}
             tabIndex={-1}
             aria-hidden
             className="sr-only outline-none"
           />
-          <div className="relative z-10">{children}</div>
+          <div className="relative z-10 min-w-0 max-w-full">{children}</div>
         </div>
       </div>
     </div>

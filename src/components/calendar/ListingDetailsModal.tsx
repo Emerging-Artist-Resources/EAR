@@ -30,6 +30,7 @@ import {
   ListingOccurrencesSection,
   listingHasOccurrencesSectionContent,
 } from "./ListingOccurrencesSection"
+import { ListingBodyText } from "./performance-detail-shared"
 import {
   PerformanceOrganizerDetailContent,
   type ChildListingSummary,
@@ -223,7 +224,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       headerClassName="bg-primary"
       titleClassName={
         isPerformanceRedesign
-          ? "font-title text-2xl font-bold tracking-wide md:text-3xl"
+          ? "font-title text-2xl font-bold leading-none tracking-wide md:text-3xl"
           : undefined
       }
       contentClassName="border-border-default bg-surface-modal-warm text-text-primary"
@@ -233,7 +234,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
           <div className="flex h-full min-h-[calc(90vh-9rem)] items-center justify-center py-12">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mb-4"></div>
-              <Text className="text-text-muted">Loading listing details...</Text>
+              <Text className="text-ear-black">Loading listing details...</Text>
             </div>
           </div>
         )}
@@ -382,7 +383,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               backToParentLabel={backToParentLabel}
             />
           ) : (
-          <div className="space-y-4">
+          <div className="min-w-0 max-w-full space-y-4">
             <div className="flex items-center justify-between gap-3 pb-4 border-b border-border-default">
               <div className="flex items-center gap-3">
                 <Badge variant="primary" size="sm">{typeLabel}</Badge>
@@ -433,7 +434,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               return (
                 <Card className="p-4">
                   <H3 className="mb-3 text-text-primary">Information</H3>
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-0">
+                  <div className="grid min-w-0 max-w-full grid-cols-1 gap-x-6 gap-y-0 sm:grid-cols-2">
                     {listing.type === "performance" && listing.performance_details && (
                       <>
                         {listing.performance_details.subtype === "PIECE" && listing.piece_details && (
@@ -550,7 +551,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                   )}
 
                   {(listing.social_handles || displayNotes) && (
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-0">
+                    <div className="grid min-w-0 max-w-full grid-cols-1 gap-x-6 gap-y-0 sm:grid-cols-2">
                       {listing.social_handles && (
                         <FieldRow
                           label="Social Media"
@@ -561,7 +562,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                       {displayNotes && (
                         <FieldRow
                           label="Additional Information"
-                          value={<p className="whitespace-pre-wrap">{displayNotes}</p>}
+                          value={<ListingBodyText text={displayNotes} />}
                         />
                       )}
                     </div>

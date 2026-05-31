@@ -1,6 +1,7 @@
 import { format, startOfMonth, endOfMonth } from "date-fns"
 import type { CalendarItem } from "@/hooks/use-calendar"
 import { convertUTCToEST, getTodayESTDateString } from "@/lib/datetime/utils"
+import { filterByCalendarListingTypes } from "@/lib/listings/calendar-filter-types"
 
 /** True when the calendar cell date is before today (EST). */
 export function isPastCalendarDate(date: Date): boolean {
@@ -8,23 +9,7 @@ export function isPastCalendarDate(date: Date): boolean {
 }
 
 export function filterCalendarItems(items: CalendarItem[], selectedTypes: Set<string>): CalendarItem[] {
-  if (selectedTypes.size === 0) {
-    return []
-  }
-
-  const allTypesSelected = selectedTypes.has('PERFORMANCE') && 
-                           selectedTypes.has('CLASS') && 
-                           selectedTypes.has('AUDITION') && 
-                           selectedTypes.has('CREATIVE')
-  
-  if (allTypesSelected) {
-    return items
-  }
-
-  return items.filter((item) => {
-    const typeUpper = item.type.toUpperCase()
-    return selectedTypes.has(typeUpper)
-  })
+  return filterByCalendarListingTypes(items, selectedTypes)
 }
 
 export function getItemsForDate(

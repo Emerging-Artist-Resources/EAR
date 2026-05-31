@@ -1,19 +1,25 @@
 "use client"
 
 import { useLayoutEffect, useRef, useState } from "react"
+import { LinkifiedText } from "@/components/shared/LinkifiedText"
 import { cn } from "@/lib/utils"
+
+const defaultListingLinkClass =
+  "text-brand-primary hover:text-brand-primary-hover underline break-all"
 
 interface ClampableTextProps {
   text: string
   /** Tailwind line-clamp class, e.g. line-clamp-4 */
   clampClassName?: string
   className?: string
+  linkClassName?: string
 }
 
 export function ClampableText({
   text,
   clampClassName = "line-clamp-4",
   className,
+  linkClassName = defaultListingLinkClass,
 }: ClampableTextProps) {
   const [expanded, setExpanded] = useState(false)
   const [overflows, setOverflows] = useState(false)
@@ -23,19 +29,19 @@ export function ClampableText({
     const el = ref.current
     if (!el) return
     setOverflows(el.scrollHeight > el.clientHeight + 1)
-  }, [text, clampClassName])
+  }, [text, clampClassName, expanded])
 
   return (
-    <div className="min-w-0">
+    <div className="min-w-0 max-w-full overflow-hidden">
       <p
         ref={ref}
         className={cn(
-          "font-sans text-sm leading-6 text-text-primary whitespace-pre-wrap",
-          !expanded && clampClassName,
+          "max-w-full font-sans text-sm leading-6 text-text-primary whitespace-pre-wrap [overflow-wrap:anywhere]",
+         !expanded && clampClassName,
           className,
         )}
       >
-        {text}
+        <LinkifiedText text={text} linkClassName={linkClassName} />
       </p>
       {(overflows || expanded) && (
         <button

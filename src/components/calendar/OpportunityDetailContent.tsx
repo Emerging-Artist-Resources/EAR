@@ -22,6 +22,7 @@ import {
   HeroImageWithLightbox,
   InlineLabelRow,
   InlineWebsiteLink,
+  ListingBodyText,
   ListingTitleGroup,
 } from "./performance-detail-shared"
 
@@ -163,9 +164,7 @@ export function OpportunityDetailContent({
             <InlineWebsiteLink href={website} />
             {hasDisplayText(dates) && (
               <FieldBlock label="Opportunity Dates">
-                <p className="whitespace-pre-wrap font-sans text-sm leading-6 text-text-primary">
-                  {dates}
-                </p>
+                <ListingBodyText text={dates} />
               </FieldBlock>
             )}
             {hasDisplayText(description) && (
@@ -233,7 +232,7 @@ export function OpportunityDetailContent({
       {hasDisplayText(notes) && (
         <section className="space-y-3">
           <H3 className="text-brand-primary">Additional Information</H3>
-          <p className="whitespace-pre-wrap font-sans text-sm leading-6 text-text-primary">{notes}</p>
+          <ListingBodyText text={notes} />
         </section>
       )}
     </div>

@@ -26,12 +26,43 @@ function isOtherSelected(val: string | string[] | undefined): boolean {
   return val === SERVICE_INQUIRY_OTHER_VALUE
 }
 
+/** Accepts untouched Controller fields (undefined) and normalizes other-text blanks. */
+const dynamicAnswerValueSchema = z.preprocess(
+  (val) => (val === null || val === undefined ? undefined : val),
+  z.union([z.string(), z.array(z.string())]).optional(),
+)
+
+const dynamicAnswerOtherValueSchema = z.preprocess(
+  (val) => (val == null ? "" : String(val)),
+  z.string(),
+)
+
+export function buildDynamicServiceInquiryDefaultValues(
+  questions: ServiceInquiryQuestionRow[],
+): DynamicServiceInquiryFormData {
+  const answers: Record<string, string | string[]> = {}
+  const answerOther: Record<string, string> = {}
+
+  for (const q of questions) {
+    answers[q.id] = q.field_type === "multiselect" ? [] : ""
+    answerOther[q.id] = ""
+  }
+
+  return {
+    firstName: "",
+    lastName: "",
+    email: "",
+    answers,
+    answerOther,
+  }
+}
+
 export function buildDynamicServiceInquirySchema(questions: ServiceInquiryQuestionRow[]) {
   return z
     .object({
       ...contactFields,
-      answers: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
-      answerOther: z.record(z.string(), z.string()),
+      answers: z.record(z.string(), dynamicAnswerValueSchema),
+      answerOther: z.record(z.string(), dynamicAnswerOtherValueSchema),
     })
     .superRefine((data, ctx) => {
       for (const q of questions) {

@@ -36,10 +36,10 @@ export function ServiceInquirySuccessScreen({
   return (
     <div className="space-y-6 text-center sm:text-left">
       {successIcon ? <div className="flex justify-center sm:justify-start">{successIcon}</div> : null}
-      <H2 className="text-foreground text-2xl font-bold tracking-tight">{successTitle}</H2>
-      <Text className="text-muted-foreground">{bodyText}</Text>
+      <H2 className="text-ear-black text-2xl font-bold tracking-tight">{successTitle}</H2>
+      <Text className="text-ear-black">{bodyText}</Text>
       {nextSteps && nextSteps.length > 0 ? (
-        <ul className="text-muted-foreground list-inside list-disc space-y-1 text-left text-sm">
+        <ul className="text-ear-black list-inside list-disc space-y-1 text-left text-sm">
           {nextSteps.map((step) => (
             <li key={step}>{step}</li>
           ))}
@@ -48,7 +48,7 @@ export function ServiceInquirySuccessScreen({
       {contactEmail ? (
         <div className="rounded-md border border-border bg-muted/30 p-4 text-left">
           {contactLabel ? (
-            <Text className="text-sm font-medium text-foreground">{contactLabel}</Text>
+            <Text className="text-sm font-medium text-ear-black">{contactLabel}</Text>
           ) : null}
           <a
             href={`mailto:${contactEmail}`}

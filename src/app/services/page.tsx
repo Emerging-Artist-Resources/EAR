@@ -16,7 +16,7 @@ export default function ServicesPage() {
           <Text className="mx-auto mb-4 max-w-3xl text-center text-lg text-ear-black md:text-xl">
           EAR exists to ensure emerging artists and small collectives are given opportunities to thrive in 
           spaces where access and visibility are too often shaped by traditional funding priorities. Our goal 
-          is to provide the infrastructure that allows your work to move forward, grow, and reach the audiences it deserves. 
+          is to provide the scaffolding that allows your work to move forward, grow, and reach the audiences it deserves. 
           </Text>
           <Text className="mx-auto mb-16 max-w-3xl text-center text-lg text-ear-black md:text-xl">
           We encourage you to explore our services to discover how we can best support you and your collective. Don&apos;t 

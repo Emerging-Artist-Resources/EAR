@@ -21,8 +21,8 @@ import {
   type ServiceInquiryQuestionRow,
 } from "@/lib/service-inquiries/service-inquiry-questions"
 import {
+  buildDynamicServiceInquiryDefaultValues,
   buildDynamicServiceInquirySchema,
-  dynamicServiceInquiryDefaultValues,
   SERVICE_INQUIRY_DYNAMIC_ERROR_FALLBACK,
   type DynamicServiceInquiryFormData,
 } from "@/lib/validations/service-inquiry-dynamic"
@@ -134,10 +134,14 @@ function ServiceInquiryFormInner({
   const [submitting, setSubmitting] = useState(false)
 
   const schema = useMemo(() => buildDynamicServiceInquirySchema(questions), [questions])
+  const defaultValues = useMemo(
+    () => buildDynamicServiceInquiryDefaultValues(questions),
+    [questions],
+  )
 
   const form = useForm<DynamicServiceInquiryFormData>({
     resolver: zodResolver(schema) as Resolver<DynamicServiceInquiryFormData>,
-    defaultValues: dynamicServiceInquiryDefaultValues,
+    defaultValues,
     mode: "onBlur",
   })
 
@@ -194,7 +198,7 @@ function ServiceInquiryFormInner({
   }
 
   const handleSubmitAnother = () => {
-    form.reset(dynamicServiceInquiryDefaultValues)
+    form.reset(defaultValues)
     setSubmitted(false)
     setShowErrorSummary(false)
   }

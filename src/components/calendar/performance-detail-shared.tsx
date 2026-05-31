@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { ClampableText } from "@/components/calendar/ClampableText"
 import { H3, Text } from "@/components/ui/typography"
 import { hasDisplayText, hasSocialHandlesContent } from "@/lib/listings/display"
 import { cn } from "@/lib/utils"
@@ -25,9 +26,9 @@ export function ListingTitleGroup({
   if (!showTitle && !showSubtitle) return null
 
   return (
-    <div className="space-y-0.5 pb-2">
+    <div className="space-y-2 py-2">
       {showTitle && (
-        <H3 className="font-header text-2xl leading-tight text-brand-primary">{title}</H3>
+        <H3 className="font-header text-2xl leading-none text-brand-primary">{title}</H3>
       )}
       {showSubtitle && (
         <Text className="font-sans text-sm leading-snug text-text-primary">
@@ -73,6 +74,18 @@ export function formatFieldLabel(label: string): string {
 export const detailLinkClass =
   "text-brand-primary hover:text-brand-primary-hover underline break-all"
 
+export function ListingBodyText({
+  text,
+  className,
+  clampClassName = "line-clamp-4",
+}: {
+  text: string
+  className?: string
+  clampClassName?: string
+}) {
+  return <ClampableText text={text} className={className} clampClassName={clampClassName} />
+}
+
 export function InlineLabelRow({
   label,
   children,
@@ -83,8 +96,9 @@ export function InlineLabelRow({
   className?: string
 }) {
   return (
-    <p className={cn("py-2 font-sans text-sm leading-6 text-text-primary", className)}>
-      <span className="font-semibold">{formatFieldLabel(label)}</span> {children}
+    <p className={cn("min-w-0 max-w-full py-2 font-sans text-sm leading-6 text-text-primary [overflow-wrap:anywhere]", className)}>
+      <span className="font-semibold">{formatFieldLabel(label)}</span>{" "}
+      <span className="min-w-0 [overflow-wrap:anywhere]">{children}</span>
     </p>
   )
 }
@@ -100,7 +114,7 @@ export function DetailAccentPanel({
   return (
     <div
       className={cn(
-        "space-y-4 rounded-r border-l-4 border-brand-primary bg-surface-panel py-2 pl-4",
+        "min-w-0 max-w-full overflow-hidden space-y-4 rounded-r border-l-4 border-brand-primary bg-surface-panel py-2 pl-4",
         className,
       )}
     >
@@ -122,7 +136,7 @@ export function DetailSectionCard({
   return (
     <section className={cn("space-y-3 border-b border-border-default pb-6", className)}>
       <H3 className="text-brand-primary">{title}</H3>
-      <div className="space-y-4 rounded-md border border-border-default bg-surface-panel p-4">
+      <div className="min-w-0 max-w-full overflow-hidden space-y-4 rounded-md border border-border-default bg-surface-panel p-4">
         {children}
       </div>
     </section>
@@ -153,7 +167,7 @@ export function FieldBlock({
   return (
     <div className={cn("py-2", className)}>
       <div className="font-sans text-sm font-semibold text-text-primary">{formatFieldLabel(label)}</div>
-      <div className="mt-0.5 font-sans text-sm text-text-primary">{children}</div>
+      <div className="mt-0.5 min-w-0 max-w-full font-sans text-sm text-text-primary">{children}</div>
     </div>
   )
 }

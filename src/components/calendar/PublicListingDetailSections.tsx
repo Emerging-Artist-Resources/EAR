@@ -1,6 +1,7 @@
 "use client"
 
 // Type definition for public listing detail (subset of AdminEventDetail)
+import { ClampableText } from "@/components/calendar/ClampableText"
 export type PublicListingDetail = {
   id: string
   type: "performance" | "audition" | "creative" | "class"
@@ -96,32 +97,42 @@ function formatFieldLabel(label: string): string {
   return label.endsWith(":") ? label : `${label}:`
 }
 
+const linkClass = "text-primary-600 hover:text-primary-700 underline break-all"
+
 export function FieldRow({
   label,
   value,
   inline = false,
+  linkify = false,
 }: {
   label: string
   value?: React.ReactNode
   inline?: boolean
+  linkify?: boolean
 }) {
   if (value === undefined || value === null || value === "") return null
+
+  const renderedValue =
+    linkify && typeof value === "string" ? (
+      <ClampableText text={value} clampClassName="line-clamp-4" linkClassName={linkClass} />
+    ) : (
+      value
+    )
+
   if (inline) {
     return (
-      <p className="py-2 font-sans text-sm text-text-primary">
-        <span className="font-semibold">{formatFieldLabel(label)}</span> {value}
+      <p className="min-w-0 max-w-full py-2 font-sans text-sm text-text-primary [overflow-wrap:anywhere]">
+       <span className="font-semibold">{formatFieldLabel(label)}</span> {renderedValue}
       </p>
     )
   }
   return (
-    <div className="py-2">
+    <div className="min-w-0 max-w-full py-2">
       <div className="font-sans text-sm text-text-muted mb-1">{formatFieldLabel(label)}</div>
-      <div className="font-sans text-sm text-text-primary">{value}</div>
+      <div className="min-w-0 max-w-full font-sans text-sm text-text-primary">{renderedValue}</div>
     </div>
   )
 }
-
-const linkClass = "text-primary-600 hover:text-primary-700 underline"
 
 export function WebsiteLinkRow({ label, href }: { label: string; href?: string | null }) {
   const url = href?.trim()
@@ -159,7 +170,7 @@ export function PieceDetails({ details }: { details: NonNullable<PublicListingDe
       <FieldRow label="Piece Title" value={details.piece_title} />
       <FieldRow label="Company/Artist Name" value={details.piece_company} />
       <WebsiteLinkRow label="Company/Artist Website" href={details.piece_company_website} />
-      <FieldRow label="Piece Description" value={details.piece_description} />
+      <FieldRow label="Piece Description" value={details.piece_description} linkify />
       <FieldRow label="Choreographer/Creator" value={details.choreographer} />
     </>
   )
@@ -185,7 +196,7 @@ export function ClassDetails({ details }: { details: NonNullable<PublicListingDe
         <FieldRow label="Organizer" value={details.parent_workshop_name} />
       )}
       <FieldRow label="Title" value={details.title} />
-      <FieldRow label="Description" value={details.description} />
+      <FieldRow label="Description" value={details.description} linkify />
       <FieldRow label="Duration" value={details.duration} />
       <FieldRow label="Price" value={details.price} inline />
       <FieldRow 
@@ -254,7 +265,7 @@ export function PerformanceDetails({ details }: { details: NonNullable<PublicLis
         } 
       />
       <FieldRow label="Price" value={details.price} inline />
-      <FieldRow label="Short Show Description" value={details.description} />
+      <FieldRow label="Short Show Description" value={details.description} linkify />
     </>
   )
 }
@@ -280,7 +291,7 @@ export function WorkshopDetails({ details }: { details: NonNullable<PublicListin
   return (
     <>
       <FieldRow label="Title" value={details.title} />
-      <FieldRow label="Description" value={details.description} />
+      <FieldRow label="Description" value={details.description} linkify />
       <FieldRow label="Duration" value={details.duration} />
       <FieldRow label="Organizer" value={details.organizer} />
       <FieldRow label="Price" value={details.price} inline />
@@ -300,9 +311,9 @@ export function WorkshopDetails({ details }: { details: NonNullable<PublicListin
         } 
       />
       <WebsiteLinkRow label="Website" href={details.website} />
-      <FieldRow label="Workshop Details" value={details.workshop_details} />
-      <FieldRow label="Classes Offered" value={details.classes_offered} />
-      <FieldRow label="Drop-in Classes" value={details.drop_in_classes} />
+      <FieldRow label="Workshop Details" value={details.workshop_details} linkify />
+      <FieldRow label="Classes Offered" value={details.classes_offered} linkify />
+      <FieldRow label="Drop-in Classes" value={details.drop_in_classes} linkify />
     </>
   )
 }
@@ -326,10 +337,10 @@ export function AuditionDetails({ details }: { details: NonNullable<PublicListin
       {details.host ? (
         <p className="py-2 font-sans text-sm text-text-primary">{details.host}</p>
       ) : null}
-      <FieldRow label="Description" value={details.description} />
-      <FieldRow label="Eligibility" value={details.eligibility} />
-      <FieldRow label="Compensation" value={details.compensation} />
-      <FieldRow label="Instructions" value={details.instructions} />
+      <FieldRow label="Description" value={details.description} linkify />
+      <FieldRow label="Eligibility" value={details.eligibility} linkify />
+      <FieldRow label="Compensation" value={details.compensation} linkify />
+      <FieldRow label="Instructions" value={details.instructions} linkify />
       <WebsiteLinkRow label="Website" href={details.website} />
     </>
   )
@@ -352,15 +363,15 @@ export function CreativeDetails({ details }: { details: NonNullable<PublicListin
   return (
     <>
       <FieldRow label="Opportunity Name" value={details.title} />
-      <FieldRow label="Opportunity Description" value={details.description} />
+      <FieldRow label="Opportunity Description" value={details.description} linkify />
       {details.host ? (
         <p className="py-2 font-sans text-sm text-text-primary">{details.host}</p>
       ) : null}
       <WebsiteLinkRow label="Website" href={details.website} />
-      <FieldRow label="Opportunity Dates" value={details.dates} />
-      <FieldRow label="What is Offered" value={details.compensation} />
-      <FieldRow label="Application Requirements" value={details.requirements} />
-      <FieldRow label="Submission Instructions" value={details.link} />
+      <FieldRow label="Opportunity Dates" value={details.dates} linkify />
+      <FieldRow label="What is Offered" value={details.compensation} linkify />
+      <FieldRow label="Application Requirements" value={details.requirements} linkify />
+      <FieldRow label="Submission Instructions" value={details.link} linkify />
     </>
   )
 }

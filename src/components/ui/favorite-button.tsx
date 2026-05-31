@@ -49,8 +49,8 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
           sizeToIcon[size],
           "pointer-events-none transition-[fill,stroke] duration-150",
           active
-            ? "fill-amber-400 stroke-amber-500 group-hover:fill-amber-500 group-hover:stroke-amber-600"
-            : "fill-none stroke-text-muted group-hover:fill-amber-300 group-hover:stroke-amber-500",
+            ? "fill-[#ffe659] stroke-text-muted group-hover:fill-[#ffe559]"
+            : "fill-none stroke-text-muted group-hover:fill-[#ffe559]/50 group-hover:stroke-text-muted",
         )}
         viewBox="0 0 24 24"
         stroke="currentColor"

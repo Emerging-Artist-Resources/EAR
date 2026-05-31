@@ -18,9 +18,10 @@ export function AboutUsHeroSection({ className }: AboutUsHeroSectionProps) {
       imageAlt="Emerging Artist Resources team and community"
       imagePosition="right"
       growWithContent
+      compact
       className={className}
     >
-      <PageHeroParagraphs paragraphs={aboutUsHero.paragraphs} />
+      <PageHeroParagraphs compact paragraphs={aboutUsHero.paragraphs} />
     </SplitPageHero>
   )
 }

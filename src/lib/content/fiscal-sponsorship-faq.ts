@@ -18,9 +18,13 @@ export const fiscalSponsorshipFaqPage = {
   title: "Fiscal Sponsorship FAQ",
 } as const
 
+export const FISCAL_SPONSORSHIP_FAQ_APPLY_IMAGE = "/images/faq/faq-final.jpg" as const
+
 export const fiscalSponsorshipFaqApply = {
   title: "Apply to Fiscal Sponsorship Here",
   buttonLabel: "Inquire here",
+  imageAlt:
+    "A motion-blurred black and white photograph of a person jumping energetically, conveying a sense of movement and performance.",
 } as const
 
 export const fiscalSponsorshipFaqSections: readonly FiscalSponsorshipFaqSection[] = [

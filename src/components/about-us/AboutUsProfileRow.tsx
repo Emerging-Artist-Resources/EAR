@@ -1,7 +1,35 @@
 import Image from "next/image"
+import { Fragment } from "react"
 import { Text } from "@/components/ui/typography"
 import { cn } from "@/lib/utils"
-import type { AboutUsProfile } from "@/lib/content/about-us"
+import type { AboutUsParagraph, AboutUsProfile } from "@/lib/content/about-us"
+
+const profileLinkClass =
+  "text-ear-dark-red underline decoration-ear-dark-red/40 underline-offset-2 transition-colors hover:text-ear-black hover:decoration-ear-black/40"
+
+function renderParagraphContent(paragraph: string | AboutUsParagraph) {
+  if (typeof paragraph === "string") {
+    return paragraph
+  }
+
+  return paragraph.map((segment, index) => {
+    if (typeof segment === "string") {
+      return <Fragment key={index}>{segment}</Fragment>
+    }
+
+    return (
+      <a
+        key={index}
+        href={segment.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={profileLinkClass}
+      >
+        {segment.label}
+      </a>
+    )
+  })
+}
 
 type AboutUsProfileRowProps = AboutUsProfile & {
   className?: string
@@ -36,7 +64,7 @@ function ProfileText({ name, role, paragraphs }: Pick<AboutUsProfile, "name" | "
       <div className="space-y-4">
         {paragraphs.map((paragraph, i) => (
           <Text key={i} className="text-pretty text-base leading-relaxed text-ear-black">
-            {paragraph}
+            {renderParagraphContent(paragraph)}
           </Text>
         ))}
       </div>

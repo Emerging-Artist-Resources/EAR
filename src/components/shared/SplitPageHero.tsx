@@ -5,6 +5,10 @@ import {
   SPLIT_PAGE_HERO_IMAGE_SIZES,
 } from "@/lib/images"
 import {
+  COMPACT_PAGE_HERO_BODY_CLASS,
+  COMPACT_PAGE_HERO_BODY_STACK_CLASS,
+  COMPACT_PAGE_HERO_TAGLINE_CLASS,
+  COMPACT_PAGE_HERO_TITLE_CLASS,
   PAGE_HERO_ACTIONS_CLASS,
   PAGE_HERO_BODY_CLASS,
   PAGE_HERO_BODY_STACK_CLASS,
@@ -30,7 +34,10 @@ type SplitPageHeroProps = {
   tagline?: string
   /** Allows the section to grow with long copy (e.g. About Us). */
   growWithContent?: boolean
+  /** Applies tighter line and paragraph spacing for text-heavy heroes. */
+  compact?: boolean
   className?: string
+  titleClassName?: string
   children?: React.ReactNode
 }
 
@@ -43,7 +50,9 @@ export function SplitPageHero({
   imageObjectPosition = "object-left",
   tagline,
   growWithContent = false,
+  compact = false,
   className,
+  titleClassName,
   children,
 }: SplitPageHeroProps) {
   const imageColumn = (
@@ -67,10 +76,26 @@ export function SplitPageHero({
 
   const contentColumn = (
     <div className={cn(PAGE_HERO_SPLIT_CONTENT_CLASS, PAGE_HERO_CONTENT_PADDING_CLASS)}>
-      <H1 id={headingId} className={PAGE_HERO_TITLE_CLASS}>
+      <H1
+        id={headingId}
+        className={cn(
+          PAGE_HERO_TITLE_CLASS,
+          compact && COMPACT_PAGE_HERO_TITLE_CLASS,
+          titleClassName
+        )}
+      >
         {title}
       </H1>
-      {tagline ? <p className={PAGE_HERO_TAGLINE_CLASS}>{tagline}</p> : null}
+      {tagline ? (
+        <p
+          className={cn(
+            PAGE_HERO_TAGLINE_CLASS,
+            compact && COMPACT_PAGE_HERO_TAGLINE_CLASS
+          )}
+        >
+          {tagline}
+        </p>
+      ) : null}
       {children}
     </div>
   )
@@ -111,19 +136,36 @@ export function SplitPageHero({
 type PageHeroParagraphsProps = {
   lead?: string
   paragraphs: readonly string[]
+  compact?: boolean
   className?: string
+  paragraphClassName?: string
 }
 
 export function PageHeroParagraphs({
   lead,
   paragraphs,
+  compact = false,
   className,
+  paragraphClassName,
 }: PageHeroParagraphsProps) {
   return (
-    <div className={cn(PAGE_HERO_BODY_STACK_CLASS, className)}>
+    <div
+      className={cn(
+        PAGE_HERO_BODY_STACK_CLASS,
+        compact && COMPACT_PAGE_HERO_BODY_STACK_CLASS,
+        className
+      )}
+    >
       {lead ? <Text className={PAGE_HERO_LEAD_CLASS}>{lead}</Text> : null}
       {paragraphs.map((paragraph, index) => (
-        <Text key={index} className={PAGE_HERO_BODY_CLASS}>
+        <Text
+          key={index}
+          className={cn(
+            PAGE_HERO_BODY_CLASS,
+            compact && COMPACT_PAGE_HERO_BODY_CLASS,
+            paragraphClassName
+          )}
+        >
           {paragraph}
         </Text>
       ))}

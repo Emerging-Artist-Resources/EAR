@@ -21,6 +21,7 @@ import {
   HeroImageWithLightbox,
   InlineLabelRow,
   InlineWebsiteLink,
+  ListingBodyText,
   ListingTitleGroup,
 } from "./performance-detail-shared"
 
@@ -162,9 +163,7 @@ export function AuditionDetailContent({
             )}
             {hasDisplayText(compensation) && (
               <FieldBlock label="Compensation">
-                <p className="whitespace-pre-wrap font-sans text-sm leading-6 text-text-primary">
-                  {compensation}
-                </p>
+                <ListingBodyText text={compensation} />
               </FieldBlock>
             )}
             {showSocial && (
@@ -218,7 +217,7 @@ export function AuditionDetailContent({
       {hasDisplayText(notes) && (
         <section className="space-y-3">
           <H3 className="text-brand-primary">Additional Information</H3>
-          <p className="whitespace-pre-wrap font-sans text-sm leading-6 text-text-primary">{notes}</p>
+          <ListingBodyText text={notes} />
         </section>
       )}
     </div>

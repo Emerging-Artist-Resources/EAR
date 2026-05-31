@@ -44,7 +44,7 @@ export const fiscalSponsorshipBenefits = {
 export const fiscalSponsorshipCtaBand = {
   overline: "Getting started",
   headline: "Ready to Apply?",
-  body: "We partner with emerging artists and small collectives who are seeking a professional home for their project's financial growth. To be eligible, your work must demonstrate a clear artistic vision and social contribution. Before applying, gather your project narrative, a basic budget draft, and an updated professional resume or artist statement.",
+  body: "We partner with emerging artists and small collectives who are seeking a professional home for their project's financial growth.",
 } as const
 
 export const fiscalSponsorshipPartnership = {

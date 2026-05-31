@@ -42,3 +42,12 @@ export const PAGE_HERO_SPLIT_CONTENT_CLASS =
 
 export const PAGE_HERO_SPLIT_DESKTOP_IMAGE_CLASS =
   "relative hidden bg-ear-black lg:block"
+
+/** Tighter typography for split-page heroes with long copy. */
+export const COMPACT_PAGE_HERO_TITLE_CLASS = "leading-[1.15] tracking-normal"
+
+export const COMPACT_PAGE_HERO_TAGLINE_CLASS = "mt-3 leading-snug tracking-wide"
+
+export const COMPACT_PAGE_HERO_BODY_CLASS = "leading-snug"
+
+export const COMPACT_PAGE_HERO_BODY_STACK_CLASS = "mt-4 space-y-3 sm:mt-6"

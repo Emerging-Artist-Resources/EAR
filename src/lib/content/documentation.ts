@@ -9,7 +9,7 @@ export const DOCUMENTATION_VIDEOGRAPHY_IMAGE =
   "/images/photo-video-service/video-image.JPG" as const
 
 export const DOCUMENTATION_PACKAGE_IMAGE =
-  "/images/photo-video-service/package-image.jpeg" as const
+  "/images/photo-video-service/package-image.JPG" as const
 
 export const DOCUMENTATION_BIO_SECTION_SRC = "/images/photo-video-service/behind-sam.jpg" as const
 

@@ -24,7 +24,7 @@ export function NewsletterSignupFormFields({
   values,
   onChange,
   labelSize = "sm",
-  showRequiredHint = true,
+  showRequiredHint = false,
   intro,
 }: NewsletterSignupFormFieldsProps) {
   return (

@@ -1,11 +1,11 @@
 "use client"
 
 import Image from "next/image"
-import { TapeAccentCard } from "@/components/shared/TapeAccentCard"
 import { NewsletterSignupInlineForm } from "@/components/newsletter/NewsletterSignupInlineForm"
 import { cn } from "@/lib/utils"
 import { ABOUT_US_STAY_IN_TOUCH_SRC, aboutUsStayInTouch } from "@/lib/content/about-us"
 import { H1 } from "../ui/typography"
+import { Card, CardContent } from "../ui/card"
 
 type AboutUsStayInTouchSectionProps = {
   className?: string
@@ -39,8 +39,8 @@ export function AboutUsStayInTouchSection({ className }: AboutUsStayInTouchSecti
         </H1>
 
         <div className="mt-auto flex justify-center pt-10 md:justify-end md:pt-0">
-          <TapeAccentCard className="w-full max-w-lg">
-            <div className="px-6 pb-8 pt-14 sm:px-8 sm:pb-10 sm:pt-16">
+          <Card className="w-full max-w-lg">
+            <CardContent>
               <h3 className="font-header text-center text-xl font-bold uppercase tracking-wide text-ear-black sm:text-2xl">
                 {aboutUsStayInTouch.cardTitle}
               </h3>
@@ -51,8 +51,8 @@ export function AboutUsStayInTouchSection({ className }: AboutUsStayInTouchSecti
                   submitLabel={aboutUsStayInTouch.ctaLabel}
                 />
               </div>
-            </div>
-          </TapeAccentCard>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </section>

@@ -1,17 +1,25 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { ListingTypeFilterDropdown } from "@/components/calendar/ListingTypeFilterDropdown";
 
 type FilterMode = "all" | "upcoming" | "past";
 
 interface SavedEventsFiltersProps {
   value: FilterMode;
   onChange: (mode: FilterMode) => void;
+  selectedTypes: Set<string>;
+  onChangeTypes: (types: Set<string>) => void;
 }
 
-export const SavedEventsFilters = ({ value, onChange }: SavedEventsFiltersProps) => {
+export const SavedEventsFilters = ({
+  value,
+  onChange,
+  selectedTypes,
+  onChangeTypes,
+}: SavedEventsFiltersProps) => {
   return (
-    <div className="mb-4 inline-flex gap-2">
+    <div className="mb-4 flex flex-wrap items-center gap-2">
       <Button
         type="button"
         className="rounded-full"
@@ -39,6 +47,10 @@ export const SavedEventsFilters = ({ value, onChange }: SavedEventsFiltersProps)
       >
         Past Events
       </Button>
+      <ListingTypeFilterDropdown
+        selectedTypes={selectedTypes}
+        onChange={onChangeTypes}
+      />
     </div>
   );
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { ListingTypeBadge } from "@/components/shared/ListingTypeBadge";
 import { SavedEvent } from "@/features/profile/server/types";
 import { AttendanceButtons } from "./AttendanceButtons";
 import { H3, Text } from "@/components/ui/typography";
@@ -63,9 +63,7 @@ export const SavedEventCard = ({ event, onListingClick }: SavedEventCardProps) =
     <Card className="flex h-full flex-col justify-between p-4">
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <Badge variant="primary" className="text-xs capitalize">
-            {event.type}
-          </Badge>
+          <ListingTypeBadge type={event.type} />
           <div className="flex items-center gap-2">
             {saveError && (
               <span className="text-xs text-red-600">{saveError}</span>

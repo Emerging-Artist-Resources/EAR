@@ -132,7 +132,7 @@ function CalendarViewContent() {
       <CommunityCalendarHero />
       <div className="flex-1 bg-surface-panel text-text-primary">
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className={`px-4 py-6 sm:px-0 transition-opacity duration-200 ${isModalOpen ? 'opacity-50' : ''}`}>
+        <div className={`calendar-chrome px-4 py-6 sm:px-0 transition-opacity duration-200 ${isModalOpen ? 'opacity-50' : ''}`}>
           <CallToAction onSubmitPerformance={handleOpenSubmit} />
           <Calendar items={items} deadlines={deadlines} />
           

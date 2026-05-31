@@ -1,7 +1,11 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { OPPORTUNITY_LISTING_TYPE_LABEL } from "@/lib/listings/type-labels"
+import {
+  CALENDAR_FILTER_TYPES,
+  CALENDAR_FILTER_TYPE_LABELS,
+  isAllCalendarFilterTypesSelected,
+} from "@/lib/listings/calendar-filter-types"
 import { cn } from "@/lib/utils"
 import { getFilterTypeColor } from "./event-colors"
 
@@ -10,17 +14,8 @@ interface FilterBarProps {
   onChangeEventType: (types: Set<string>) => void
 }
 
-const TYPES = ["PERFORMANCE", "CLASS", "AUDITION", "CREATIVE"] as const
-
-const TYPE_LABELS: Record<string, string> = {
-  PERFORMANCE: "Performance",
-  CLASS: "Class/Workshop",
-  AUDITION: "Audition",
-  CREATIVE: OPPORTUNITY_LISTING_TYPE_LABEL
-}
-
 export function FilterBar({ selectedTypes, onChangeEventType }: FilterBarProps) {
-  const isAllSelected = TYPES.every(t => selectedTypes.has(t))
+  const isAllSelected = isAllCalendarFilterTypesSelected(selectedTypes)
 
   const handleToggle = (type: string) => {
     if (isAllSelected) {
@@ -37,7 +32,7 @@ export function FilterBar({ selectedTypes, onChangeEventType }: FilterBarProps) 
   }
 
   const handleSelectAll = () => {
-    onChangeEventType(new Set(TYPES))
+    onChangeEventType(new Set(CALENDAR_FILTER_TYPES))
   }
 
   return (
@@ -52,7 +47,7 @@ export function FilterBar({ selectedTypes, onChangeEventType }: FilterBarProps) 
           >
             All
           </Button>
-          {TYPES.map(t => {
+          {CALENDAR_FILTER_TYPES.map((t) => {
             const isSelected = !isAllSelected && selectedTypes.has(t)
             const colors = getFilterTypeColor(t)
             const outlineText =
@@ -82,7 +77,7 @@ export function FilterBar({ selectedTypes, onChangeEventType }: FilterBarProps) 
                       }
                 }
               >
-                {TYPE_LABELS[t]}
+                {CALENDAR_FILTER_TYPE_LABELS[t]}
               </Button>
             )
           })}

@@ -30,7 +30,7 @@ export function FiscalSponsorshipPartnershipSection({
       <div className="absolute inset-0 bg-ear-black/20" aria-hidden />
 
       <div className="relative z-10 mx-auto max-w-4xl">
-        <div className="bg-ear-black px-6 py-10 sm:px-10 sm:py-12 lg:px-14 lg:py-16">
+        <div className="bg-ear-black px-6 py-6 sm:px-10 sm:py-8 lg:px-10 lg:py-10">
           <h2 id="fiscal-sponsorship-partnership-heading" className="sr-only">
             EAR partnership with mignolo
           </h2>

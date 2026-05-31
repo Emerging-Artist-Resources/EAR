@@ -101,15 +101,15 @@ export function ListingOccurrencesSection({
   const isPerformance = variant === "performance"
 
   const inner = (
-    <div className="space-y-0">
+    <div className="min-w-0 max-w-full space-y-0">
       {opportunityDatesSummary && (
-        <div className="mb-4 grid grid-cols-2 gap-x-6 gap-y-0">
-          <FieldRow label="Opportunity Dates" value={opportunityDatesSummary} />
+        <div className="mb-4 grid grid-cols-1 gap-x-6 gap-y-0 sm:grid-cols-2">
+          <FieldRow label="Opportunity Dates" value={opportunityDatesSummary} linkify />
         </div>
       )}
 
       {hasSingleLocation && singleLocation && listingHasLocationDisplay(singleLocation) && (
-        <div className={cn(isPerformance ? "mb-4" : "grid grid-cols-2 gap-x-6 gap-y-0")}>
+        <div className={cn(isPerformance ? "mb-4 min-w-0 max-w-full" : "grid min-w-0 max-w-full grid-cols-1 gap-x-6 gap-y-0 sm:grid-cols-2")}>
           <ListingLocationDisplay
             location={{ ...singleLocation, meta: listing.meta }}
             linkifyAddress
@@ -148,10 +148,10 @@ export function ListingOccurrencesSection({
               return (
                 <DetailAccentPanel
                   key={o.id}
-                  className={cn("space-y-1", !isPerformance && "border-primary-300")}
+                  className={cn("min-w-0 max-w-full space-y-1", !isPerformance && "border-primary-300")}
                 >
-                  <div className="mb-1 font-header text-xl font-semibold text-text-primary">
-                    {formatOccurrenceRangeEST(o.starts_at_utc, o.ends_at_utc)}
+                  <div className="mb-1 min-w-0 max-w-full font-header text-xl font-semibold text-text-primary [overflow-wrap:anywhere]">
+                   {formatOccurrenceRangeEST(o.starts_at_utc, o.ends_at_utc)}
                   </div>
                   {!hasSingleLocation && hasLocation && occurrenceLocation && (
                     <ListingLocationDisplay

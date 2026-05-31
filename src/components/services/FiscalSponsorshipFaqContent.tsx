@@ -23,7 +23,7 @@ export function FiscalSponsorshipFaqContent({
 
   return (
     <>
-      <div className="mt-14 sm:mt-16">
+      <div className="mt-8 sm:mt-12 lg:mt-16">
         <label htmlFor="fiscal-sponsorship-faq-search" className="sr-only">
           Search fiscal sponsorship questions
         </label>
@@ -38,7 +38,7 @@ export function FiscalSponsorshipFaqContent({
         />
       </div>
 
-      <div className="mt-14 space-y-16 sm:mt-16 sm:space-y-20">
+      <div className="mt-8 space-y-10 sm:mt-12 sm:space-y-16 lg:mt-16 lg:space-y-20">
         {filteredSections.length > 0 ? (
           filteredSections.map((section) => (
             <FiscalSponsorshipFaqSection key={section.id} section={section} />

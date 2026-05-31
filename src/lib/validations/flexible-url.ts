@@ -52,7 +52,7 @@ function isLikelyWebHostname(hostname: string): boolean {
   return true
 }
 
-function isValidHttpUrl(value: string): boolean {
+export function isValidHttpUrl(value: string): boolean {
   try {
     const parsed = new URL(value)
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false

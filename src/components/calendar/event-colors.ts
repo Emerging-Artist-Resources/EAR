@@ -91,8 +91,8 @@ export const getFilterTypeColor = (type: string) => {
       return {
         accent: CALENDAR_COLOR_BY_TYPE.creative.border,
         bg: CALENDAR_COLOR_BY_TYPE.creative.bg,
-        text: CALENDAR_COLOR_BY_TYPE.creative.text,
-        outlineText: CALENDAR_COLOR_BY_TYPE.creative.text,
+        text: "var(--ear-dark-blue)",
+        outlineText: "var(--ear-dark-blue)",
       }
     default:
       return {

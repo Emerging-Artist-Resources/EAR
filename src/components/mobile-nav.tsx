@@ -97,20 +97,42 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
             </Link> */}
 
             <div className="border-t border-border-default my-2" />
-            <div className="px-2 py-1">
-              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Services</p>
-            </div>
+            <Link
+              href="/services"
+              className="block"
+              onClick={() => setIsOpen(false)}
+            >
+              <Button variant="ghost" className="w-full justify-start text-ear-black">
+                Services
+              </Button>
+            </Link>
             {servicesNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="block"
-                onClick={() => setIsOpen(false)}
-              >
-                <Button variant="ghost" className="w-full justify-start text-ear-black">
-                  {item.label}
-                </Button>
-              </Link>
+              <div key={item.href}>
+                <Link
+                  href={item.href}
+                  className="block"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Button variant="ghost" className="w-full justify-start text-ear-black">
+                    {item.label}
+                  </Button>
+                </Link>
+                {item.subItems?.map((subItem) => (
+                  <Link
+                    key={subItem.href}
+                    href={subItem.href}
+                    className="block"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start pl-8 text-sm text-text-muted"
+                    >
+                      {subItem.label}
+                    </Button>
+                  </Link>
+                ))}
+              </div>
             ))}
             
             {/* Admin Navigation - visually separated */}
