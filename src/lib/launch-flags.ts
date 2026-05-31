@@ -28,5 +28,8 @@ export function isEmailsDisabled(): boolean {
 }
 
 export function isSentryDisabled(): boolean {
-  return getLaunchFlags().disableSentry
+  return (
+    getLaunchFlags().disableSentry ||
+    process.env.NEXT_PUBLIC_DISABLE_SENTRY === "true"
+  )
 }

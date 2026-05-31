@@ -8,8 +8,8 @@ Operational guide for EAR (performance-calendar) launch and incident response.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `SENTRY_DSN` | Optional | Server Sentry DSN |
-| `NEXT_PUBLIC_SENTRY_DSN` | Optional | Client Sentry DSN (can match server) |
+| `SENTRY_DSN` | Server | Server-side Sentry DSN (API routes, SSR) |
+| `NEXT_PUBLIC_SENTRY_DSN` | **Client** | **Required for browser errors.** Must match `SENTRY_DSN` (or use the same DSN value). Without this, only server/API errors appear in Sentry. |
 | `SENTRY_ORG` | Build | Sentry org slug (source maps upload) |
 | `SENTRY_PROJECT` | Build | Sentry project slug |
 | `SENTRY_AUTH_TOKEN` | Build | Sentry auth token for releases |
@@ -30,7 +30,8 @@ Set to `true` in Vercel → redeploy. Never default in production.
 | Variable | Effect |
 |----------|--------|
 | `DISABLE_RATE_LIMIT` | Skip Upstash rate limits |
-| `DISABLE_SENTRY` | Disable Sentry init and capture |
+| `DISABLE_SENTRY` | Disable server-side Sentry init and capture |
+| `NEXT_PUBLIC_DISABLE_SENTRY` | Disable client-side Sentry init and capture (set both to fully disable) |
 | `DISABLE_EMAILS` | Skip Postmark sends (DB writes continue) |
 | `DISABLE_BACKGROUND_SYNC` | Skip newsletter Mailchimp cron processing |
 
