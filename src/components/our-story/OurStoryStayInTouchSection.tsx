@@ -2,8 +2,7 @@
 
 import Image from "next/image"
 import { TapeAccentCard } from "@/components/shared/TapeAccentCard"
-import { NewsletterSignupTrigger } from "@/components/newsletter/NewsletterSignupTrigger"
-import { Button } from "@/components/ui/button"
+import { NewsletterSignupInlineForm } from "@/components/newsletter/NewsletterSignupInlineForm"
 import { cn } from "@/lib/utils"
 import { OUR_STORY_REACH_OUT_SRC, ourStoryStayInTouch } from "@/lib/content/our-story"
 import { H1 } from "../ui/typography"
@@ -40,22 +39,18 @@ export function OurStoryStayInTouchSection({ className }: OurStoryStayInTouchSec
         </H1>
 
         <div className="mt-auto flex justify-center pt-10 md:justify-end md:pt-0">
-          <TapeAccentCard className="w-full max-w-md">
-            <div className="px-6 pb-8 pt-14 text-center sm:px-8 sm:pb-10 sm:pt-16">
-              <h3 className="font-header text-xl font-bold uppercase tracking-wide text-ear-black sm:text-2xl">
+          <TapeAccentCard className="w-full max-w-lg">
+            <div className="px-6 pb-8 pt-14 sm:px-8 sm:pb-10 sm:pt-16">
+              <h3 className="font-header text-center text-xl font-bold uppercase tracking-wide text-ear-black sm:text-2xl">
                 {ourStoryStayInTouch.cardTitle}
               </h3>
-              <NewsletterSignupTrigger source="our-story" sourceContext="stay-in-touch">
-                {({ onClick }) => (
-                  <Button
-                    type="button"
-                    onClick={onClick}
-                    className="mt-6 h-auto rounded-none bg-ear-dark-red px-8 py-4 text-xs font-semibold uppercase tracking-widest text-ear-off-white hover:bg-ear-dark-red/90"
-                  >
-                    {ourStoryStayInTouch.ctaLabel}
-                  </Button>
-                )}
-              </NewsletterSignupTrigger>
+              <div className="mt-6">
+                <NewsletterSignupInlineForm
+                  source="our-story"
+                  sourceContext="stay-in-touch"
+                  submitLabel={ourStoryStayInTouch.ctaLabel}
+                />
+              </div>
             </div>
           </TapeAccentCard>
         </div>

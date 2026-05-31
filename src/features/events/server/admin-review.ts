@@ -2,9 +2,8 @@ import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { storageService } from "@/services/storage"
 import { sendListingUpdateEmail, sendListingShareEmailsAfterApproval } from "./service"
-import { getListingTitle } from "./listing-utils"
+import { appendAdminNotes } from "@/lib/listings/admin-notes"
 import { normalizeSupabaseRelation } from "./admin-utils"
-import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
 import {
   addPieceOccurrencesToParent,
   addClassOccurrencesToParent,
@@ -46,85 +45,74 @@ async function migratePhotosToPublic(listingId: string): Promise<void> {
 }
 
 /**
- * Sends approval email notification
+ * Sends approval/rejection email notification
  */
-async function sendApprovalEmail(listingId: string): Promise<void> {
-  const supabase = await getSupabaseServerClient()
-  
+async function sendListingStatusUpdateEmail(listingId: string): Promise<void> {
+  const supabase = getSupabaseServiceClient()
+
   try {
     const { data: listingData } = await supabase
       .from("listings")
-      .select(`
-        id, type, contact_name, contact_email,
-        performance_details (*),
-        audition_details (*),
-        creative_details (*),
-        class_workshop_details!class_workshop_details_listing_id_fkey (*),
-        piece_details!piece_details_listing_id_fkey (*)
-      `)
+      .select("contact_name, contact_email")
       .eq("id", listingId)
       .single()
 
     if (listingData?.contact_email && listingData?.contact_name) {
-      const listingForTitle = listingData as unknown as PublicListingDetail
-      const listingTitle = getListingTitle(listingForTitle)
       await sendListingUpdateEmail(
         listingId,
         listingData.contact_email,
         listingData.contact_name,
-        listingTitle
       )
     }
   } catch (emailError) {
-    console.error(`Failed to send approval email for listing ${listingId}:`, emailError)
+    console.error(`Failed to send listing update email for ${listingId}:`, emailError)
   }
+}
+
+/**
+ * Sends approval email notification
+ */
+async function sendApprovalEmail(listingId: string): Promise<void> {
+  await sendListingStatusUpdateEmail(listingId)
 }
 
 /**
  * Sends rejection email notification
  */
 async function sendRejectionEmail(listingId: string): Promise<void> {
-  const supabase = await getSupabaseServerClient()
-  
-  try {
-    const { data: listingData } = await supabase
-      .from("listings")
-      .select(`
-        id, type, contact_name, contact_email,
-        performance_details (*),
-        audition_details (*),
-        creative_details (*),
-        class_workshop_details!class_workshop_details_listing_id_fkey (*),
-        piece_details!piece_details_listing_id_fkey (*)
-      `)
-      .eq("id", listingId)
-      .single()
-
-    if (listingData?.contact_email && listingData?.contact_name) {
-      const listingForTitle = listingData as unknown as PublicListingDetail
-      const listingTitle = getListingTitle(listingForTitle)
-      await sendListingUpdateEmail(
-        listingId,
-        listingData.contact_email,
-        listingData.contact_name,
-        listingTitle
-      )
-    }
-  } catch (emailError) {
-    console.error(`Failed to send rejection email for listing ${listingId}:`, emailError)
-  }
+  await sendListingStatusUpdateEmail(listingId)
 }
 
-export async function approveListingRepo(listingId: string, reviewerId: string) {
+export async function approveListingRepo(
+  listingId: string,
+  reviewerId: string,
+  admin_notes?: string
+) {
   const supabase = await getSupabaseServerClient()
-  
+
+  const updateData: {
+    status: string
+    reviewed_at: string
+    reviewed_by: string
+    notes?: string
+  } = {
+    status: "approved",
+    reviewed_at: new Date().toISOString(),
+    reviewed_by: reviewerId,
+  }
+
+  if (admin_notes?.trim()) {
+    const { data: existing } = await supabase
+      .from("listings")
+      .select("notes")
+      .eq("id", listingId)
+      .single()
+    updateData.notes = appendAdminNotes(existing?.notes, admin_notes)
+  }
+
   const { error } = await supabase
     .from("listings")
-    .update({
-      status: "approved",
-      reviewed_at: new Date().toISOString(),
-      reviewed_by: reviewerId,
-    })
+    .update(updateData)
     .eq("id", listingId)
   if (error) throw new Error(`Failed to approve listing: ${error.message}`)
 
@@ -174,15 +162,13 @@ export async function rejectListingRepo(
     reviewed_by: reviewerId,
   }
   
-  if (admin_notes) {
+  if (admin_notes?.trim()) {
     const { data: existing } = await supabase
       .from("listings")
       .select("notes")
       .eq("id", listingId)
       .single()
-    updateData.notes = existing?.notes 
-      ? `${existing.notes}\n\nAdmin notes: ${admin_notes}`
-      : `Admin notes: ${admin_notes}`
+    updateData.notes = appendAdminNotes(existing?.notes, admin_notes)
   }
   
   const { error } = await supabase

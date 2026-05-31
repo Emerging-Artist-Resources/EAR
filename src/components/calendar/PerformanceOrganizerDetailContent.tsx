@@ -6,6 +6,7 @@ import { FavoriteButton } from "@/components/ui/favorite-button"
 import { H3, Text } from "@/components/ui/typography"
 import { HorizontalScrollCards } from "@/components/shared/HorizontalScrollCards"
 import { ListingCard } from "@/components/shared/ListingCard"
+import { stripAdminNotes } from "@/lib/listings/admin-notes"
 import { hasDisplayText } from "@/lib/listings/display"
 import type { OrganizerProgramPiecesDocument } from "@/lib/listings/organizer-program-pieces"
 import {
@@ -111,7 +112,7 @@ export function PerformanceOrganizerDetailContent({
   const participants =
     pd?.event_type === "SOLO" && hasDisplayText(pd?.participants) ? pd!.participants!.trim() : ""
   const website = pd?.website?.trim() ?? ""
-  const notes = listing.notes?.trim() ?? ""
+  const notes = stripAdminNotes(listing.notes) ?? ""
   const showSocial = hasSocialHandlesContent(listing.social_handles)
 
   const hasBodyText =

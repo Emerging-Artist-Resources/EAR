@@ -9,6 +9,7 @@
  */
 
 import { getPublicAppUrl } from "@/lib/config/app-url"
+import { ROUTES } from "@/lib/config/constants"
 import { postmarkClient } from "./postmark"
 
 type ListingEmailType = "listing-received" | "listing-updated" | "admin-listing-received"
@@ -59,7 +60,7 @@ export async function sendListingEmail(
   const ctaUrl =
     type === "admin-listing-received"
       ? `${baseUrl}/admin`
-      : `${baseUrl}/calendar?listingId=${encodeURIComponent(listingId)}`
+      : `${baseUrl}${ROUTES.PROFILE_LISTINGS}?listingId=${encodeURIComponent(listingId)}`
 
   const templateModel: Record<string, string> = {
     submitter_name: submitterName,

@@ -5,6 +5,7 @@ import { FavoriteButton } from "@/components/ui/favorite-button"
 import { H3, Text } from "@/components/ui/typography"
 import { HorizontalScrollCards } from "@/components/shared/HorizontalScrollCards"
 import { ListingCard } from "@/components/shared/ListingCard"
+import { stripAdminNotes } from "@/lib/listings/admin-notes"
 import { hasDisplayText } from "@/lib/listings/display"
 import { cn } from "@/lib/utils"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
@@ -71,7 +72,7 @@ export function WorkshopOrganizerDetailContent({
   const workDetails = cwd?.workshop_details?.trim() ?? ""
   const workshopSchedule = cwd?.classes_offered?.trim() ?? ""
   const website = cwd?.website?.trim() ?? ""
-  const notes = listing.notes?.trim() ?? ""
+  const notes = stripAdminNotes(listing.notes) ?? ""
   const showSocial = hasSocialHandlesContent(listing.social_handles)
 
   const hasBodyText =

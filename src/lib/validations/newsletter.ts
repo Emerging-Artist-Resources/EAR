@@ -4,6 +4,8 @@ import { NEWSLETTER_SOURCES } from "@/features/newsletter/constants"
 export const newsletterSubscribeRequestSchema = z
   .object({
     email: z.string().email("Enter a valid email").transform((s) => s.trim()),
+    first_name: z.string().trim().min(1, "First name is required").max(100),
+    last_name: z.string().trim().min(1, "Last name is required").max(100),
     subscribed_to_newsletter: z.boolean(),
     subscribed_to_calendar: z.boolean(),
     source: z.enum(NEWSLETTER_SOURCES).optional(),

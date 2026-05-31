@@ -4,11 +4,13 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { H3, H4, Text } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { apiGet, apiPost } from "@/lib/client/fetch-utils";
 import type { MyListing } from "@/features/profile/server/types";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import PerformanceModal from "@/components/performance-modal";
+import { Alert } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 function listingBadgeVariant(listing: MyListing): "success" | "warning" | "error" | "default" {
   if (listing.status === "approved") return "success";
@@ -28,13 +30,8 @@ function listingBadgeLabel(listing: MyListing): string {
   return listing.status;
 }
 
-import { getCalendarListingTypeLabel } from "@/lib/listings/type-labels";
-
-function getTypeLabel(type: string): string {
-  return getCalendarListingTypeLabel(type);
-}
-
 const LISTINGS_PER_PAGE = 5;
+const LISTING_HIGHLIGHT_MS = 3500;
 
 function ListingSkeleton() {
   return (
@@ -68,6 +65,9 @@ interface MyListingsProps {
   onEditListing?: (listingId: string) => void;
   /** When set, refetches listings when this value changes (e.g. after modal success). */
   refreshKey?: number;
+  /** Scroll to and briefly highlight this listing (e.g. from email deep link). */
+  highlightListingId?: string | null;
+  onHighlightComplete?: () => void;
 }
 
 export const MyListings = ({
@@ -75,6 +75,8 @@ export const MyListings = ({
   hideHeader = false,
   onEditListing,
   refreshKey: refreshKeyProp,
+  highlightListingId = null,
+  onHighlightComplete,
 }: MyListingsProps) => {
   const [listings, setListings] = useState<MyListing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,19 +89,39 @@ export const MyListings = ({
   const [internalRefreshKey, setInternalRefreshKey] = useState(0);
   const refreshKey = refreshKeyProp ?? internalRefreshKey;
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [activeHighlightId, setActiveHighlightId] = useState<string | null>(null);
+  const highlightHandledRef = useRef<string | null>(null);
+  const syncingPageFromFocusRef = useRef(false);
 
   useEffect(() => {
+    if (syncingPageFromFocusRef.current) {
+      syncingPageFromFocusRef.current = false;
+      return;
+    }
+
     let isMounted = true;
     
     const loadListings = async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await apiGet<{ listings: MyListing[], total: number }>(`/api/profile/my-listings?page=${page}&limit=${LISTINGS_PER_PAGE}`);
+        const shouldFocus =
+          !!highlightListingId && highlightHandledRef.current !== highlightListingId;
+        const focusParam = shouldFocus
+          ? `&focusListingId=${encodeURIComponent(highlightListingId)}`
+          : "";
+        const requestPage = shouldFocus ? 0 : page;
+        const data = await apiGet<{ listings: MyListing[], total: number, page?: number }>(
+          `/api/profile/my-listings?page=${requestPage}&limit=${LISTINGS_PER_PAGE}${focusParam}`
+        );
         
         if (isMounted) {
           setListings(data.listings);
           setTotal(data.total);
+          if (shouldFocus && typeof data.page === "number" && data.page !== page) {
+            syncingPageFromFocusRef.current = true;
+            setPage(data.page);
+          }
         }
       } catch (err) {
         if (isMounted) {
@@ -118,7 +140,38 @@ export const MyListings = ({
     return () => {
       isMounted = false;
     };
-  }, [page, refreshKey]);
+  }, [page, refreshKey, highlightListingId]);
+
+  useEffect(() => {
+    if (highlightListingId) {
+      highlightHandledRef.current = null;
+    }
+  }, [highlightListingId]);
+
+  useEffect(() => {
+    if (!highlightListingId || loading) return;
+
+    const listingOnPage = listings.some((listing) => listing.id === highlightListingId);
+    if (!listingOnPage) return;
+    if (highlightHandledRef.current === highlightListingId) return;
+
+    highlightHandledRef.current = highlightListingId;
+    setActiveHighlightId(highlightListingId);
+
+    requestAnimationFrame(() => {
+      document.getElementById(`listing-${highlightListingId}`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
+
+    const timer = window.setTimeout(() => {
+      setActiveHighlightId(null);
+      onHighlightComplete?.();
+    }, LISTING_HIGHLIGHT_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [highlightListingId, loading, listings, onHighlightComplete]);
 
   useEffect(() => {
     if (refreshKeyProp !== undefined) {
@@ -226,13 +279,38 @@ export const MyListings = ({
               const isProcessing = loadingId === listing.id;
 
               return (
-                <Card key={listing.id} className="p-4">
+                <Card
+                  key={listing.id}
+                  id={`listing-${listing.id}`}
+                  className={cn(
+                    "p-4 transition-[box-shadow,background-color] duration-500",
+                    activeHighlightId === listing.id &&
+                      "bg-ear-baby-blue/10 ring-2 ring-ear-baby-blue ring-offset-2"
+                  )}
+                >
                   <div className="flex items-start justify-between">
                     <div className="pr-4 flex-1">
-                      <H4>{getTypeLabel(listing.type)}</H4>
+                      <H4>{listing.title}</H4>
                       <Text className="text-sm text-gray-600">
                         Submitted on {formattedDate}
                       </Text>
+                      {(listing.admin_notes || listing.status === "rejected") && (
+                        <div className="mt-3 space-y-2">
+                          {listing.admin_notes && (
+                            <Alert variant={listing.status === "rejected" ? "error" : "default"}>
+                              <Text className="text-sm font-medium">Note from our team</Text>
+                              <Text className="mt-1 whitespace-pre-wrap text-sm">
+                                {listing.admin_notes}
+                              </Text>
+                            </Alert>
+                          )}
+                          {listing.status === "rejected" && (
+                            <Text className="text-sm text-gray-600">
+                              You can edit this listing and resubmit it for review.
+                            </Text>
+                          )}
+                        </div>
+                      )}
                       <div className="mt-1 flex gap-2 flex-wrap items-center">
                         <Button 
                           variant="link" 

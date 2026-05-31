@@ -79,7 +79,15 @@ export const Modal: React.FC<ModalProps> = ({
             headerClassName ?? "bg-primary text-primary-foreground"
           )}
         >
-          <H2 className={cn("text-center text-primary-foreground", titleClassName)}>{title}</H2>
+          <H2
+            className={cn(
+              "text-center text-primary-foreground",
+              showCloseButton && "px-11",
+              titleClassName,
+            )}
+          >
+            {title}
+          </H2>
 
           {showCloseButton && (
             <Button
@@ -87,7 +95,7 @@ export const Modal: React.FC<ModalProps> = ({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="absolute right-4 top-1/2 -translate-y-1/2"
+              className="absolute right-2 top-2 text-ear-off-white hover:bg-transparent active:bg-transparent dark:hover:bg-transparent hover:text-ear-off-white/80"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

@@ -9,7 +9,7 @@ import {
 } from "@/lib/email/listing-share-email-model"
 import { sendListingShareTemplatedEmail } from "@/lib/email/sendListingShareEmail"
 import { normalizeSupabaseRelation } from "./admin-utils"
-import { getListingTitle } from "./listing-utils"
+import { getListingTitle, getListingTitleFromDb } from "./listing-utils"
 import type { CreateListingInput } from "./repository-types"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { normalizeShareRecipientEmails } from "@/lib/listings/share"
@@ -139,8 +139,8 @@ export async function sendListingUpdateEmail(
   listingId: string,
   contactEmail: string,
   contactName: string,
-  listingTitle: string
 ): Promise<void> {
+  const listingTitle = await getListingTitleFromDb(listingId)
   await sendListingEmail("listing-updated", {
     to: contactEmail,
     submitterName: contactName,

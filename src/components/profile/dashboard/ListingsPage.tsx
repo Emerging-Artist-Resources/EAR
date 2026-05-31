@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { PlusIcon } from "lucide-react"
 import { MyListings } from "@/components/profile/activity/MyListings"
@@ -11,10 +12,27 @@ import PerformanceModal from "@/components/performance-modal"
 import { ROUTES } from "@/lib/config/constants"
 
 export function ListingsPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalListingId, setModalListingId] = useState<string | null>(null)
   const [listingsRefreshKey, setListingsRefreshKey] = useState(0)
+  const [highlightListingId, setHighlightListingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const listingId = searchParams.get("listingId")
+    if (!listingId) return
+
+    setHighlightListingId(listingId)
+
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete("listingId")
+    const newUrl = params.toString()
+      ? `${ROUTES.PROFILE_LISTINGS}?${params.toString()}`
+      : ROUTES.PROFILE_LISTINGS
+    router.replace(newUrl)
+  }, [searchParams, router])
 
   const openCreateModal = useCallback(() => {
     setModalListingId(null)
@@ -54,6 +72,8 @@ export function ListingsPage() {
       <MyListings
         hideHeader
         refreshKey={listingsRefreshKey}
+        highlightListingId={highlightListingId}
+        onHighlightComplete={() => setHighlightListingId(null)}
         onListingClick={setSelectedListingId}
         onEditListing={openEditModal}
       />

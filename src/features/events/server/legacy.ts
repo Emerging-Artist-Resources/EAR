@@ -58,8 +58,12 @@ export async function updatePendingEventRepo(
   return updatePendingListingRepo(listingId, patch)
 }
 
-export async function approveEventRepo(listingId: string, reviewerId: string) {
-  return approveListingRepo(listingId, reviewerId)
+export async function approveEventRepo(
+  listingId: string,
+  reviewerId: string,
+  admin_notes?: string
+) {
+  return approveListingRepo(listingId, reviewerId, admin_notes)
 }
 
 export async function rejectEventRepo(

@@ -37,6 +37,8 @@ export async function POST(req: NextRequest) {
       earOptIn: data.subscribed_to_newsletter,
       calendarOptIn: data.subscribed_to_calendar,
       profileId: profileId ?? undefined,
+      firstName: data.first_name,
+      lastName: data.last_name,
       source,
       sourceContext: data.source_context,
     })

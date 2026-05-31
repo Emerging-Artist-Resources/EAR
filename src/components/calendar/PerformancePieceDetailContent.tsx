@@ -10,6 +10,7 @@ import {
   hasSocialHandlesContent,
   normalizePublicListingRelations,
 } from "@/lib/listings/display"
+import { stripAdminNotes } from "@/lib/listings/admin-notes"
 import { cn } from "@/lib/utils"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { SocialHandles } from "./PublicListingDetailSections"
@@ -87,7 +88,7 @@ export function PerformancePieceDetailContent({
       piece?.piece_company_website?.trim() ||
       listing.company_website?.trim()) ??
     ""
-  const notes = listing.notes?.trim() ?? ""
+  const notes = stripAdminNotes(listing.notes) ?? ""
   const showSocial = hasSocialHandlesContent(listing.social_handles)
 
   const hasBodyText =

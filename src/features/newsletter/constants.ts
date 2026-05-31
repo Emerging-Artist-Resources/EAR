@@ -1,4 +1,11 @@
-/** Mailchimp audience tag names (must match Mailchimp exactly). */
+/** Mailchimp group category (must match Mailchimp exactly). */
+export const MAILCHIMP_GROUP_CATEGORY = "EAR Emailing Lists"
+
+/** Mailchimp group option names under the category above. */
+export const MAILCHIMP_GROUP_EAR = "EAR General Email List"
+export const MAILCHIMP_GROUP_CALENDAR = "Community Calendar Weekly Email List"
+
+/** Legacy audience tags (kept in sync for existing automations). */
 export const MAILCHIMP_TAG_EAR = "EAR Newsletter"
 export const MAILCHIMP_TAG_CALENDAR = "Calendar"
 

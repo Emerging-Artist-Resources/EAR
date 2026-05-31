@@ -3,7 +3,14 @@ import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { storageService } from "@/services/storage"
 import type { ListingType } from "./repository-types"
-import { normalizeSupabaseRelation } from "./admin-utils"
+import {
+  normalizeSupabaseRelation,
+  collectParentListingIds,
+  fetchParentTitles,
+} from "./admin-utils"
+import { extractLatestAdminNotes } from "@/lib/listings/admin-notes"
+import { getListingTitle } from "./listing-utils"
+import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
 
 const MIN_SEARCH_QUERY_LENGTH = 2
 const MIN_SEARCH_SCORE = 30
@@ -15,7 +22,7 @@ type SearchScoreResult = {
   allTokensPresent: boolean
 }
 
-function getListingTitle(listing: any): string | null {
+function getSearchListingTitle(listing: any): string | null {
   if (listing.type === "performance") return listing.performance_details?.title ?? null
   if (listing.type === "audition") return listing.audition_details?.title ?? null
   if (listing.type === "creative") return listing.creative_details?.title ?? null
@@ -150,7 +157,7 @@ export async function searchListingsRepo(params: {
       return true
     })
     .map((listing: any) => {
-      const title = getListingTitle(listing) ?? "Untitled"
+      const title = getSearchListingTitle(listing) ?? "Untitled"
       const normalizedTitle = normalizeSearchText(title)
       const { score, tokenCoverageRatio } = scoreListingTitleMatch(normalizedQuery, normalizedTitle)
 
@@ -380,6 +387,29 @@ export async function getListingPublicRepo(listingId: string) {
   return data
 }
 
+export async function resolveMyListingsPageForListing(
+  listingId: string,
+  limit: number
+): Promise<number | null> {
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.id) throw new Error("Unauthorized")
+
+  const { data: listings, error } = await supabase
+    .from("listings")
+    .select("id")
+    .eq("created_by", user.id)
+    .is("deleted_at", null)
+    .order("submitted_at", { ascending: false })
+
+  if (error) throw error
+
+  const index = listings?.findIndex((listing) => listing.id === listingId) ?? -1
+  if (index === -1) return null
+
+  return Math.floor(index / limit)
+}
+
 export async function listMyListingsRepo(page: number = 0, limit: number = 10) {
   const supabase = await getSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -395,14 +425,42 @@ export async function listMyListingsRepo(page: number = 0, limit: number = 10) {
   // Get paginated listings
   const { data, error } = await supabase
     .from("listings")
-    .select(`id, type, status, submitted_at, payment_required, payment_status, payment_amount, resubmitted_at, reviewed_at`)
+    .select(`
+      id, type, status, submitted_at, payment_required, payment_status, payment_amount,
+      resubmitted_at, reviewed_at, notes,
+      performance_details (*),
+      audition_details (*),
+      creative_details (*),
+      class_workshop_details!class_workshop_details_listing_id_fkey (*),
+      piece_details!piece_details_listing_id_fkey (*)
+    `)
     .eq("created_by", user.id)
     .is("deleted_at", null)
     .order("submitted_at", { ascending: false })
     .range(page * limit, (page + 1) * limit - 1)
 
   if (error) throw error
-  return { listings: data || [], total: count || 0 }
+
+  const parentTitles = await fetchParentTitles(
+    collectParentListingIds(data ?? []),
+    supabase
+  )
+
+  const listings = (data || []).map((listing) => ({
+    id: listing.id,
+    type: listing.type,
+    status: listing.status,
+    submitted_at: listing.submitted_at,
+    payment_required: listing.payment_required,
+    payment_status: listing.payment_status,
+    payment_amount: listing.payment_amount,
+    resubmitted_at: listing.resubmitted_at,
+    reviewed_at: listing.reviewed_at,
+    title: getListingTitle(listing as unknown as PublicListingDetail, parentTitles),
+    admin_notes: extractLatestAdminNotes(listing.notes),
+  }))
+
+  return { listings, total: count || 0 }
 }
 
 export async function getListingForOwnerRepo(listingId: string) {

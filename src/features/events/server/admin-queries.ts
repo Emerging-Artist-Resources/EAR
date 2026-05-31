@@ -1,11 +1,11 @@
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import type { ListingStatus } from "./repository-types"
 import {
-  normalizeSupabaseRelation,
   computeListingTitle,
   enrichWithParentTitle,
   generatePhotoUrls,
   fetchParentTitles,
+  collectParentListingIds,
 } from "./admin-utils"
 
 export async function listAdminListingsRepo(params: {
@@ -35,31 +35,7 @@ export async function listAdminListingsRepo(params: {
     .limit(params.limit)
   if (error) throw error
 
-  const pieceParentIds = (data ?? [])
-    .filter((e: any) => {
-      if (e.type !== "performance" || normalizeSupabaseRelation(e.performance_details)?.subtype !== "PIECE") return false
-      const pieceDetails = normalizeSupabaseRelation(e.piece_details)
-      return pieceDetails?.parent_listing_id
-    })
-    .map((e: any) => {
-      const pieceDetails = normalizeSupabaseRelation(e.piece_details)
-      return pieceDetails?.parent_listing_id
-    })
-    .filter((id): id is string => !!id)
-  
-  const classParentIds = (data ?? [])
-    .filter((e: any) => {
-      if (e.type !== "class") return false
-      const classDetails = normalizeSupabaseRelation(e.class_workshop_details)
-      return classDetails?.parent_listing_id && classDetails?.class_workshop_type === "CLASS"
-    })
-    .map((e: any) => {
-      const classDetails = normalizeSupabaseRelation(e.class_workshop_details)
-      return classDetails?.parent_listing_id
-    })
-    .filter((id): id is string => !!id)
-  
-  const allParentIds = [...new Set([...pieceParentIds, ...classParentIds])]
+  const allParentIds = collectParentListingIds(data ?? [])
   const parentTitles = await fetchParentTitles(allParentIds, svc)
 
   return (data ?? []).map((e: any) => {

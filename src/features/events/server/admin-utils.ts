@@ -66,6 +66,31 @@ export function isOccurrenceDuplicate(
 }
 
 /**
+ * Collects parent listing IDs from piece and child class listings for batch title lookup.
+ */
+export function collectParentListingIds(listings: any[]): string[] {
+  const pieceParentIds = listings
+    .filter((listing) => {
+      if (listing.type !== "performance") return false
+      const perfDetails = normalizeSupabaseRelation(listing.performance_details)
+      if (perfDetails?.subtype !== "PIECE") return false
+      const pieceDetails = normalizeSupabaseRelation(listing.piece_details)
+      return !!pieceDetails?.parent_listing_id
+    })
+    .map((listing) => normalizeSupabaseRelation(listing.piece_details)?.parent_listing_id)
+
+  const classParentIds = listings
+    .filter((listing) => {
+      if (listing.type !== "class") return false
+      const classDetails = normalizeSupabaseRelation(listing.class_workshop_details)
+      return classDetails?.class_workshop_type === "CLASS" && !!classDetails?.parent_listing_id
+    })
+    .map((listing) => normalizeSupabaseRelation(listing.class_workshop_details)?.parent_listing_id)
+
+  return [...new Set([...pieceParentIds, ...classParentIds].filter((id): id is string => !!id))]
+}
+
+/**
  * Computes display title for a listing, handling pieces and classes with parent listings
  */
 export function computeListingTitle(

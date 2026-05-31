@@ -22,6 +22,7 @@ import {
 } from "./PublicListingDetailSections"
 import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
 import { H3, Text } from "@/components/ui/typography"
+import { stripAdminNotes } from "@/lib/listings/admin-notes"
 import { getCalendarListingTypeLabel } from "@/lib/listings/type-labels"
 import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/listings/organizer-program-pieces"
 import { OrganizerProgramPieceDetailModal } from "./OrganizerProgramPieceDetailModal"
@@ -183,6 +184,11 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
     )
   }, [listing?.listing_photos])
+
+  const displayNotes = useMemo(
+    () => stripAdminNotes(listing?.notes),
+    [listing?.notes]
+  )
 
   const organizerProgramPiecesDoc = useMemo(() => {
     if (listing?.type !== "performance") return null
@@ -524,7 +530,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
 
             {(sortedPhotos.length > 0) ||
             listing.social_handles ||
-            listing.notes ? (
+            displayNotes ? (
               <Card className="p-4">
                 <H3 className="mb-3 text-text-primary">Additional Information</H3>
                 <div className="space-y-0">
@@ -543,7 +549,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                     </div>
                   )}
 
-                  {(listing.social_handles || listing.notes) && (
+                  {(listing.social_handles || displayNotes) && (
                     <div className="grid grid-cols-2 gap-x-6 gap-y-0">
                       {listing.social_handles && (
                         <FieldRow
@@ -552,10 +558,10 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                         />
                       )}
 
-                      {listing.notes && (
+                      {displayNotes && (
                         <FieldRow
                           label="Additional Information"
-                          value={<p className="whitespace-pre-wrap">{listing.notes}</p>}
+                          value={<p className="whitespace-pre-wrap">{displayNotes}</p>}
                         />
                       )}
                     </div>

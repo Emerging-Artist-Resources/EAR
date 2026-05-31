@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { FavoriteButton } from "@/components/ui/favorite-button"
 import { H3, Text } from "@/components/ui/typography"
 import { formatOccurrenceRangeEST } from "@/lib/datetime/utils"
+import { stripAdminNotes } from "@/lib/listings/admin-notes"
 import { hasDisplayText } from "@/lib/listings/display"
 import { listingHasLocationDisplay } from "@/lib/location/display"
 import { cn } from "@/lib/utils"
@@ -78,7 +79,7 @@ export function OpportunityDetailContent({
   const offered = cd?.compensation?.trim() ?? ""
   const requirements = cd?.requirements?.trim() ?? ""
   const submissionInstructions = cd?.link?.trim() ?? ""
-  const notes = listing.notes?.trim() ?? ""
+  const notes = stripAdminNotes(listing.notes) ?? ""
   const showSocial = hasSocialHandlesContent(listing.social_handles)
 
   const listingLocation = useMemo(() => getListingLocation(listing), [listing])

@@ -7,27 +7,13 @@ import {
   SYNC_STATUS,
 } from "@/features/newsletter/constants"
 import type { NewsletterSubscriberRow } from "@/features/newsletter/types"
+import { mailchimpRequest } from "./mailchimp-client"
 import { getMailchimpEnv } from "./mailchimp-env"
+import { resolveMailchimpInterestIds } from "./mailchimp-interests"
+import { buildMailchimpMergeFields, buildMailchimpMergeFieldsFromParts } from "./mailchimp-merge-fields"
 
 function subscriberHash(normalizedEmail: string): string {
   return createHash("md5").update(normalizedEmail).digest("hex")
-}
-
-async function mailchimpRequest(
-  env: NonNullable<ReturnType<typeof getMailchimpEnv>>,
-  path: string,
-  init: RequestInit,
-): Promise<Response> {
-  const url = `https://${env.serverPrefix}.api.mailchimp.com/3.0${path}`
-  const auth = Buffer.from(`anystring:${env.apiKey}`).toString("base64")
-  return fetch(url, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Basic ${auth}`,
-      ...init.headers,
-    },
-  })
 }
 
 async function updateSyncMetadata(
@@ -46,6 +32,20 @@ async function updateSyncMetadata(
   if (error) {
     console.error("[newsletter] failed to update sync metadata", error)
   }
+}
+
+async function loadProfileName(profileId: string | null): Promise<string | null> {
+  if (!profileId) return null
+
+  const supabase = getSupabaseServiceClient()
+  const { data, error } = await supabase.from("profiles").select("name").eq("id", profileId).maybeSingle()
+
+  if (error) {
+    console.error("[newsletter] profile name lookup failed", profileId, error)
+    return null
+  }
+
+  return (data?.name as string | null) ?? null
 }
 
 /**
@@ -87,13 +87,28 @@ export async function syncToMailchimp(subscriberId: string): Promise<void> {
   const listPath = `/lists/${env.audienceId}/members/${hash}`
 
   try {
+    const interestIds = await resolveMailchimpInterestIds(env)
+    const profileName = await loadProfileName(subscriber.profile_id)
+    const merge_fields = profileName
+      ? buildMailchimpMergeFields(profileName)
+      : buildMailchimpMergeFieldsFromParts(subscriber.first_name, subscriber.last_name)
+
+    const memberBody: Record<string, unknown> = {
+      email_address: subscriber.normalized_email,
+      status_if_new: "subscribed",
+      status: "subscribed",
+      interests: {
+        [interestIds.ear]: subscriber.subscribed_to_newsletter,
+        [interestIds.calendar]: subscriber.subscribed_to_calendar,
+      },
+    }
+    if (merge_fields) {
+      memberBody.merge_fields = merge_fields
+    }
+
     const memberRes = await mailchimpRequest(env, listPath, {
       method: "PUT",
-      body: JSON.stringify({
-        email_address: subscriber.normalized_email,
-        status_if_new: "subscribed",
-        status: "subscribed",
-      }),
+      body: JSON.stringify(memberBody),
     })
 
     if (!memberRes.ok) {

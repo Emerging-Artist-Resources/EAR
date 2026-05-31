@@ -5,6 +5,8 @@ export type NewsletterSubscriberRow = {
   email: string
   normalized_email: string
   profile_id: string | null
+  first_name: string | null
+  last_name: string | null
   subscribed_to_newsletter: boolean
   subscribed_to_calendar: boolean
   source: string
@@ -24,6 +26,8 @@ export type SyncNewsletterPreferencesInput = {
   earOptIn: boolean
   calendarOptIn: boolean
   profileId?: string | null
+  firstName?: string | null
+  lastName?: string | null
   source: NewsletterSource
   sourceContext?: string
 }

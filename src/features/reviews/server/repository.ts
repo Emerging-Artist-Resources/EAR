@@ -25,7 +25,7 @@ export async function insertReviewRepo(input: {
 export async function updateListingStatusRepo(listingId: string, decision: 'APPROVED' | 'REJECTED', approverUserId: string, notes?: string | null) {
   // Use the main repository functions which handle photo migration and proper status updates
   if (decision === 'APPROVED') {
-    await approveListingRepo(listingId, approverUserId)
+    await approveListingRepo(listingId, approverUserId, notes || undefined)
   } else {
     await rejectListingRepo(listingId, approverUserId, notes || undefined)
   }

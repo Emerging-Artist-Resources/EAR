@@ -36,6 +36,8 @@ export async function upsertNewsletterSubscriber(
         email,
         normalized_email,
         profile_id: profileId,
+        first_name: input.firstName?.trim() || null,
+        last_name: input.lastName?.trim() || null,
         subscribed_to_newsletter: input.earOptIn,
         subscribed_to_calendar: input.calendarOptIn,
         source: input.source,

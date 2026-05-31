@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
-import { listMyListingsRepo } from "@/features/events/server/read";
+import { listMyListingsRepo, resolveMyListingsPageForListing } from "@/features/events/server/read";
 import { getAuthenticatedUser } from "@/lib/auth/helpers";
-import { handleApiError, createSuccessResponse, getQueryParamNumber } from "@/lib/api/utils";
+import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamNumber } from "@/lib/api/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,12 +10,20 @@ export async function GET(request: NextRequest) {
       return handleApiError(new Error("Unauthorized"));
     }
 
-    const page = getQueryParamNumber(request, "page", 0, 0);
+    let page = getQueryParamNumber(request, "page", 0, 0);
     const limit = getQueryParamNumber(request, "limit", 5, 1);
+    const focusListingId = getQueryParam(request, "focusListingId");
+
+    if (focusListingId) {
+      const resolvedPage = await resolveMyListingsPageForListing(focusListingId, limit);
+      if (resolvedPage !== null) {
+        page = resolvedPage;
+      }
+    }
 
     const result = await listMyListingsRepo(page, limit);
     
-    return createSuccessResponse(result);
+    return createSuccessResponse({ ...result, page });
   } catch (error) {
     return handleApiError(error);
   }

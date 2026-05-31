@@ -52,6 +52,7 @@ export interface ServiceInquirySummary {
 export interface MyListing {
   id: string;
   type: string;
+  title: string;
   status: "pending" | "approved" | "rejected" | "pending_payment";
   submitted_at: string;
   payment_required?: boolean;
@@ -59,4 +60,5 @@ export interface MyListing {
   payment_amount?: number | null;
   resubmitted_at?: string | null;
   reviewed_at?: string | null;
+  admin_notes?: string | null;
 }
