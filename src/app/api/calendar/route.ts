@@ -4,6 +4,7 @@ import { listCalendarItemsRepo, listDeadlinesRepo, searchListingsRepo } from "@/
 import { checkRateLimit } from "@/services/rate-limit"
 import { getClientIpFromRequest } from "@/lib/get-client-ip"
 import { rateLimitExceededResponse } from "@/lib/rate-limit-response"
+import { handleApiError } from "@/lib/api/utils"
 type EventType = "performance" | "audition" | "creative" | "class" | "funding"
 
 function isoOrDefault(s: string | null, d: Date) {
@@ -119,8 +120,7 @@ export async function GET(req: Request) {
       { headers: { "Cache-Control": cacheControl } },
     )
   } catch (err) {
-    console.error("Calendar GET error:", err)
-    return NextResponse.json({ error: { code: "INTERNAL" } }, { status: 500 })
+    return handleApiError(err, { route: "/api/calendar" })
   }
 }
 

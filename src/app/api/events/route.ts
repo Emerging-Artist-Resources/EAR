@@ -5,7 +5,7 @@ import { createEventOwnedRepo, CreateListingInput } from "@/features/events/serv
 import { eventPayloadSchema } from "@/features/events/server/event-payload-schema"
 import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamArray, validateRequestBody } from "@/lib/api/utils"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { getAuthenticatedUser } from "@/lib/auth-helpers"
+import { getAuthenticatedUser } from "@/lib/auth/helpers"
 import { checkRateLimit } from "@/services/rate-limit"
 import { getClientIpFromRequest } from "@/lib/get-client-ip"
 import { rateLimitExceededResponse } from "@/lib/rate-limit-response"

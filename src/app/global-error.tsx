@@ -2,6 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs"
 import { useEffect } from "react"
+import { isSentryDisabled } from "@/lib/launch-flags"
 
 export default function GlobalError({
   error,
@@ -11,7 +12,9 @@ export default function GlobalError({
   reset: () => void
 }) {
   useEffect(() => {
-    Sentry.captureException(error)
+    if (!isSentryDisabled()) {
+      Sentry.captureException(error)
+    }
   }, [error])
 
   return (

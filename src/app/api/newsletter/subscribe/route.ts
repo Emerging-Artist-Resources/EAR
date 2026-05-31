@@ -4,8 +4,6 @@ import {
   handleApiError,
   createSuccessResponse,
   validateRequestBody,
-  createErrorResponse,
-  ErrorCodes,
 } from "@/lib/api/utils"
 import { newsletterSubscribeRequestSchema } from "@/lib/validations/newsletter"
 import { syncNewsletterPreferences } from "@/features/newsletter/server/syncNewsletterPreferences"

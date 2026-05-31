@@ -2,6 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs"
 import { useEffect } from "react"
+import { isSentryDisabled } from "@/lib/launch-flags"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/typography"
@@ -14,7 +15,9 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    Sentry.captureException(error)
+    if (!isSentryDisabled()) {
+      Sentry.captureException(error)
+    }
   }, [error])
 
   return (
