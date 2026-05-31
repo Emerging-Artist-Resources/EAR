@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { flexibleUrlRequiredSchema } from "../flexible-url"
-import { hasCompleteLocation, isOnlineLocationMode, locationValidationIssue } from "@/lib/location-mode"
+import { hasCompleteLocation, isOnlineLocationMode, locationValidationIssue } from "@/lib/location/mode"
 import { baseSchema, refineOccurrenceTimeSlotEndAfterStart } from "./base"
 import { performanceFields } from "./performance"
 import {
@@ -15,7 +15,7 @@ import {
   inferOrganizerPieceCount,
   organizerPieceHasSchedule,
   pieceFieldPrefix,
-} from "@/lib/organizer-program-pieces"
+} from "@/lib/listings/organizer-program-pieces"
 
 export const eventFormSchema = baseSchema
   .merge(performanceFields)
@@ -141,7 +141,7 @@ export const eventFormSchema = baseSchema
           message: "Artist type is required",
         })
       }
-      // Emerging artists: platform listing fee waived (no listingFeeOption / comp / waiver).
+      // Platform listing fees are waived for all artist types; server clears listingFeeOption fields.
     }
     
     // Ticket link format is enforced by flexible URL preprocessing + zod on performanceFields.link
@@ -463,6 +463,7 @@ export const auditionStep2Schema = baseSchema
   .merge(auditionFields)
   .pick({
     title: true,
+    host: true,
     description: true,
     eligibility: true,
     compensation: true,
@@ -490,6 +491,13 @@ export const auditionStep2Schema = baseSchema
         code: "custom",
         path: ["title"],
         message: "Title is required",
+      })
+    }
+    if (!data.host || data.host.trim() === "") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["host"],
+        message: "Hosting organization or individual(s) is required",
       })
     }
     if (!data.description || data.description.trim() === "") {
@@ -694,7 +702,6 @@ export const classStep2Schema = baseSchema
     teachers: true,
     occurrences: true,
     classWorkshopType: true,
-    classWorkshopDuration: true,
     isPartOfFestivalOrWorkshop: true,
     parentEventId: true,
     placeholderTitle: true,
@@ -745,15 +752,6 @@ export const classStep2Schema = baseSchema
         code: "custom",
         path: ["description"],
         message: "Description is required",
-      })
-    }
-
-    const duration = data.classWorkshopDuration?.trim() ?? ""
-    if (!duration) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["classWorkshopDuration"],
-        message: "Duration is required",
       })
     }
 

@@ -80,6 +80,7 @@ export type AdminEventDetail = {
   audition_details?: {
     id?: string
     title?: string
+    host?: string | null
     description?: string
     eligibility?: string
     compensation?: string

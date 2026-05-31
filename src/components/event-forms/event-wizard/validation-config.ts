@@ -44,6 +44,7 @@ export const eventTypeValidationFields: Record<
   ],
   AUDITION: [
     "title", // First field in AuditionStep - Audition Details section
+    "host",
     "description", // Second field
     "eligibility", // Third field
     "compensation", // Fourth field
@@ -74,7 +75,6 @@ export const eventTypeValidationFields: Record<
     "title",
     "organizer",
     "description",
-    "classWorkshopDuration",
     "price",
     "classRegistrationDetails",
     "listingWebsite",

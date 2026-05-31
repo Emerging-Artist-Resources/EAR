@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getEligibilitySubmissionsRepo } from "@/features/profile/server/repository";
-import { getAuthenticatedUser } from "@/lib/auth-helpers";
+import { getAuthenticatedUser } from "@/lib/auth/helpers";
 
 export async function GET() {
   try {

@@ -12,11 +12,11 @@ import { InviteRecipientEmailsSection } from "@/components/event-forms/event-wiz
 import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
 
 const MANUAL_LINK_TOOLTIP =
-  "This information allows us to link your listing once the organizer submits the main event."
+  "Once the organizer submits their event to EAR, your work will be linked to their listing."
 
 const INVITE_ORGANIZER_TITLE = "Invite the organizer or presenter"
 const INVITE_ORGANIZER_DESCRIPTION =
-  "Enter the email address(es) of the organizer or presenter. We will email them to let them know this event has been listed and encourage them to submit their own linked listing if they have not already done so."
+  "Enter the email address(es) of the organizer, presenter, or collaborators. Once your listing has been approved, we'll notify them and invite them to create connected listings for the event."
 
 export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormData> }) {
   const parentEventMode = useWatch({
@@ -32,7 +32,7 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
 
   return (
     <>
-      <Section title="Find your event">
+      <Section title="Search for EAR event">
         {parentEventMode !== "MANUAL" && (
           <EventSearch
             form={form}
@@ -42,7 +42,7 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
             label="Search for event"
             placeholder="Type to search for event..."
             showCantLocateButton={true}
-            cantLocateButtonLabel="Can't locate event? Enter manually"
+            cantLocateButtonLabel="Event not listed with EAR? Enter manually."
             cantLocateTooltip={MANUAL_LINK_TOOLTIP}
             required={true}
           />
@@ -50,7 +50,7 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
       </Section>
 
       {parentEventMode === "MANUAL" && (
-        <Section title="Can't locate event? Enter manually">
+        <Section title="Event not listed with EAR? Enter manually.">
           <p className="text-sm text-muted-foreground mb-3 flex flex-wrap items-center gap-2">
             <span>Provide what you know so we can link your listing later.</span>
             <FormFieldTooltip text={MANUAL_LINK_TOOLTIP} />
@@ -87,7 +87,7 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
         description={INVITE_ORGANIZER_DESCRIPTION}
       />
 
-      <Section title="Piece details">
+      <Section title="Details">
         <PieceDetails
           form={form}
           index={0}
@@ -98,10 +98,10 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
         />
       </Section>
 
-      <Section title="Performance times & location">
+      <Section title="Performance schedule">
         <PieceOccurrencesPicker
           form={form}
-          label="Select performance date(s) / time(s)"
+          label="Select performance date(s) & time(s)"
           mode={parentEventId ? "SELECT_FROM_PARENT" : "CUSTOM_ONLY"}
         />
       </Section>

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
-import { requireRole, hasRole } from "@/lib/auth-helpers"
-import { handleApiError, createSuccessResponse, createErrorResponse, ErrorCodes, getQueryParam } from "@/lib/api-utils"
+import { requireRole, hasRole } from "@/lib/auth/helpers"
+import { handleApiError, createSuccessResponse, createErrorResponse, ErrorCodes, getQueryParam } from "@/lib/api/utils"
 import { searchParentEventsRepo } from "@/features/events/server/admin"
 
 export async function GET(req: NextRequest) {

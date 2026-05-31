@@ -24,15 +24,14 @@ export function BasicInfoStep({ eventType, onChangeType, lockListingType }: Basi
         </CardHeader>
         <CardContent>
           <Text>
-            Our community calendar is designed to support emerging artists and creative professionals by offering a range of listing options.
-          </Text>
+          Our community calendar offers a range of listing options for emerging artists and creative professionals:          </Text>
           <ol className="mt-4 space-y-2 text-sm text-gray-700 pl-4">
             <li><strong>1. Performances:</strong> Promote shows, premiers, immersive experiences, and movement based events.</li>
             <li><strong>2. Auditions:</strong> Share upcoming audition opportunities.</li>
             <li><strong>3. Classes/Workshops:</strong> List classes, workshops, intensives, and training opportunities.</li>
             <li><strong>4. Opportunities:</strong> Share choreographic opportunities, residencies, open calls, or any creative offering that doesn’t fit into another category.</li>
           </ol>
-          <Text className="mt-4">Each listing is designed to provide essential information at glance.</Text>
+          <Text className="mt-4">Each listing provides essential information at a glance.</Text>
           <Text className="mt-4">Whether you’re looking to perform, train, create, or secure support, this calendar helps you connect you with opportunities that move your practice forward.</Text>
         </CardContent>
       </Card>

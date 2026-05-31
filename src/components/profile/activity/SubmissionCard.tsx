@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { H4, Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { getCalendarListingTypeLabel } from "@/lib/listing-type-labels"
+import { getCalendarListingTypeLabel } from "@/lib/listings/type-labels"
 
 export interface SubmissionItem {
   id: string

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
 import { reviewEvent } from "@/features/reviews/server/service"
-import { requireRole } from "@/lib/auth-helpers"
-import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api-utils"
+import { requireRole } from "@/lib/auth/helpers"
+import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api/utils"
 import { z } from "zod"
 
 const reviewSchema = z.object({

@@ -106,20 +106,42 @@ For each email type, create a template in Postmark with the corresponding alias:
 
 #### Template: `listing-share-festival`
 - **Alias**: `listing-share-festival`
-- **Subject**: (configure in Postmark, e.g. someone shared an EAR performance listing with you)
-- **When sent**: After an **approved** performance listing with `performance_details.subtype = ORGANIZER` is approved, once per listing (see idempotency below).
+- **Subject**: `{{company_artist_name}} invited you to collaborate on a listing`
+- **When sent**: After an **approved** performance listing with `performance_details.subtype = ORGANIZER` (or an approved multi-day workshop) is approved, once per listing (see idempotency below).
+- **Suggested body** (configure in Postmark; variables below):
+
+  > Dear Artist,  
+  > {{company_artist_name}} has invited you to join their listing as a participating artist for {{event_title}} on Emerging Artist Resources' Community Calendar.  
+  > You can use the link below to submit your listing. To ensure the listings are properly connected, please submit as a **Participant Artist**.  
+  > {{submit_listing_url}}  
+  > If you have any questions or concerns, please do not hesitate to reach out to info@eararts.org.  
+  > Best,  
+  > Emerging Artist Resources (EAR)
+
 - **Template Variables**:
-  - `{{listing_title}}` - Title of the listing
-  - `{{public_calendar_url}}` - Deep link to the public calendar (`/calendar?listingId=...`, uses `getPublicAppUrl()`)
-  - `{{inviter_name}}` - Submitter / contact name
-  - `{{inviter_email}}` - Submitter contact email
-  - `{{platform_name}}` - `EAR` (literal from code; use in body for context)
+  - `{{company_artist_name}}` - Organizer / presenting company, then listing company, then submitter contact name
+  - `{{event_title}}` - Listing title (`getListingTitle()`)
+  - `{{submit_listing_url}}` - `${getPublicAppUrl()}/forms` (submit listing)
 
 #### Template: `listing-share-piece`
 - **Alias**: `listing-share-piece`
-- **Subject**: (configure in Postmark; same intent as festival template but for a **piece**)
-- **When sent**: After an **approved** performance listing with `performance_details.subtype = PIECE` is approved, once per listing.
-- **Template Variables**: Same as `listing-share-festival`.
+- **Subject**: `{{company_artist_name}} invited you to collaborate on a listing` (or similar; use `{{company_artist_name}}`, not `{{inviter_name}}`)
+- **When sent**: After an **approved** performance listing with `performance_details.subtype = PIECE` is approved, once per listing. Recipients are organizer/presenter emails from the participating-artist “Invite the organizer or presenter” field (`meta.share.recipient_emails`).
+- **Suggested body** (configure in Postmark; variables below):
+
+  > Dear Artist,  
+  > {{company_artist_name}} has invited you to join the performance listing for {{event_title}} on Emerging Artist Resources’ Community Calendar.  
+  > You can use the link below to submit your listing. To ensure the listings are properly connected, please submit as the Primary Lister.  
+  > If you have any questions, please feel free to contact us at {{support_email}}.  
+  > {{submit_listing_url}}  
+  > Best,  
+  > Emerging Artist Resources
+
+- **Template Variables**:
+  - `{{company_artist_name}}` - Piece company, then choreographer, then submitter contact name
+  - `{{event_title}}` - Parent event name (manual), else linked parent listing title, else piece performance title, else `this performance`
+  - `{{submit_listing_url}}` - `${getPublicAppUrl()}/forms` (submit listing)
+  - `{{support_email}}` - `info@eararts.org`
 
 **Share list storage:** Recipient addresses live in `listings.meta.share.recipient_emails` (max 10, normalized server-side: trim, lowercase, dedupe, submitter excluded). **`meta.share.sent_at`** is set by the server after the first share batch attempt so re-approval does not resend. Clients cannot set `sent_at` via API. Public listing reads do not expose `meta`.
 

@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react"
-import { apiPost } from "@/lib/fetch-utils"
+import { apiPost } from "@/lib/client/fetch-utils"
 
 export interface ReviewData {
   eventId: string

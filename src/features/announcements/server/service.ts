@@ -6,7 +6,7 @@ import {
   deleteAnnouncementRepo,
   listAnnouncementsRepoAdmin,
 } from "./repository"
-import { notificationSchema } from "@/lib/validations"
+import { notificationSchema } from "@/lib/validations/legacy-schemas"
 
 export async function listAnnouncements() {
   const data = await listAnnouncementsRepo()

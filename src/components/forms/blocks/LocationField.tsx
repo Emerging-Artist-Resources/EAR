@@ -3,8 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react"
 import { UseFormReturn, Path } from "react-hook-form"
 import { Input } from "@/components/ui/input"
-import { loadPlacesLibrary } from "@/lib/googleMaps"
-import { coerceLocationFieldString } from "@/lib/location-mode"
+import { loadPlacesLibrary } from "@/lib/location/google-maps-loader"
+import { coerceLocationFieldString } from "@/lib/location/mode"
 
 export type LocationFieldInstructionsProps<T extends Record<string, unknown>> = {
   form: UseFormReturn<T>

@@ -4,7 +4,7 @@ import { UseFormReturn, Path } from "react-hook-form"
 import { useEffect, useReducer, useRef, useCallback, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { apiGet } from "@/lib/fetch-utils"
+import { apiGet } from "@/lib/client/fetch-utils"
 import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
 
 type EventType = "performance" | "audition" | "creative" | "class" | "funding"
@@ -99,10 +99,10 @@ export function EventSearch<T extends Record<string, unknown>>({
   eventType,
   eventIdField,
   eventModeField,
-  label = "Search for event",
-  placeholder = "Type to search for events...",
+  label = "Search for EAR event",
+  placeholder = "Start typing the event title...",
   showCantLocateButton = false,
-  cantLocateButtonLabel = "Can't Locate Event",
+  cantLocateButtonLabel = "Event not listed with EAR? Enter manually.",
   cantLocateTooltip,
   onCantLocate,
   required = false,

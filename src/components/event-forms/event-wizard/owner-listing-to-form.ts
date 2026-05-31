@@ -1,13 +1,13 @@
 import type { EventFormData } from "@/lib/validations/events"
 import type { EventType } from "./EventTypeSelector"
-import { convertUTCToEST } from "@/lib/datetime-utils"
-import { inferLocationModeFromStored } from "@/lib/location-mode"
+import { convertUTCToEST } from "@/lib/datetime/utils"
+import { inferLocationModeFromStored } from "@/lib/location/mode"
 import {
   extractPiecePhotosByIdFromDocument,
   normalizeOrganizerProgramPiecesFromDb,
   pieceFieldPrefix,
   type OrganizerProgramPiecePhoto,
-} from "@/lib/organizer-program-pieces"
+} from "@/lib/listings/organizer-program-pieces"
 
 type UnknownRecord = Record<string, unknown>
 
@@ -55,6 +55,17 @@ function shareEmailsFromMeta(meta: unknown): string[] {
   return Array.isArray(raw) ? raw.filter((e): e is string => typeof e === "string") : []
 }
 
+/** Form stores one credits string applied to all listing photos on submit. */
+function creditsFromListingPhotos(
+  photos: Array<{ path: string; credit?: string | null }>
+): string | undefined {
+  for (const photo of photos) {
+    const credit = photo.credit?.trim()
+    if (credit) return credit
+  }
+  return undefined
+}
+
 export type OwnerListingLoadResult = {
   eventType: EventType
   defaults: Partial<EventFormData>
@@ -86,6 +97,7 @@ export function ownerListingToFormLoad(row: UnknownRecord): OwnerListingLoadResu
     })
 
   const baseDefaults: Partial<EventFormData> = {
+    credits: creditsFromListingPhotos(existingPhotos),
     company: (listing.company as string) || undefined,
     companyWebsite: (listing.company_website as string) || undefined,
     locationMode: inferLocationModeFromStored({
@@ -224,6 +236,7 @@ export function ownerListingToFormLoad(row: UnknownRecord): OwnerListingLoadResu
     const defaults: Partial<EventFormData> = {
       ...baseDefaults,
       title: (ad?.title as string) || "",
+      host: (ad?.host as string) || "",
       description: (ad?.description as string) || "",
       eligibility: (ad?.eligibility as string) || "",
       compensation: (ad?.compensation as string) || "",

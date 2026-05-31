@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
-import { handleApiError, createSuccessResponse } from "@/lib/api-utils"
+import { handleApiError, createSuccessResponse } from "@/lib/api/utils"
 
 /** Success polling must see fresh `payment_status`; do not statically cache this route. */
 export const dynamic = "force-dynamic"

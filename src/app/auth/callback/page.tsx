@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { completeAuthCallbackClient } from "@/lib/auth/completeAuthCallbackClient"
 import { supabase } from "@/lib/supabase/client"
 import { Text } from "@/components/ui/typography"
-import { ROUTES } from "@/lib/constants"
+import { ROUTES } from "@/lib/config/constants"
 
 function sanitizeNextParam(raw: string | null): string {
   const next = raw ?? ROUTES.HOME

@@ -2,28 +2,112 @@ import {
   isOnlineLocationDisplay,
   listingHasLocationDisplay,
   type LocationDisplaySource,
-} from "@/lib/location-display"
-import { ONLINE_VENUE_LABEL } from "@/lib/location-mode"
+} from "@/lib/location/display"
+import { getGoogleMapsLink } from "@/lib/location/google-maps-link"
+import { ONLINE_VENUE_LABEL } from "@/lib/location/mode"
 import { FieldRow } from "@/components/calendar/PublicListingDetailSections"
-
-function getGoogleMapsLink(
-  address: string | null | undefined,
-  placeId: string | null | undefined,
-): string | null {
-  if (placeId) {
-    return `https://www.google.com/maps/place/?q=place_id:${placeId}`
-  }
-  if (address) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
-  }
-  return null
-}
 
 type ListingLocationDisplayProps = {
   location: LocationDisplaySource | null | undefined
   linkifyAddress?: boolean
   addressClassName?: string
-  variant?: "fieldRow" | "inline"
+  variant?: "fieldRow" | "inline" | "performance" | "performance-inline"
+}
+
+function PerformanceLocationInline({
+  location,
+  linkifyAddress,
+}: {
+  location: LocationDisplaySource
+  linkifyAddress: boolean
+}) {
+  if (isOnlineLocationDisplay(location)) {
+    return (
+      <>
+        <div>
+          <span className="font-semibold text-text-primary">Venue: </span>
+          <span className="text-text-primary">{ONLINE_VENUE_LABEL}</span>
+        </div>
+        {location.location_instructions?.trim() ? (
+          <div>
+            <span className="font-semibold text-text-primary">Additional Instructions: </span>
+            <span className="text-text-primary">{location.location_instructions.trim()}</span>
+          </div>
+        ) : null}
+      </>
+    )
+  }
+
+  const venue =
+    location.venue_name?.trim() && location.venue_name !== ONLINE_VENUE_LABEL
+      ? location.venue_name.trim()
+      : null
+  const address = location.address?.trim() ? location.address.trim() : null
+  const instructions = location.location_instructions?.trim()
+    ? location.location_instructions.trim()
+    : null
+
+  return (
+    <>
+      {venue ? (
+        <div>
+          <span className="font-semibold text-text-primary">Venue: </span>
+          <span className="text-text-primary">{venue}</span>
+        </div>
+      ) : null}
+      {address ? (
+        <div>
+          <span className="font-semibold text-text-primary">Address: </span>
+          <span className="text-text-primary">
+            <AddressWithMapsLink
+              address={address}
+              placeId={location.place_id}
+              linkifyAddress={linkifyAddress}
+              mapsLinkClassName="ml-2 text-sm text-brand-primary hover:text-brand-primary-hover underline"
+            />
+          </span>
+        </div>
+      ) : null}
+      {instructions ? (
+        <div>
+          <span className="font-semibold text-text-primary">Additional Instructions: </span>
+          <span className="whitespace-pre-wrap text-text-primary">{instructions}</span>
+        </div>
+      ) : null}
+    </>
+  )
+}
+
+function AddressWithMapsLink({
+  address,
+  placeId,
+  linkifyAddress,
+  addressClassName = "",
+  mapsLinkClassName = "ml-2 text-brand-primary hover:text-brand-primary-hover underline",
+}: {
+  address: string
+  placeId?: string | null
+  linkifyAddress: boolean
+  addressClassName?: string
+  mapsLinkClassName?: string
+}) {
+  const mapsLink = linkifyAddress ? getGoogleMapsLink(address, placeId) : null
+
+  return (
+    <>
+      <span className={addressClassName}>{address}</span>
+      {mapsLink ? (
+        <a
+          href={mapsLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={mapsLinkClassName}
+        >
+          View on Maps →
+        </a>
+      ) : null}
+    </>
+  )
 }
 
 export function ListingLocationDisplay({
@@ -33,6 +117,20 @@ export function ListingLocationDisplay({
   variant = "fieldRow",
 }: ListingLocationDisplayProps) {
   if (!location || !listingHasLocationDisplay(location)) return null
+
+  if (variant === "performance" || variant === "performance-inline") {
+    return (
+      <div
+        className={
+          variant === "performance-inline"
+            ? "ml-0 mt-2 space-y-1 font-sans text-sm"
+            : "space-y-1 font-sans text-sm"
+        }
+      >
+        <PerformanceLocationInline location={location} linkifyAddress={linkifyAddress} />
+      </div>
+    )
+  }
 
   if (variant === "inline") {
     return (

@@ -2,7 +2,7 @@
 
 import { UseFormReturn } from "react-hook-form"
 import { Section } from "@/components/forms/blocks/Section"
-import { SignupFormData } from "@/lib/validations/signup"
+import { SIGNUP_OTHER_VALUE, SignupFormData } from "@/lib/validations/signup"
 import { SelectBlock } from "../forms/blocks/Select"
 
 interface SignUpWrapUpProps {
@@ -16,8 +16,9 @@ export function SignUpWrapUp({ form }: SignUpWrapUpProps) {
                 form={form} 
                 name="referral_source" 
                 label="How did you hear about us?" 
-                allowOther={true} 
-                otherName="referral_source_other" 
+                allowOther={true}
+                otherValue={SIGNUP_OTHER_VALUE}
+                otherName="referral_source_other"
                 required 
                 options={[
                     { label: "Instagram", value: "instagram" }, 
@@ -27,7 +28,7 @@ export function SignUpWrapUp({ form }: SignUpWrapUpProps) {
             />
 
             <div className="space-y-4">
-                <p className="text-sm font-medium text-gray-700">Newsletter Preferences</p>
+                <p className="text-sm font-medium text-ear-black">Newsletter Preferences</p>
                 <SelectBlock 
                     form={form} 
                     name="newsletter_ear_opt_in" 

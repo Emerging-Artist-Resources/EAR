@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import { Footer } from "@/components/layout/footer"
-import { isDonationFunnelPath } from "@/lib/donation-funnel-path"
+import { isDonationFunnelPath } from "@/lib/donations/funnel-path"
 
 export default function FooterGate() {
   const pathname = usePathname()

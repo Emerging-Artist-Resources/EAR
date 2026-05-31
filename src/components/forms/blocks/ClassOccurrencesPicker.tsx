@@ -6,8 +6,8 @@ import { Section } from "@/components/forms/blocks/Section"
 import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { EventFormData } from "@/lib/validations/events"
-import { apiGet } from "@/lib/fetch-utils"
-import { DEFAULT_LOCATION_MODE } from "@/lib/location-mode"
+import { apiGet } from "@/lib/client/fetch-utils"
+import { DEFAULT_LOCATION_MODE } from "@/lib/location/mode"
 
 interface ParentEventData {
   event_occurrences?: Array<{ id: string; starts_at_utc: string; tz: string }>
@@ -176,8 +176,8 @@ export function ClassOccurrencesPicker({ form, label, showEndTime = false }: Cla
         <ShowtimesList
           form={form as unknown as UseFormReturn<Record<string, unknown>>}
           name={"occurrences"}
-          title="Class Dates & Times"
-          note="Add all dates and start times."
+          title="Class date(s) & time(s)"
+          note="Add all dates and times."
           required
           rowLabel="Class date"
           maxTimesPerDate={1}

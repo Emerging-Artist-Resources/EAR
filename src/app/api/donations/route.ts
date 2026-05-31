@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getAuthenticatedUser } from "@/lib/auth-helpers"
+import { getAuthenticatedUser } from "@/lib/auth/helpers"
 import {
   handleApiError,
   createSuccessResponse,
   validateRequestBody,
   createErrorResponse,
   ErrorCodes,
-} from "@/lib/api-utils"
+} from "@/lib/api/utils"
 import { createDonationRequestSchema } from "@/lib/validations/donations"
 import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
 import { donationStripeAccountForRecipient } from "@/lib/payments/donationStripeAccount"

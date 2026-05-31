@@ -5,7 +5,6 @@ import { Modal } from "@/components/ui/modal"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { FavoriteButton } from "@/components/ui/favorite-button"
-import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { getListingTitle } from "@/features/events/server/listing-utils"
 import { HorizontalScrollCards } from "@/components/shared/HorizontalScrollCards"
@@ -15,7 +14,6 @@ import { useAuth } from "@/hooks/use-auth"
 import {
   PieceDetails,
   ClassDetails,
-  PerformanceDetails,
   WorkshopDetails,
   AuditionDetails,
   CreativeDetails,
@@ -23,35 +21,35 @@ import {
   SocialHandles,
 } from "./PublicListingDetailSections"
 import { PhotoThumbnail } from "@/components/shared/PhotoThumbnail"
-import { H3, H4, Text } from "@/components/ui/typography"
-import { getCalendarListingTypeLabel } from "@/lib/listing-type-labels"
-import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/organizer-program-pieces"
-import {
-  buildOccurrencesForOrganizerProgramPiece,
-  firstOrganizerPiecePhotoCredit,
-  firstOrganizerPiecePhotoUrl,
-  organizerProgramPieceDisplayTitle,
-} from "@/lib/organizer-program-pieces-display"
+import { H3, Text } from "@/components/ui/typography"
+import { getCalendarListingTypeLabel } from "@/lib/listings/type-labels"
+import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/listings/organizer-program-pieces"
 import { OrganizerProgramPieceDetailModal } from "./OrganizerProgramPieceDetailModal"
-import { ListingLocationDisplay } from "./ListingLocationDisplay"
-import { listingHasLocationDisplay } from "@/lib/location-display"
+import {
+  ListingOccurrencesSection,
+  listingHasOccurrencesSectionContent,
+} from "./ListingOccurrencesSection"
+import {
+  PerformanceOrganizerDetailContent,
+  type ChildListingSummary,
+} from "./PerformanceOrganizerDetailContent"
+import { PerformancePieceDetailContent } from "./PerformancePieceDetailContent"
+import {
+  isAuditionListingDetail,
+  isOpportunityListingDetail,
+  isClassListingDetail,
+  isOrganizerPerformanceListing,
+  isOrganizerWorkshopListing,
+  isPiecePerformanceListing,
+  normalizePublicListingRelations,
+} from "@/lib/listings/display"
+import { WorkshopOrganizerDetailContent } from "./WorkshopOrganizerDetailContent"
+import { ClassDetailContent } from "./ClassDetailContent"
+import { AuditionDetailContent } from "./AuditionDetailContent"
+import { OpportunityDetailContent } from "./OpportunityDetailContent"
 
 function getTypeLabel(type: string): string {
   return getCalendarListingTypeLabel(type)
-}
-
-function getOccurrenceLocation(
-  occ: NonNullable<PublicListingDetail['listing_occurrences']>[number] | undefined,
-  fallback: PublicListingDetail
-) {
-  if (!occ) return null
-  return {
-    address: occ.address || fallback.address,
-    place_id: occ.place_id || fallback.place_id,
-    venue_name: occ.venue_name || fallback.venue_name,
-    location_instructions: occ.location_instructions || fallback.location_instructions,
-    meta: fallback.meta,
-  }
 }
 
 interface ListingDetailsModalProps {
@@ -69,35 +67,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
   const [error, setError] = useState<string | null>(null)
   const [showAllDates, setShowAllDates] = useState(false)
   const [selectedOrganizerPieceId, setSelectedOrganizerPieceId] = useState<string | null>(null)
-  const [childListings, setChildListings] = useState<Array<{
-    id: string
-    type: string
-    title: string
-    is_piece?: boolean
-    is_class?: boolean
-    starts_at_utc: string | null
-    ends_at_utc: string | null
-    piece_company?: string | null
-    piece_company_website?: string | null
-    piece_description?: string | null
-    choreographer?: string | null
-    class_title?: string | null
-    class_description?: string | null
-    class_organizer?: string | null
-    class_teachers?: string | null
-    class_price?: string | null
-    class_link?: string | null
-    class_style_category?: string | null
-    notes?: string | null
-    cover_image_url?: string | null
-    cover_image_credit?: string | null
-    occurrences?: Array<{
-      id: string
-      starts_at_utc: string
-      ends_at_utc: string | null
-      tz: string
-    }>
-  }>>([])
+  const [childListings, setChildListings] = useState<ChildListingSummary[]>([])
 
   useEffect(() => {
     if (!isOpen || !listingId) {
@@ -126,7 +96,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       })
       .then((data) => {
         if (!abortController.signal.aborted) {
-          setListing(data)
+          setListing(normalizePublicListingRelations(data))
           setLoading(false)
         }
       })
@@ -180,6 +150,20 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
 
   const title = listing ? getListingTitle(listing) : "Listing Details"
   const typeLabel = listing ? getTypeLabel(listing.type) : ""
+  const isOrganizerPerformance = isOrganizerPerformanceListing(listing)
+  const isPiecePerformance = isPiecePerformanceListing(listing)
+  const isOrganizerWorkshop = isOrganizerWorkshopListing(listing)
+  const isClassDetail = isClassListingDetail(listing)
+  const isAuditionDetail = isAuditionListingDetail(listing)
+  const isOpportunityDetail = isOpportunityListingDetail(listing)
+  const isPerformanceRedesign =
+    isOrganizerPerformance ||
+    isPiecePerformance ||
+    isOrganizerWorkshop ||
+    isClassDetail ||
+    isAuditionDetail ||
+    isOpportunityDetail
+
   const parentListingId =
     listing?.piece_details?.parent_listing_id || listing?.class_workshop_details?.parent_listing_id || null
   const backToParentLabel = listing?.piece_details?.parent_listing_id
@@ -212,38 +196,30 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
     return organizerProgramPiecesDoc.pieces.find((p) => p.id === selectedOrganizerPieceId) ?? null
   }, [selectedOrganizerPieceId, organizerProgramPiecesDoc])
 
-  const { hasSingleLocation, singleLocation } = useMemo(() => {
-    if (!listing?.listing_occurrences || listing.listing_occurrences.length === 0) {
-      return { hasSingleLocation: false, singleLocation: null }
-    }
-    
-    const firstLocation = getOccurrenceLocation(listing.listing_occurrences[0], listing)
-    if (!firstLocation) {
-      return { hasSingleLocation: false, singleLocation: null }
-    }
-    
-    const allSame = listing.listing_occurrences.every(occ => {
-      const occLocation = getOccurrenceLocation(occ, listing)
-      if (!occLocation) return false
-      return occLocation.address === firstLocation.address &&
-             occLocation.place_id === firstLocation.place_id &&
-             occLocation.venue_name === firstLocation.venue_name
-    })
-    
-    return {
-      hasSingleLocation: allSame,
-      singleLocation: allSame ? firstLocation : null
-    }
-  }, [listing])
+  const navigateToListing = (nextListingId: string) => {
+    onListingClick?.(nextListingId)
+  }
+
+  const handleDismissAll = () => {
+    setSelectedOrganizerPieceId(null)
+    onClose()
+  }
+
+  const showOrganizerPieceOverlay = selectedOrganizerPieceId !== null
 
   return (
     <>
     <Modal
-      isOpen={isOpen}
-      onClose={onClose}
+      isOpen={isOpen && !showOrganizerPieceOverlay}
+      onClose={handleDismissAll}
       title={title}
       size="lg"
       headerClassName="bg-primary"
+      titleClassName={
+        isPerformanceRedesign
+          ? "font-title text-2xl font-bold tracking-wide md:text-3xl"
+          : undefined
+      }
       contentClassName="border-border-default bg-surface-modal-warm text-text-primary"
     >
       <div className="min-h-[calc(90vh-9rem)]">
@@ -271,8 +247,136 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
         )}
 
         {!loading && !error && listing && (
+          isOrganizerPerformance ? (
+            <PerformanceOrganizerDetailContent
+              listing={listing}
+              typeLabel={typeLabel}
+              sortedPhotos={sortedPhotos}
+              childListings={childListings}
+              organizerProgramPiecesDoc={organizerProgramPiecesDoc}
+              showAllDates={showAllDates}
+              onShowAllDatesChange={setShowAllDates}
+              isAuthed={isAuthed}
+              isSaved={isSaved}
+              saving={saving}
+              savingLoading={savingLoading}
+              saveError={saveError}
+              onToggleSave={() => {
+                if (!saving && !savingLoading) {
+                  void toggleSave()
+                }
+              }}
+              onListingClick={navigateToListing}
+              onSelectOrganizerPiece={setSelectedOrganizerPieceId}
+              parentListingId={parentListingId}
+              backToParentLabel={backToParentLabel}
+            />
+          ) : isOrganizerWorkshop ? (
+            <WorkshopOrganizerDetailContent
+              listing={listing}
+              typeLabel={typeLabel}
+              sortedPhotos={sortedPhotos}
+              childListings={childListings}
+              showAllDates={showAllDates}
+              onShowAllDatesChange={setShowAllDates}
+              isAuthed={isAuthed}
+              isSaved={isSaved}
+              saving={saving}
+              savingLoading={savingLoading}
+              saveError={saveError}
+              onToggleSave={() => {
+                if (!saving && !savingLoading) {
+                  void toggleSave()
+                }
+              }}
+              onListingClick={navigateToListing}
+              parentListingId={parentListingId}
+              backToParentLabel={backToParentLabel}
+            />
+          ) : isPiecePerformance ? (
+            <PerformancePieceDetailContent
+              listing={listing}
+              typeLabel={typeLabel}
+              sortedPhotos={sortedPhotos}
+              showAllDates={showAllDates}
+              onShowAllDatesChange={setShowAllDates}
+              isAuthed={isAuthed}
+              isSaved={isSaved}
+              saving={saving}
+              savingLoading={savingLoading}
+              saveError={saveError}
+              onToggleSave={() => {
+                if (!saving && !savingLoading) {
+                  void toggleSave()
+                }
+              }}
+              onListingClick={navigateToListing}
+              parentListingId={parentListingId}
+              backToParentLabel={backToParentLabel}
+            />
+          ) : isClassDetail ? (
+            <ClassDetailContent
+              listing={listing}
+              typeLabel={typeLabel}
+              sortedPhotos={sortedPhotos}
+              showAllDates={showAllDates}
+              onShowAllDatesChange={setShowAllDates}
+              isAuthed={isAuthed}
+              isSaved={isSaved}
+              saving={saving}
+              savingLoading={savingLoading}
+              saveError={saveError}
+              onToggleSave={() => {
+                if (!saving && !savingLoading) {
+                  void toggleSave()
+                }
+              }}
+              onListingClick={navigateToListing}
+              parentListingId={parentListingId}
+              backToParentLabel={backToParentLabel}
+            />
+          ) : isAuditionDetail ? (
+            <AuditionDetailContent
+              listing={listing}
+              typeLabel={typeLabel}
+              sortedPhotos={sortedPhotos}
+              showAllDates={showAllDates}
+              onShowAllDatesChange={setShowAllDates}
+              isAuthed={isAuthed}
+              isSaved={isSaved}
+              saving={saving}
+              savingLoading={savingLoading}
+              saveError={saveError}
+              onToggleSave={() => {
+                if (!saving && !savingLoading) {
+                  void toggleSave()
+                }
+              }}
+              onListingClick={navigateToListing}
+              parentListingId={parentListingId}
+              backToParentLabel={backToParentLabel}
+            />
+          ) : isOpportunityDetail ? (
+            <OpportunityDetailContent
+              listing={listing}
+              typeLabel={typeLabel}
+              sortedPhotos={sortedPhotos}
+              isAuthed={isAuthed}
+              isSaved={isSaved}
+              saving={saving}
+              savingLoading={savingLoading}
+              saveError={saveError}
+              onToggleSave={() => {
+                if (!saving && !savingLoading) {
+                  void toggleSave()
+                }
+              }}
+              onListingClick={navigateToListing}
+              parentListingId={parentListingId}
+              backToParentLabel={backToParentLabel}
+            />
+          ) : (
           <div className="space-y-4">
-            {/* Header with type badge and save button */}
             <div className="flex items-center justify-between gap-3 pb-4 border-b border-border-default">
               <div className="flex items-center gap-3">
                 <Badge variant="primary" size="sm">{typeLabel}</Badge>
@@ -303,7 +407,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               <div>
                 <button
                   type="button"
-                  onClick={() => onListingClick(parentListingId)}
+                  onClick={() => navigateToListing(parentListingId)}
                   className="text-sm text-brand-primary hover:text-brand-primary-hover underline"
                 >
                   ← {backToParentLabel}
@@ -311,7 +415,6 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               </div>
             )}
 
-            {/* Info Card - Type-Specific Details */}
             {(() => {
               const hasTypeDetails = 
                 (listing.type === "performance" && listing.performance_details) ||
@@ -329,9 +432,6 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                       <>
                         {listing.performance_details.subtype === "PIECE" && listing.piece_details && (
                           <PieceDetails details={listing.piece_details} />
-                        )}
-                        {listing.performance_details.subtype === "ORGANIZER" && (
-                          <PerformanceDetails details={listing.performance_details} />
                         )}
                       </>
                     )}
@@ -355,187 +455,23 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               )
             })()}
 
-            {/* Dates Card - Location and Dates/Times */}
-            {(hasSingleLocation && singleLocation && listingHasLocationDisplay(singleLocation)) ||
-             (listing.listing_occurrences && listing.listing_occurrences.length > 0) ||
-             opportunityDatesSummary ? (
+            {listingHasOccurrencesSectionContent(listing, opportunityDatesSummary) && (
               <Card className="p-4">
                 <H3 className="mb-3 text-text-primary">Dates</H3>
-                <div className="space-y-0">
-                  {opportunityDatesSummary && (
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-0 mb-4">
-                      <FieldRow label="Opportunity Dates" value={opportunityDatesSummary} />
-                    </div>
-                  )}
-                  {/* Location - Single Location */}
-                  {hasSingleLocation && singleLocation && listingHasLocationDisplay(singleLocation) && (
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-0">
-                      <ListingLocationDisplay
-                        location={{ ...singleLocation, meta: listing.meta }}
-                        linkifyAddress
-                      />
-                    </div>
-                  )}
-
-                  {/* Dates & Times */}
-                  {listing.listing_occurrences && listing.listing_occurrences.length > 0 && (
-                    <div className="mt-4">
-                {(() => {
-                  const deadlines = listing.listing_occurrences
-                    .filter(o => o.occurrence_type === 'deadline')
-                    .sort((a: { starts_at_utc: string }, b: { starts_at_utc: string }) => new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime())
-                  const events = listing.listing_occurrences
-                    .filter(o => !o.occurrence_type || o.occurrence_type === 'event')
-                    .sort((a: { starts_at_utc: string }, b: { starts_at_utc: string }) => new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime())
-                  
-                  const eventTypeLabel = getTypeLabel(listing.type)
-                  
-                  const renderOccurrence = (o: typeof listing.listing_occurrences[0]) => {
-                    const occurrenceLocation = getOccurrenceLocation(o, listing)
-                    const hasLocation =
-                      occurrenceLocation && listingHasLocationDisplay(occurrenceLocation)
-                    
-                    return (
-                      <div key={o.id} className="border-l-4 border-primary-300 pl-4 py-2 bg-surface-panel rounded-r">
-                        <div className="font-header text-xl font-semibold text-text-primary mb-1">
-                          {formatOccurrenceRangeEST(o.starts_at_utc, o.ends_at_utc)}
-                        </div>
-                        {!hasSingleLocation && hasLocation && occurrenceLocation && (
-                          <ListingLocationDisplay
-                            location={occurrenceLocation}
-                            linkifyAddress
-                            variant="inline"
-                          />
-                        )}
-                      </div>
-                    )
-                  }
-                  
-                  return (
-                    <div className="space-y-4">
-                      {deadlines.length > 0 && (
-                        <div>
-                          <H4 className="text-text-muted mb-2">Deadlines</H4>
-                          <div className="space-y-2">
-                            {deadlines.map(renderOccurrence)}
-                          </div>
-                        </div>
-                      )}
-                      {events.length > 0 && (
-                        <div>
-                          <H4 className="text-text-muted mb-2">{eventTypeLabel} Dates</H4>
-                          <div className="space-y-2">
-                            {events.slice(0, showAllDates ? events.length : 3).map(renderOccurrence)}
-                            {events.length > 3 && !showAllDates && (
-                              <button
-                                onClick={() => setShowAllDates(true)}
-                                className="mt-2 text-sm text-brand-primary hover:text-brand-primary-hover underline"
-                              >
-                                See more ({events.length - 3} more)
-                              </button>
-                            )}
-                            {events.length > 3 && showAllDates && (
-                              <button
-                                onClick={() => setShowAllDates(false)}
-                                className="mt-2 text-sm text-brand-primary hover:text-brand-primary-hover underline"
-                              >
-                                See less
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })()}
-                    </div>
-                  )}
-                </div>
+                <ListingOccurrencesSection
+                  listing={listing}
+                  showAllDates={showAllDates}
+                  onShowAllDatesChange={setShowAllDates}
+                  opportunityDatesSummary={opportunityDatesSummary}
+                  variant="legacy"
+                />
               </Card>
-            ) : null}
+            )}
 
-            {/* Contact Info Card 
-            {(listing.contact_name || listing.contact_email) && (
-              <Card className="p-4">
-                <h3 className="text-base font-semibold text-gray-900 mb-3">Contact Information</h3>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-0">
-                  {listing.contact_name && (
-                    <FieldRow 
-                      label="Contact Name" 
-                      value={
-                        <span>
-                          {listing.contact_name}
-                          {listing.pronouns && ` (${listing.pronouns})`}
-                        </span>
-                      } 
-                    />
-                  )}
-                  {listing.contact_email && (
-                    <FieldRow 
-                      label="Contact Email" 
-                      value={
-                        <a 
-                          href={`mailto:${listing.contact_email}`}
-                          className="text-primary-600 hover:text-primary-700 underline"
-                        >
-                          {listing.contact_email}
-                        </a>
-                      } 
-                    />
-                  )}
-                </div>
-              </Card>
-            )}*/}
-
-            {organizerProgramPiecesDoc &&
-              organizerProgramPiecesDoc.pieces.length > 0 &&
-              listing.performance_details?.subtype === "ORGANIZER" && (
-                <HorizontalScrollCards
-                  title={
-                    childListings.length > 0
-                      ? "Program pieces"
-                      : "Pieces in this Performance"
-                  }
-                  cardsPerView={3}
-                  onCardClick={(index) => {
-                    const p = organizerProgramPiecesDoc.pieces[index]
-                    if (p) setSelectedOrganizerPieceId(p.id)
-                  }}
-                >
-                  {organizerProgramPiecesDoc.pieces.map((piece) => (
-                    <ListingCard
-                      key={piece.id}
-                      id={piece.id}
-                      type="performance"
-                      title={organizerProgramPieceDisplayTitle(piece)}
-                      is_piece
-                      piece_company={piece.company?.trim() ? piece.company : null}
-                      piece_company_website={piece.company_website}
-                      piece_description={piece.description?.trim() ? piece.description : null}
-                      choreographer={piece.choreographer}
-                      notes={piece.credits}
-                      occurrences={buildOccurrencesForOrganizerProgramPiece(
-                        piece,
-                        listing.listing_occurrences,
-                      )}
-                      coverImageUrl={firstOrganizerPiecePhotoUrl(piece)}
-                      coverImageAlt={
-                        firstOrganizerPiecePhotoCredit(piece)
-                          ? `Listing photo: ${firstOrganizerPiecePhotoCredit(piece)}`
-                          : `${organizerProgramPieceDisplayTitle(piece)} — photo`
-                      }
-                      enableSave={false}
-                      onClick={() => setSelectedOrganizerPieceId(piece.id)}
-                    />
-                  ))}
-                </HorizontalScrollCards>
-              )}
-
-            {/* Child Listings Card */}
             {childListings.length > 0 && (() => {
               const allPieces = childListings.every((child) => child.is_piece)
               const allClasses = childListings.every((child) => child.is_class)
-              const title = allPieces 
+              const childTitle = allPieces 
                 ? "Pieces in this Performance"
                 : allClasses
                 ? "Classes in this Workshop"
@@ -543,13 +479,12 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               
               return (
                 <HorizontalScrollCards
-                  title={title}
+                  title={childTitle}
                   cardsPerView={3}
                   onCardClick={(index) => {
                     const childListing = childListings[index]
                     if (childListing && onListingClick) {
-                      onClose()
-                      onListingClick(childListing.id)
+                      navigateToListing(childListing.id)
                     }
                   }}
                 >
@@ -559,33 +494,26 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                       id={child.id}
                       type={child.type}
                       title={child.title}
+                      host={child.host}
+                      description={child.description}
+                      venue={child.venue}
+                      price={child.price}
+                      link={child.link}
+                      submittedAt={child.submitted_at}
                       starts_at_utc={child.starts_at_utc}
                       ends_at_utc={child.ends_at_utc}
                       is_piece={child.is_piece}
                       piece_company={child.piece_company}
-                      piece_company_website={child.piece_company_website}
                       piece_description={child.piece_description}
                       choreographer={child.choreographer}
                       is_class={child.is_class}
-                      class_title={child.class_title}
                       class_description={child.class_description}
                       class_organizer={child.class_organizer}
                       class_teachers={child.class_teachers}
-                      class_price={child.class_price}
-                      class_link={child.class_link}
-                      class_style_category={child.class_style_category}
-                      notes={child.notes}
                       occurrences={child.occurrences}
-                      coverImageUrl={child.cover_image_url}
-                      coverImageAlt={
-                        child.cover_image_credit
-                          ? `Listing photo: ${child.cover_image_credit}`
-                          : `${child.title} — photo`
-                      }
                       onClick={() => {
                         if (onListingClick) {
-                          onClose()
-                          onListingClick(child.id)
+                          navigateToListing(child.id)
                         }
                       }}
                     />
@@ -602,7 +530,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                 <div className="space-y-0">
                   {sortedPhotos.length > 0 && (
                     <div className="py-2 col-span-2">
-                      <Text className="text-text-muted mb-2">Photos</Text>
+                      <Text className="text-text-muted mb-2">Photos:</Text>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {sortedPhotos.map((photo) => (
                           <PhotoThumbnail
@@ -636,13 +564,15 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               </Card>
             ) : null}
           </div>
+          )
         )}
       </div>
     </Modal>
 
     <OrganizerProgramPieceDetailModal
-      isOpen={selectedOrganizerPieceId !== null}
-      onClose={() => setSelectedOrganizerPieceId(null)}
+      isOpen={isOpen && showOrganizerPieceOverlay}
+      onClosePiece={() => setSelectedOrganizerPieceId(null)}
+      onDismissAll={handleDismissAll}
       piece={selectedOrganizerPiece}
       parentListing={listing}
     />

@@ -2,8 +2,9 @@
 
 import { format } from "date-fns"
 import { Card } from "@/components/ui/card"
-import { formatTimeEST12Hour } from "@/lib/datetime-utils"
+import { formatTimeEST12Hour } from "@/lib/datetime/utils"
 import type { CalendarItem } from "@/hooks/use-calendar"
+import { isPastCalendarDate } from "./calendar-utils"
 import { getEventTypeColor } from "./event-colors"
 
 interface DayViewProps {
@@ -23,6 +24,8 @@ export function DayView({
   allItems,
   onItemClick,
 }: DayViewProps) {
+  const isPast = isPastCalendarDate(currentDate)
+
   return (
     <div className="p-2">
       <div className="font-sans text-base sm:text-sm text-text-muted mb-2">{format(currentDate, 'EEEE, MMMM d, yyyy')}</div>
@@ -32,7 +35,7 @@ export function DayView({
         <div className="space-y-3">
           {deduplicatedItems.map((performance) => {
             const listingOccurrences = allItems.filter(p => p.listingId === performance.listingId)
-            const colors = getEventTypeColor(performance.type)
+            const colors = getEventTypeColor(performance.type, { muted: isPast })
             return (
               <Card 
                 key={`${performance.listingId}-${currentDate.toISOString()}`} 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { storageService } from "@/services/storage"
-import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/organizer-program-pieces"
+import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/listings/organizer-program-pieces"
 
 const PRIVATE_BUCKET = "event-photos"
 

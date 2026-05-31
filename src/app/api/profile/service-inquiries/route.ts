@@ -1,5 +1,5 @@
-import { getAuthenticatedUser } from "@/lib/auth-helpers"
-import { handleApiError, createSuccessResponse } from "@/lib/api-utils"
+import { getAuthenticatedUser } from "@/lib/auth/helpers"
+import { handleApiError, createSuccessResponse } from "@/lib/api/utils"
 import { getServiceInquiries } from "@/features/profile/server/service"
 
 export async function GET() {

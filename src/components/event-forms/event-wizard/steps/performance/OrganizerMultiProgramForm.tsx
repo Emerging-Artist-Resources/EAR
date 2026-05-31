@@ -11,7 +11,7 @@ import { Section } from "@/components/forms/blocks/Section"
 import { Button } from "@/components/ui/button"
 import { PieceDetails } from "@/components/forms/blocks/PieceDetails"
 import { SelectBlock } from "@/components/forms/blocks/Select"
-import { pieceFieldPrefix, type OrganizerProgramPiecePhoto } from "@/lib/organizer-program-pieces"
+import { pieceFieldPrefix, type OrganizerProgramPiecePhoto } from "@/lib/listings/organizer-program-pieces"
 
 export function OrganizerMultiProgramForm({
   form,

@@ -6,11 +6,11 @@ import { useRouter, usePathname } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { VscAccount } from "react-icons/vsc"
 import { useAuth } from "@/hooks/use-auth"
-import { ROUTES } from "@/lib/constants"
-import { servicesNavItems } from "@/lib/services-nav"
-import { Heart } from "lucide-react"
+import { ROUTES } from "@/lib/config/constants"
+import { publicNavItems } from "@/lib/navigation/public-nav"
+import { servicesNavItems } from "@/lib/navigation/services-nav"
+import { dashboardNavItems } from "@/lib/navigation/dashboard-nav"
 
 interface MobileNavProps {
   onSubmitPerformance?: () => void
@@ -29,10 +29,10 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
   const [isOpen, setIsOpen] = useState(false)
   const { isAuthed, userName, role } = useAuth()
 
-  const publicNavigation = [
-    { name: "Calendar", href: "/calendar" },
-    { name: "Announcements", href: "/announcement" },
-  ]
+  const publicNavigation = publicNavItems.map((item) => ({
+    name: item.label,
+    href: item.href,
+  }))
 
   const adminNavigation = role === "ADMIN" ? [
     { name: "Analytics", href: "/admin/analytics" },
@@ -88,12 +88,13 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
               </Link>
             ))}
 
+            {/* TEMPORARY DISABLED DONATE BUTTON 
             <Link href="/donate" className="block" onClick={() => setIsOpen(false)}>
               <Button variant="default" className="mt-1 w-full justify-start text-ear-off-white">
                 <Heart className="mr-2 h-4 w-4 text-ear-off-white" />
                 Support Artists
               </Button>
-            </Link>
+            </Link> */}
 
             <div className="border-t border-border-default my-2" />
             <div className="px-2 py-1">
@@ -145,21 +146,28 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
             )}
               {isAuthed ? (
                 <>
-                  <div className="border-t border-border-default pt-3 mt-3">
-                    <p className="px-3 py-2 text-sm text-text-muted">
+                  <div className="border-t border-border-default my-2" />
+                  <div className="px-2 py-1">
+                    <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+                      Dashboard
+                    </p>
+                    <p className="px-1 pt-1 text-sm text-text-muted">
                       Welcome, {userName || "User"}
                     </p>
-                  
-                    <button
-                      onClick={() => {
-                        router.push("/profile")
-                        setIsOpen(false)
-                      }}
-                        className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-surface-panel-alt"
-                      >
-                        <VscAccount className="w-5 h-5" />
-                    </button>
-                    
+                  </div>
+                  {dashboardNavItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="block"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Button variant="ghost" className="w-full justify-start text-ear-black">
+                        {item.name}
+                      </Button>
+                    </Link>
+                  ))}
+
                     <Button
                       onClick={async () => {
                         setIsOpen(false)
@@ -189,7 +197,6 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
                     >
                       Sign Out
                     </Button>
-                  </div>
               </>
             ) : (
               <Link

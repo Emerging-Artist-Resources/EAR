@@ -1,6 +1,6 @@
 import type { RefinementCtx } from "zod"
-import { pieceFieldPrefix } from "@/lib/organizer-program-pieces"
-import { isOnlineLocationMode } from "@/lib/location-mode"
+import { pieceFieldPrefix } from "@/lib/listings/organizer-program-pieces"
+import { isOnlineLocationMode } from "@/lib/location/mode"
 import {
   buildOrganizerOccurrenceSlotKeySet,
   indexOfOrganizerRowsMissingLocation,

@@ -13,7 +13,7 @@ import {
   LOCATION_MODE_ONLINE,
   LOCATION_MODE_OPTIONS,
   type LocationMode,
-} from "@/lib/location-mode"
+} from "@/lib/location/mode"
 
 export type LocationSectionProps<T extends Record<string, unknown>> = {
   form: UseFormReturn<T>

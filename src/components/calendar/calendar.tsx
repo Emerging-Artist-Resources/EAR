@@ -24,8 +24,9 @@ import {
   subWeeks,
   addDays,
 } from "date-fns"
-import { convertUTCToEST, formatOccurrenceRangeEST } from "@/lib/datetime-utils"
+import { convertUTCToEST, formatOccurrenceRangeEST } from "@/lib/datetime/utils"
 import { filterCalendarItems, getItemsForDate, handleMonthChange } from "./calendar-utils"
+import { getEventTypeColor } from "./event-colors"
 
 const INITIAL_MONTH_KEY = (() => {
   const now = new Date()
@@ -255,13 +256,16 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
             <H3 className="text-primary mb-4">Upcoming Deadlines</H3>
             
             <div className="space-y-3">
-              {upcomingDeadlines.map((it) => (
+              {upcomingDeadlines.map((it) => {
+                const typeColor = getEventTypeColor(it.type)
+                return (
                 <button
                   key={it.occurrenceId}
                   type="button"
                   onClick={() => handleItemClick(it.listingId)}
                   aria-label={`View details: ${it.title || "Untitled"}`}
-                  className="group w-full rounded-r-md border-l-4 border-primary/50 pl-3 py-1.5 text-left transition-colors hover:bg-surface-panel-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="group w-full rounded-r-md border-l-4 pl-3 py-1.5 text-left transition-colors hover:bg-surface-panel-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  style={{ borderLeftColor: typeColor.border }}
                 >
                   <div className="font-header text-base font-semibold text-text-muted group-hover:text-text-primary">
                     {it.title || "Untitled"}
@@ -270,7 +274,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
                     {formatOccurrenceRangeEST(String(it.start), it.endsAt)}
                   </Text>
                 </button>
-              ))}
+              )})}
               {upcomingDeadlines.length === 0 && (
                 <Text className="text-muted-foreground">No upcoming deadlines</Text>
               )}

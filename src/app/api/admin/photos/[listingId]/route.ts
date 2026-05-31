@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { storageService } from "@/services/storage"
-import { getAuthenticatedUser, hasRole } from "@/lib/auth-helpers"
+import { getAuthenticatedUser, hasRole } from "@/lib/auth/helpers"
 
 export async function GET(
   _req: NextRequest,

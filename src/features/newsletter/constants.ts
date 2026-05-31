@@ -22,6 +22,8 @@ export const NEWSLETTER_SOURCES = [
   "modal",
   "footer",
   "home",
+  "our-story",
+  "about-us",
   "backfill",
 ] as const
 

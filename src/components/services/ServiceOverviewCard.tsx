@@ -3,7 +3,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/typography"
-import type { ServiceOverviewItem } from "@/lib/services-overview-content"
+import type { ServiceOverviewItem } from "@/lib/content/services-overview"
 
 type ServiceOverviewCardProps = ServiceOverviewItem
 

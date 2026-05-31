@@ -15,7 +15,7 @@ import {
   parseActiveDonationDesignationConfig,
 } from "@/lib/donations/donationDesignationConfig";
 import { resolveDonationRecipientDisplayName } from "@/lib/profile/donationRecipientDisplayName";
-import { formatOccurrenceRangeEST } from "@/lib/datetime-utils";
+import { formatOccurrenceRangeEST } from "@/lib/datetime/utils";
 
 export async function fetchSavedEventsFromDb(
   userId: string,

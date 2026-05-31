@@ -2,39 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import type {
   CreateListingInput,
-  ListingType,
   OccurrenceType,
 } from "./repository-types"
 import { detailTable } from "./repository-types"
 import { calculateListingFee } from "./fee-calculator"
 import { buildPersistableListingMeta } from "./listing-meta-share"
-
-/** Emerging artists never pay platform listing fees for performance or class; force nulls so clients cannot set PAY_FEE. */
-export function nullEmergingPlatformListingFeeFields(
-  type: ListingType,
-  details: Record<string, unknown>
-) {
-  if (details.artist_type !== "EMERGING") return
-  if (type === "performance") {
-    details.listing_fee_option = null
-    details.listing_fee_explanation = null
-    details.complementary_ticket_info = null
-  } else if (type === "class") {
-    details.listing_fee_option = null
-    details.listing_fee_explanation = null
-    details.guest_spot_info = null
-  }
-}
-
-/** Established artists must pay platform fee for performance/class submissions. */
-export function enforceEstablishedPlatformListingFeeFields(
-  type: ListingType,
-  details: Record<string, unknown>
-) {
-  if (details.artist_type !== "ESTABLISHED") return
-  if (type !== "performance" && type !== "class") return
-  details.listing_fee_option = "PAY_FEE"
-}
+import { applyPlatformListingFeePolicy } from "@/lib/fees/listing-fee-policy"
 
 export function validateClassParentConstraint(details: Record<string, unknown>) {
   const classWorkshopType = details.class_workshop_type
@@ -134,8 +107,7 @@ export async function createListingOwnedRepo(
       }
     }
 
-    enforceEstablishedPlatformListingFeeFields(input.type, input.details)
-    nullEmergingPlatformListingFeeFields(input.type, input.details)
+    applyPlatformListingFeePolicy(input.type, input.details)
     if (input.type === "class") validateClassParentConstraint(input.details)
 
     const { error: e2 } = await supabase
@@ -353,8 +325,7 @@ export async function createListingAnonymousRepo(
       input.details.artist_type = "EMERGING"
     }
 
-    enforceEstablishedPlatformListingFeeFields(input.type, input.details)
-    nullEmergingPlatformListingFeeFields(input.type, input.details)
+    applyPlatformListingFeePolicy(input.type, input.details)
     if (input.type === "class") validateClassParentConstraint(input.details)
 
     const { error: e2 } = await serviceSupabase

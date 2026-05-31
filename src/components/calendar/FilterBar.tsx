@@ -1,7 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { OPPORTUNITY_LISTING_TYPE_LABEL } from "@/lib/listing-type-labels"
+import { OPPORTUNITY_LISTING_TYPE_LABEL } from "@/lib/listings/type-labels"
+import { cn } from "@/lib/utils"
 import { getFilterTypeColor } from "./event-colors"
 
 interface FilterBarProps {
@@ -46,7 +47,7 @@ export function FilterBar({ selectedTypes, onChangeEventType }: FilterBarProps) 
           <Button
             size="sm"
             className="rounded-full"
-            variant={isAllSelected ? "outline" : "secondary"}
+            variant={isAllSelected ? "outlineSecondary" : "outline"}
             onClick={handleSelectAll}
           >
             All
@@ -54,18 +55,32 @@ export function FilterBar({ selectedTypes, onChangeEventType }: FilterBarProps) 
           {TYPES.map(t => {
             const isSelected = !isAllSelected && selectedTypes.has(t)
             const colors = getFilterTypeColor(t)
+            const outlineText =
+              "outlineText" in colors && colors.outlineText
+                ? colors.outlineText
+                : colors.accent
             return (
               <Button
                 key={t}
                 size="sm"
-                className="rounded-full"
-                variant={isSelected ? "none" : "secondary"}
+                className={cn(
+                  "rounded-full border bg-transparent hover:bg-transparent",
+                  isSelected && "hover:opacity-90",
+                )}
+                variant="none"
                 onClick={() => handleToggle(t)}
-                style={isSelected ? {
-                  backgroundColor: colors.bg,
-                  color: colors.text,
-                  borderColor: colors.bg,
-                } : undefined}
+                style={
+                  isSelected
+                    ? {
+                        backgroundColor: colors.bg,
+                        color: colors.text,
+                        borderColor: colors.accent,
+                      }
+                    : {
+                        color: outlineText,
+                        borderColor: colors.accent,
+                      }
+                }
               >
                 {TYPE_LABELS[t]}
               </Button>

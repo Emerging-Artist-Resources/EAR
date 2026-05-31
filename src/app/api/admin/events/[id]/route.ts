@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAdminEventDetail } from "@/features/events/server/service"
-import { getAuthenticatedUser, hasRole } from "@/lib/auth-helpers"
+import { getAuthenticatedUser, hasRole } from "@/lib/auth/helpers"
 
 export async function GET(
   _req: NextRequest,

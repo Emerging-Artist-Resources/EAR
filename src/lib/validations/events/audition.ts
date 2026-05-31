@@ -6,6 +6,7 @@ import { occurrenceSchema } from "./base"
 export const auditionFields = z
   .object({
     title: z.string().optional(),
+    host: z.string().optional(),
     description: z.string().max(2000, "Description must be 2000 characters or less").optional(),
     eligibility: z.string().optional(),
     compensation: z.string().optional(),
@@ -18,9 +19,7 @@ export const auditionFields = z
     /** Company / project website (DB: audition_details.website) */
     listingWebsite: flexibleUrlOptionalSchema,
     /**
-     * Listing fee fields (only shown if fee === "FEE")
-     * Established artists: $25
-     * Emerging artists: $35
+     * Artist type metadata (profile-driven). Platform listing fee applies only when fee === "FEE".
      */
     artistType: z.enum(["ESTABLISHED", "EMERGING"]).optional(),
   })
@@ -31,6 +30,13 @@ export const auditionFields = z
         code: "custom",
         path: ["title"],
         message: "Title is required",
+      })
+    }
+    if (!data.host || data.host.trim() === "") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["host"],
+        message: "Hosting organization or individual(s) is required",
       })
     }
     if (!data.description || data.description.trim() === "") {

@@ -80,7 +80,7 @@ export function NewsletterSignupModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={resetAndClose} title="Join our newsletters" size="sm" contentClassName="bg-ear-off-white">
+    <Modal isOpen={isOpen} onClose={resetAndClose} title="Join our Newsletters" size="sm" contentClassName="bg-ear-off-white">
       <form onSubmit={handleSubmit} className="space-y-4 px-1 pb-2 bg-ear-off-white">
         <Text className="text-sm text-gray-600">
           Choose what you would like to hear about. You can use the same email as your EAR account or

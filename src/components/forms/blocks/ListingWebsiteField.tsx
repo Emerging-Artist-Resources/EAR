@@ -12,7 +12,6 @@ type ListingWebsiteFieldProps = {
   placeholder?: string
 }
 
-const DEFAULT_LABEL_NOTE = "Link to your company, project, or event page."
 const DEFAULT_PLACEHOLDER = "https://…"
 
 /**
@@ -25,7 +24,7 @@ export function ListingWebsiteField({ form, note, placeholder }: ListingWebsiteF
       form={form as unknown as UseFormReturn<Record<string, unknown>>}
       name="listingWebsite"
       label="Website"
-      note={note ?? DEFAULT_LABEL_NOTE}
+      note={note ?? ""}
       placeholder={placeholder ?? DEFAULT_PLACEHOLDER}
     />
   )

@@ -18,20 +18,20 @@ import { PageNumbers } from "@/components/forms/blocks/PageNumbers"
 import { useEventStepValidation } from "@/hooks/use-event-step-validation"
 import { DEFAULT_EVENT_ERROR_MESSAGE } from "@/lib/validations/events"
 import { buildEventPayload, type UserInfo } from "./payload-builders"
-import { normalizeShareRecipientEmails } from "@/lib/listing-share"
+import { normalizeShareRecipientEmails } from "@/lib/listings/share"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/contexts/ToastContext"
-import { apiPost, apiGet, apiPut } from "@/lib/fetch-utils"
+import { apiPost, apiGet, apiPut } from "@/lib/client/fetch-utils"
 import { supabase } from "@/lib/supabase/client"
 import { storageService } from "@/services/storage"
 import {
   normalizeOrganizerProgramPiecesFromDb,
   piecePromoFilesFieldName,
   type OrganizerProgramPiecePhoto,
-} from "@/lib/organizer-program-pieces"
+} from "@/lib/listings/organizer-program-pieces"
 import { ownerListingToFormLoad } from "./owner-listing-to-form"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { resetModalFormView } from "@/lib/reset-scroll-ancestors"
+import { resetModalFormView } from "@/lib/forms/reset-scroll-ancestors"
 
 interface EventWizardProps {
   onSuccess: (info?: { wasApprovedResubmit?: boolean }) => void
@@ -592,7 +592,11 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
         )
       )}
       {step === 3 && eventType && (
-        <MediaAndAdditionalInfoStep form={form} eventType={eventType} />
+        <MediaAndAdditionalInfoStep
+          form={form}
+          eventType={eventType}
+          existingPhotosRef={listingId ? existingPhotosRef : undefined}
+        />
       )}
 
       <div className="flex items-center justify-between">

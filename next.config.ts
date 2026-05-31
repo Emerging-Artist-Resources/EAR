@@ -2,8 +2,11 @@ import type { NextConfig } from "next"
 import { withSentryConfig } from "@sentry/nextjs"
 
 const nextConfig: NextConfig = {
-  /* config options here */
-}
+  images: {
+    formats: ["image/avif", "image/webp"],
+    qualities: [75, 90],
+  },
+};
 
 const hasSentry = Boolean(
   process.env.SENTRY_DSN ?? process.env.NEXT_PUBLIC_SENTRY_DSN,

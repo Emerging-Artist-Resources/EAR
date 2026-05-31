@@ -1,10 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { EAR_AUDITION_CREATIVE_LISTING_FEE_USD } from "@/lib/listing-fee-amounts"
-import {
-  ESTABLISHED_BASE_FEE_USD as ESTABLISHED_BASE_FEE,
-  EMERGING_BASE_FEE_USD as EMERGING_BASE_FEE,
-  calculateClassListingFeeUsd,
-} from "@/lib/fees/listing-fee-policy"
+import { getPlatformListingFeeContext } from "@/lib/fees/listing-fee-policy"
 
 export interface ListingFeeParams {
   listingType: "performance" | "audition" | "creative" | "class"
@@ -20,7 +15,7 @@ export async function calculateListingFee(
   if (listingType === "class") {
     const { data: classDetails, error } = await supabase
       .from("class_workshop_details")
-      .select("class_workshop_type, artist_type, listing_fee_option")
+      .select("listing_fee_option")
       .eq("listing_id", listingId)
       .single()
 
@@ -28,30 +23,17 @@ export async function calculateListingFee(
       return null
     }
 
-    if (classDetails.listing_fee_option !== "PAY_FEE") {
-      return null
-    }
+    const ctx = getPlatformListingFeeContext({
+      listingType: "class",
+      listingFeeOption: classDetails.listing_fee_option,
+    })
 
-    if (!classDetails.artist_type) {
-      return null
-    }
-
-    const { data: occurrences } = await supabase
-      .from("listing_occurrences")
-      .select("id")
-      .eq("listing_id", listingId)
-      .eq("occurrence_type", "event")
-
-    const occurrenceCount = occurrences?.length || 0
-    const isWorkshop = classDetails.class_workshop_type === "WORKSHOP"
-
-    const feeCalc = calculateClassListingFeeUsd(isWorkshop, occurrenceCount, classDetails.artist_type)
-    if (!feeCalc) {
+    if (!ctx.feeApplies || ctx.amountUsd == null) {
       return null
     }
 
     return {
-      amount: feeCalc.totalFee * 100,
+      amount: ctx.amountUsd * 100,
       currency: "usd",
     }
   }
@@ -59,7 +41,7 @@ export async function calculateListingFee(
   if (listingType === "performance") {
     const { data: perfDetails, error } = await supabase
       .from("performance_details")
-      .select("listing_fee_option, artist_type")
+      .select("listing_fee_option")
       .eq("listing_id", listingId)
       .single()
 
@@ -67,18 +49,17 @@ export async function calculateListingFee(
       return null
     }
 
-    if (perfDetails.listing_fee_option !== "PAY_FEE") {
+    const ctx = getPlatformListingFeeContext({
+      listingType: "performance",
+      listingFeeOption: perfDetails.listing_fee_option,
+    })
+
+    if (!ctx.feeApplies || ctx.amountUsd == null) {
       return null
     }
-
-    if (!perfDetails.artist_type) {
-      return null
-    }
-
-    const baseFee = perfDetails.artist_type === "ESTABLISHED" ? ESTABLISHED_BASE_FEE : EMERGING_BASE_FEE
 
     return {
-      amount: baseFee * 100,
+      amount: ctx.amountUsd * 100,
       currency: "usd",
     }
   }
@@ -94,16 +75,22 @@ export async function calculateListingFee(
       return null
     }
 
-    if (auditionDetails.fee !== "PAY_FEE") {
-      return null
-    }
-
     if (!auditionDetails.artist_type) {
       return null
     }
 
+    const ctx = getPlatformListingFeeContext({
+      listingType: "audition",
+      artistType: auditionDetails.artist_type,
+      listingFeeOption: auditionDetails.fee,
+    })
+
+    if (!ctx.feeApplies || ctx.amountUsd == null) {
+      return null
+    }
+
     return {
-      amount: EAR_AUDITION_CREATIVE_LISTING_FEE_USD * 100,
+      amount: ctx.amountUsd * 100,
       currency: "usd",
     }
   }
@@ -119,16 +106,22 @@ export async function calculateListingFee(
       return null
     }
 
-    if (creativeDetails.fee !== "PAY_FEE") {
-      return null
-    }
-
     if (!creativeDetails.artist_type) {
       return null
     }
 
+    const ctx = getPlatformListingFeeContext({
+      listingType: "creative",
+      artistType: creativeDetails.artist_type,
+      listingFeeOption: creativeDetails.fee,
+    })
+
+    if (!ctx.feeApplies || ctx.amountUsd == null) {
+      return null
+    }
+
     return {
-      amount: EAR_AUDITION_CREATIVE_LISTING_FEE_USD * 100,
+      amount: ctx.amountUsd * 100,
       currency: "usd",
     }
   }

@@ -1,6 +1,6 @@
 import type { CreateListingInput } from "./repository-types"
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
-import { UNTITLED_OPPORTUNITY_TITLE } from "@/lib/listing-type-labels"
+import { UNTITLED_OPPORTUNITY_TITLE } from "@/lib/listings/type-labels"
 
 function isCreateListingInput(input: CreateListingInput | PublicListingDetail): input is CreateListingInput {
   return "details" in input && "base" in input

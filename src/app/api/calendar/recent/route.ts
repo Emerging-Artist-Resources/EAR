@@ -3,12 +3,56 @@ import { getSupabaseServerClientAnon } from "@/lib/supabase/serverAnon"
 import { getListingTitle } from "@/features/events/server/listing-utils"
 import { normalizeSupabaseRelation, isLinkedPiece, isLinkedClass } from "@/features/events/server/admin-utils"
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
-import { getCoverPhotoPublic } from "@/lib/listing-photo-cover"
 import {
   filterBySubmittedWithinLastDays,
   getRecentlyAddedCutoff,
   RECENTLY_ADDED_MAX_AGE_DAYS,
-} from "@/lib/recently-added-listings"
+} from "@/lib/listings/recently-added"
+import { getListingCardSummary } from "@/lib/listings/card-display"
+
+function buildRecentListingCard(listing: any) {
+  const listingDetail: PublicListingDetail = {
+    id: listing.id,
+    type: listing.type,
+    company: listing.company ?? null,
+    address: listing.address ?? null,
+    place_id: listing.place_id ?? null,
+    venue_name: listing.venue_name ?? null,
+    meta: listing.meta ?? null,
+    performance_details: listing.performance_details,
+    audition_details: listing.audition_details,
+    creative_details: listing.creative_details,
+    class_workshop_details: listing.class_workshop_details,
+    piece_details: listing.piece_details,
+    listing_occurrences: listing.listing_occurrences || [],
+  }
+
+  const title = getListingTitle(listingDetail)
+  const summary = getListingCardSummary(listingDetail)
+  const earliestEvent = summary.events[0]
+  const occurrences = [...summary.deadlines, ...summary.events].map((occ) => ({
+    id: occ.id,
+    starts_at_utc: occ.starts_at_utc,
+    ends_at_utc: occ.ends_at_utc,
+    tz: occ.tz ?? "UTC",
+    occurrence_type: occ.occurrence_type ?? "event",
+  }))
+
+  return {
+    id: listing.id,
+    type: listing.type,
+    title,
+    submitted_at: listing.submitted_at,
+    host: summary.host,
+    description: summary.description,
+    venue: summary.venue,
+    price: summary.price,
+    link: summary.link,
+    starts_at_utc: earliestEvent?.starts_at_utc ?? null,
+    ends_at_utc: earliestEvent?.ends_at_utc ?? null,
+    occurrences,
+  }
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -30,6 +74,11 @@ export async function GET(req: NextRequest) {
         type,
         status,
         submitted_at,
+        company,
+        address,
+        place_id,
+        venue_name,
+        meta,
         performance_details (*),
         audition_details (*),
         creative_details (*),
@@ -39,9 +88,12 @@ export async function GET(req: NextRequest) {
           id,
           starts_at_utc,
           ends_at_utc,
-          tz
-        ),
-        listing_photos ( id, path, credit, sort_order )
+          tz,
+          occurrence_type,
+          address,
+          place_id,
+          venue_name
+        )
       `)
       .eq("status", "approved")
       .is("deleted_at", null)
@@ -112,15 +164,26 @@ export async function GET(req: NextRequest) {
           id,
           type,
           status,
+          company,
+          address,
+          place_id,
+          venue_name,
+          meta,
           performance_details (*),
+          audition_details (*),
+          creative_details (*),
+          piece_details!piece_details_listing_id_fkey (*),
           class_workshop_details!class_workshop_details_listing_id_fkey (*),
           listing_occurrences!listing_occurrences_listing_id_fkey (
             id,
             starts_at_utc,
             ends_at_utc,
-            tz
-          ),
-          listing_photos ( id, path, credit, sort_order )
+            tz,
+            occurrence_type,
+            address,
+            place_id,
+            venue_name
+          )
         `)
         .in("id", parentIds)
         .eq("status", "approved")
@@ -143,74 +206,8 @@ export async function GET(req: NextRequest) {
       }
     }
     
-    // Process standalone listings
-    const processedStandalone = standaloneListings.map((listing: any) => {
-      const listingDetail: PublicListingDetail = {
-        id: listing.id,
-        type: listing.type,
-        performance_details: listing.performance_details,
-        audition_details: listing.audition_details,
-        creative_details: listing.creative_details,
-        class_workshop_details: listing.class_workshop_details,
-        piece_details: listing.piece_details,
-        listing_occurrences: listing.listing_occurrences || [],
-      }
-      
-      const title = getListingTitle(listingDetail)
-      
-      const earliestOccurrence = listing.listing_occurrences
-        ?.filter((occ: any) => occ.starts_at_utc)
-        .sort((a: any, b: any) => 
-          new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime()
-        )[0]
-      
-      const cover = getCoverPhotoPublic(listing.listing_photos)
-
-      return {
-        id: listing.id,
-        type: listing.type,
-        title,
-        submitted_at: listing.submitted_at,
-        starts_at_utc: earliestOccurrence?.starts_at_utc || null,
-        ends_at_utc: earliestOccurrence?.ends_at_utc || null,
-        tz: earliestOccurrence?.tz || null,
-        cover_image_url: cover?.url ?? null,
-        cover_image_credit: cover?.credit ?? null,
-      }
-    })
-    
-    // Process parent listings
-    const processedParents = parentListings.map((parent: any) => {
-      const listingDetail: PublicListingDetail = {
-        id: parent.id,
-        type: parent.type,
-        performance_details: parent.performance_details,
-        class_workshop_details: parent.class_workshop_details,
-        listing_occurrences: parent.listing_occurrences || [],
-      }
-      
-      const title = getListingTitle(listingDetail)
-      
-      const earliestOccurrence = parent.listing_occurrences
-        ?.filter((occ: any) => occ.starts_at_utc)
-        .sort((a: any, b: any) => 
-          new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime()
-        )[0]
-      
-      const cover = getCoverPhotoPublic(parent.listing_photos)
-
-      return {
-        id: parent.id,
-        type: parent.type,
-        title,
-        submitted_at: parent.submitted_at,
-        starts_at_utc: earliestOccurrence?.starts_at_utc || null,
-        ends_at_utc: earliestOccurrence?.ends_at_utc || null,
-        tz: earliestOccurrence?.tz || null,
-        cover_image_url: cover?.url ?? null,
-        cover_image_credit: cover?.credit ?? null,
-      }
-    })
+    const processedStandalone = standaloneListings.map(buildRecentListingCard)
+    const processedParents = parentListings.map(buildRecentListingCard)
     
     // Combine and deduplicate by id, keeping the one with most recent submitted_at
     const allListings = [...processedStandalone, ...processedParents]

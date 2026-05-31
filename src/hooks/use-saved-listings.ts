@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { apiGet, apiPost, apiDelete } from "@/lib/fetch-utils";
+import { apiGet, apiPost, apiDelete } from "@/lib/client/fetch-utils";
 
 export function useSavedListings(listingId?: string, initialIsSaved?: boolean) {
   const { isAuthed } = useAuth();

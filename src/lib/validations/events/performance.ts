@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { hasCompleteLocation, locationValidationIssue } from "@/lib/location-mode"
+import { hasCompleteLocation, locationValidationIssue } from "@/lib/location/mode"
 import { flexibleUrlOrEmptySchema, flexibleUrlOptionalSchema } from "../flexible-url"
 import { extraDateSchema, lenientOccurrenceTimeSlotSchema } from "./base"
 import {
@@ -7,12 +7,12 @@ import {
   addOrganizerMultiProgramPieceSlotAndCustomIssues,
   resolveOrganizerOccurrencesForValidation,
 } from "./organizer-performance-schedule"
-import { MAX_SHARE_RECIPIENT_EMAILS } from "@/lib/listing-share"
+import { MAX_SHARE_RECIPIENT_EMAILS } from "@/lib/listings/share"
 import {
   inferOrganizerPieceCount,
   organizerPieceHasSchedule,
   pieceFieldPrefix,
-} from "@/lib/organizer-program-pieces"
+} from "@/lib/listings/organizer-program-pieces"
 
 /**
  * Performance-only fields
@@ -111,9 +111,8 @@ export const performanceFields = z
     selectedSlots: z.array(z.string()).optional(), // keys like "YYYY-MM-DD|HH:mm" for now
 
     /**
-     * Platform listing fee fields (ORGANIZER)
-     * Established: fee path via PAY_FEE / automatic display.
-     * Emerging: waived; server forces these to null for EMERGING.
+     * Platform listing fee fields (ORGANIZER). Performance listings are currently free;
+     * server clears these via listing fee policy.
      */
     artistType: z.enum(["ESTABLISHED", "EMERGING"]).optional(),
     listingFeeOption: z.enum(["PAY_FEE", "PROVIDE", "EXPLAIN"]).optional(),

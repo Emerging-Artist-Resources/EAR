@@ -1,41 +1,45 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Text } from "@/components/ui/typography"
+import { FISCAL_SPONSORSHIP_INQUIRY_HREF } from "@/lib/content/fiscal-sponsorship"
 import { cn } from "@/lib/utils"
 
 type FiscalSponsorshipCtaBandProps = {
   overline: string
   headline: string
   body: string
+  inquiryHref?: string
   className?: string
 }
-
-const inquireOnDarkClass =
-  "h-auto rounded-full border-transparent bg-secondary-50 px-8 py-6 text-xs font-semibold uppercase tracking-widest text-foreground hover:bg-secondary-100 hover:text-foreground disabled:opacity-100"
 
 export function FiscalSponsorshipCtaBand({
   overline,
   headline,
   body,
+  inquiryHref = FISCAL_SPONSORSHIP_INQUIRY_HREF,
   className,
 }: FiscalSponsorshipCtaBandProps) {
   return (
-    <section className={cn(className)} aria-labelledby="fiscal-sponsorship-cta-heading">
-      <div className="h-1.5 w-full bg-secondary-50" aria-hidden />
-      <div className="bg-foreground text-background">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-center lg:gap-12 lg:px-8 lg:py-16">
-          <div className="flex flex-col gap-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-background/90">{overline}</p>
-            <h2 id="fiscal-sponsorship-cta-heading" className="text-3xl font-bold tracking-tight text-background sm:text-4xl">
-              {headline}
-            </h2>
-            <Text className="text-base leading-relaxed text-background/85">{body}</Text>
-          </div>
-          <div className="flex lg:justify-end">
-            <Button asChild variant="outline" className={cn(inquireOnDarkClass, "w-full sm:w-auto")}>
-              <Link href="/services/fiscal-sponsorship/inquiry">Inquire here</Link>
-            </Button>
-          </div>
+    <section
+      className={cn("bg-secondary-50 px-4 py-16 sm:px-6 lg:px-8 lg:py-20", className)}
+      aria-labelledby="fiscal-sponsorship-cta-heading"
+    >
+      <div className="mx-auto flex max-w-3xl flex-col gap-6">
+        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ear-black/70">{overline}</p>
+        <h2
+          id="fiscal-sponsorship-cta-heading"
+          className="font-header text-3xl font-bold tracking-tight text-ear-black sm:text-4xl md:text-5xl"
+        >
+          {headline}
+        </h2>
+        <Text className="text-ear-black text-pretty text-base leading-relaxed">{body}</Text>
+        <div>
+          <Button
+            asChild
+            className="h-auto w-full rounded-none bg-ear-black px-8 py-4 text-xs font-semibold uppercase tracking-widest text-ear-off-white hover:bg-ear-black/90 sm:w-auto"
+          >
+            <Link href={inquiryHref}>Apply here</Link>
+          </Button>
         </div>
       </div>
     </section>

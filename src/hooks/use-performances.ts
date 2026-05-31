@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
-import { apiGet, apiPost } from "@/lib/fetch-utils"
+import { apiGet, apiPost } from "@/lib/client/fetch-utils"
 
 export interface Performance {
   id: string

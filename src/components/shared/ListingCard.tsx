@@ -1,14 +1,22 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, type ReactNode } from "react"
 import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { FavoriteButton } from "@/components/ui/favorite-button"
-import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
+import { formatOccurrenceRangeEST } from "@/lib/datetime/utils"
 import { useSavedListings } from "@/hooks/use-saved-listings"
 import { useAuth } from "@/hooks/use-auth"
-import { getCalendarListingTypeLabel } from "@/lib/listing-type-labels"
+import { getEventTypeColor } from "@/components/calendar/event-colors"
+import type { CalendarItem } from "@/hooks/use-calendar"
+import type {
+  ListingCardLinkDisplay,
+  ListingCardOccurrence,
+  ListingCardVenue,
+} from "@/lib/listings/card-display"
+import { splitListingCardOccurrences } from "@/lib/listings/card-display"
 import { cn } from "@/lib/utils"
+
+const MAX_EVENT_DATES_SHOWN = 3
 
 interface ListingCardProps {
   id: string
@@ -17,38 +25,22 @@ interface ListingCardProps {
   starts_at_utc?: string | null
   ends_at_utc?: string | null
   onClick?: () => void
+  host?: string | null
+  description?: string | null
+  venue?: ListingCardVenue | null
+  price?: string | null
+  link?: ListingCardLinkDisplay | null
+  submittedAt?: string | null
   is_piece?: boolean
   piece_company?: string | null
-  piece_company_website?: string | null
   piece_description?: string | null
   choreographer?: string | null
   is_class?: boolean
-  class_title?: string | null
   class_description?: string | null
   class_organizer?: string | null
   class_teachers?: string | null
-  class_price?: string | null
-  class_link?: string | null
-  class_style_category?: string | null
-  notes?: string | null
-  occurrences?: Array<{
-    id: string
-    starts_at_utc: string
-    ends_at_utc: string | null
-    tz: string
-  }>
-  /** First listing photo by sort_order (e.g. admin-chosen cover). */
-  coverImageUrl?: string | null
-  coverImageAlt?: string | null
-  /**
-   * When false, hide favorites (id may not be a `listings` row — e.g. embedded organizer piece).
-   * @default true
-   */
+  occurrences?: ListingCardOccurrence[]
   enableSave?: boolean
-}
-
-function getTypeLabel(type: string): string {
-  return getCalendarListingTypeLabel(type)
 }
 
 function ListingCardFavoriteBar({ listingId }: { listingId: string }) {
@@ -56,7 +48,7 @@ function ListingCardFavoriteBar({ listingId }: { listingId: string }) {
   const { isSaved, loading, saving, toggleSave } = useSavedListings(listingId)
   if (!isAuthed) return null
   return (
-    <div className="absolute top-2 right-2 z-10">
+    <div className="absolute top-3 right-3 z-10">
       <FavoriteButton
         active={isSaved}
         onToggle={(e) => {
@@ -73,182 +65,217 @@ function ListingCardFavoriteBar({ listingId }: { listingId: string }) {
   )
 }
 
-export function ListingCard({ 
-  id, 
-  type, 
-  title, 
-  starts_at_utc, 
-  ends_at_utc, 
+function resolveHost(props: ListingCardProps): string | null {
+  if (props.host?.trim()) return props.host.trim()
+  if (props.is_piece) {
+    return props.piece_company?.trim() || props.choreographer?.trim() || null
+  }
+  if (props.is_class) {
+    return props.class_organizer?.trim() || props.class_teachers?.trim() || null
+  }
+  return null
+}
+
+function resolveDescription(props: ListingCardProps): string | null {
+  if (props.description?.trim()) return props.description.trim()
+  if (props.is_piece) return props.piece_description?.trim() || null
+  if (props.is_class) return props.class_description?.trim() || null
+  return null
+}
+
+function formatAddedDate(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ""
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
+}
+
+function CardDetailRow({
+  label,
+  children,
+}: {
+  label: string
+  children: ReactNode
+}) {
+  return (
+    <div className="font-sans text-sm leading-snug">
+      <span className="font-semibold text-text-primary">{label}: </span>
+      <span className="text-text-muted">{children}</span>
+    </div>
+  )
+}
+
+function VenueRow({ venue }: { venue: ListingCardVenue }) {
+  return (
+    <CardDetailRow label="Location">
+      {venue.mapsUrl && !venue.isOnline ? (
+        <a
+          href={venue.mapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-brand-primary hover:text-brand-primary-hover underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {venue.name}
+        </a>
+      ) : (
+        venue.name
+      )}
+    </CardDetailRow>
+  )
+}
+
+export function ListingCard({
+  id,
+  type,
+  title,
+  starts_at_utc,
+  ends_at_utc,
   onClick,
+  host,
+  description,
+  venue,
+  submittedAt,
   is_piece,
   piece_company,
-  piece_company_website,
   piece_description,
   choreographer,
   is_class,
-  class_title,
   class_description,
   class_organizer,
   class_teachers,
-  class_price,
-  class_link,
-  class_style_category,
-  notes,
   occurrences,
-  coverImageUrl,
-  coverImageAlt,
   enableSave = true,
 }: ListingCardProps) {
-  const sortedOccurrences = useMemo(() => {
-    if (!occurrences?.length) return []
-    return [...occurrences].sort(
-      (a, b) => new Date(a.starts_at_utc).getTime() - new Date(b.starts_at_utc).getTime(),
-    )
-  }, [occurrences])
+  const typeColor = getEventTypeColor(type as CalendarItem["type"])
 
+  const { deadlines, events: eventOccurrences } = useMemo(() => {
+    if (occurrences?.length) {
+      return splitListingCardOccurrences(occurrences)
+    }
+    if (starts_at_utc) {
+      return {
+        deadlines: [] as ListingCardOccurrence[],
+        events: [
+          {
+            id: "primary",
+            starts_at_utc,
+            ends_at_utc: ends_at_utc ?? null,
+            occurrence_type: "event",
+          },
+        ],
+      }
+    }
+    return { deadlines: [], events: [] }
+  }, [occurrences, starts_at_utc, ends_at_utc])
+
+  const visibleDeadlines = deadlines.slice(0, MAX_EVENT_DATES_SHOWN)
+  const remainingDeadlineCount = deadlines.length - visibleDeadlines.length
+  const visibleEvents = eventOccurrences.slice(0, MAX_EVENT_DATES_SHOWN)
+  const remainingEventCount = eventOccurrences.length - visibleEvents.length
+
+  const displayHost = resolveHost({
+    id,
+    type,
+    title,
+    host,
+    is_piece,
+    piece_company,
+    choreographer,
+    is_class,
+    class_organizer,
+    class_teachers,
+  })
+  const displayDescription = resolveDescription({
+    id,
+    type,
+    title,
+    description,
+    is_piece,
+    piece_description,
+    is_class,
+    class_description,
+  })
+  const addedLabel = submittedAt ? formatAddedDate(submittedAt) : null
+  const hasSchedule = visibleDeadlines.length > 0 || visibleEvents.length > 0
   const interactive = Boolean(onClick)
 
   return (
     <Card
+      padding="none"
       className={cn(
-        "p-4 h-full transition-shadow relative",
+        "flex h-full w-full flex-col overflow-hidden text-left transition-shadow relative",
         interactive ? "cursor-pointer hover:shadow-md" : "cursor-default",
       )}
       onClick={onClick}
     >
-      {coverImageUrl && (
-        <div className="-mx-4 -mt-4 mb-3 overflow-hidden rounded-t-lg border-b border-border-default">
-          <img
-            src={coverImageUrl}
-            alt={coverImageAlt || ""}
-            className="h-36 w-full object-cover"
-          />
-        </div>
-      )}
-      {enableSave ? <ListingCardFavoriteBar listingId={id} /> : null}
-      <div className="space-y-2">
-        <div className="space-y-1">
-          <Badge variant="primary" size="sm" className="inline-block">
-            {getTypeLabel(type)}
-          </Badge>
-          <h4
-            className={cn(
-              "font-header text-xl font-semibold text-text-primary line-clamp-2",
-              enableSave && "pr-8",
-            )}
-          >
+      <div
+        className="h-1.5 w-full shrink-0"
+        style={{ backgroundColor: typeColor.bg }}
+        aria-hidden
+      />
+
+      <div className="flex min-h-0 flex-1 flex-col p-4">
+        {enableSave ? <ListingCardFavoriteBar listingId={id} /> : null}
+
+        <div className={cn(enableSave && "pr-8")}>
+          <h4 className="font-header text-xl font-semibold leading-tight text-text-primary line-clamp-2">
             {title}
           </h4>
+          {displayHost ? (
+            <p className="mt-0.5 font-sans text-sm leading-snug text-text-muted">{displayHost}</p>
+          ) : null}
         </div>
-        
-        {is_piece && sortedOccurrences.length > 0 && (
-          <div className="font-sans text-xs text-text-muted">
-            <div className="font-medium text-text-primary mb-1">Dates:</div>
-            <ul className="list-disc ml-4 space-y-0.5">
-              {sortedOccurrences.map((occ) => (
-                <li key={occ.id}>
+
+        <div className="mt-4 flex min-h-[7.5rem] flex-1 flex-col gap-2">
+          {venue ? <VenueRow venue={venue} /> : null}
+          {displayDescription ? (
+            <p className="font-sans text-sm leading-snug text-text-muted line-clamp-3">
+              {displayDescription}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="mt-4 border-t border-border-default pt-4">
+          {hasSchedule ? (
+            <div className="space-y-2 font-sans text-xs text-text-muted">
+              {visibleDeadlines.map((occ) => (
+                <div key={occ.id}>
+                  <span className="font-semibold text-text-primary">Deadline: </span>
                   {formatOccurrenceRangeEST(occ.starts_at_utc, occ.ends_at_utc)}
-                </li>
+                </div>
               ))}
-            </ul>
-          </div>
-        )}
-        
-        {!is_piece && starts_at_utc && (
-          <div className="font-sans text-xs text-text-muted">
-            {formatOccurrenceRangeEST(starts_at_utc, ends_at_utc)}
-          </div>
-        )}
-        
-        {is_piece && (
-          <div className="space-y-1 font-sans text-xs text-text-muted border-t border-border-default pt-2 mt-2">
-            {piece_company && (
-              <div>
-                <span className="font-medium text-text-primary">Company/Artist:</span> {piece_company}
-              </div>
-            )}
-            {piece_company_website && (
-              <div>
-                <span className="font-medium text-text-primary">Website:</span>{" "}
-                <a
-                  href={piece_company_website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary-600 hover:underline"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {piece_company_website}
-                </a>
-              </div>
-            )}
-            {piece_description && (
-              <div>
-                <span className="font-medium text-text-primary">Description:</span>{" "}
-                <span className="line-clamp-2">{piece_description}</span>
-              </div>
-            )}
-            {choreographer && (
-              <div>
-                <span className="font-medium text-text-primary">Choreographer:</span> {choreographer}
-              </div>
-            )}
-            {notes && (
-              <div>
-                <span className="font-medium text-text-primary">Credits:</span> {notes}
-              </div>
-            )}
-          </div>
-        )}
-        
-        {is_class && (
-          <div className="space-y-1 font-sans text-xs text-text-muted border-t border-border-default pt-2 mt-2">
-            {class_title && (
-              <div>
-                <span className="font-medium text-text-primary">Title:</span> {class_title}
-              </div>
-            )}
-            {class_description && (
-              <div>
-                <span className="font-medium text-text-primary">Description:</span>{" "}
-                <span className="line-clamp-2">{class_description}</span>
-              </div>
-            )}
-            {class_organizer && (
-              <div>
-                <span className="font-medium text-text-primary">Organizer:</span> {class_organizer}
-              </div>
-            )}
-            {class_teachers && (
-              <div>
-                <span className="font-medium text-text-primary">Teachers:</span> {class_teachers}
-              </div>
-            )}
-            {class_price && (
-              <div>
-                <span className="font-medium text-text-primary">Price:</span> {class_price}
-              </div>
-            )}
-            {class_link && (
-              <div>
-                <span className="font-medium text-text-primary">Link:</span>{" "}
-                <a
-                  href={class_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary-600 hover:underline"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {class_link}
-                </a>
-              </div>
-            )}
-            {class_style_category && (
-              <div>
-                <span className="font-medium text-text-primary">Style Category:</span> {class_style_category}
-              </div>
-            )}
-          </div>
-        )}
+              {remainingDeadlineCount > 0 ? (
+                <p>+{remainingDeadlineCount} more deadline{remainingDeadlineCount === 1 ? "" : "s"}</p>
+              ) : null}
+              {visibleEvents.map((occ) => (
+                <div key={occ.id}>{formatOccurrenceRangeEST(occ.starts_at_utc, occ.ends_at_utc)}</div>
+              ))}
+              {remainingEventCount > 0 ? (
+                <p>+{remainingEventCount} more date{remainingEventCount === 1 ? "" : "s"}</p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {(interactive || addedLabel) ? (
+            <div
+              className={cn(
+                "flex items-center justify-end gap-3 font-sans text-sm",
+                hasSchedule ? "mt-4" : "mt-0",
+              )}
+            >
+              {interactive ? (
+                <span className="mr-auto font-medium text-brand-primary">Learn more →</span>
+              ) : null}
+              {addedLabel ? (
+                <span className="shrink-0 text-xs text-text-muted">Added {addedLabel}</span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
     </Card>
   )

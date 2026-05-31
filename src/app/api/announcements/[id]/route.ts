@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getAnnouncement, updateAnnouncement, deleteAnnouncement } from "@/features/announcements/server/service"
-// validation handled inside service layer
-import { ZodError } from "zod"
-import { getUserRole } from '@/lib/authz'
+import { requireRole } from "@/lib/auth/helpers"
+import { createSuccessResponse, handleApiError } from "@/lib/api/utils"
 
 export async function GET(
   _request: NextRequest,
@@ -12,11 +10,12 @@ export async function GET(
   try {
     const params = await context.params
     const data = await getAnnouncement(params.id)
-    if (!data) return NextResponse.json({ error: { code: 'NOT_FOUND' } }, { status: 404 })
-    return NextResponse.json({ data })
+    if (!data) {
+      return NextResponse.json({ error: { code: "NOT_FOUND" } }, { status: 404 })
+    }
+    return createSuccessResponse(data)
   } catch (error) {
-    console.error('Announcement fetch error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return handleApiError(error)
   }
 }
 
@@ -25,21 +24,14 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await getSupabaseServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    await requireRole("ADMIN")
     const params = await context.params
-
-    if (!user?.id) return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
-    const role = getUserRole(user)
-    if (role !== 'ADMIN') return NextResponse.json({ error: { code: 'FORBIDDEN' } }, { status: 403 })
 
     const body = await request.json()
     const data = await updateAnnouncement(params.id, body)
-    return NextResponse.json({ data })
-  } catch (error: unknown) {
-    if (error instanceof ZodError) return NextResponse.json({ error: { code: 'INVALID_INPUT' } }, { status: 400 })
-    console.error('Announcement update error:', error)
-    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
+    return createSuccessResponse(data)
+  } catch (error) {
+    return handleApiError(error)
   }
 }
 
@@ -48,20 +40,12 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await getSupabaseServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    await requireRole("ADMIN")
     const params = await context.params
 
-    if (!user?.id) return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
-    const role = getUserRole(user)
-    if (role !== 'ADMIN') return NextResponse.json({ error: { code: 'FORBIDDEN' } }, { status: 403 })
-
     await deleteAnnouncement(params.id)
-    return NextResponse.json({ data: { deleted: true } })
+    return createSuccessResponse({ deleted: true })
   } catch (error) {
-    console.error('Announcement delete error:', error)
-    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
+    return handleApiError(error)
   }
 }
-
-

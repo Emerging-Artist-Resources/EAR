@@ -179,6 +179,7 @@ CREATE TABLE audition_details (
   
   -- Core fields
   title TEXT NOT NULL,
+  host TEXT,
   description TEXT NOT NULL,
   eligibility TEXT NOT NULL,
   compensation TEXT NOT NULL,

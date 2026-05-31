@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
 import { listAdminEvents } from "@/features/events/server/service"
-import { requireRole, hasRole } from "@/lib/auth-helpers"
-import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamNumber, ErrorCodes, createErrorResponse } from "@/lib/api-utils"
+import { requireRole, hasRole } from "@/lib/auth/helpers"
+import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamNumber, ErrorCodes, createErrorResponse } from "@/lib/api/utils"
 
 export async function GET(req: NextRequest) {
   try {

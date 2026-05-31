@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { signupAction } from "@/features/profile/server/signup"
 import { Alert } from "@/components/ui/alert"
 import { useToast } from "@/contexts/ToastContext"
-import { getFieldLabel } from "@/lib/form-helpers"
+import { getFieldLabel } from "@/lib/forms/helpers"
 import {
   DEFAULT_ERROR_MESSAGE,
   type SignupFormData,

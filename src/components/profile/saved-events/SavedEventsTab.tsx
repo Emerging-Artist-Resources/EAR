@@ -3,18 +3,19 @@
 import { useEffect, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { SavedEvent } from "@/features/profile/server/types";
-import { apiGet } from "@/lib/fetch-utils";
+import { apiGet } from "@/lib/client/fetch-utils";
 import { SavedEventsFilters } from "./SavedEventsFilters";
 import { SavedEventsGrid } from "./SavedEventsGrid";
-import { H3, Text } from "@/components/ui/typography";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { ListingDetailsModal } from "@/components/calendar/ListingDetailsModal";
 import { useAuth } from "@/hooks/use-auth";
 
 type FilterMode = "all" | "upcoming" | "past";
 
-export const SavedEventsTab = () => {
+interface SavedEventsTabProps {
+  hideHeader?: boolean;
+}
+
+export const SavedEventsTab = ({ hideHeader = false }: SavedEventsTabProps) => {
   const [events, setEvents] = useState<SavedEvent[]>([]);
   const [filter, setFilter] = useState<FilterMode>("all");
   const [isLoading, setIsLoading] = useState(false);
@@ -72,17 +73,7 @@ export const SavedEventsTab = () => {
 
   return (
     <>
-      <section className="mt-6">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <H3>Saved Events</H3>
-            <Text className="text-sm text-ear-baby-blue">Events you bookmarked for later</Text>
-          </div>
-          <Link href="/calendar">
-            <Button variant="link">Browse More Events</Button>
-          </Link>
-        </div>
-
+      <section className={hideHeader ? undefined : "mt-6"}>
         <Card className="p-4" padding="md" border="dashed">
           <SavedEventsFilters value={filter} onChange={setFilter} />
           <SavedEventsGrid events={events} isLoading={isLoading} onListingClick={handleListingClick} />

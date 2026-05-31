@@ -1,32 +1,36 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { notificationSchema } from "@/lib/validations"
-import { listAnnouncements, createAnnouncement } from "@/features/announcements/server/service"
-import { ZodError } from "zod"
-import { getUserRole } from "@/lib/authz"
+import { NextRequest } from "next/server"
+import { notificationSchema } from "@/lib/validations/legacy-schemas"
+import {
+  listAnnouncements,
+  listAnnouncementsAdmin,
+  createAnnouncement,
+} from "@/features/announcements/server/service"
+import { requireRole } from "@/lib/auth/helpers"
+import {
+  createSuccessResponse,
+  getQueryParam,
+  handleApiError,
+} from "@/lib/api/utils"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const isAdminList = getQueryParam(request, "admin") === "true"
+    if (isAdminList) {
+      await requireRole("ADMIN")
+      const data = await listAnnouncementsAdmin()
+      return createSuccessResponse(data)
+    }
+
     const data = await listAnnouncements()
-    return NextResponse.json({ data })
+    return createSuccessResponse(data)
   } catch (error) {
-    console.error('Announcements fetch error:', error)
-    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
+    return handleApiError(error)
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await getSupabaseServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user?.id) {
-      return NextResponse.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
-    }
-    const role = getUserRole(user)
-    if (role !== 'ADMIN') {
-      return NextResponse.json({ error: { code: 'FORBIDDEN' } }, { status: 403 })
-    }
+    const auth = await requireRole("ADMIN")
 
     const body = await request.json()
     const validated = notificationSchema.parse(body)
@@ -34,14 +38,10 @@ export async function POST(request: NextRequest) {
       title: validated.title,
       content: validated.content,
       type: validated.type,
-      authorUserId: user.id,
+      authorUserId: auth.user.id,
     })
-    return NextResponse.json({ data }, { status: 201 })
-  } catch (error: unknown) {
-    if (error instanceof ZodError) {
-      return NextResponse.json({ error: { code: 'INVALID_INPUT' } }, { status: 400 })
-    }
-    console.error('Announcements create error:', error)
-    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
+    return createSuccessResponse(data, 201)
+  } catch (error) {
+    return handleApiError(error)
   }
 }

@@ -10,11 +10,11 @@ import {
   ORGANIZER_OCCURRENCE_USER_MESSAGES,
 } from "@/lib/validations/events/occurrence-row"
 import { createLocationFields, type DateItem, type LocationConfigFull } from "./DateTime"
-import { isOnlineLocationMode } from "@/lib/location-mode"
+import { isOnlineLocationMode } from "@/lib/location/mode"
 import { ShowtimeRow } from "./ShowtimeRow"
 import { FormFieldTooltip } from "./FormFieldTooltip"
-import { buildEmptyShowtimeRow } from "@/lib/showtimes-empty-row"
-import { focusFormFieldNoScroll } from "@/lib/focus-form-field"
+import { buildEmptyShowtimeRow } from "@/lib/datetime/showtimes-empty-row"
+import { focusFormFieldNoScroll } from "@/lib/forms/focus-field"
 
 export interface ShowtimesListProps<T extends FieldValues> {
   form: UseFormReturn<T>
@@ -115,8 +115,8 @@ export function ShowtimesList<T extends FieldValues>({
   const defaultHeaderNote = !showTime
     ? "Add one or more dates."
     : requireLocation
-      ? "Add one or more showtimes. New rows start with a blank date and copy the previous showtime’s time and location (when it’s a single time). You can add more than one time on the same date when needed."
-      : "Add one or more date & time slots. New rows copy the previous slot’s time when it’s a single time."
+      ? "Add one or more showtimes. New rows start with a blank date and copy the previous showtime’s time and location. You can add more than one time on the same date when needed."
+      : "Add one or more date & time slots. New rows copy the previous slot’s time."
 
   const tooltipText = titleTooltip?.trim()
   const hasTitleTooltip = Boolean(tooltipText)
@@ -268,7 +268,7 @@ export function ShowtimesList<T extends FieldValues>({
                 : undefined
             }
           >
-            + Add another {rowLabel}
+            + Add another date
           </Button>
           {/* {!canAddShowtime && (
             <p className="text-xs text-amber-800" role="status">

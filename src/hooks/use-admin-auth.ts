@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
-import { fetchUserRoleWithFallback } from "@/lib/authz"
+import { fetchUserRoleWithFallback } from "@/lib/auth/authz"
 import { User } from "@supabase/supabase-js"
 
 export function useAdminAuth() {

@@ -10,7 +10,7 @@ import { Text } from "@/components/ui/typography"
 import { useToast } from "@/contexts/ToastContext"
 import { LocationSection } from "./LocationSection"
 import { DateCard, createLocationFields, type DateItem, type TimeItem, type LocationConfigFull } from "./DateTime"
-import { clearedInPersonLocationFields, hasCompleteLocation } from "@/lib/location-mode"
+import { clearedInPersonLocationFields, hasCompleteLocation } from "@/lib/location/mode"
 
 interface DateTimeListProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>

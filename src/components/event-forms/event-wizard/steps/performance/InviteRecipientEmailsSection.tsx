@@ -5,7 +5,7 @@ import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { MAX_SHARE_RECIPIENT_EMAILS } from "@/lib/listing-share"
+import { MAX_SHARE_RECIPIENT_EMAILS } from "@/lib/listings/share"
 
 export interface InviteRecipientEmailsSectionProps {
   form: UseFormReturn<EventFormData>
@@ -79,7 +79,7 @@ export function InviteRecipientEmailsSection({
         </Button>
       )}
       <p className="text-xs text-muted-foreground mt-2">
-        Up to {MAX_SHARE_RECIPIENT_EMAILS} addresses. Your own contact email is skipped automatically.
+        Add up to {MAX_SHARE_RECIPIENT_EMAILS} addresses.
       </p>
     </Section>
   )

@@ -1,6 +1,5 @@
-import { ProfilePage } from "@/components/profile/ProfilePage";
+import { DashboardHomePage } from "@/components/profile/dashboard/DashboardHomePage"
 
-export default function ProfileRoute() {
-  // You can fetch server-side data or user here if you need later.
-  return <ProfilePage />;
+export default function ProfileDashboardPage() {
+  return <DashboardHomePage />
 }

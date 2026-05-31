@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { buildSiteMetadata } from "@/lib/config/site-metadata";
 import HeaderGate from "@/components/layout/header-gate"
 import FooterGate from "@/components/layout/footer-gate"
 import { ErrorBoundary } from "@/components/error-boundary"
@@ -21,10 +21,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Performance Calendar",
-  description: "Shared calendar for performance submissions",
-};
+export const metadata = buildSiteMetadata();
 
 export default function RootLayout({
   children,

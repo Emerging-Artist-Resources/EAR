@@ -1,7 +1,7 @@
 "use client"
 
 import { ServiceInquiryForm } from "@/components/forms/service-inquiry/ServiceInquiryForm"
-import { fiscalServicesInquiryContent } from "@/lib/fiscal-services-inquiry-content"
+import { fiscalServicesInquiryContent } from "@/lib/content/fiscal-services-inquiry"
 import {
   FISCAL_SERVICES_SERVICE_SLUG,
   partitionFiscalServicesQuestions,

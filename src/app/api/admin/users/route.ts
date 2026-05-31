@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
 import { listUsers, updateUserRole } from "@/features/users/server/service"
-import { requireRole } from "@/lib/auth-helpers"
-import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api-utils"
+import { requireRole } from "@/lib/auth/helpers"
+import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/api/utils"
 import { z } from "zod"
 
 const updateUserRoleSchema = z.object({

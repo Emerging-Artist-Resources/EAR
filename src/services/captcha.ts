@@ -1,4 +1,4 @@
-import { getServerEnv, getOptionalEnv } from "@/lib/env"
+import { getServerEnv, getOptionalEnv } from "@/lib/config/env"
 
 export const captchaService = {
   async verifyTurnstile(token: string | undefined, secret?: string) {

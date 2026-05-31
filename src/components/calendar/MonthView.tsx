@@ -2,6 +2,7 @@
 
 import { format, isSameMonth, isSameDay } from "date-fns"
 import type { CalendarItem } from "@/hooks/use-calendar"
+import { isPastCalendarDate } from "./calendar-utils"
 import { getEventTypeColor } from "./event-colors"
 
 interface MonthViewProps {
@@ -37,6 +38,7 @@ export function MonthView({
         const dayPerformances = itemsByDate.get(dayKey) || []
         const isToday = isSameDay(day, new Date())
         const isCurrentMonth = isSameMonth(day, currentDate)
+        const isPast = isPastCalendarDate(day)
         return (
           <div
             key={day.toISOString()}
@@ -48,7 +50,7 @@ export function MonthView({
             </div>
             <div className="mt-1 space-y-1">
               {dayPerformances.slice(0, 2).map((performance) => {
-                const colors = getEventTypeColor(performance.type)
+                const colors = getEventTypeColor(performance.type, { muted: isPast })
                 return (
                   <div 
                     key={`${performance.listingId}-${day.toISOString()}`} 

@@ -2,11 +2,17 @@ import { createListingOwnedRepo, listEvents, listCalendarItemsRepo, getEventPubl
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { sendListingEmail } from "@/lib/email/sendListingEmail"
+import {
+  resolveCompanyArtistName,
+  resolveFestivalCompanyArtistName,
+  resolvePieceEventTitle,
+} from "@/lib/email/listing-share-email-model"
 import { sendListingShareTemplatedEmail } from "@/lib/email/sendListingShareEmail"
+import { normalizeSupabaseRelation } from "./admin-utils"
 import { getListingTitle } from "./listing-utils"
 import type { CreateListingInput } from "./repository-types"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { normalizeShareRecipientEmails } from "@/lib/listing-share"
+import { normalizeShareRecipientEmails } from "@/lib/listings/share"
 import { mergeListingMetaWithServerShareSentAt } from "./listing-meta-share"
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
 
@@ -163,6 +169,24 @@ export async function sendAdminListingNotificationEmail(
   })
 }
 
+async function fetchParentPerformanceTitle(
+  supabase: SupabaseClient,
+  parentListingId: string | null | undefined
+): Promise<string | null> {
+  if (!parentListingId) return null
+  const { data, error } = await supabase
+    .from("listings")
+    .select("performance_details (title)")
+    .eq("id", parentListingId)
+    .maybeSingle()
+  if (error || !data) return null
+  const pd = normalizeSupabaseRelation(
+    data.performance_details as { title?: string | null } | { title?: string | null }[] | null
+  )
+  const title = pd?.title?.trim()
+  return title || null
+}
+
 /**
  * After listing approval: notify share recipients once (idempotent via meta.share.sent_at).
  */
@@ -173,7 +197,7 @@ export async function sendListingShareEmailsAfterApproval(listingId: string): Pr
       .from("listings")
       .select(
         `
-        id, type, contact_name, contact_email, meta,
+        id, type, contact_name, contact_email, company, meta,
         performance_details (*),
         audition_details (*),
         creative_details (*),
@@ -229,25 +253,86 @@ export async function sendListingShareEmailsAfterApproval(listingId: string): Pr
       return
     }
 
-    const template =
-      isWorkshopListing || subtype === "ORGANIZER"
-        ? "listing-share-festival"
-        : "listing-share-piece"
+    const useFestivalTemplate = isWorkshopListing || subtype === "ORGANIZER"
     const listingForTitle = listingData as unknown as PublicListingDetail
     const listingTitle = getListingTitle(listingForTitle)
-    const inviterName = listingData.contact_name || "Someone"
-    const inviterEmail = listingData.contact_email || ""
+
+    const pieceDetails = normalizeSupabaseRelation(
+      listingData.piece_details as
+        | {
+            piece_company?: string | null
+            choreographer?: string | null
+            parent_event_name?: string | null
+            parent_listing_id?: string | null
+          }
+        | {
+            piece_company?: string | null
+            choreographer?: string | null
+            parent_event_name?: string | null
+            parent_listing_id?: string | null
+          }[]
+        | null
+    )
+    const perfDetailsForPiece = normalizeSupabaseRelation(
+      listingData.performance_details as { title?: string | null } | { title?: string | null }[] | null
+    )
+
+    let shareContext: { companyArtistName: string; eventTitle: string } | null = null
+    if (useFestivalTemplate) {
+      let organizerName: string | null | undefined = null
+      if (listingData.type === "performance") {
+        const perfForOrg = normalizeSupabaseRelation(
+          listingData.performance_details as
+            | { organizer?: string | null }
+            | { organizer?: string | null }[]
+            | null
+        )
+        organizerName = perfForOrg?.organizer
+      } else if (isWorkshopListing) {
+        const cwdForOrg = normalizeSupabaseRelation(
+          listingData.class_workshop_details as
+            | { organizer?: string | null }
+            | { organizer?: string | null }[]
+            | null
+        )
+        organizerName = cwdForOrg?.organizer
+      }
+      shareContext = {
+        companyArtistName: resolveFestivalCompanyArtistName({
+          organizerName,
+          company: listingData.company,
+          contactName: listingData.contact_name,
+        }),
+        eventTitle: listingTitle,
+      }
+    } else {
+      const parentPerformanceTitle = await fetchParentPerformanceTitle(
+        supabase,
+        pieceDetails?.parent_listing_id
+      )
+      shareContext = {
+        companyArtistName: resolveCompanyArtistName({
+          pieceDetails,
+          contactName: listingData.contact_name,
+        }),
+        eventTitle: resolvePieceEventTitle({
+          pieceDetails,
+          performanceDetails: perfDetailsForPiece,
+          parentPerformanceTitle,
+        }),
+      }
+    }
 
     for (const to of normalized) {
       try {
-        await sendListingShareTemplatedEmail({
-          template,
-          to,
-          listingTitle,
-          listingId,
-          inviterName,
-          inviterEmail,
-        })
+        if (shareContext) {
+          await sendListingShareTemplatedEmail({
+            template: useFestivalTemplate ? "listing-share-festival" : "listing-share-piece",
+            to,
+            companyArtistName: shareContext.companyArtistName,
+            eventTitle: shareContext.eventTitle,
+          })
+        }
       } catch (e) {
         console.error(`[EMAIL] listing share failed for ${to} (listing ${listingId}):`, e)
       }

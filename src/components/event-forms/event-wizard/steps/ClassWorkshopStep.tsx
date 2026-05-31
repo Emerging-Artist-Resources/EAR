@@ -12,12 +12,15 @@ import { FestivalAssociationSection } from "./class-workshop/FestivalAssociation
 import { ClassOccurrencesPicker } from "@/components/forms/blocks/ClassOccurrencesPicker"
 import { ListingWebsiteField } from "@/components/forms/blocks/ListingWebsiteField"
 import { ShareListingSection } from "@/components/event-forms/event-wizard/steps/performance/ShareListingSection"
+import { useSyncArtistTypeFromProfile } from "@/hooks/use-sync-artist-type-from-profile"
 
 interface ClassesWorkshopsStepProps {
   form: UseFormReturn<EventFormData>
 }
 
 export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
+  useSyncArtistTypeFromProfile(form, "artistType")
+
   const classWorkshopType = useWatch({
     control: form.control,
     name: "classWorkshopType",
@@ -126,19 +129,23 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
 
       {isClass && (
         <>
-          <Section title="Basic Info" description="Class (single or multiple dates)">
-            <TextField form={form} name={"title"} label="Class Name" required />
+          <Section title="Basic Info">
+            <TextField form={form} name={"title"} label="Class title" required />
             <TextField
               form={form}
               name={"organizer"}
-              label="Company / Instructor(s)"
+              label="Company or instructor(s)"
               placeholder="Name of the company or individual(s) leading the class."
               required
+            />
+            <ListingWebsiteField
+              form={form}
+              placeholder="https://..."
             />
             <TextAreaField
               form={form}
               name={"description"}
-              label="Class Description"
+              label="Class description"
               required
               rows={4}
             />
@@ -149,19 +156,15 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
               required
               placeholder="e.g., $30, Free, $20–40 sliding scale"
             />
-            <TextField form={form} name={"classWorkshopDuration"} label="Class Duration" required />
             <TextAreaField
               form={form}
               name={"classRegistrationDetails"}
-              label="Registration Link & Instructions"
+              label="Registration link & instructions"
               placeholder="Provide a link and/or sign-up instructions."
               required
               rows={3}
             />
-            <ListingWebsiteField
-              form={form}
-              note="Link to your company or project."
-            />
+            
           </Section>
 
           <Section title="Festival / Workshop Association">
@@ -186,8 +189,8 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
               <ShowtimesList
                 form={form as unknown as UseFormReturn<Record<string, unknown>>}
                 name={"occurrences"}
-                title="Class Dates & Times"
-                note="Add all dates and start times."
+                title="Class date(s) & time(s)"
+                note="Add all dates and times."
                 required
                 rowLabel="Class date"
                 maxTimesPerDate={1}
@@ -201,29 +204,30 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
 
       {isWorkshop && (
         <>
-          <Section title="Basic Info" description="Multi-day workshop">
-            <TextField form={form} name={"title"} label="Workshop Name" required />
-            <TextField form={form} name={"organizer"} label="Hosting Company / Individual(s)" required />
+          <Section title="Basic Info">
+            <TextField form={form} name={"title"} label="Workshop title" required />
+            <TextField form={form} name={"organizer"} label="Hosting company or individual(s)" required />
+            <ListingWebsiteField form={form} placeholder="https://..." />
             <TextAreaField
               form={form}
               name={"description"}
-              label="Short Workshop Description"
+              label="Short workshop description"
               required
               rows={4}
             />
-            <TextField form={form} name={"classWorkshopDuration"} label="Workshop Duration" required />
             <TextField form={form} name={"price"} label="Price" required placeholder="e.g., $30, Free, $20–40 sliding scale" />
-            <TextField
+            <TextAreaField
               form={form}
               name={"classRegistrationDetails"}
-              label="Registration Link"
-              placeholder="https://…"
+              label="Registration link & instructions"
+              placeholder="Provide a link and/or sign-up instructions."
               required
+              rows={3}
             />
-            <ListingWebsiteField form={form} note="Optional" />
+            
           </Section>
 
-          <Section title="Workshop Details">
+          <Section title="Workshop details">
             <TextAreaField
               form={form}
               name={"workshopDetails"}
@@ -234,37 +238,37 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
             <TextAreaField
               form={form}
               name={"classesOffered"}
-              label="Workshop Schedule"
+              label="Workshop schedule"
               placeholder="Provide a list of all classes or sessions included in the workshop, along with the instructors and brief descriptions."
               rows={6}
             />
             <SelectBlock
               form={form}
               name={"dropInClassesAvailable"}
-              label="Drop-in Availability"
+              label="Drop-in availability"
               required
               options={[
-                { label: "No", value: "NO" },
                 { label: "Yes", value: "YES" },
+                { label: "No", value: "NO" },
               ]}
             />
             {dropInClassesAvailable === "YES" && (
               <TextAreaField
                 form={form}
                 name={"dropInClasses"}
-                label="Drop-in Pricing"
+                label="Drop-in pricing"
                 placeholder="Provide details and pricing if applicable."
                 rows={4}
               />
             )}
           </Section>
 
-          <Section title="Schedule">
+          <Section title="Workshop schedule">
             <ShowtimesList
               form={form as unknown as UseFormReturn<Record<string, unknown>>}
               name={"occurrences"}
-              title="Workshop Dates & Times"
-              note="Add all known dates and start times."
+              title="Workshop date(s) & time(s)"
+              note="Add all known dates and times."
               required
               rowLabel="Workshop date"
               maxTimesPerDate={1}

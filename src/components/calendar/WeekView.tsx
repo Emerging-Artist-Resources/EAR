@@ -2,6 +2,7 @@
 
 import { format, isSameDay } from "date-fns"
 import type { CalendarItem } from "@/hooks/use-calendar"
+import { isPastCalendarDate } from "./calendar-utils"
 import { getEventTypeColor } from "./event-colors"
 
 interface WeekViewProps {
@@ -30,6 +31,7 @@ export function WeekView({
           const dayKey = format(day, 'yyyy-MM-dd')
           const dayPerformances = itemsByDate.get(dayKey) || []
           const isToday = isSameDay(day, new Date())
+          const isPast = isPastCalendarDate(day)
           return (
             <div key={day.toISOString()} className={`bg-surface-panel p-2 min-h-[100px] sm:min-h-[140px] ${isToday ? 'bg-secondary' : ''}`}>
               <div className={`font-sans text-xs sm:text-sm font-medium ${isToday ? 'text-primary' : 'text-text-primary'}`}>{format(day, 'EEE d')}</div>
@@ -38,7 +40,7 @@ export function WeekView({
                   <div className="font-sans text-xs text-muted-foreground">No events</div>
                 ) : (
                   dayPerformances.map((performance) => {
-                    const colors = getEventTypeColor(performance.type)
+                    const colors = getEventTypeColor(performance.type, { muted: isPast })
                     return (
                       <div 
                         key={`${performance.listingId}-${day.toISOString()}`} 

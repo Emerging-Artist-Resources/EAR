@@ -7,6 +7,13 @@ import { H2, Text } from "@/components/ui/typography"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
+import { Card, CardContent } from "@/components/ui/card"
+import {
+  AUTH_LINK_CLASS,
+  AUTH_MUTED_TEXT_CLASS,
+  AUTH_PAGE_CARD_CLASS,
+  AUTH_PAGE_SHELL_CLASS,
+} from "@/lib/auth/page-styles"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -39,14 +46,18 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
+    <div className={AUTH_PAGE_SHELL_CLASS}>
       <div className="max-w-md w-full space-y-8">
-        <H2 className="text-center">Reset your password</H2>
-        <Text className="text-center text-gray-600 text-sm">
-          Enter your email and we&apos;ll send you a link to choose a new password.
-        </Text>
+        <div>
+          <H2 className="text-center text-ear-black">Reset your password</H2>
+          <Text className={`mt-2 text-center text-sm ${AUTH_MUTED_TEXT_CLASS}`}>
+            Enter your email and we&apos;ll send you a link to choose a new password.
+          </Text>
+        </div>
 
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+        <Card className={AUTH_PAGE_CARD_CLASS}>
+          <CardContent className="pt-6">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="email" className="sr-only">
               Email
@@ -70,10 +81,12 @@ export default function ForgotPasswordPage() {
             {loading ? "Sending…" : "Send reset link"}
           </Button>
         </form>
+          </CardContent>
+        </Card>
 
         <div className="text-center space-y-2">
           <Text>
-            <Link href="/auth/signin" className="text-primary hover:opacity-80">
+            <Link href="/auth/signin" className={AUTH_LINK_CLASS}>
               Back to sign in
             </Link>
           </Text>

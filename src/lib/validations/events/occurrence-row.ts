@@ -1,4 +1,4 @@
-import { hasCompleteLocation, type LocationFormFields } from "@/lib/location-mode"
+import { hasCompleteLocation, type LocationFormFields } from "@/lib/location/mode"
 
 /**
  * Shared rules for one occurrence / showtime row: location + (optional) time gating

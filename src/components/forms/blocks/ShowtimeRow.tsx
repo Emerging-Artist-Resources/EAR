@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { LocationFieldInstructions } from "./LocationField"
 import { LocationSection } from "./LocationSection"
-import { isOnlineLocationMode } from "@/lib/location-mode"
+import { isOnlineLocationMode } from "@/lib/location/mode"
 import type { LocationConfigFull } from "./DateTime/types"
-import { focusFormFieldNoScroll } from "@/lib/focus-form-field"
+import { focusFormFieldNoScroll } from "@/lib/forms/focus-field"
 
 function getTodayDateString(): string {
   const today = new Date()
@@ -72,7 +72,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
       errorMode,
       labelIndex,
       locationConfig,
-      rowLabel = "Showtime",
+      rowLabel = "Date & Time",
       showLabelIndex = true,
       onRemove,
       canRemove,

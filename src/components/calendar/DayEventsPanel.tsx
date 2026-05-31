@@ -3,8 +3,9 @@
 import { format } from "date-fns"
 import { Modal } from "@/components/ui/modal"
 import type { CalendarItem } from "@/hooks/use-calendar"
+import { isPastCalendarDate } from "./calendar-utils"
 import { getEventTypeColor } from "./event-colors"
-import { formatOccurrenceRangeEST } from "@/lib/datetime-utils"
+import { formatOccurrenceRangeEST } from "@/lib/datetime/utils"
 import { Text } from "@/components/ui/typography"
 
 interface DayEventsPanelProps {
@@ -28,6 +29,8 @@ export function DayEventsPanel({
 }: DayEventsPanelProps) {
   if (!date) return null
 
+  const isPast = isPastCalendarDate(date)
+
   return (
     <Modal
       isOpen={isOpen}
@@ -42,7 +45,7 @@ export function DayEventsPanel({
           </div>
         ) : (
           events.map((event) => {
-            const colors = getEventTypeColor(event.type)
+            const colors = getEventTypeColor(event.type, { muted: isPast })
             return (
               <div
                 key={`${event.listingId}-${event.occurrenceId}`}

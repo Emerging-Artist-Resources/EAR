@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { H3, H4, Text } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback } from "react";
-import { apiGet, apiPost } from "@/lib/fetch-utils";
+import { apiGet, apiPost } from "@/lib/client/fetch-utils";
 import type { MyListing } from "@/features/profile/server/types";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import PerformanceModal from "@/components/performance-modal";
@@ -28,7 +28,7 @@ function listingBadgeLabel(listing: MyListing): string {
   return listing.status;
 }
 
-import { getCalendarListingTypeLabel } from "@/lib/listing-type-labels";
+import { getCalendarListingTypeLabel } from "@/lib/listings/type-labels";
 
 function getTypeLabel(type: string): string {
   return getCalendarListingTypeLabel(type);
@@ -63,17 +63,29 @@ function ListingsLoadingSkeleton() {
 
 interface MyListingsProps {
   onListingClick?: (listingId: string) => void;
+  /** Hide the in-component title and submit link (use page header instead). */
+  hideHeader?: boolean;
+  onEditListing?: (listingId: string) => void;
+  /** When set, refetches listings when this value changes (e.g. after modal success). */
+  refreshKey?: number;
 }
 
-export const MyListings = ({ onListingClick }: MyListingsProps) => {
+export const MyListings = ({
+  onListingClick,
+  hideHeader = false,
+  onEditListing,
+  refreshKey: refreshKeyProp,
+}: MyListingsProps) => {
   const [listings, setListings] = useState<MyListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalListingId, setModalListingId] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [internalRefreshKey, setInternalRefreshKey] = useState(0);
+  const refreshKey = refreshKeyProp ?? internalRefreshKey;
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -96,6 +108,7 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
       } finally {
         if (isMounted) {
           setLoading(false);
+          setHasLoadedOnce(true);
         }
       }
     };
@@ -107,15 +120,25 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
     };
   }, [page, refreshKey]);
 
+  useEffect(() => {
+    if (refreshKeyProp !== undefined) {
+      setPage(0);
+    }
+  }, [refreshKeyProp]);
+
   const openCreateModal = useCallback(() => {
     setModalListingId(null);
     setIsModalOpen(true);
   }, []);
 
   const openEditModal = useCallback((listingId: string) => {
+    if (onEditListing) {
+      onEditListing(listingId);
+      return;
+    }
     setModalListingId(listingId);
     setIsModalOpen(true);
-  }, []);
+  }, [onEditListing]);
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
@@ -125,8 +148,10 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
   const handleModalSuccess = useCallback(() => {
     closeModal();
     setPage(0);
-    setRefreshKey((k) => k + 1);
-  }, [closeModal]);
+    if (refreshKeyProp === undefined) {
+      setInternalRefreshKey((k) => k + 1);
+    }
+  }, [closeModal, refreshKeyProp]);
 
   const handlePayNow = useCallback(async (listingId: string) => {
     if (loadingId === listingId) return;
@@ -158,16 +183,23 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
     return false;
   }, []);
 
+  const showInitialSkeleton = loading && !hasLoadedOnce;
+  const isRefetching = loading && hasLoadedOnce;
+
+  const usesExternalModal = hideHeader && onEditListing != null;
+
   return (
     <>
-      <div className="flex items-center justify-between mb-3">
-        <H3>My Listings</H3>
-        <Button variant="link" onClick={openCreateModal} className="text-ear-baby-blue hover:text-ear-baby-blue/80">
-          + Submit New Listing
-        </Button>
-      </div>
+      {!hideHeader && (
+        <div className="mb-3 flex items-center justify-between">
+          <H3>My Listings</H3>
+          <Button variant="link" onClick={openCreateModal} className="text-ear-baby-blue hover:text-ear-baby-blue/80">
+            + Submit New Listing
+          </Button>
+        </div>
+      )}
       <Card border="dashed" padding="md" className="space-y-3">
-        {loading ? (
+        {showInitialSkeleton ? (
           <ListingsLoadingSkeleton />
         ) : error ? (
           <div className="text-center text-red-600">
@@ -178,7 +210,10 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
             <Text className="text-sm">You haven't submitted any listings yet.</Text>
           </div>
         ) : (
-          <>
+          <div
+            className={isRefetching ? "space-y-3 opacity-60 pointer-events-none" : "space-y-3"}
+            aria-busy={isRefetching}
+          >
             {listings.map((listing) => {
               const date = new Date(listing.submitted_at);
               const formattedDate = date.toLocaleDateString("en-US", {
@@ -208,7 +243,7 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
                         <Button
                           variant="link"
                           onClick={() => openEditModal(listing.id)}
-                          className="text-ear-baby-blue hover:text-ear-baby-blue/80"
+                          className="text-ear-orange hover:text-ear-orange/80"
                         >
                           Edit
                         </Button>
@@ -243,15 +278,17 @@ export const MyListings = ({ onListingClick }: MyListingsProps) => {
                 onPageChange={setPage}
               />
             )}
-          </>
+          </div>
         )}
       </Card>
-      <PerformanceModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        onSuccess={handleModalSuccess}
-        listingId={modalListingId}
-      />
+      {!usesExternalModal && (
+        <PerformanceModal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          onSuccess={handleModalSuccess}
+          listingId={modalListingId}
+        />
+      )}
     </>
   );
 };

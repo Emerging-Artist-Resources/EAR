@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getListingForOwnerRepo } from "@/features/events/server/read"
-import { getAuthenticatedUser } from "@/lib/auth-helpers"
+import { getAuthenticatedUser } from "@/lib/auth/helpers"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { handleApiError } from "@/lib/api-utils"
+import { handleApiError } from "@/lib/api/utils"
 
 export async function GET(
   _req: NextRequest,

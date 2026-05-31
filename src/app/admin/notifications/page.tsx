@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { H2, H3, Text } from "@/components/ui/typography"
-import { getNotificationTypeColor, formatDateTime } from "@/lib/constants"
+import { getNotificationTypeColor, formatDateTime } from "@/lib/config/constants"
 import { AdminLayout } from "@/components/admin/shared/AdminLayout"
 import { AdminLoadingState } from "@/components/admin/shared/AdminLoadingState"
 

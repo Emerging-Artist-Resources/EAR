@@ -3,7 +3,7 @@ import { listCalendarItems, sendListingConfirmationEmail, sendAdminListingNotifi
 import { z } from "zod"
 import { createEventOwnedRepo, CreateListingInput } from "@/features/events/server/repository"
 import { eventPayloadSchema } from "@/features/events/server/event-payload-schema"
-import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamArray, validateRequestBody } from "@/lib/api-utils"
+import { handleApiError, createSuccessResponse, getQueryParam, getQueryParamArray, validateRequestBody } from "@/lib/api/utils"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { getAuthenticatedUser } from "@/lib/auth-helpers"
 import { checkRateLimit } from "@/services/rate-limit"

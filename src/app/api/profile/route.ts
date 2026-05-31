@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProfileRepo, updateProfileRepo } from "@/features/profile/server/repository";
-import { getAuthenticatedUser } from "@/lib/auth-helpers";
+import { getAuthenticatedUser } from "@/lib/auth/helpers";
 import {
   handleApiError,
   createSuccessResponse,
   validateRequestBody,
   createErrorResponse,
   ErrorCodes,
-} from "@/lib/api-utils";
+} from "@/lib/api/utils";
 import { updateProfileSchema } from "@/lib/validations/profile";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 

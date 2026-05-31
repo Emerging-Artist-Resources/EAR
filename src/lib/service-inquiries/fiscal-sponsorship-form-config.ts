@@ -1,4 +1,4 @@
-import { fiscalSponsorshipInquiryContent } from "@/lib/fiscal-sponsorship-inquiry-content"
+import { fiscalSponsorshipInquiryContent } from "@/lib/content/fiscal-sponsorship-inquiry"
 import { FISCAL_SPONSORSHIP_SERVICE_SLUG } from "@/lib/service-inquiries/fiscal-sponsorship-options"
 
 export { FISCAL_SPONSORSHIP_SERVICE_SLUG }

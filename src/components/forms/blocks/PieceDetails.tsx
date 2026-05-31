@@ -9,7 +9,7 @@ import { PieceOccurrencesPicker } from "@/components/forms/blocks/PieceOccurrenc
 import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
 import { PieceExistingImageThumbnails } from "@/components/forms/blocks/PieceExistingImageThumbnails"
 import { Button } from "@/components/ui/button"
-import { piecePromoFilesFieldName, type OrganizerProgramPiecePhoto } from "@/lib/organizer-program-pieces"
+import { piecePromoFilesFieldName, type OrganizerProgramPiecePhoto } from "@/lib/listings/organizer-program-pieces"
 
 interface PieceDetailsProps {
   form: UseFormReturn<EventFormData>
@@ -85,14 +85,14 @@ export function PieceDetails({
         <TextField
           form={form}
           name={`${prefix}_company` as Path<EventFormData>}
-          label="Company / Artist name"
+          label="Company or artist name"
           required
         />
 
         <TextField
           form={form}
           name={`${prefix}_companyWebsite` as Path<EventFormData>}
-          label="Website"
+          label="Company or artist website"
           type="url"
           placeholder="https://..."
         />
@@ -100,7 +100,7 @@ export function PieceDetails({
         <TextField
           form={form}
           name={`${prefix}_title` as Path<EventFormData>}
-          label="Piece title"
+          label="Title of work"
           required
         />
 
@@ -108,15 +108,15 @@ export function PieceDetails({
           <TextField
             form={form}
             name={`${prefix}_choreographer` as Path<EventFormData>}
-            label="Choreographer / Creator (if different from company / artist name)"
+            label="Choreographer or creator (if different from company or artist name)"
           />
         ) : null}
 
         <TextAreaField
           form={form}
           name={`${prefix}_description` as Path<EventFormData>}
-          label="Piece description"
-          note="Provide a brief description of the work being presented."
+          label="Description of work"
+          placeholder="Provide a brief description of the work being presented."
           required
           rows={4}
         />

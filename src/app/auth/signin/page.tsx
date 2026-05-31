@@ -11,7 +11,13 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
 import { Card, CardContent } from "@/components/ui/card"
-import { ROUTES } from "@/lib/constants"
+import { ROUTES } from "@/lib/config/constants"
+import {
+  AUTH_LINK_CLASS,
+  AUTH_MUTED_TEXT_CLASS,
+  AUTH_PAGE_CARD_CLASS,
+  AUTH_PAGE_SHELL_CLASS,
+} from "@/lib/auth/page-styles"
 
 function sanitizeNextParam(raw: string | null): string {
   const next = raw ?? ROUTES.HOME
@@ -91,19 +97,21 @@ function SignInContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
+    <div className={AUTH_PAGE_SHELL_CLASS}>
       <div className="max-w-md w-full space-y-8">
         <div>
-          <H1 className="mt-6 text-center">Welcome back to EAR</H1>
-          <Text className="text-center mt-2 text-ear-baby-blue">Sign in to your account to continue</Text>
+          <H1 className="mt-6 text-center text-ear-black">Welcome back to EAR</H1>
+          <Text className={`mt-2 text-center ${AUTH_MUTED_TEXT_CLASS}`}>
+            Sign in to your account to continue
+          </Text>
         </div>
 
-        <Card className="bg-ear-off-white">
+        <Card className={AUTH_PAGE_CARD_CLASS}>
           <CardContent className="pt-6">
             <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm flex flex-col gap-3">
             <div>
-              <Text className="block text-sm font-medium text-gray-700 pb-1">Email</Text>
+              <Text className="block pb-1 text-sm font-medium text-ear-black">Email</Text>
               <Input
                 id="email"
                 name="email"
@@ -117,7 +125,7 @@ function SignInContent() {
             </div>
 
             <div className="relative pt-2">
-              <Text className="block text-sm font-medium text-gray-700 pb-1">Password</Text>
+              <Text className="block pb-1 text-sm font-medium text-ear-black">Password</Text>
               <div className="relative">
                 <Input
                   id="password"
@@ -133,7 +141,7 @@ function SignInContent() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ear-black/50 hover:text-ear-black focus:outline-none"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -143,7 +151,7 @@ function SignInContent() {
           </div>
 
           <div className="text-right text-sm">
-            <Link href="/auth/forgot-password" className="text-primary hover:opacity-80">
+            <Link href="/auth/forgot-password" className={AUTH_LINK_CLASS}>
               Forgot password?
             </Link>
           </div>
@@ -168,7 +176,7 @@ function SignInContent() {
 
               <div className="text-center">
                 <Text>
-                  <Link href={ROUTES.SIGN_UP} className="text-primary hover:opacity-80">
+                  <Link href={ROUTES.SIGN_UP} className={AUTH_LINK_CLASS}>
                     Don&apos;t have an account? Sign up
                   </Link>
                 </Text>
@@ -182,7 +190,7 @@ function SignInContent() {
             type="button"
             onClick={() => router.push(ROUTES.HOME)}
             variant="outline"
-            className="w-full bg-ear-baby-blue text-ear-black hover:bg-ear-baby-blue/90 justify-center border border-primary"
+            className="w-full justify-center border-ear-black/20 bg-white text-ear-black hover:bg-ear-black/5"
           >
             Continue as guest
           </Button>
@@ -196,8 +204,8 @@ export default function SignIn() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <p className="text-gray-600">Loading…</p>
+        <div className={AUTH_PAGE_SHELL_CLASS}>
+          <p className={AUTH_MUTED_TEXT_CLASS}>Loading…</p>
         </div>
       }
     >

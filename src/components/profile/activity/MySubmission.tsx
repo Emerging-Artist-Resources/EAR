@@ -4,7 +4,7 @@ import { H3, Text } from "@/components/ui/typography";
 import { SubmissionCard, type SubmissionItem } from "./SubmissionCard";
 import PerformanceModal from "@/components/performance-modal";
 import { useState, useEffect } from "react";
-import { apiGet } from "@/lib/fetch-utils";
+import { apiGet } from "@/lib/client/fetch-utils";
 
 interface EligibilitySubmission {
   id: string;

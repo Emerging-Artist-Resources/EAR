@@ -4,7 +4,7 @@ import { useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Text, H2 } from "@/components/ui/typography"
-import { apiPost } from "@/lib/fetch-utils"
+import { apiPost } from "@/lib/client/fetch-utils"
 import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnelTrustHeader"
 
 function PaymentCancelContent() {

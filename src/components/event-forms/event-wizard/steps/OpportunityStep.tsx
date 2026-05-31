@@ -11,7 +11,10 @@ import { useEffect } from "react"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { SimpleFeeDisplay } from "@/components/event-forms/event-wizard/shared/SimpleFeeDisplay"
 import { ListingWebsiteField } from "@/components/forms/blocks/ListingWebsiteField"
-import { OPPORTUNITY_APPLICATION_FEE_LISTING_POLICY_TOOLTIP } from "@/lib/fees/listing-fee-policy"
+import {
+  OPPORTUNITY_APPLICATION_FEE_LISTING_POLICY_TOOLTIP,
+  getPlatformListingFeeContext,
+} from "@/lib/fees/listing-fee-policy"
 
 interface OpportunityStepProps {
   form: UseFormReturn<EventFormData>
@@ -20,6 +23,10 @@ interface OpportunityStepProps {
 export function OpportunityStep({ form }: OpportunityStepProps) {
   const fee = form.watch("fee") as string | undefined
   const isFee = fee === "FEE"
+  const listingFeeContext = getPlatformListingFeeContext({
+    listingType: "creative",
+    listingFeeOption: isFee ? "PAY_FEE" : null,
+  })
 
   useEffect(() => {
     if (!isFee) {
@@ -124,11 +131,11 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
         />
       </Section>
 
-      {isFee && (
+      {listingFeeContext.feeApplies && listingFeeContext.amountUsd != null && (
         <SimpleFeeDisplay
           form={form}
           artistTypeFieldName={"artistType" as Path<EventFormData>}
-          feeVariant="creative"
+          amountUsd={listingFeeContext.amountUsd}
         />
       )}
     </>

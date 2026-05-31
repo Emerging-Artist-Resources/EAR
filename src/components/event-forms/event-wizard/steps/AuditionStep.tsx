@@ -12,7 +12,10 @@ import { SelectBlock } from "@/components/forms/blocks/Select"
 import { ListingWebsiteField } from "@/components/forms/blocks/ListingWebsiteField"
 import { Button } from "@/components/ui/button"
 import { useCallback, useEffect } from "react"
-import { AUDITION_FEE_LISTING_POLICY_TOOLTIP } from "@/lib/fees/listing-fee-policy"
+import {
+  AUDITION_FEE_LISTING_POLICY_TOOLTIP,
+  getPlatformListingFeeContext,
+} from "@/lib/fees/listing-fee-policy"
 
 interface AuditionStepProps {
   form: UseFormReturn<EventFormData>
@@ -28,6 +31,10 @@ export function AuditionStep({ form }: AuditionStepProps) {
   // const e = errors as FieldErrors<EventFormData>
   const fee = form.watch("fee") as string | undefined
   const isFee = fee === "FEE"
+  const listingFeeContext = getPlatformListingFeeContext({
+    listingType: "audition",
+    listingFeeOption: isFee ? "PAY_FEE" : null,
+  })
 
   const auditionOccurrences = useWatch({
     control: form.control,
@@ -73,6 +80,12 @@ export function AuditionStep({ form }: AuditionStepProps) {
     <>
       <Section title="Audition Details">
         <TextField form={form} name={"title"} label="Audition Name" required />
+        <TextField
+          form={form}
+          name={"host"}
+          label="Hosting Organization/Individual(s)"
+          required
+        />
         <ListingWebsiteField form={form} />
         <TextAreaField
           form={form}
@@ -183,11 +196,11 @@ export function AuditionStep({ form }: AuditionStepProps) {
         />
       </Section>
 
-      {isFee && (
+      {listingFeeContext.feeApplies && listingFeeContext.amountUsd != null && (
         <SimpleFeeDisplay
           form={form}
           artistTypeFieldName={"artistType" as Path<EventFormData>}
-          feeVariant="audition"
+          amountUsd={listingFeeContext.amountUsd}
         />
       )}
     </>

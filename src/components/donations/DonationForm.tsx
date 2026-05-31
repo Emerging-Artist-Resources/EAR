@@ -17,7 +17,7 @@ import { Alert } from "@/components/ui/alert"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/contexts/ToastContext"
-import { apiPost, apiGet } from "@/lib/fetch-utils"
+import { apiPost, apiGet } from "@/lib/client/fetch-utils"
 import { H2, Text } from "@/components/ui/typography"
 import { Card } from "@/components/ui/card"
 import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnelTrustHeader"
@@ -301,7 +301,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
           {lockedRecipient ? `Support ${recipientLabel}` : "Make a Donation"}
         </H2>
         {lockedRecipient || effectiveOrgHero ? (
-          <Text className="text-gray-600">Your gift is tax-deductible to the extent permitted by law.</Text>
+          <Text className="text-gray-600">Emerging Artist Resources x mignolo is a 501(c)(3) tax-exempt organization. <br />Your gift is tax-deductible to the extent permitted by law.</Text>
         ) : (
           <Text className="text-gray-600">
             Your support helps us continue providing resources for emerging artists.

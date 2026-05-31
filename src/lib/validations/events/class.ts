@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { hasCompleteLocation, locationValidationIssue } from "@/lib/location-mode"
+import { hasCompleteLocation, locationValidationIssue } from "@/lib/location/mode"
 import { flexibleUrlOptionalSchema } from "../flexible-url"
 import {
   occurrenceSchema,
@@ -109,9 +109,8 @@ export const classFields = z
     shortDescription: z.string().optional(), // Legacy
 
     /**
-     * Class/Workshop listing fee fields (shared field names)
-     * Established: platform listing fee (automatic).
-     * Emerging: waived server-side; these fields stay null for EMERGING profiles.
+     * Class/Workshop listing fee fields (shared field names).
+     * Class listings are currently free; server clears these via listing fee policy.
      */
     artistType: z.enum(["ESTABLISHED", "EMERGING"]).optional(),
     listingFeeOption: z.enum(["PAY_FEE", "PROVIDE", "EXPLAIN"]).optional(),
@@ -147,15 +146,6 @@ export const classFields = z
         code: "custom",
         path: ["description"],
         message: "Description is required",
-      })
-    }
-
-    const duration = data.classWorkshopDuration?.trim() ?? ""
-    if (!duration) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["classWorkshopDuration"],
-        message: "Duration is required",
       })
     }
 

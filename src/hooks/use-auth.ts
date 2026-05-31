@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
-import { extractUserName, fetchUserRoleWithFallback } from "@/lib/authz"
+import { extractUserName, fetchUserRoleWithFallback } from "@/lib/auth/authz"
 
 export interface AuthState {
   user: User | null

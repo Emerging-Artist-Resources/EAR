@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react"
-import { apiGet } from "@/lib/fetch-utils"
+import { apiGet } from "@/lib/client/fetch-utils"
 
 export type CalendarItem = {
   occurrenceId: string

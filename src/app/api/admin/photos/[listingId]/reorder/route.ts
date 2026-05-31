@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
-import { getAuthenticatedUser, hasRole } from "@/lib/auth-helpers"
+import { getAuthenticatedUser, hasRole } from "@/lib/auth/helpers"
 
 const bodySchema = z.object({
   photoIds: z.array(z.string().uuid()).min(1),
