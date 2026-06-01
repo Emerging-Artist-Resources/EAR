@@ -4,7 +4,7 @@ export function WhoWeAreSection() {
       id="who-we-are"
       className="bg-ear-off-white px-4 py-8 sm:px-8 md:py-12 lg:px-12"
     >
-      <h2 className="font-header text-center text-4xl font-bold tracking-tight text-ear-black md:text-5xl lg:text-6xl">
+      <h2 className="font-title text-center text-4xl font-bold tracking-tight text-ear-black md:text-5xl lg:text-6xl">
         WHO WE ARE
       </h2>
       <div className="mx-auto mt-12 grid max-w-6xl gap-12 lg:grid-cols-2 lg:items-start lg:gap-16">
