@@ -4,7 +4,7 @@ export const fiscalServicesHero = {
 
 export const FISCAL_SERVICES_INQUIRY_HREF = "/services/fiscal-services/inquiry" as const
 
-export const FISCAL_SERVICES_HERO_IMAGE = "/images/fiscal-service/hero-image.JPG" as const
+export const FISCAL_SERVICES_HERO_IMAGE = "/images/fiscal-service/hero-image.jpg" as const
 
 export const FISCAL_SERVICES_FINAL_IMAGE = "/images/fiscal-service/final-image.JPG" as const
 
