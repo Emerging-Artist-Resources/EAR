@@ -27,7 +27,7 @@ export const fiscalServiceSections: FiscalServiceBlock[] = [
     title: "Hourly Fiscal Services",
     subheading:
       "Receive guidance on selecting and implementing financial management tools.",
-    servicesIntro: "Services are customizable to include:",
+    servicesIntro: "Services include:",
     services: [
       "Accounting software setup and configuration",
       "Payroll processor selection and setup",
@@ -69,7 +69,7 @@ export const fiscalServiceSections: FiscalServiceBlock[] = [
     id: "bookkeeping",
     title: "Bookkeeping | Coming Soon",
     subheading: "Professional bookkeeping services tailored to artists, fiscally sponsored projects, and small nonprofit organizations.",
-    servicesIntro: "Services Include:",
+    servicesIntro: "Services are customizable to include:",
     services: [
       "Establishment of a Chart of Accounts (ongoing modifications)",
       "Posting of receipts and disbursements from bank account",
