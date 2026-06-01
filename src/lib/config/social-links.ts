@@ -37,6 +37,8 @@ const SOCIAL_LINK_LABELS: Record<SocialPlatform, string> = {
 
 const DEFAULT_SOCIAL_URLS: Partial<Record<SocialPlatform, string>> = {
   instagram: "https://www.instagram.com/emergingartistresources",
+  facebook: "https://www.facebook.com/profile.php?id=61573304949829",
+  tiktok: "https://www.tiktok.com/@emerging.artist.r?",
   linkedin: "https://www.linkedin.com/company/emerging-artist-resources",
   youtube: "https://www.youtube.com/@emergingartistresources",
 }
@@ -57,4 +59,10 @@ export function getSocialLinks(platforms: SocialPlatform[] = ALL_PLATFORMS): Soc
   })
 }
 
-export const FOOTER_SOCIAL_PLATFORMS: SocialPlatform[] = ["instagram", "linkedin", "youtube"]
+export const FOOTER_SOCIAL_PLATFORMS: SocialPlatform[] = [
+  "instagram",
+  "facebook",
+  "tiktok",
+  "linkedin",
+  "youtube",
+]
