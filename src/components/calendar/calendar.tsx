@@ -124,7 +124,6 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
     return deadlines
       .filter(it => new Date(String(it.start)).getTime() >= now)
       .sort((a: { start: string | Date }, b: { start: string | Date }) => new Date(String(a.start)).getTime() - new Date(String(b.start)).getTime())
-      .slice(0, 5)
   }, [deadlines])
 
   const handleItemClick = useCallback((listingId: string) => {
@@ -218,7 +217,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
         </div>
       </Card>
 
-      <div className="grid lg:grid-cols-4 gap-6">
+      <div className="grid lg:grid-cols-4 gap-6 lg:items-start">
         <div className="lg:col-span-3">
           <Card className="p-2 sm:p-3 shadow-md bg-surface-panel-alt">
             {view === 'month' && (
@@ -254,8 +253,9 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
         <div className="lg:col-span-1">
           <Card className="p-6 shadow-md">
             <H3 className="text-primary mb-4">Upcoming Deadlines</H3>
-            
-            <div className="space-y-3">
+
+            {/* ~5 rows (title + date + padding + gap), then scroll */}
+            <div className="max-h-[34rem] space-y-3 overflow-y-auto overscroll-y-contain pr-1 md:max-h-[30rem] sm:max-h-[15rem]">
               {upcomingDeadlines.map((it) => {
                 const typeColor = getEventTypeColor(it.type)
                 return (
