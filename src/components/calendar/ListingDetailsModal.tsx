@@ -258,7 +258,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
           <div className="flex h-full min-h-[calc(90vh-9rem)] items-center justify-center py-12">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mb-4"></div>
-              <Text className="text-primary-foreground">Loading listing details...</Text>
+              <Text className="text-ear-black/70">Loading listing details...</Text>
             </div>
           </div>
         )}

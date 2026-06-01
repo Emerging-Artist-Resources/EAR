@@ -188,7 +188,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
     return (
       <Card
         ref={ref}
-        className="space-y-4 rounded-2xl border border-border-default bg-surface-panel p-4 shadow-sm"
+        className="space-y-4 rounded-2xl border border-border-default bg-surface-panel p-4 shadow-sm max-sm:overflow-x-clip"
       >
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h4 className="text-sm font-semibold text-text-primary">
@@ -209,8 +209,10 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
           Row 1: date | (time) | place only — address row is isolated from row 2 so
           opening instructions does not move date / time / location.
         */}
-        <div className={`grid w-full min-w-0 max-w-full grid-cols-1 items-start gap-x-4 gap-y-3 ${gridColsClass}`}>
-            <div className="w-full min-w-0 max-w-full sm:max-w-[12.5rem] md:max-w-none">
+        <div
+          className={`grid w-full min-w-0 max-w-full grid-cols-1 items-start gap-x-4 gap-y-3 max-sm:overflow-x-clip ${gridColsClass}`}
+        >
+            <div className="grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[12.5rem] md:max-w-none">
               <label htmlFor={dateInputId} className="mb-1.5 block text-sm font-medium text-text-primary">
                 Date <span className="text-error-600">*</span>
               </label>
@@ -219,14 +221,14 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                 type="date"
                 min={getTodayDateString()}
                 error={showDateErr}
-                className="w-full max-w-full"
+                className="w-full min-w-0 max-w-full"
                 {...register(dateFieldName as any)}
               />
               {dateErrMsg && <p className="mt-1 text-xs text-red-600">{dateErrMsg}</p>}
             </div>
 
             {hasTime && (
-              <div className="w-full min-w-0 max-w-full sm:max-w-[9.5rem] md:max-w-none">
+              <div className="grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[9.5rem] md:max-w-none">
                 <label className="mb-1.5 block text-sm font-medium text-text-primary" htmlFor={`${dateInputId}-time-0`}>
                   Time <span className="text-error-600">*</span>
                 </label>
@@ -234,7 +236,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                   id={`${dateInputId}-time-0`}
                   type="time"
                   error={showFirstTimeErr}
-                  className="w-full max-w-full"
+                  className="w-full min-w-0 max-w-full"
                   {...register(firstTimeFieldName as any)}
                 />
                 {firstTimeErrMsg && <p className="mt-1 text-xs text-red-600">{firstTimeErrMsg}</p>}
@@ -242,7 +244,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
             )}
 
             {hasTime && showEndTime && (
-              <div className="w-full min-w-0 max-w-full sm:max-w-[9.5rem] md:max-w-none">
+              <div className="grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[9.5rem] md:max-w-none">
                 <label
                   className="mb-1.5 block text-sm font-medium text-text-primary"
                   htmlFor={`${dateInputId}-end-0`}
@@ -253,7 +255,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                   id={`${dateInputId}-end-0`}
                   type="time"
                   error={showFirstEndErr}
-                  className="w-full max-w-full"
+                  className="w-full min-w-0 max-w-full"
                   {...register(firstEndTimeFieldName as any)}
                 />
                 {firstEndErrMsg && <p className="mt-1 text-xs text-red-600">{firstEndErrMsg}</p>}
@@ -322,7 +324,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
 
               return (
                 <div key={timeField.id} className="flex w-full min-w-0 max-w-full flex-wrap items-end gap-2 overflow-x-hidden sm:gap-3">
-                  <div className="w-full min-w-0 max-w-full sm:max-w-[9.5rem] sm:flex-1">
+                  <div className="grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[9.5rem] sm:flex-1">
                     <label
                       className="mb-1.5 block text-sm font-medium text-text-primary"
                       htmlFor={`${dateInputId}-time-${timeIndex}`}
@@ -333,13 +335,13 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                       id={`${dateInputId}-time-${timeIndex}`}
                       type="time"
                       error={showTimeErr}
-                      className="w-full max-w-full"
+                      className="w-full min-w-0 max-w-full"
                       {...register(timeFieldName as any)}
                     />
                     {timeErrMsgLocal && <p className="mt-1 text-xs text-red-600">{timeErrMsgLocal}</p>}
                   </div>
                   {showEndTime && (
-                    <div className="w-full min-w-0 max-w-full sm:max-w-[9.5rem] sm:flex-1">
+                    <div className="grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[9.5rem] sm:flex-1">
                       <label
                         className="mb-1.5 block text-sm font-medium text-text-primary"
                         htmlFor={`${dateInputId}-end-${timeIndex}`}
@@ -350,7 +352,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                         id={`${dateInputId}-end-${timeIndex}`}
                         type="time"
                         error={showEndErr}
-                        className="w-full max-w-full"
+                        className="w-full min-w-0 max-w-full"
                         {...register(endTimeFieldName as any)}
                       />
                       {endErrMsgLocal && <p className="mt-1 text-xs text-red-600">{endErrMsgLocal}</p>}
