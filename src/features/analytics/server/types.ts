@@ -31,6 +31,12 @@ export type MailchimpHealth = {
   failed: number
 }
 
+export type ServiceInquiryServiceDetail = {
+  slug: string
+  label: string
+  count: number
+}
+
 export type AdminAnalytics = {
   totalUsers: number
   newUsersThisPeriod: number
@@ -50,14 +56,21 @@ export type AdminAnalytics = {
   listingFeesCents: number
   listingFeesInPeriodCents: number
   totalSavedListings: number
+  totalServiceInquiries: number
+  serviceInquiriesThisPeriod: number
+  pendingServiceInquiries: number
+  serviceInquiryByService: ServiceInquiryServiceDetail[]
   newsletter: NewsletterStats
   mailchimp: MailchimpHealth
   listingTypeBreakdown: ListingTypeBreakdownItem[]
   submissionsOverTime: TimeSeriesPoint[]
   donationsOverTime: TimeSeriesPoint[]
+  usersOverTime: TimeSeriesPoint[]
+  serviceInquiriesOverTime: TimeSeriesPoint[]
   trends: {
     users: AnalyticsTrend | null
     newListings: AnalyticsTrend | null
     donations: AnalyticsTrend | null
+    serviceInquiries: AnalyticsTrend | null
   }
 }

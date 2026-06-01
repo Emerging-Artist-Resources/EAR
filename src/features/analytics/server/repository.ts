@@ -8,6 +8,7 @@ import {
   buildChartBuckets,
   type ChartBucket,
 } from "./chart-buckets"
+import { getServiceInquiryByServiceRepo } from "./service-inquiry-details"
 import type { AnalyticsRange } from "./types"
 
 async function countProfiles(options?: { createdFrom?: string; createdBefore?: string }): Promise<number> {
@@ -108,6 +109,39 @@ async function countSavedListings(): Promise<number> {
   return count ?? 0
 }
 
+async function countServiceInquiries(options?: {
+  createdFrom?: string
+  createdBefore?: string
+  status?: string
+}): Promise<number> {
+  const svc = getSupabaseServiceClient()
+  let query = svc.from("service_inquiries").select("id", { count: "exact", head: true })
+  if (options?.createdFrom) query = query.gte("created_at", options.createdFrom)
+  if (options?.createdBefore) query = query.lt("created_at", options.createdBefore)
+  if (options?.status) query = query.eq("status", options.status)
+  const { count, error } = await query
+  if (error) throw error
+  return count ?? 0
+}
+
+async function fetchServiceInquiryTimestamps(options: {
+  createdFrom?: string
+  createdBefore?: string
+}): Promise<string[]> {
+  const svc = getSupabaseServiceClient()
+  let query = svc
+    .from("service_inquiries")
+    .select("created_at")
+    .order("created_at", { ascending: true })
+
+  if (options.createdFrom) query = query.gte("created_at", options.createdFrom)
+  if (options.createdBefore) query = query.lt("created_at", options.createdBefore)
+
+  const { data, error } = await query
+  if (error) throw error
+  return (data ?? []).map((r) => r.created_at as string)
+}
+
 async function getNewsletterStatsRepo(): Promise<{
   totalSubscribers: number
   earNewsletter: number
@@ -201,6 +235,24 @@ async function getMedianReviewTimeHoursRepo(options?: {
   return medianHours(hours)
 }
 
+async function fetchAccountCreatedTimestamps(options: {
+  createdFrom?: string
+  createdBefore?: string
+}): Promise<string[]> {
+  const svc = getSupabaseServiceClient()
+  let query = svc
+    .from("profiles")
+    .select("created_at")
+    .order("created_at", { ascending: true })
+
+  if (options.createdFrom) query = query.gte("created_at", options.createdFrom)
+  if (options.createdBefore) query = query.lt("created_at", options.createdBefore)
+
+  const { data, error } = await query
+  if (error) throw error
+  return (data ?? []).map((r) => r.created_at as string)
+}
+
 async function fetchSubmissionTimestamps(options: {
   submittedFrom?: string
   submittedBefore?: string
@@ -260,10 +312,14 @@ function buildTimeSeriesForRange(
   periodStart: Date | null,
   periodEnd: Date,
   submissionTimestamps: string[],
+  accountCreatedTimestamps: string[],
+  serviceInquiryTimestamps: string[],
   paidDonations: DonationRow[],
 ): {
   submissionsOverTime: { label: string; count: number }[]
   donationsOverTime: { label: string; count: number; amountCents: number }[]
+  usersOverTime: { label: string; count: number }[]
+  serviceInquiriesOverTime: { label: string; count: number }[]
 } {
   const buckets: ChartBucket[] = buildChartBuckets(range, periodStart, periodEnd)
   const chartFrom =
@@ -271,12 +327,20 @@ function buildTimeSeriesForRange(
   const filteredSubmissions = chartFrom
     ? submissionTimestamps.filter((ts) => ts >= chartFrom)
     : submissionTimestamps
+  const filteredAccounts = chartFrom
+    ? accountCreatedTimestamps.filter((ts) => ts >= chartFrom)
+    : accountCreatedTimestamps
+  const filteredInquiries = chartFrom
+    ? serviceInquiryTimestamps.filter((ts) => ts >= chartFrom)
+    : serviceInquiryTimestamps
   const filteredDonations = chartFrom
     ? paidDonations.filter((d) => d.created_at >= chartFrom)
     : paidDonations
 
   return {
     submissionsOverTime: aggregateIntoBuckets(filteredSubmissions, buckets),
+    usersOverTime: aggregateIntoBuckets(filteredAccounts, buckets),
+    serviceInquiriesOverTime: aggregateIntoBuckets(filteredInquiries, buckets),
     donationsOverTime: aggregateAmountsIntoBuckets(
       filteredDonations.map((d) => ({ at: d.created_at, cents: giftCents(d) })),
       buckets,
@@ -324,6 +388,13 @@ export async function getAdminAnalyticsCountsRepo(params: {
     mailchimp,
     medianReviewTimeHours,
     submissionTimestamps,
+    accountCreatedTimestamps,
+    serviceInquiryTimestamps,
+    totalServiceInquiries,
+    serviceInquiriesThisPeriod,
+    serviceInquiriesPreviousPeriod,
+    pendingServiceInquiries,
+    serviceInquiryByService,
     chartDonations,
   ] = await Promise.all([
     countProfiles(),
@@ -382,19 +453,44 @@ export async function getAdminAnalyticsCountsRepo(params: {
       submittedFrom: chartSubmittedFrom,
       submittedBefore: periodEnd,
     }),
+    fetchAccountCreatedTimestamps({
+      createdFrom: chartSubmittedFrom,
+      createdBefore: periodEnd,
+    }),
+    fetchServiceInquiryTimestamps({
+      createdFrom: chartSubmittedFrom,
+      createdBefore: periodEnd,
+    }),
+    countServiceInquiries(),
+    periodStart
+      ? countServiceInquiries({ createdFrom: periodStart, createdBefore: periodEnd })
+      : Promise.resolve(0),
+    previousPeriodStart && previousPeriodEnd
+      ? countServiceInquiries({
+          createdFrom: previousPeriodStart,
+          createdBefore: previousPeriodEnd,
+        })
+      : Promise.resolve(0),
+    countServiceInquiries({ status: "pending" }),
+    getServiceInquiryByServiceRepo(
+      periodStart ? { createdFrom: periodStart, createdBefore: periodEnd } : undefined,
+    ),
     fetchPaidDonations({
       createdFrom: chartSubmittedFrom,
       createdBefore: periodEnd,
     }),
   ])
 
-  const { submissionsOverTime, donationsOverTime } = buildTimeSeriesForRange(
-    range,
-    periodStartDate,
-    periodEndDate,
-    submissionTimestamps,
-    chartDonations,
-  )
+  const { submissionsOverTime, donationsOverTime, usersOverTime, serviceInquiriesOverTime } =
+    buildTimeSeriesForRange(
+      range,
+      periodStartDate,
+      periodEndDate,
+      submissionTimestamps,
+      accountCreatedTimestamps,
+      serviceInquiryTimestamps,
+      chartDonations,
+    )
 
   return {
     totalUsers,
@@ -418,11 +514,18 @@ export async function getAdminAnalyticsCountsRepo(params: {
     listingFeesCents,
     listingFeesInPeriodCents,
     totalSavedListings,
+    totalServiceInquiries,
+    serviceInquiriesThisPeriod,
+    serviceInquiriesPreviousPeriod,
+    pendingServiceInquiries,
+    serviceInquiryByService,
     newsletter,
     mailchimp,
     medianReviewTimeHours,
     listingTypeBreakdown,
     submissionsOverTime,
     donationsOverTime,
+    usersOverTime,
+    serviceInquiriesOverTime,
   }
 }

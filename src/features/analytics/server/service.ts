@@ -60,11 +60,17 @@ export async function getAdminAnalytics(rangeParam?: string): Promise<AdminAnaly
     listingFeesCents: counts.listingFeesCents,
     listingFeesInPeriodCents: counts.listingFeesInPeriodCents,
     totalSavedListings: counts.totalSavedListings,
+    totalServiceInquiries: counts.totalServiceInquiries,
+    serviceInquiriesThisPeriod: counts.serviceInquiriesThisPeriod,
+    pendingServiceInquiries: counts.pendingServiceInquiries,
+    serviceInquiryByService: counts.serviceInquiryByService,
     newsletter: counts.newsletter,
     mailchimp: counts.mailchimp,
     listingTypeBreakdown: counts.listingTypeBreakdown,
     submissionsOverTime: counts.submissionsOverTime,
     donationsOverTime: counts.donationsOverTime,
+    usersOverTime: counts.usersOverTime,
+    serviceInquiriesOverTime: counts.serviceInquiriesOverTime,
     trends: {
       users: hasComparison
         ? calcTrend(counts.newUsersThisPeriod, counts.newUsersPreviousPeriod)
@@ -74,6 +80,9 @@ export async function getAdminAnalytics(rangeParam?: string): Promise<AdminAnaly
         : null,
       donations: hasComparison
         ? calcTrend(donationsTrendMetric, donationsTrendPrevious)
+        : null,
+      serviceInquiries: hasComparison
+        ? calcTrend(counts.serviceInquiriesThisPeriod, counts.serviceInquiriesPreviousPeriod)
         : null,
     },
   }
