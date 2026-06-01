@@ -17,9 +17,9 @@ const CALENDAR_COLOR_BY_TYPE = {
     border: "var(--ear-dark-sage)",
   },
   creative: {
-    bg: "var(--ear-baby-blue)",
-    text: "var(--ear-black)",
-    border: "var(--ear-baby-blue)",
+    bg: "var(--ear-dark-blue)",
+    text: "var(--ear-off-white)",
+    border: "var(--ear-dark-blue)",
   },
   default: {
     bg: "var(--surface-interactive)",
@@ -91,7 +91,7 @@ export const getFilterTypeColor = (type: string) => {
       return {
         accent: CALENDAR_COLOR_BY_TYPE.creative.border,
         bg: CALENDAR_COLOR_BY_TYPE.creative.bg,
-        text: "var(--ear-dark-blue)",
+        text: "var(--ear-off-white)",
         outlineText: "var(--ear-dark-blue)",
       }
     default:

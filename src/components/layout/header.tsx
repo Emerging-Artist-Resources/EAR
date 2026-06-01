@@ -55,14 +55,14 @@ export const Header: React.FC<HeaderProps> = ({
   }
 
   return (
-    <nav className={"shrink-0 bg-ear-black"}>
+    <nav className={"sticky top-0 z-50 shrink-0 bg-ear-black"}>
       <div className="max-w-7xl mx-auto w-full">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link
               href="/"
               aria-label="Emerging Artist Resources — Home"
-              className="flex shrink-0 items-center"
+              className="flex shrink-0 items-center pl-2 lg:pl-0"
             >
               <Image
                 src="/EAR-Logos/EAR LOGOS-12.png"

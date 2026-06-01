@@ -194,22 +194,22 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
       <Card className="mb-4 p-4 shadow-md">
         <div className="flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="inline-flex rounded-md gap-1 border-none shadow-none" role="group">
-              <Button onClick={() => setView('month')} variant={view === 'month' ? 'primary' : 'outline'} size="default" className="rounded-l-md">Month</Button>
-              <Button onClick={() => setView('week')} variant={view === 'week' ? 'primary' : 'outline'} size="default" className="rounded-l-md">Week</Button>
-              <Button onClick={() => setView('day')} variant={view === 'day' ? 'primary' : 'outline'} size="default" className="rounded-l-md">Day</Button>
-            </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2 order-1 sm:order-2">
               <Button variant="ghost" size="icon" onClick={() => navigate('prev')} aria-label="Previous">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
               </Button>
-              <H2 className="text-xl sm:text-2xl">
+              <H2 className="text-xl sm:text-2xl text-center">
                 {formattedDateTitle}
               </H2>
               <Button variant="ghost" size="icon" onClick={() => navigate('next')} aria-label="Next">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </Button>
               <Button variant="outline" size="sm" onClick={handleTodayClick}>Today</Button>
+            </div>
+            <div className="inline-flex rounded-md gap-1 border-none shadow-none w-fit mx-auto order-2 sm:order-1 sm:mx-0" role="group">
+              <Button onClick={() => setView('month')} variant={view === 'month' ? 'primary' : 'outline'} size="default" className="rounded-l-md">Month</Button>
+              <Button onClick={() => setView('week')} variant={view === 'week' ? 'primary' : 'outline'} size="default" className="rounded-l-md">Week</Button>
+              <Button onClick={() => setView('day')} variant={view === 'day' ? 'primary' : 'outline'} size="default" className="rounded-l-md">Day</Button>
             </div>
           </div>
           <div className="pt-3 border-t border-border-default">

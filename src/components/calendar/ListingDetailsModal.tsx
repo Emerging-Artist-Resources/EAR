@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, type CSSProperties } from "react"
 import { Modal } from "@/components/ui/modal"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -49,6 +49,7 @@ import { WorkshopOrganizerDetailContent } from "./WorkshopOrganizerDetailContent
 import { ClassDetailContent } from "./ClassDetailContent"
 import { AuditionDetailContent } from "./AuditionDetailContent"
 import { OpportunityDetailContent } from "./OpportunityDetailContent"
+import { getFilterTypeColor } from "./event-colors"
 
 function getTypeLabel(type: string): string {
   return getCalendarListingTypeLabel(type)
@@ -214,6 +215,28 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
 
   const showOrganizerPieceOverlay = selectedOrganizerPieceId !== null
 
+  const listingDetailThemeStyle: CSSProperties | undefined = useMemo(() => {
+    if (!listing) return undefined
+
+    const colors = getFilterTypeColor(listing.type.toUpperCase())
+
+    return {
+      // `Modal` header uses `bg-primary` (primary-600), spinners use `border-primary-600`.
+      ["--primary" as any]: colors.accent,
+      ["--primary-500" as any]: colors.accent,
+      ["--primary-600" as any]: colors.accent,
+      ["--primary-700" as any]: colors.accent,
+
+      // Badge `variant="primary"` and left accent bars use `brand-primary`.
+      ["--brand-primary" as any]: colors.accent,
+      ["--brand-primary-hover" as any]: colors.accent,
+
+      // Loader text + header title should match the filter chip text color.
+      ["--primary-foreground" as any]: colors.text,
+      ["--text-inverse" as any]: colors.text,
+    }
+  }, [listing])
+
   return (
     <>
     <Modal
@@ -222,6 +245,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       title={title}
       size="lg"
       headerClassName="bg-primary"
+      chromeStyle={listingDetailThemeStyle}
       titleClassName={
         isPerformanceRedesign
           ? "font-title text-2xl font-bold leading-none tracking-wide md:text-3xl"
@@ -234,7 +258,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
           <div className="flex h-full min-h-[calc(90vh-9rem)] items-center justify-center py-12">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mb-4"></div>
-              <Text className="text-ear-black">Loading listing details...</Text>
+              <Text className="text-primary-foreground">Loading listing details...</Text>
             </div>
           </div>
         )}

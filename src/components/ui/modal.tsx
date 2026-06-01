@@ -19,6 +19,11 @@ export interface ModalProps {
   contentClassName?: string
   /** Extra classes on the full-screen overlay (e.g. higher z-index for nested modals). */
   overlayClassName?: string
+  /**
+   * CSS vars to apply to the modal "chrome" layer (overlay root), allowing per-type
+   * theming of header background/spinner colors without changing every className.
+   */
+  chromeStyle?: React.CSSProperties
 }
 
 const sizeClasses = {
@@ -40,6 +45,7 @@ export const Modal: React.FC<ModalProps> = ({
   titleClassName,
   contentClassName,
   overlayClassName,
+  chromeStyle,
 }) => {
   const bodyRef = useRef<HTMLDivElement>(null)
   const focusSentinelRef = useRef<HTMLDivElement>(null)
@@ -60,9 +66,10 @@ export const Modal: React.FC<ModalProps> = ({
   return (
     <div
       className={cn(
-        "modal-chrome fixed inset-0 bg-ear-black/70 backdrop-blur-[1px] flex items-start justify-center p-4 z-[9999] overflow-hidden",
+        "modal-chrome fixed inset-0 bg-ear-black/70 backdrop-blur-[1px] flex items-start justify-center p-2 sm:p-4 z-[9999] overflow-hidden",
         overlayClassName,
       )}
+      style={chromeStyle}
       onClick={handleOverlayClick}
     >
       <div

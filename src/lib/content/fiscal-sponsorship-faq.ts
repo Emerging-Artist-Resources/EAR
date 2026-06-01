@@ -18,7 +18,7 @@ export const fiscalSponsorshipFaqPage = {
   title: "Fiscal Sponsorship FAQ",
 } as const
 
-export const FISCAL_SPONSORSHIP_FAQ_APPLY_IMAGE = "/images/faq/faq-final.jpg" as const
+export const FISCAL_SPONSORSHIP_FAQ_APPLY_IMAGE = "/images/faq/faq-final-v2.jpg" as const
 
 export const fiscalSponsorshipFaqApply = {
   title: "Apply to Fiscal Sponsorship Here",

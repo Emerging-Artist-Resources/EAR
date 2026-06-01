@@ -196,7 +196,7 @@ export function ClassDetailContent({
 
       {hasDisplayText(notes) && (
         <section className="space-y-3">
-          <H3 className="text-brand-primary">Additional Information</H3>
+          <H3 className="text-ear-black">Additional Information</H3>
           <ListingBodyText text={notes} />
         </section>
       )}

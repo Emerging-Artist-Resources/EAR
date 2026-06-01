@@ -16,13 +16,13 @@ type FiscalSponsorshipFaqApplySectionProps = {
 
 function ApplyImage({ src, alt }: { src: string; alt: string }) {
   return (
-    <div className="relative min-h-[14rem] w-full bg-secondary-50 sm:min-h-[20rem] lg:min-h-[28rem]">
+    <div className="relative aspect-[16/9] w-full bg-secondary-50 lg:aspect-auto lg:min-h-[28rem] lg:h-full">
       <Image
         src={src}
         alt={alt}
         fill
         quality={MARKETING_IMAGE_QUALITY}
-        className="object-contain object-center"
+        className="object-cover object-center"
         sizes={DOCUMENTATION_SERVICE_IMAGE_SIZES}
       />
     </div>

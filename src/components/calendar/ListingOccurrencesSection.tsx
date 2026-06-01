@@ -148,7 +148,7 @@ export function ListingOccurrencesSection({
               return (
                 <DetailAccentPanel
                   key={o.id}
-                  className={cn("min-w-0 max-w-full space-y-1", !isPerformance && "border-primary-300")}
+                  className={cn("min-w-0 max-w-full space-y-1")}
                 >
                   <div className="mb-1 min-w-0 max-w-full font-header text-xl font-semibold text-text-primary [overflow-wrap:anywhere]">
                    {formatOccurrenceRangeEST(o.starts_at_utc, o.ends_at_utc)}

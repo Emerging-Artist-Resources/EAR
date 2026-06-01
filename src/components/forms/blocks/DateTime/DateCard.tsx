@@ -171,7 +171,7 @@ export function DateCard<T extends FieldValues>({
             const canRemove = timeIndex > 0
 
             return (
-              <div key={timeField.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+              <div key={timeField.id} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700">
                     {timeIndex === 0 ? "Time *" : "Additional time *"}
@@ -192,7 +192,7 @@ export function DateCard<T extends FieldValues>({
                   <button
                     type="button"
                     onClick={() => handleRemoveTime(timeIndex)}
-                    className="w-full rounded border border-gray-300 px-2 py-2 text-xs hover:bg-gray-50"
+                    className="w-full rounded border border-gray-300 px-2 py-2 text-xs hover:bg-gray-50 sm:w-auto"
                   >
                     Remove
                   </button>

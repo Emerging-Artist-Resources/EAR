@@ -22,7 +22,7 @@ export const serviceOverviewItems: ServiceOverviewItem[] = [
     iconAlt: "Fiscal services",
   },
   {
-    title: "Fiscal Sponsorship",
+    title: "Fiscal\nSponsorship",
     description:
       "Operate under our 501(c)(3) status to apply for institutional grants and accept tax-deductible donations without incorporating your own nonprofit.",
     href: "/services/fiscal-sponsorship",
@@ -30,7 +30,7 @@ export const serviceOverviewItems: ServiceOverviewItem[] = [
     iconAlt: "Fiscal sponsorship",
   },
   {
-    title: "Photography & Videography",
+    title: "Photography &\nVideography",
     description:
       "Professional documentation for performances, rehearsals, and creative work—so you can share your process and preserve your projects with clarity.",
     href: "/services/photography-videography",

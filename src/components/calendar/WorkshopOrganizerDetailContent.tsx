@@ -200,7 +200,7 @@ export function WorkshopOrganizerDetailContent({
 
       {hasFeaturedClasses && (
         <section className="space-y-3">
-          <H3 className="text-brand-primary">Featured Classes</H3>
+          <H3 className="text-ear-black">Featured Classes</H3>
           <HorizontalScrollCards
             cardsPerView={3}
             onCardClick={(index) => {
@@ -242,7 +242,7 @@ export function WorkshopOrganizerDetailContent({
 
       {hasDisplayText(notes) && (
         <section className="space-y-3">
-          <H3 className="text-brand-primary">Additional Information</H3>
+          <H3 className="text-ear-black">Additional Information</H3>
           <ListingBodyText text={notes} />
         </section>
       )}

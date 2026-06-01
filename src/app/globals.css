@@ -378,7 +378,7 @@ body {
   --brand-primary-hover: #333333;
 }
 
-/* Modals always use brand red accents, even when opened from calendar-chrome. */
+/* Modals default to brand red accents, even when opened from calendar-chrome. */
 .modal-chrome {
   --primary: var(--ear-dark-red);
   --primary-foreground: var(--ear-off-white);
@@ -387,6 +387,13 @@ body {
   --primary-700: #43150a;
   --brand-primary: var(--ear-dark-red);
   --brand-primary-hover: #43150a;
+}
+
+/* Keep Google Places input visually consistent with app inputs across themes. */
+.ear-place-autocomplete {
+  width: 100%;
+  /* Keep Google Places UI from switching to its own dark skin. */
+  color-scheme: light;
 }
 
 .shadow-custom {

@@ -135,7 +135,7 @@ export function DetailSectionCard({
 }) {
   return (
     <section className={cn("space-y-3 border-b border-border-default pb-6", className)}>
-      <H3 className="text-brand-primary">{title}</H3>
+      <H3 className="text-ear-black">{title}</H3>
       <div className="min-w-0 max-w-full overflow-hidden space-y-4 rounded-md border border-border-default bg-surface-panel p-4">
         {children}
       </div>

@@ -233,7 +233,7 @@ export function PerformanceOrganizerDetailContent({
 
       {hasFeaturedWorks && (
         <section className="space-y-3">
-          <H3 className="text-brand-primary">Featured Works</H3>
+          <H3 className="text-ear-black">Featured Works</H3>
           <HorizontalScrollCards
             cardsPerView={3}
             onCardClick={(index) => {
@@ -309,7 +309,7 @@ export function PerformanceOrganizerDetailContent({
 
       {hasDisplayText(notes) && (
         <section className="space-y-3">
-          <H3 className="text-brand-primary">Additional Information</H3>
+          <H3 className="text-ear-black">Additional Information</H3>
           <ListingBodyText text={notes} />
         </section>
       )}

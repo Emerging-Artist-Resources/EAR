@@ -38,7 +38,7 @@ export function FilterBar({ selectedTypes, onChangeEventType }: FilterBarProps) 
   return (
     <div className="mb-1">
       <div className="bg-surface-panel p-3 rounded-md border border-border-default">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
           <Button
             size="sm"
             className="rounded-full"
