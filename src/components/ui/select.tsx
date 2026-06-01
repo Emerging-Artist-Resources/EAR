@@ -12,7 +12,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         <select
           className={cn(
             // basically shadcn Input base styles
-            "flex h-10 w-full rounded-md border bg-card px-3 py-2 text-sm text-card-foreground ring-offset-card",
+            "flex h-10 w-full rounded-md border bg-card px-3 py-2 text-base text-card-foreground ring-offset-card md:text-sm",
             "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             "disabled:cursor-not-allowed disabled:opacity-50",
             // select-specific

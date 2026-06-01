@@ -171,8 +171,11 @@ export function DateCard<T extends FieldValues>({
             const canRemove = timeIndex > 0
 
             return (
-              <div key={timeField.id} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-                <div>
+              <div
+                key={timeField.id}
+                className="grid w-full min-w-0 grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_auto]"
+              >
+                <div className="w-full min-w-0">
                   <label className="mb-1 block text-sm font-medium text-gray-700">
                     {timeIndex === 0 ? "Time *" : "Additional time *"}
                   </label>

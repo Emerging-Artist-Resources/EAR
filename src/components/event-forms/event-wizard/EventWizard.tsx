@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useMemo, useEffect, useLayoutEffect, useRef } from "react"
 import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
-import { useWatch } from "react-hook-form"
 import type { Resolver } from "react-hook-form"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
 import { Button } from "@/components/ui/button"
@@ -179,28 +178,22 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
     shouldFocusError: false, // prevents scroll-to-first-error / focus jumps
   })
 
-  const perfType = useWatch({ control: form.control, name: "type" })
-  const performanceFormat = useWatch({ control: form.control, name: "eventType" })
-  const classWorkshopType = useWatch({ control: form.control, name: "classWorkshopType" })
-
-  const scrollResetKey =
-    step === 2
-      ? `${step}:${eventType}:${perfType}:${performanceFormat}:${classWorkshopType}`
-      : `${step}:${eventType}`
+  const scrollResetKey = `${step}`
 
   // Runs after child layout effects (e.g. ShowtimesList row seed) so scroll stays at top.
   useLayoutEffect(() => {
     resetModalFormView(wizardRootRef.current, wizardFocusSentinelRef.current)
   }, [scrollResetKey])
 
-  // Google Places mounts asynchronously and can refocus after layout; reset once it settles.
+  // Google Places mounts asynchronously when entering step 2 and can refocus after layout.
+  // Keep this tied to step transitions only so in-step field changes never snap the modal.
   useEffect(() => {
     if (step !== 2) return
     const id = window.setTimeout(() => {
       resetModalFormView(wizardRootRef.current, wizardFocusSentinelRef.current)
     }, 200)
     return () => window.clearTimeout(id)
-  }, [scrollResetKey, step])
+  }, [step])
 
   // Hook must be called unconditionally - use PERFORMANCE as default
   // Must be called after form initialization

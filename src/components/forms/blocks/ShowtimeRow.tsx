@@ -321,7 +321,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
               const endErrMsgLocal = showEndErr ? getErrorMessage(form, endTimeFieldName) : undefined
 
               return (
-                <div key={timeField.id} className="flex flex-wrap items-end gap-2 sm:gap-3">
+                <div key={timeField.id} className="flex w-full min-w-0 flex-wrap items-end gap-2 sm:gap-3">
                   <div className="w-full min-w-0 sm:max-w-[9.5rem] sm:flex-1">
                     <label
                       className="mb-1.5 block text-sm font-medium text-text-primary"

@@ -176,7 +176,7 @@ export function SelectBlock<T extends Record<string, unknown>>({
                         {...form.register(finalOtherName as unknown as never)}
                         placeholder=""
                         disabled={!selected}
-                        className={`flex-1 bg-transparent outline-none border-0 border-b text-sm ${
+                        className={`flex-1 bg-transparent outline-none border-0 border-b text-base md:text-sm ${
                           selected ? "border-border-default focus:border-primary" : "border-border-default"
                         } ${selected ? "focus:ring-0" : "cursor-not-allowed opacity-70"}`}
                       />
