@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { CircleHelp } from "lucide-react"
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -14,6 +14,7 @@ type FormFieldTooltipProps = {
 /** Accessible info trigger: hover/focus shows `text` in a Radix tooltip. */
 export function FormFieldTooltip({ text, className }: FormFieldTooltipProps) {
   const [open, setOpen] = useState(false)
+  const isTouchTapRef = useRef(false)
 
   return (
     <Tooltip open={open} onOpenChange={setOpen}>
@@ -27,8 +28,11 @@ export function FormFieldTooltip({ text, className }: FormFieldTooltipProps) {
           aria-label={text}
           aria-expanded={open}
           onPointerDown={(event) => {
-            if (event.pointerType !== "touch") return
-            // Radix tooltips are hover/focus-first; add explicit touch toggle for mobile UX.
+            isTouchTapRef.current = event.pointerType === "touch"
+          }}
+          onClick={(event) => {
+            if (!isTouchTapRef.current) return
+            // Explicit tap-to-toggle on mobile: tap once opens, tap again closes.
             event.preventDefault()
             setOpen((prev) => !prev)
           }}

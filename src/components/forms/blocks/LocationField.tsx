@@ -164,46 +164,7 @@ export function LocationField<T extends Record<string, unknown>>({
   const containerRef = useRef<HTMLDivElement | null>(null)
   const elementRef = useRef<HTMLElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
-  const scrollRootRef = useRef<HTMLElement | null>(null)
-  const savedWindowScrollYRef = useRef(0)
-  const savedScrollRootTopRef = useRef(0)
   const [apiError, setApiError] = useState<string | null>(null)
-
-  const findScrollRoot = (start: HTMLElement | null): HTMLElement | null => {
-    let el: HTMLElement | null = start
-    while (el && el !== document.body) {
-      const { overflowY } = window.getComputedStyle(el)
-      if (overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay") {
-        return el
-      }
-      el = el.parentElement
-    }
-    return null
-  }
-
-  const snapshotScrollPositions = () => {
-    savedWindowScrollYRef.current = window.scrollY
-    const root = findScrollRoot(containerRef.current)
-    scrollRootRef.current = root
-    savedScrollRootTopRef.current = root?.scrollTop ?? 0
-  }
-
-  const restoreScrollPositions = () => {
-    const root = scrollRootRef.current
-    const savedWindowY = savedWindowScrollYRef.current
-    const savedRootTop = savedScrollRootTopRef.current
-
-    const apply = () => {
-      window.scrollTo({ top: savedWindowY, left: 0, behavior: "auto" })
-      if (root) {
-        root.scrollTop = savedRootTop
-      }
-    }
-
-    // Mobile browsers can apply the jump asynchronously; run twice.
-    apply()
-    requestAnimationFrame(apply)
-  }
 
   // Watch the address field to update the Google Places element when form values change externally
   const currentAddress = form.watch(addressName) as string | undefined
@@ -262,23 +223,6 @@ export function LocationField<T extends Record<string, unknown>>({
         containerRef.current.appendChild(el)
         elementRef.current = el
 
-        // Places can steal focus when its element mounts; avoid scrolling the modal to it.
-        const releasePlacesFocus = () => {
-          const active = document.activeElement
-          if (active instanceof HTMLElement && containerRef.current?.contains(active)) {
-            active.blur()
-          }
-        }
-        queueMicrotask(releasePlacesFocus)
-        requestAnimationFrame(releasePlacesFocus)
-
-        const captureScrollBeforePlacesInteraction = () => {
-          snapshotScrollPositions()
-        }
-
-        el.addEventListener("focusin", captureScrollBeforePlacesInteraction)
-        el.addEventListener("pointerdown", captureScrollBeforePlacesInteraction)
-
         const onPlaceSelect = async (evt: any) => {
           const { placePrediction } = evt?.detail ?? evt ?? {}
           
@@ -336,21 +280,6 @@ export function LocationField<T extends Record<string, unknown>>({
               if (latName) form.setValue(latName, Number(lat) as any, { shouldDirty: true })
               if (lngName) form.setValue(lngName, Number(lng) as any, { shouldDirty: true })
             }
-
-            const closePlacesOverlay = () => {
-              const active = document.activeElement
-              if (active instanceof HTMLElement && containerRef.current?.contains(active)) {
-                active.blur()
-              }
-            }
-
-            // Close Google Places UI first to avoid detached overlay placement,
-            // then restore scroll position if mobile shifted the viewport.
-            closePlacesOverlay()
-            requestAnimationFrame(() => {
-              restoreScrollPositions()
-              requestAnimationFrame(closePlacesOverlay)
-            })
           } catch (e) {
             console.error("LocationField place select error:", e)
           }
@@ -359,8 +288,6 @@ export function LocationField<T extends Record<string, unknown>>({
         el.addEventListener("gmp-select", onPlaceSelect)
 
         return () => {
-          el.removeEventListener("focusin", captureScrollBeforePlacesInteraction)
-          el.removeEventListener("pointerdown", captureScrollBeforePlacesInteraction)
           el.removeEventListener("gmp-select", onPlaceSelect)
         }
       } catch (e) {
