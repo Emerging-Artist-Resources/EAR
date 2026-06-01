@@ -29,7 +29,7 @@ export function fiscalServicesQuestionNote(questionText: string): string | undef
   }
 
   if (key === normalizeQuestionText(FISCAL_SERVICES_HOURLY_QUESTION)) {
-    return "Select the hourly bookkeeping and reporting services you need."
+    return "Select the hourly fiscal guidance and tooling services you need."
   }
 
   return undefined

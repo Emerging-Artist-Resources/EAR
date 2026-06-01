@@ -24,8 +24,8 @@ const baseQuestions: ServiceInquiryQuestionRow[] = [
     order_index: 4,
     options: [
       {
-        label: "Establishment of a Chart of Accounts (ongoing modifications)",
-        value: "Establishment of a Chart of Accounts (ongoing modifications)",
+        label: "Accounting software setup and configuration",
+        value: "Accounting software setup and configuration",
         order_index: 1,
         is_other: false,
       },
