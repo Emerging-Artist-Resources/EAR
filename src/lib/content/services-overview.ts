@@ -14,12 +14,12 @@ export type ServiceOverviewItem = {
 
 export const serviceOverviewItems: ServiceOverviewItem[] = [
   {
-    title: "Photography & Videography",
+    title: "Fiscal\nServices",
     description:
-      "Professional documentation for performances, rehearsals, and creative work—so you can share your process and preserve your projects with clarity.",
-    href: "/services/photography-videography",
-    iconSrc: "/icons/photography-videography-icon.png",
-    iconAlt: "Photography and videography",
+      "Bookkeeping, fiscal mentorship, and hourly support to help artists and small collectives build clear, sustainable financial systems.",
+    href: "/services/fiscal-services",
+    iconSrc: "/icons/admin-icon.png",
+    iconAlt: "Fiscal services",
   },
   {
     title: "Fiscal Sponsorship",
@@ -30,11 +30,11 @@ export const serviceOverviewItems: ServiceOverviewItem[] = [
     iconAlt: "Fiscal sponsorship",
   },
   {
-    title: "Fiscal Services",
+    title: "Photography & Videography",
     description:
-      "Bookkeeping, fiscal mentorship, and hourly support to help artists and small collectives build clear, sustainable financial systems.",
-    href: "/services/fiscal-services",
-    iconSrc: "/icons/admin-icon.png",
-    iconAlt: "Fiscal services",
+      "Professional documentation for performances, rehearsals, and creative work—so you can share your process and preserve your projects with clarity.",
+    href: "/services/photography-videography",
+    iconSrc: "/icons/photography-videography-icon.png",
+    iconAlt: "Photography and videography",
   },
 ]

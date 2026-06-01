@@ -28,7 +28,7 @@ export function ServiceOverviewCard({
           className="h-auto max-h-full w-auto max-w-full object-contain"
         />
       </div>
-      <h2 className="font-header text-center mb-4 text-2xl font-bold uppercase tracking-wide text-ear-black md:text-3xl">
+      <h2 className="font-header mb-4 whitespace-pre-line text-center text-2xl font-bold uppercase tracking-wide text-ear-black md:text-3xl">
         {title}
       </h2>
       <Text className="mb-8 flex-1 text-ear-black">{description}</Text>

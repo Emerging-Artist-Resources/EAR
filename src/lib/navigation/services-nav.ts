@@ -12,11 +12,11 @@ export type ServicesNavItem = {
 }
 
 export const servicesNavItems: ServicesNavItem[] = [
-  { label: "Photography & Videography", href: "/services/photography-videography" },
+  { label: "Fiscal Services", href: "/services/fiscal-services" },
   {
     label: "Fiscal Sponsorship",
     href: "/services/fiscal-sponsorship",
     subItems: [{ label: "FAQ", href: FISCAL_SPONSORSHIP_FAQ_HREF }],
   },
-  { label: "Fiscal Services", href: "/services/fiscal-services" },
+  { label: "Photography & Videography", href: "/services/photography-videography" },
 ]
