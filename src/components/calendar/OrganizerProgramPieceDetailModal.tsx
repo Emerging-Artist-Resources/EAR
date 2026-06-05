@@ -71,12 +71,6 @@ export function OrganizerProgramPieceDetailModal({
         sortedPhotos={sortedPhotos}
         showAllDates={showAllDates}
         onShowAllDatesChange={setShowAllDates}
-        isAuthed={false}
-        isSaved={false}
-        saving={false}
-        savingLoading={false}
-        saveError={null}
-        onToggleSave={() => {}}
         onBackToParent={onClosePiece}
         parentListingId={parentListing?.id ?? null}
         backToParentLabel="Back to Performance"

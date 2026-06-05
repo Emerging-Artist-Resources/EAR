@@ -2,6 +2,7 @@
 
 import { UseFormReturn, useFormState } from "react-hook-form"
 import { Select } from "@/components/ui/select"
+import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
 
 type Option = {
   value: string
@@ -13,6 +14,8 @@ interface DropdownProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>
   name: string
   label?: string
+  /** Hover tooltip beside the label (info icon). */
+  labelTooltip?: string
   options: Option[]
   placeholder?: string
   required?: boolean
@@ -25,6 +28,7 @@ export function Dropdown<T extends Record<string, unknown>>({
   form,
   name,
   label,
+  labelTooltip,
   options,
   placeholder,
   required = false,
@@ -44,9 +48,14 @@ export function Dropdown<T extends Record<string, unknown>>({
   return (
     <div className={className}>
       {label && (
-        <label className="mb-1 block text-sm font-medium text-gray-700">
-          {label} {required && showAsterisk && <span className="text-error-600">*</span>}
-        </label>
+        <div className="mb-1">
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            <label className="text-sm font-medium text-gray-700">
+              {label} {required && showAsterisk && <span className="text-error-600">*</span>}
+            </label>
+            {labelTooltip?.trim() ? <FormFieldTooltip text={labelTooltip.trim()} /> : null}
+          </div>
+        </div>
       )}
       <Select
         {...form.register(name as unknown as never)}

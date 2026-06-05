@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 
 export const headerDropdownMenuClass =
@@ -9,15 +9,20 @@ export const headerDropdownMenuClass =
 export const headerDropdownMenuItemClass =
   "h-auto w-full justify-start rounded-none px-4 py-2 text-sm font-normal"
 
+type HeaderDropdownTriggerProps = {
+  isOpen: boolean
+  toggle: () => void
+}
+
 interface HeaderHoverDropdownProps {
-  trigger: ReactNode
+  trigger: ReactNode | ((props: HeaderDropdownTriggerProps) => ReactNode)
   children: ReactNode
   align?: "left" | "center" | "right"
   menuClassName?: string
   className?: string
 }
 
-/** Opens on hover; clicking the trigger collapses the menu (does not stay open). */
+/** Opens on click; closes on outside click, Escape, or menu item selection. */
 export function HeaderHoverDropdown({
   trigger,
   children,
@@ -25,32 +30,54 @@ export function HeaderHoverDropdown({
   menuClassName,
   className,
 }: HeaderHoverDropdownProps) {
-  const [isHovered, setIsHovered] = useState(false)
-  const [suppressOpen, setSuppressOpen] = useState(false)
-  const isOpen = isHovered && !suppressOpen
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const toggle = () => setIsOpen((prev) => !prev)
+  const close = () => setIsOpen(false)
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        close()
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        close()
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown)
+    document.addEventListener("keydown", handleKeyDown)
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown)
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isOpen])
+
+  const triggerNode =
+    typeof trigger === "function" ? trigger({ isOpen, toggle }) : trigger
 
   return (
     <div
-      className={cn("group relative inline-flex flex-col items-center", className)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false)
-        setSuppressOpen(false)
-      }}
+      ref={containerRef}
+      className={cn("relative inline-flex flex-col items-center", className)}
     >
-      <div
-        className="relative inline-flex flex-col items-center"
-        onClick={() => setSuppressOpen(true)}
-      >
-        {trigger}
-      </div>
+      {triggerNode}
 
       <div
         className={cn(
           "absolute top-full z-50 pt-1",
           align === "center" && "left-1/2 min-w-[12rem] -translate-x-1/2",
           align === "right" && "right-0 min-w-[10rem]",
-          align === "left" && "left-0 min-w-[12rem]"
+          align === "left" && "left-0 min-w-[12rem]",
         )}
       >
         <div
@@ -58,9 +85,10 @@ export function HeaderHoverDropdown({
             headerDropdownMenuClass,
             "transition-[opacity,visibility] duration-150",
             isOpen ? "visible opacity-100" : "invisible opacity-0",
-            menuClassName
+            menuClassName,
           )}
           role="menu"
+          onClick={close}
         >
           {children}
         </div>

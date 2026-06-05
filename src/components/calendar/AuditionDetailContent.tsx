@@ -2,8 +2,8 @@
 
 import { useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
-import { FavoriteButton } from "@/components/ui/favorite-button"
-import { H3, Text } from "@/components/ui/typography"
+import { SaveListingFavoriteButton } from "@/components/shared/SaveListingFavoriteButton"
+import { H3 } from "@/components/ui/typography"
 import { formatOccurrenceRangeEST } from "@/lib/datetime/utils"
 import { stripAdminNotes } from "@/lib/listings/admin-notes"
 import { hasDisplayText } from "@/lib/listings/display"
@@ -33,12 +33,6 @@ export interface AuditionDetailContentProps {
   sortedPhotos: ListingPhoto[]
   showAllDates: boolean
   onShowAllDatesChange: (showAll: boolean) => void
-  isAuthed: boolean
-  isSaved: boolean
-  saving: boolean
-  savingLoading: boolean
-  saveError: string | null
-  onToggleSave: () => void
   onListingClick?: (listingId: string) => void
   parentListingId?: string | null
   backToParentLabel?: string | null
@@ -50,12 +44,6 @@ export function AuditionDetailContent({
   sortedPhotos,
   showAllDates,
   onShowAllDatesChange,
-  isAuthed,
-  isSaved,
-  saving,
-  savingLoading,
-  saveError,
-  onToggleSave,
   onListingClick,
   parentListingId,
   backToParentLabel,
@@ -108,22 +96,7 @@ export function AuditionDetailContent({
         <Badge variant="primary" size="sm">
           {typeLabel}
         </Badge>
-        {isAuthed && (
-          <div className="flex items-center gap-2">
-            {saveError && <Text className="text-status-error-fg">{saveError}</Text>}
-            <FavoriteButton
-              active={isSaved}
-              onToggle={() => {
-                if (!saving && !savingLoading) {
-                  onToggleSave()
-                }
-              }}
-              size="md"
-              disabled={saving || savingLoading}
-              aria-label={isSaved ? "Remove from favorites" : "Add to favorites"}
-            />
-          </div>
-        )}
+        <SaveListingFavoriteButton listingId={listing.id} />
       </div>
 
       {parentListingId && backToParentLabel && onListingClick && (

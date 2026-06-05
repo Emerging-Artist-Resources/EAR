@@ -7,10 +7,12 @@ import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { LocationSection } from "@/components/forms/blocks/LocationSection"
+import { LOCATION_UNDISCLOSED_TOOLTIP } from "@/lib/location/tooltips"
 import { useEffect } from "react"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { SimpleFeeDisplay } from "@/components/event-forms/event-wizard/shared/SimpleFeeDisplay"
 import { ListingWebsiteField } from "@/components/forms/blocks/ListingWebsiteField"
+import { OPPORTUNITY_APPLICATION_DEADLINE_CALENDAR_TOOLTIP } from "@/lib/content/opportunity-listing-tooltips"
 import {
   OPPORTUNITY_APPLICATION_FEE_LISTING_POLICY_TOOLTIP,
   getPlatformListingFeeContext,
@@ -39,25 +41,25 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
   return (
     <>
       <Section title="Opportunity Details">
-        <TextField form={form} name={"title"} label="Opportunity Name" required />
+        <TextField form={form} name={"title"} label="Opportunity title" required />
         <TextField
           form={form}
           name={"host"}
-          label="Hosting Organization/Individual(s)"
+          label="Hosting organization or individual(s)"
           required
         />
         <ListingWebsiteField form={form} />
         <TextField
           form={form}
           name={"dates"}
-          label="Opportunity Dates"
+          label="Opportunity dates"
           required
           placeholder="e.g. Rolling through June 30, or specific date range"
         />
         <TextAreaField
           form={form}
           name={"description"}
-          label="Opportunity Description"
+          label="Opportunity description"
           placeholder="Provide an overview of the opportunity."
           required
           rows={4}
@@ -65,7 +67,7 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
         <TextAreaField
           form={form}
           name={"compensation"}
-          label="What is Offered"
+          label="What is offered"
           placeholder="Include compensation (monetary & non-monetary), commitment dates, and any other key details."
           required
           rows={5}
@@ -76,7 +78,7 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
         <TextAreaField
           form={form}
           name={"requirements"}
-          label="Application Requirements"
+          label="Application requirements"
           required
           rows={4}
           placeholder="Summarize what applicants need to submit or qualify."
@@ -84,7 +86,7 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
         <TextAreaField
           form={form}
           name={"creativeSubmissionInstructions"}
-          label="Submission Instructions"
+          label="Submission instructions"
           placeholder="Include link, contact email, and any required materials."
           required
           rows={4}
@@ -92,7 +94,8 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
         <ShowtimesList
           form={form as unknown as UseFormReturn<Record<string, unknown>>}
           name={"deadlineOccurrences"}
-          title="Application Deadline"
+          title="Application deadline"
+          titleTooltip={OPPORTUNITY_APPLICATION_DEADLINE_CALENDAR_TOOLTIP}
           note="Add the deadline date and time."
           maxDates={1}
           maxTimesPerDate={1}
@@ -103,7 +106,7 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
           form={form}
           options={[{ label: "Yes", value: "FEE" }, { label: "No", value: "NO_FEE" }]}
           name={"fee"}
-          label="Application Fee"
+          label="Application fee"
           labelTooltip={OPPORTUNITY_APPLICATION_FEE_LISTING_POLICY_TOOLTIP}
           required
         />
@@ -111,7 +114,7 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
           <TextField
             form={form}
             name={"feeAmount"}
-            label="Application Fee Amount"
+            label="Application fee amount"
             required
             placeholder="$ or description"
           />
@@ -127,6 +130,7 @@ export function OpportunityStep({ form }: OpportunityStepProps) {
           latName={"lat"}
           lngName={"lng"}
           instructionsName={"locationInstructions"}
+          labelTooltip={LOCATION_UNDISCLOSED_TOOLTIP}
           required
         />
       </Section>

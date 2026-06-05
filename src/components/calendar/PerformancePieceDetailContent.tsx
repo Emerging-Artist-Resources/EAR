@@ -3,8 +3,8 @@
 import { useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FavoriteButton } from "@/components/ui/favorite-button"
-import { H3, Text } from "@/components/ui/typography"
+import { SaveListingFavoriteButton } from "@/components/shared/SaveListingFavoriteButton"
+import { H3 } from "@/components/ui/typography"
 import {
   hasDisplayText,
   hasSocialHandlesContent,
@@ -33,12 +33,6 @@ export interface PerformancePieceDetailContentProps {
   sortedPhotos: ListingPhoto[]
   showAllDates: boolean
   onShowAllDatesChange: (showAll: boolean) => void
-  isAuthed: boolean
-  isSaved: boolean
-  saving: boolean
-  savingLoading: boolean
-  saveError: string | null
-  onToggleSave: () => void
   onListingClick?: (listingId: string) => void
   /** When set, back link calls this instead of `onListingClick(parentListingId)`. */
   onBackToParent?: () => void
@@ -54,12 +48,6 @@ export function PerformancePieceDetailContent({
   sortedPhotos,
   showAllDates,
   onShowAllDatesChange,
-  isAuthed,
-  isSaved,
-  saving,
-  savingLoading,
-  saveError,
-  onToggleSave,
   onListingClick,
   onBackToParent,
   parentListingId,
@@ -117,7 +105,7 @@ export function PerformancePieceDetailContent({
         <Badge variant="primary" size="sm">
           {typeLabel}
         </Badge>
-        {(showBackToParent || (showSave && isAuthed)) && (
+        {(showBackToParent || showSave) && (
           <div className="flex shrink-0 flex-wrap items-center justify-end gap-3">
             {showBackToParent && (
               <button
@@ -128,22 +116,7 @@ export function PerformancePieceDetailContent({
                 ← {backToParentLabel}
               </button>
             )}
-            {showSave && isAuthed && (
-              <div className="flex items-center gap-2">
-                {saveError && <Text className="text-status-error-fg">{saveError}</Text>}
-                <FavoriteButton
-                  active={isSaved}
-                  onToggle={() => {
-                    if (!saving && !savingLoading) {
-                      onToggleSave()
-                    }
-                  }}
-                  size="md"
-                  disabled={saving || savingLoading}
-                  aria-label={isSaved ? "Remove from favorites" : "Add to favorites"}
-                />
-              </div>
-            )}
+            {showSave ? <SaveListingFavoriteButton listingId={listing.id} /> : null}
           </div>
         )}
       </div>

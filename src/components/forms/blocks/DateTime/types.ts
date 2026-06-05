@@ -30,6 +30,7 @@ export interface LocationConfigFull {
   note?: string
   instructionsLabel?: string
   instructionsPlaceholder?: string
+  labelTooltip?: string
   required?: boolean
 }
 

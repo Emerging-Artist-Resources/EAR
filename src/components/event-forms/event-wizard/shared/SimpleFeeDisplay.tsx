@@ -25,7 +25,7 @@ export function SimpleFeeDisplay({
 
   if (isLoading) {
     return (
-      <Section title="Fee">
+      <Section title="Listing Fee">
         <Text className="text-sm text-gray-500">Loading eligibility status...</Text>
       </Section>
     )
@@ -33,7 +33,7 @@ export function SimpleFeeDisplay({
 
   if (!artistType) {
     return (
-      <Section title="Fee">
+      <Section title="Listing Fee">
         <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
           <Text className="text-sm font-medium text-gray-900">Unable to determine eligibility status</Text>
           <Text className="text-xs text-gray-600 mt-1">
@@ -45,7 +45,7 @@ export function SimpleFeeDisplay({
   }
 
   return (
-    <Section title="Fee">
+    <Section title="Listing Fee">
       <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md space-y-2">
         <Text className="text-sm font-medium text-gray-900">Listing fee: ${amountUsd}</Text>
         <Text className="text-xs text-gray-700">

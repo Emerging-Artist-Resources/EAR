@@ -88,6 +88,13 @@ export default function AdminAnalyticsPage() {
   const donationAmountCents = isAllTime
     ? analytics.donationsAmountCents
     : analytics.donationsAmountInPeriodCents
+  const earDonationsAmountCents = isAllTime
+    ? analytics.earDonationsAmountCents
+    : analytics.earDonationsAmountInPeriodCents
+  const artistDonationsAmountCents = isAllTime
+    ? analytics.sponsorDonationsAmountCents
+    : analytics.sponsorDonationsAmountInPeriodCents
+  const donationPeriodLabel = isAllTime ? "All paid donations" : "Paid in selected period"
   const listingFeesCents = isAllTime
     ? analytics.listingFeesCents
     : analytics.listingFeesInPeriodCents
@@ -200,16 +207,20 @@ export default function AdminAnalyticsPage() {
           <Card className="p-6">
             <Text className="text-sm text-[var(--gray-600)] mb-2">EAR Donations</Text>
             <H3 className="text-2xl font-bold text-[var(--gray-900)]">
-              {formatCurrency(analytics.earDonationsAmountCents)}
+              {formatCurrency(earDonationsAmountCents)}
             </H3>
-            <Text className="text-xs text-[var(--gray-500)] mt-2">All paid (org account)</Text>
+            <Text className="text-xs text-[var(--gray-500)] mt-2">
+              {donationPeriodLabel} (no recipient)
+            </Text>
           </Card>
           <Card className="p-6">
             <Text className="text-sm text-[var(--gray-600)] mb-2">Artist / Sponsor Donations</Text>
             <H3 className="text-2xl font-bold text-[var(--gray-900)]">
-              {formatCurrency(analytics.sponsorDonationsAmountCents)}
+              {formatCurrency(artistDonationsAmountCents)}
             </H3>
-            <Text className="text-xs text-[var(--gray-500)] mt-2">Fiscally sponsored artists</Text>
+            <Text className="text-xs text-[var(--gray-500)] mt-2">
+              {donationPeriodLabel} (with recipient)
+            </Text>
           </Card>
           <Card className="p-6">
             <Text className="text-sm text-[var(--gray-600)] mb-2">Listing Fees</Text>
@@ -227,9 +238,7 @@ export default function AdminAnalyticsPage() {
                 donationCount > 0 ? Math.round(donationAmountCents / donationCount) : 0
               )}
             </H3>
-            <Text className="text-xs text-[var(--gray-500)] mt-2">
-              {isAllTime ? "All paid donations" : "Paid in selected period"}
-            </Text>
+            <Text className="text-xs text-[var(--gray-500)] mt-2">{donationPeriodLabel}</Text>
           </Card>
         </div>
       </AnalyticsSection>

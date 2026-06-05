@@ -8,9 +8,6 @@ import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { Dropdown } from "@/components/forms/blocks/Dropdown"
 import { InviteRecipientEmailsSection } from "@/components/event-forms/event-wizard/steps/performance/InviteRecipientEmailsSection"
 
-const SPLIT_FESTIVAL_ORGANIZER_TOOLTIP =
-  "For split bills, one listing must be submitted as the primary event. All other participants should submit as Participating Artists to ensure listings are linked."
-
 const INVITE_PARTICIPATING_ARTISTS_TITLE = "Invite participating artists"
 const INVITE_PARTICIPATING_ARTISTS_DESCRIPTION =
   "Enter participating artists and companies email addresses. They will receive a notification inviting them to connect their listing to this event."
@@ -41,13 +38,7 @@ export function OrganizerBasics({ form }: { form: UseFormReturn<EventFormData> }
       {isMulti ? (
         <>
           <TextField form={form} name={"title"} label="Performance title" required />
-          <TextField
-            form={form}
-            name={"organizer"}
-            label="Company or artist name"
-            labelTooltip={SPLIT_FESTIVAL_ORGANIZER_TOOLTIP}
-            required
-          />
+          <TextField form={form} name={"organizer"} label="Company or artist name" required />
           <TextField
             form={form}
             name={"website"}

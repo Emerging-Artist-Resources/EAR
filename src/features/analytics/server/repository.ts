@@ -1,4 +1,5 @@
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
+import { isEarDonation } from "@/lib/payments/donationStripeAccount"
 import { SYNC_STATUS } from "@/features/newsletter/constants"
 import type { ListingTypeBreakdownItem } from "./types"
 import { CALENDAR_LISTING_TYPE_LABELS } from "@/lib/listings/type-labels"
@@ -39,24 +40,22 @@ async function countListings(options: {
 type DonationRow = {
   base_gift_cents: number | null
   amount: number
-  stripe_account: string | null
+  recipient_user_id: string | null
   created_at: string
 }
 
 async function fetchPaidDonations(options?: {
   createdFrom?: string
   createdBefore?: string
-  sponsorOnly?: boolean
 }): Promise<DonationRow[]> {
   const svc = getSupabaseServiceClient()
   let query = svc
     .from("donations")
-    .select("base_gift_cents, amount, stripe_account, created_at")
+    .select("base_gift_cents, amount, recipient_user_id, created_at")
     .eq("payment_status", "paid")
 
   if (options?.createdFrom) query = query.gte("created_at", options.createdFrom)
   if (options?.createdBefore) query = query.lt("created_at", options.createdBefore)
-  if (options?.sponsorOnly) query = query.eq("stripe_account", "sponsor")
 
   const { data, error } = await query
   if (error) throw error
@@ -76,7 +75,13 @@ function sumGiftCents(rows: DonationRow[]): number {
 
 function sumEarGiftCents(rows: DonationRow[]): number {
   return rows
-    .filter((row) => row.stripe_account !== "sponsor")
+    .filter((row) => isEarDonation(row.recipient_user_id))
+    .reduce((sum, row) => sum + giftCents(row), 0)
+}
+
+function sumArtistGiftCents(rows: DonationRow[]): number {
+  return rows
+    .filter((row) => !isEarDonation(row.recipient_user_id))
     .reduce((sum, row) => sum + giftCents(row), 0)
 }
 
@@ -379,7 +384,6 @@ export async function getAdminAnalyticsCountsRepo(params: {
     allPaidDonations,
     paidDonationsThisPeriod,
     paidDonationsPreviousPeriod,
-    allSponsorDonations,
     listingTypeBreakdown,
     listingFeesCents,
     listingFeesInPeriodCents,
@@ -437,7 +441,6 @@ export async function getAdminAnalyticsCountsRepo(params: {
           createdBefore: previousPeriodEnd,
         })
       : Promise.resolve([] as DonationRow[]),
-    fetchPaidDonations({ sponsorOnly: true }),
     getListingTypeBreakdownRepo(),
     sumListingFeesCents(),
     periodStart
@@ -506,9 +509,11 @@ export async function getAdminAnalyticsCountsRepo(params: {
     totalDonations: allPaidDonations.length,
     donationsAmountCents: sumGiftCents(allPaidDonations),
     earDonationsAmountCents: sumEarGiftCents(allPaidDonations),
-    sponsorDonationsAmountCents: sumGiftCents(allSponsorDonations),
+    sponsorDonationsAmountCents: sumArtistGiftCents(allPaidDonations),
     donationsInPeriod: paidDonationsThisPeriod.length,
     donationsAmountInPeriodCents: sumGiftCents(paidDonationsThisPeriod),
+    earDonationsAmountInPeriodCents: sumEarGiftCents(paidDonationsThisPeriod),
+    sponsorDonationsAmountInPeriodCents: sumArtistGiftCents(paidDonationsThisPeriod),
     donationsPreviousPeriod: paidDonationsPreviousPeriod.length,
     donationsAmountPreviousPeriodCents: sumGiftCents(paidDonationsPreviousPeriod),
     listingFeesCents,

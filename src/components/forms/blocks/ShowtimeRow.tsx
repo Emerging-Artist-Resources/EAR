@@ -276,6 +276,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                     instructionsName={locationConfig.instructionsName ? (`${name}.${index}.${locationConfig.instructionsName}` as Path<FieldValues>) : undefined}
                     includeInstructionsInPlace={false}
                     label={locationConfig.label || "Location"}
+                    labelTooltip={locationConfig.labelTooltip}
                     note={locationConfig.note}
                     required={locationConfig.required ?? true}
                     compact

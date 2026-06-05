@@ -14,6 +14,7 @@ import {
   LOCATION_MODE_OPTIONS,
   type LocationMode,
 } from "@/lib/location/mode"
+import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
 
 export type LocationSectionProps<T extends Record<string, unknown>> = {
   form: UseFormReturn<T>
@@ -25,6 +26,8 @@ export type LocationSectionProps<T extends Record<string, unknown>> = {
   lngName?: Path<T>
   instructionsName?: Path<T>
   label?: string
+  /** Tooltip beside the section label (e.g. undisclosed venue guidance). */
+  labelTooltip?: string
   note?: string
   instructionsLabel?: string
   instructionsNote?: string
@@ -50,6 +53,7 @@ export function LocationSection<T extends Record<string, unknown>>({
   lngName,
   instructionsName,
   label = "Location",
+  labelTooltip,
   note,
   instructionsLabel = "Location instructions",
   instructionsNote,
@@ -111,9 +115,12 @@ export function LocationSection<T extends Record<string, unknown>>({
           )}
         >
           {showLabel ? (
-            <span className="text-sm font-medium text-gray-700">
-              {label} {required && showAsterisk ? <span className="text-error-600">*</span> : null}
-            </span>
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+              <span className="text-sm font-medium text-gray-700">
+                {label} {required && showAsterisk ? <span className="text-error-600">*</span> : null}
+              </span>
+              {labelTooltip?.trim() ? <FormFieldTooltip text={labelTooltip.trim()} /> : null}
+            </div>
           ) : null}
           <fieldset className="m-0 min-w-0 shrink-0 border-0 p-0" aria-labelledby={groupId}>
             <legend id={groupId} className="sr-only">

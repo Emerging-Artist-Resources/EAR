@@ -231,6 +231,7 @@ export function DateCard<T extends FieldValues>({
             lngName={locationConfig.lngName ? `${name}.${index}.${locationConfig.lngName}` as Path<T> : undefined}
             instructionsName={locationConfig.instructionsName ? `${name}.${index}.${locationConfig.instructionsName}` as Path<T> : undefined}
             label={locationConfig.label || "Location"}
+            labelTooltip={locationConfig.labelTooltip}
             note={locationConfig.note}
             instructionsLabel={locationConfig.instructionsLabel}
             instructionsPlaceholder={locationConfig.instructionsPlaceholder}

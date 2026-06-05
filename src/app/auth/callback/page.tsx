@@ -6,6 +6,14 @@ import { completeAuthCallbackClient } from "@/lib/auth/completeAuthCallbackClien
 import { supabase } from "@/lib/supabase/client"
 import { Text } from "@/components/ui/typography"
 import { ROUTES } from "@/lib/config/constants"
+import { AuthLinkErrorCard } from "@/components/auth/AuthLinkErrorCard"
+import { ResendVerificationEmailForm } from "@/components/auth/ResendVerificationEmailForm"
+import {
+  authLinkErrorKindFromCode,
+  getAuthLinkErrorContent,
+  type AuthLinkErrorKind,
+} from "@/lib/auth/verification-link-errors"
+import { AUTH_PAGE_SHELL_CLASS, AUTH_MUTED_TEXT_CLASS } from "@/lib/auth/page-styles"
 
 function sanitizeNextParam(raw: string | null): string {
   const next = raw ?? ROUTES.HOME
@@ -13,10 +21,14 @@ function sanitizeNextParam(raw: string | null): string {
   return ROUTES.HOME
 }
 
+type CallbackErrorState = {
+  kind: AuthLinkErrorKind
+}
+
 function AuthCallbackInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [errorState, setErrorState] = useState<CallbackErrorState | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -29,12 +41,17 @@ function AuthCallbackInner() {
 
       if (!result.ok) {
         if (result.reason === "oauth_error") {
-          const q = result.errorCode === "otp_expired" ? "otp_expired" : "auth_link"
-          router.replace(`/auth/signin?error=${q}`)
+          setErrorState({
+            kind: authLinkErrorKindFromCode(result.errorCode),
+          })
           return
         }
         if (result.reason === "missing_auth_payload") {
-          setErrorMessage("This link is missing authentication data. It may have expired.")
+          setErrorState({ kind: "missing_payload" })
+          return
+        }
+        if (result.reason === "exchange_failed" || result.reason === "set_session_failed") {
+          setErrorState({ kind: "session_failed" })
           return
         }
         router.replace("/auth/signin?error=auth")
@@ -53,20 +70,18 @@ function AuthCallbackInner() {
     }
   }, [router, searchParams])
 
-  if (errorMessage) {
+  if (errorState) {
+    const { title, description } = getAuthLinkErrorContent(errorState.kind)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4">
-        <Text className="text-gray-700 text-center max-w-md">{errorMessage}</Text>
-        <a href="/auth/signin" className="mt-4 text-primary hover:opacity-80 text-sm font-medium">
-          Back to sign in
-        </a>
-      </div>
+      <AuthLinkErrorCard title={title} description={description}>
+        <ResendVerificationEmailForm showEmailField />
+      </AuthLinkErrorCard>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <Text className="text-lg text-gray-700">Verifying your sign-in…</Text>
+    <div className={AUTH_PAGE_SHELL_CLASS}>
+      <Text className={`text-lg ${AUTH_MUTED_TEXT_CLASS}`}>Verifying your account…</Text>
     </div>
   )
 }
@@ -75,8 +90,8 @@ export default function AuthCallbackPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center px-4">
-          <Text className="text-lg text-gray-700">Loading…</Text>
+        <div className={AUTH_PAGE_SHELL_CLASS}>
+          <Text className={AUTH_MUTED_TEXT_CLASS}>Loading…</Text>
         </div>
       }
     >

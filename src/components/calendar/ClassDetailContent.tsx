@@ -1,8 +1,8 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
-import { FavoriteButton } from "@/components/ui/favorite-button"
-import { H3, Text } from "@/components/ui/typography"
+import { SaveListingFavoriteButton } from "@/components/shared/SaveListingFavoriteButton"
+import { H3 } from "@/components/ui/typography"
 import { stripAdminNotes } from "@/lib/listings/admin-notes"
 import { hasDisplayText } from "@/lib/listings/display"
 import { cn } from "@/lib/utils"
@@ -28,12 +28,6 @@ export interface ClassDetailContentProps {
   sortedPhotos: ListingPhoto[]
   showAllDates: boolean
   onShowAllDatesChange: (showAll: boolean) => void
-  isAuthed: boolean
-  isSaved: boolean
-  saving: boolean
-  savingLoading: boolean
-  saveError: string | null
-  onToggleSave: () => void
   onListingClick?: (listingId: string) => void
   parentListingId?: string | null
   backToParentLabel?: string | null
@@ -59,12 +53,6 @@ export function ClassDetailContent({
   sortedPhotos,
   showAllDates,
   onShowAllDatesChange,
-  isAuthed,
-  isSaved,
-  saving,
-  savingLoading,
-  saveError,
-  onToggleSave,
   onListingClick,
   parentListingId,
   backToParentLabel,
@@ -113,35 +101,18 @@ export function ClassDetailContent({
         <Badge variant="primary" size="sm">
           {typeLabel}
         </Badge>
-        {(showBackToParent || isAuthed) && (
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-3">
-            {showBackToParent && (
-              <button
-                type="button"
-                onClick={handleBackToParent}
-                className="text-sm text-brand-primary hover:text-brand-primary-hover underline"
-              >
-                ← {backToParentLabel}
-              </button>
-            )}
-            {isAuthed && (
-              <div className="flex items-center gap-2">
-                {saveError && <Text className="text-status-error-fg">{saveError}</Text>}
-                <FavoriteButton
-                  active={isSaved}
-                  onToggle={() => {
-                    if (!saving && !savingLoading) {
-                      onToggleSave()
-                    }
-                  }}
-                  size="md"
-                  disabled={saving || savingLoading}
-                  aria-label={isSaved ? "Remove from favorites" : "Add to favorites"}
-                />
-              </div>
-            )}
-          </div>
-        )}
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-3">
+          {showBackToParent ? (
+            <button
+              type="button"
+              onClick={handleBackToParent}
+              className="text-sm text-brand-primary hover:text-brand-primary-hover underline"
+            >
+              ← {backToParentLabel}
+            </button>
+          ) : null}
+          <SaveListingFavoriteButton listingId={listing.id} />
+        </div>
       </div>
 
       {showBodySection && (

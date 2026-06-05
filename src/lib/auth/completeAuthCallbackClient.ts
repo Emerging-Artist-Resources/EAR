@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { getHashAuthParams, getSupabaseAuthErrorParams } from "@/lib/auth/parseAuthCallbackUrl"
 
 /**
  * Hash fragment types allowed on `/auth/callback` (not password recovery — that uses `/auth/callback/recovery`).
@@ -22,10 +23,9 @@ export async function completeAuthCallbackClient(
 ): Promise<CompleteAuthCallbackResult> {
   const u = new URL(href)
 
-  const oauthError = u.searchParams.get("error")
-  const errorCode = u.searchParams.get("error_code")
-  if (oauthError || errorCode || u.searchParams.get("error_description")) {
-    return { ok: false, reason: "oauth_error", errorCode }
+  const errorParams = getSupabaseAuthErrorParams(u)
+  if (errorParams) {
+    return { ok: false, reason: "oauth_error", errorCode: errorParams.get("error_code") }
   }
 
   const code = u.searchParams.get("code")
@@ -37,15 +37,14 @@ export async function completeAuthCallbackClient(
     return { ok: true }
   }
 
-  const hashRaw = u.hash.startsWith("#") ? u.hash.slice(1) : u.hash
-  if (!hashRaw) {
+  const hashParams = getHashAuthParams(u)
+  if (!hashParams) {
     return { ok: false, reason: "missing_auth_payload" }
   }
 
-  const params = new URLSearchParams(hashRaw)
-  const accessToken = params.get("access_token")
-  const refreshToken = params.get("refresh_token")
-  const type = params.get("type")
+  const accessToken = hashParams.get("access_token")
+  const refreshToken = hashParams.get("refresh_token")
+  const type = hashParams.get("type")
 
   if (!accessToken || !refreshToken) {
     return { ok: false, reason: "missing_auth_payload" }

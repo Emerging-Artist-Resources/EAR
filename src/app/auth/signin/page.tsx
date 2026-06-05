@@ -12,6 +12,11 @@ import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
 import { Card, CardContent } from "@/components/ui/card"
 import { ROUTES } from "@/lib/config/constants"
+import { ResendVerificationEmailForm } from "@/components/auth/ResendVerificationEmailForm"
+import {
+  authLinkErrorKindFromCode,
+  getAuthLinkErrorContent,
+} from "@/lib/auth/verification-link-errors"
 import {
   AUTH_LINK_CLASS,
   AUTH_MUTED_TEXT_CLASS,
@@ -37,18 +42,28 @@ function SignInContent() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
+  const linkErrorParam = searchParams.get("error")
+  const showVerificationResend =
+    linkErrorParam === "otp_expired" || linkErrorParam === "auth_link"
+
   useEffect(() => {
     if (searchParams.get("reset") === "success") {
       setInfo("Your password was updated. You can sign in below.")
     }
     const err = searchParams.get("error")
     if (err === "otp_expired") {
-      setError(
-        "That email link has expired or was already used. Request a new link with Forgot password, or for sign-up verification use Resend on the confirmation email screen."
+      const { description } = getAuthLinkErrorContent(
+        authLinkErrorKindFromCode("otp_expired")
       )
-    } else if (err === "auth_link" || err === "auth") {
+      setError(description)
+    } else if (err === "auth_link") {
+      const { description } = getAuthLinkErrorContent(
+        authLinkErrorKindFromCode(null)
+      )
+      setError(description)
+    } else if (err === "auth") {
       setError(
-        "We couldn't use that sign-in link. It may be invalid or expired. Try Forgot password or request a new verification email."
+        "We couldn't complete sign-in from that link. Try again below or use Forgot password."
       )
     }
   }, [searchParams])
@@ -167,6 +182,18 @@ function SignInContent() {
               {error}
             </Alert>
           )}
+
+          {showVerificationResend ? (
+            <div className="space-y-2 border-t border-ear-black/10 pt-4">
+              <Text className="text-sm font-medium text-ear-black text-center">
+                Need a new verification email?
+              </Text>
+              <ResendVerificationEmailForm
+                initialEmail={email}
+                showEmailField={!email.trim()}
+              />
+            </div>
+          ) : null}
 
           <div>
             <Button type="submit" disabled={loading} className="w-full">

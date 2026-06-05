@@ -12,6 +12,7 @@ import { OrganizerFlow } from "@/components/event-forms/event-wizard/steps/perfo
 import { PieceSubmissionFlow } from "@/components/event-forms/event-wizard/steps/performance/PieceSubmissionFlow"
 import type { OrganizerProgramPiecePhoto } from "@/lib/listings/organizer-program-pieces"
 import { debugScheduleLog } from "@/lib/debug-log"
+import { PERFORMANCE_ROLE_TOOLTIP } from "@/lib/content/performance-listing-tooltips"
 
 type PerfType = "ORGANIZER" | "PIECE"
 
@@ -66,6 +67,7 @@ export function PerformanceDetailsStep({
         form={form}
         name={"type"}
         label="Select your role"
+        labelTooltip={PERFORMANCE_ROLE_TOOLTIP}
         required
         options={[
           {

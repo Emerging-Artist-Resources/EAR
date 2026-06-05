@@ -635,6 +635,7 @@ export function DateTimeList<T extends Record<string, unknown>>({
               lngName={locationConfig.lngName ? `${name}.0.${locationConfig.lngName}` as any : undefined}
               instructionsName={locationConfig.instructionsName ? `${name}.0.${locationConfig.instructionsName}` as any : undefined}
               label={locationConfig.label}
+              labelTooltip={locationConfig.labelTooltip}
               note={locationConfig.note}
               instructionsLabel={locationConfig.instructionsLabel}
               instructionsPlaceholder={locationConfig.instructionsPlaceholder}
@@ -689,6 +690,7 @@ export function DateTimeList<T extends Record<string, unknown>>({
                   lngName={locationConfig.lngName ? `${name}.0.${locationConfig.lngName}` as any : undefined}
                   instructionsName={locationConfig.instructionsName ? `${name}.0.${locationConfig.instructionsName}` as any : undefined}
                   label={locationConfig.label}
+                  labelTooltip={locationConfig.labelTooltip}
                   note={locationConfig.note}
                   instructionsLabel={locationConfig.instructionsLabel}
                   instructionsPlaceholder={locationConfig.instructionsPlaceholder}

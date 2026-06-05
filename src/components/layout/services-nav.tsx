@@ -18,29 +18,29 @@ export function ServicesNav({ onDarkSurface = false }: { onDarkSurface?: boolean
 
   return (
     <HeaderHoverDropdown
-      trigger={
-        <>
+      trigger={({ isOpen, toggle }) => (
+        <div className="relative inline-flex flex-col items-center">
           <Button
-            asChild
+            type="button"
             variant="none"
             className={cn(
               "gap-1",
               isActive
                 ? "text-ear-baby-blue hover:text-ear-baby-blue/80"
-                : "text-ear-off-white hover:text-ear-off-white/80"
+                : "text-ear-off-white hover:text-ear-off-white/80",
             )}
+            aria-haspopup="true"
+            aria-expanded={isOpen}
+            onClick={toggle}
           >
-            <Link
-              href="/services"
-              aria-haspopup="true"
-              className="inline-flex items-center gap-1"
-            >
-              <span>Services</span>
-              <ChevronDown
-                className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:rotate-180"
-                aria-hidden
-              />
-            </Link>
+            <span>Services</span>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 shrink-0 transition-transform duration-150",
+                isOpen && "rotate-180",
+              )}
+              aria-hidden
+            />
           </Button>
           {isActive && (
             <div className="absolute -bottom-1 left-0 right-0">
@@ -51,9 +51,14 @@ export function ServicesNav({ onDarkSurface = false }: { onDarkSurface?: boolean
               />
             </div>
           )}
-        </>
-      }
+        </div>
+      )}
     >
+      <Button asChild variant="ghost" className={headerDropdownMenuItemClass}>
+        <Link href="/services" role="menuitem">
+          Overview
+        </Link>
+      </Button>
       {servicesNavItems.map((item) => (
         <div key={item.href}>
           <Button

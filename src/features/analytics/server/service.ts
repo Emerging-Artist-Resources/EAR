@@ -57,6 +57,8 @@ export async function getAdminAnalytics(rangeParam?: string): Promise<AdminAnaly
     sponsorDonationsAmountCents: counts.sponsorDonationsAmountCents,
     donationsInPeriod: counts.donationsInPeriod,
     donationsAmountInPeriodCents: counts.donationsAmountInPeriodCents,
+    earDonationsAmountInPeriodCents: counts.earDonationsAmountInPeriodCents,
+    sponsorDonationsAmountInPeriodCents: counts.sponsorDonationsAmountInPeriodCents,
     listingFeesCents: counts.listingFeesCents,
     listingFeesInPeriodCents: counts.listingFeesInPeriodCents,
     totalSavedListings: counts.totalSavedListings,

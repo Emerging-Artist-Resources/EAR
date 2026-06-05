@@ -4,13 +4,11 @@ import { useState, useEffect, useMemo, type CSSProperties } from "react"
 import { Modal } from "@/components/ui/modal"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import { FavoriteButton } from "@/components/ui/favorite-button"
+import { SaveListingFavoriteButton } from "@/components/shared/SaveListingFavoriteButton"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { getListingTitle } from "@/features/events/server/listing-utils"
 import { HorizontalScrollCards } from "@/components/shared/HorizontalScrollCards"
 import { ListingCard } from "@/components/shared/ListingCard"
-import { useSavedListings } from "@/hooks/use-saved-listings"
-import { useAuth } from "@/hooks/use-auth"
 import {
   PieceDetails,
   ClassDetails,
@@ -63,8 +61,6 @@ interface ListingDetailsModalProps {
 }
 
 export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick }: ListingDetailsModalProps) {
-  const { isAuthed } = useAuth();
-  const { isSaved, loading: savingLoading, saving, error: saveError, toggleSave } = useSavedListings(listingId || undefined);
   const [loading, setLoading] = useState(false)
   const [listing, setListing] = useState<PublicListingDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -287,16 +283,6 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               organizerProgramPiecesDoc={organizerProgramPiecesDoc}
               showAllDates={showAllDates}
               onShowAllDatesChange={setShowAllDates}
-              isAuthed={isAuthed}
-              isSaved={isSaved}
-              saving={saving}
-              savingLoading={savingLoading}
-              saveError={saveError}
-              onToggleSave={() => {
-                if (!saving && !savingLoading) {
-                  void toggleSave()
-                }
-              }}
               onListingClick={navigateToListing}
               onSelectOrganizerPiece={setSelectedOrganizerPieceId}
               parentListingId={parentListingId}
@@ -310,16 +296,6 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               childListings={childListings}
               showAllDates={showAllDates}
               onShowAllDatesChange={setShowAllDates}
-              isAuthed={isAuthed}
-              isSaved={isSaved}
-              saving={saving}
-              savingLoading={savingLoading}
-              saveError={saveError}
-              onToggleSave={() => {
-                if (!saving && !savingLoading) {
-                  void toggleSave()
-                }
-              }}
               onListingClick={navigateToListing}
               parentListingId={parentListingId}
               backToParentLabel={backToParentLabel}
@@ -331,16 +307,6 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               sortedPhotos={sortedPhotos}
               showAllDates={showAllDates}
               onShowAllDatesChange={setShowAllDates}
-              isAuthed={isAuthed}
-              isSaved={isSaved}
-              saving={saving}
-              savingLoading={savingLoading}
-              saveError={saveError}
-              onToggleSave={() => {
-                if (!saving && !savingLoading) {
-                  void toggleSave()
-                }
-              }}
               onListingClick={navigateToListing}
               parentListingId={parentListingId}
               backToParentLabel={backToParentLabel}
@@ -352,16 +318,6 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               sortedPhotos={sortedPhotos}
               showAllDates={showAllDates}
               onShowAllDatesChange={setShowAllDates}
-              isAuthed={isAuthed}
-              isSaved={isSaved}
-              saving={saving}
-              savingLoading={savingLoading}
-              saveError={saveError}
-              onToggleSave={() => {
-                if (!saving && !savingLoading) {
-                  void toggleSave()
-                }
-              }}
               onListingClick={navigateToListing}
               parentListingId={parentListingId}
               backToParentLabel={backToParentLabel}
@@ -373,16 +329,6 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               sortedPhotos={sortedPhotos}
               showAllDates={showAllDates}
               onShowAllDatesChange={setShowAllDates}
-              isAuthed={isAuthed}
-              isSaved={isSaved}
-              saving={saving}
-              savingLoading={savingLoading}
-              saveError={saveError}
-              onToggleSave={() => {
-                if (!saving && !savingLoading) {
-                  void toggleSave()
-                }
-              }}
               onListingClick={navigateToListing}
               parentListingId={parentListingId}
               backToParentLabel={backToParentLabel}
@@ -392,16 +338,6 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
               listing={listing}
               typeLabel={typeLabel}
               sortedPhotos={sortedPhotos}
-              isAuthed={isAuthed}
-              isSaved={isSaved}
-              saving={saving}
-              savingLoading={savingLoading}
-              saveError={saveError}
-              onToggleSave={() => {
-                if (!saving && !savingLoading) {
-                  void toggleSave()
-                }
-              }}
               onListingClick={navigateToListing}
               parentListingId={parentListingId}
               backToParentLabel={backToParentLabel}
@@ -415,24 +351,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                   <Text className="text-text-muted">{listing.company}</Text>
                 )}
               </div>
-              {isAuthed && (
-                <div className="flex items-center gap-2">
-                  {saveError && (
-                    <Text className="text-status-error-fg">{saveError}</Text>
-                  )}
-                  <FavoriteButton
-                    active={isSaved}
-                    onToggle={() => {
-                      if (!saving && !savingLoading) {
-                        void toggleSave();
-                      }
-                    }}
-                    size="md"
-                    disabled={saving || savingLoading}
-                    aria-label={isSaved ? "Remove from favorites" : "Add to favorites"}
-                  />
-                </div>
-              )}
+              {listingId ? <SaveListingFavoriteButton listingId={listingId} /> : null}
             </div>
             {parentListingId && backToParentLabel && onListingClick && (
               <div>

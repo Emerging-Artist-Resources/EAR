@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
+import type { AdminListingDateBasis } from "@/lib/admin/listing-date-filter"
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { createListingOwnedRepo, createListingAnonymousRepo } from "./create"
@@ -77,6 +78,9 @@ export async function rejectEventRepo(
 export async function listAdminEventsRepo(params: {
   status: "pending" | "approved" | "rejected"
   limit: number
+  dateFrom?: string
+  dateTo?: string
+  dateBasis?: AdminListingDateBasis
 }) {
   return listAdminListingsRepo(params)
 }

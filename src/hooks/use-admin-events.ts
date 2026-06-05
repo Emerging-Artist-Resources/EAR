@@ -1,14 +1,33 @@
 import { useCallback, useEffect, useState } from "react"
-import { AdminEventItem, AdminStatus } from "@/components/admin/events/types"
+import { AdminEventItem, AdminListingDateBasis, AdminStatus } from "@/components/admin/events/types"
 import { useAuth } from "@/hooks/use-auth"
 
 interface UseAdminEventsOptions {
   filter: AdminStatus
   dateFrom?: string
   dateTo?: string
+  dateBasis?: AdminListingDateBasis
 }
 
-export function useAdminEvents({ filter, dateFrom, dateTo }: UseAdminEventsOptions) {
+function buildEventsUrl(
+  status: string,
+  options: Pick<UseAdminEventsOptions, "dateFrom" | "dateTo" | "dateBasis">,
+) {
+  const params = new URLSearchParams({ status })
+  if (options.dateFrom) params.set("dateFrom", options.dateFrom)
+  if (options.dateTo) params.set("dateTo", options.dateTo)
+  if (options.dateBasis && options.dateBasis !== "submitted") {
+    params.set("dateBasis", options.dateBasis)
+  }
+  return `/api/admin/events?${params.toString()}`
+}
+
+export function useAdminEvents({
+  filter,
+  dateFrom,
+  dateTo,
+  dateBasis = "submitted",
+}: UseAdminEventsOptions) {
   const { isAuthed } = useAuth()
   const [items, setItems] = useState<AdminEventItem[]>([])
   const [counts, setCounts] = useState<Record<"pending" | "approved" | "rejected", number>>({
@@ -28,10 +47,11 @@ export function useAdminEvents({ filter, dateFrom, dateTo }: UseAdminEventsOptio
 
     setLoading(true)
     try {
+      const dateOptions = { dateFrom, dateTo, dateBasis }
       const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
-        fetch(`/api/admin/events?status=pending`),
-        fetch(`/api/admin/events?status=approved`),
-        fetch(`/api/admin/events?status=rejected`),
+        fetch(buildEventsUrl("pending", dateOptions)),
+        fetch(buildEventsUrl("approved", dateOptions)),
+        fetch(buildEventsUrl("rejected", dateOptions)),
       ])
 
       const [p, a, r] = await Promise.all(
@@ -39,27 +59,18 @@ export function useAdminEvents({ filter, dateFrom, dateTo }: UseAdminEventsOptio
           if (!res.ok) return []
           const json = await res.json()
           return Array.isArray(json?.data) ? (json.data as AdminEventItem[]) : []
-        })
+        }),
       )
 
       setCounts({ pending: p.length, approved: a.length, rejected: r.length })
-      let current = filter === "PENDING" ? p : filter === "APPROVED" ? a : r
-      
-      if (dateFrom || dateTo) {
-        const fromTime = dateFrom ? new Date(dateFrom).getTime() : -Infinity
-        const toTime = dateTo ? new Date(dateTo).getTime() + 24 * 60 * 60 * 1000 - 1 : Infinity
-        current = current.filter((it) => {
-          const t = new Date(it.submitted_at).getTime()
-          return t >= fromTime && t <= toTime
-        })
-      }
+      const current = filter === "PENDING" ? p : filter === "APPROVED" ? a : r
       setItems(current)
     } catch (e) {
       console.error("Admin fetch error:", e)
     } finally {
       setLoading(false)
     }
-  }, [filter, dateFrom, dateTo, isAuthed])
+  }, [filter, dateFrom, dateTo, dateBasis, isAuthed])
 
   useEffect(() => {
     fetchEvents()
@@ -67,4 +78,3 @@ export function useAdminEvents({ filter, dateFrom, dateTo }: UseAdminEventsOptio
 
   return { items, counts, loading, refetch: fetchEvents }
 }
-

@@ -1,6 +1,6 @@
 "use client"
 
-import { AdminStatus } from "./types"
+import { AdminListingDateBasis, AdminStatus } from "./types"
 import { Button } from "@/components/ui/button"
 import { H2 } from "@/components/ui/typography"
 import { AdminDateFilter } from "../shared/AdminDateFilter"
@@ -11,7 +11,9 @@ interface AdminHeaderProps {
   onChange: (f: AdminStatus) => void
   dateFrom?: string
   dateTo?: string
+  dateBasis?: AdminListingDateBasis
   onChangeDate?: (range: { from?: string; to?: string }) => void
+  onChangeDateBasis?: (basis: AdminListingDateBasis) => void
 }
 
 export function AdminHeader({
@@ -20,7 +22,9 @@ export function AdminHeader({
   onChange,
   dateFrom,
   dateTo,
+  dateBasis,
   onChangeDate,
+  onChangeDateBasis,
 }: AdminHeaderProps) {
   const tabBtn = (state: AdminStatus, label: string, count: number) => {
     const active = filter === state
@@ -49,7 +53,9 @@ export function AdminHeader({
         <AdminDateFilter
           dateFrom={dateFrom}
           dateTo={dateTo}
+          dateBasis={dateBasis}
           onChange={onChangeDate}
+          onChangeBasis={onChangeDateBasis}
         />
       )}
     </div>

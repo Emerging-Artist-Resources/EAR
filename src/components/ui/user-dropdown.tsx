@@ -35,7 +35,7 @@ export function UserDropdown({ userName, isMobile = false }: UserDropdownProps) 
   return (
     <HeaderHoverDropdown
       align="right"
-      trigger={
+      trigger={({ isOpen, toggle }) => (
         <button
           type="button"
           className={cn(
@@ -43,16 +43,22 @@ export function UserDropdown({ userName, isMobile = false }: UserDropdownProps) 
             isActive
               ? "text-ear-baby-blue hover:text-ear-baby-blue/80"
               : "text-ear-off-white hover:text-ear-off-white/80",
-            isMobile && "text-base"
+            isMobile && "text-base",
           )}
+          aria-haspopup="true"
+          aria-expanded={isOpen}
+          onClick={toggle}
         >
           <span>Welcome, {userName}</span>
           <ChevronDown
-            className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:rotate-180"
+            className={cn(
+              "h-4 w-4 shrink-0 transition-transform duration-150",
+              isOpen && "rotate-180",
+            )}
             aria-hidden
           />
         </button>
-      }
+      )}
     >
       <Button asChild variant="ghost" className={headerDropdownMenuItemClass}>
         <Link href={ROUTES.PROFILE} role="menuitem">

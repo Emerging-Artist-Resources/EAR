@@ -2,10 +2,8 @@
 
 import { useMemo, type ReactNode } from "react"
 import { Card } from "@/components/ui/card"
-import { FavoriteButton } from "@/components/ui/favorite-button"
+import { SaveListingFavoriteButton } from "@/components/shared/SaveListingFavoriteButton"
 import { formatOccurrenceRangeEST } from "@/lib/datetime/utils"
-import { useSavedListings } from "@/hooks/use-saved-listings"
-import { useAuth } from "@/hooks/use-auth"
 import { getEventTypeColor } from "@/components/calendar/event-colors"
 import type { CalendarItem } from "@/hooks/use-calendar"
 import type {
@@ -44,23 +42,9 @@ interface ListingCardProps {
 }
 
 function ListingCardFavoriteBar({ listingId }: { listingId: string }) {
-  const { isAuthed } = useAuth()
-  const { isSaved, loading, saving, toggleSave } = useSavedListings(listingId)
-  if (!isAuthed) return null
   return (
     <div className="absolute top-3 right-3 z-10">
-      <FavoriteButton
-        active={isSaved}
-        onToggle={(e) => {
-          e.stopPropagation()
-          if (!saving && !loading) {
-            void toggleSave()
-          }
-        }}
-        size="sm"
-        disabled={saving || loading}
-        aria-label={isSaved ? "Remove from favorites" : "Add to favorites"}
-      />
+      <SaveListingFavoriteButton listingId={listingId} size="sm" />
     </div>
   )
 }

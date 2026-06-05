@@ -5,6 +5,32 @@ import { UseFormReturn, Path } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { loadPlacesLibrary } from "@/lib/location/google-maps-loader"
 import { coerceLocationFieldString } from "@/lib/location/mode"
+import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
+
+function FieldLabelWithTooltip({
+  htmlFor,
+  label,
+  tooltip,
+  required,
+  showAsterisk = true,
+}: {
+  htmlFor?: string
+  label: string
+  tooltip?: string
+  required?: boolean
+  showAsterisk?: boolean
+}) {
+  const tooltipText = tooltip?.trim()
+  return (
+    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+      <label className="text-sm font-medium text-gray-700" htmlFor={htmlFor}>
+        {label}
+        {required && showAsterisk ? <span className="text-error-600"> *</span> : null}
+      </label>
+      {tooltipText ? <FormFieldTooltip text={tooltipText} /> : null}
+    </div>
+  )
+}
 
 export type LocationFieldInstructionsProps<T extends Record<string, unknown>> = {
   form: UseFormReturn<T>
@@ -120,6 +146,8 @@ interface LocationFieldProps<T extends Record<string, unknown>> {
   lngName?: Path<T>
   instructionsName?: Path<T>
   label?: string
+  /** Tooltip beside the address/place label when `label` is shown. */
+  labelTooltip?: string
   note?: string
   instructionsLabel?: string
   instructionsNote?: string
@@ -149,6 +177,7 @@ export function LocationField<T extends Record<string, unknown>>({
   lngName,
   instructionsName,
   label = "Location",
+  labelTooltip,
   note,
   instructionsLabel = "Location Instructions",
   instructionsNote,
@@ -168,7 +197,7 @@ export function LocationField<T extends Record<string, unknown>>({
 
   // Watch the address field to update the Google Places element when form values change externally
   const currentAddress = form.watch(addressName) as string | undefined
-  
+
   useEffect(() => {
     if (elementRef.current && currentAddress && (elementRef.current as any).value !== currentAddress) {
       console.log("[LocationField] Updating Google Places element value:", currentAddress)
@@ -225,30 +254,30 @@ export function LocationField<T extends Record<string, unknown>>({
 
         const onPlaceSelect = async (evt: any) => {
           const { placePrediction } = evt?.detail ?? evt ?? {}
-          
+
           let place = evt?.place ?? evt?.detail?.place
-          
+
           if (!place && evt?.mh) {
             place = evt.mh.place ?? evt.mh.placePrediction ?? evt.mh
           }
-          
+
           if (!place && placePrediction) {
             place = placePrediction.toPlace ? placePrediction.toPlace() : placePrediction
           }
-          
+
           if (!place && el) {
             place = (el as any)?.place ?? (el as any)?.gmpPlace ?? (el as any)?.value
           }
-          
+
           let elementValue = ""
           if (el && (el as any)?.value) {
             elementValue = String((el as any).value)
           }
-          
+
           if (!place) return
 
           try {
-            if (place && typeof place.toPlace === 'function') {
+            if (place && typeof place.toPlace === "function") {
               place = place.toPlace()
             }
 
@@ -306,11 +335,6 @@ export function LocationField<T extends Record<string, unknown>>({
     }
   }, [form, addressName, venueName, placeIdName, latName, lngName])
 
-  // // ✅ THIS is what RHF validates + submits
-  // const addressField = form.register(addressName, {
-  //   required: required ? "Location is required" : false,
-  // })
-
   const mapClassName = compact ? "mt-0 border-2" : "mt-2 border-2"
 
   void form.formState.errors
@@ -323,14 +347,21 @@ export function LocationField<T extends Record<string, unknown>>({
       form.formState.submitCount > 0)
   const addressErrMsg = showAddressErr ? (addressState.error?.message as string | undefined) : undefined
 
+  const showLabel = Boolean(label?.trim())
+
   return (
     <div className={className}>
-      <div className={compact ? "mb-1.5" : "mb-1"}>
-        <label className="block text-sm font-medium text-gray-700">
-          {label} {required && showAsterisk ? <span className="text-error-600">*</span> : null}
-        </label>
-        {note && !compact ? <p className="mt-1 text-sm text-gray-500">{note}</p> : null}
-      </div>
+      {showLabel ? (
+        <div className={compact ? "mb-1.5" : "mb-1"}>
+          <FieldLabelWithTooltip
+            label={label}
+            tooltip={labelTooltip}
+            required={required}
+            showAsterisk={showAsterisk}
+          />
+          {note && !compact ? <p className="mt-1 text-sm text-gray-500">{note}</p> : null}
+        </div>
+      ) : null}
 
       {apiError ? <div className="text-xs text-error-600 mb-2">{apiError}</div> : null}
       {addressErrMsg ? <p className="mb-2 text-xs text-error-600" role="alert">{addressErrMsg}</p> : null}

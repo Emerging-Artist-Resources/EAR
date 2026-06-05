@@ -1,3 +1,7 @@
+import type { AdminListingDateBasis } from "@/lib/admin/listing-date-filter"
+
+export type { AdminListingDateBasis }
+
 export type AdminStatus = "PENDING" | "APPROVED" | "REJECTED"
 
 export type EventType = "performance" | "audition" | "creative" | "class"
@@ -7,6 +11,8 @@ export interface AdminEventItem {
   type: EventType
   status: "pending" | "approved" | "rejected"
   submitted_at: string
+  /** Earliest matching date for the active filter (occurrence or submitted). */
+  display_date?: string
   title: string | null
 }
 

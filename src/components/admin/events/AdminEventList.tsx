@@ -1,6 +1,7 @@
 "use client"
 
-import { AdminEventItem } from "./types"
+import { AdminEventItem, AdminListingDateBasis } from "./types"
+import { adminListingDateColumnLabel } from "@/lib/admin/listing-date-filter"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/typography"
 import { useState } from "react"
@@ -14,10 +15,12 @@ export function AdminEventList({
   items,
   onReview,
   onDelete,
+  dateBasis = "submitted",
 }: {
   items: AdminEventItem[]
   onReview: (id: string, status: "APPROVED" | "REJECTED", comments: string) => Promise<void>
   onDelete?: (id: string) => Promise<void>
+  dateBasis?: AdminListingDateBasis
 }) {
   const [selected, setSelected] = useState<AdminEventItem | null>(null)
   const [open, setOpen] = useState(false)
@@ -42,20 +45,20 @@ export function AdminEventList({
             <tr>
               <th className="px-3 py-2 text-left">Type</th>
               <th className="px-3 py-2 text-left">Title</th>
-              <th className="px-3 py-2 text-left">Submitted</th>
+              <th className="px-3 py-2 text-left">{adminListingDateColumnLabel(dateBasis)}</th>
               <th className="px-3 py-2 text-left">Status</th>
               <th className="px-3 py-2" />
             </tr>
           </thead>
           <tbody>
             {items.map((ev) => {
-              const submitted = new Date(ev.submitted_at).toLocaleString()
+              const displayDate = new Date(ev.display_date ?? ev.submitted_at).toLocaleString()
               const title = ev.title ?? ev.id
               return (
                 <tr key={ev.id} className="border-t border-[var(--gray-200)]">
                   <td className="px-3 py-2 capitalize">{ev.type}</td>
                   <td className="px-3 py-2">{title}</td>
-                  <td className="px-3 py-2">{submitted}</td>
+                  <td className="px-3 py-2">{displayDate}</td>
                   <td className="px-3 py-2 capitalize">{ev.status}</td>
                   <td className="px-3 py-2 text-right">
                     <div className="flex items-center gap-2 justify-end">

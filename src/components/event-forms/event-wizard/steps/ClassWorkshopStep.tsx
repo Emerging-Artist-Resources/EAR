@@ -13,6 +13,7 @@ import { ClassOccurrencesPicker } from "@/components/forms/blocks/ClassOccurrenc
 import { ListingWebsiteField } from "@/components/forms/blocks/ListingWebsiteField"
 import { ShareListingSection } from "@/components/event-forms/event-wizard/steps/performance/ShareListingSection"
 import { useSyncArtistTypeFromProfile } from "@/hooks/use-sync-artist-type-from-profile"
+import { LOCATION_UNDISCLOSED_TOOLTIP } from "@/lib/location/tooltips"
 
 interface ClassesWorkshopsStepProps {
   form: UseFormReturn<EventFormData>
@@ -109,6 +110,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
     instructionsName: "locationInstructions",
     instructionsPlaceholder: "",
     label: "Location",
+    labelTooltip: LOCATION_UNDISCLOSED_TOOLTIP,
     required: true,
   } as const
 

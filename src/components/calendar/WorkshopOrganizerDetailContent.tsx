@@ -1,8 +1,8 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
-import { FavoriteButton } from "@/components/ui/favorite-button"
-import { H3, Text } from "@/components/ui/typography"
+import { SaveListingFavoriteButton } from "@/components/shared/SaveListingFavoriteButton"
+import { H3 } from "@/components/ui/typography"
 import { HorizontalScrollCards } from "@/components/shared/HorizontalScrollCards"
 import { ListingCard } from "@/components/shared/ListingCard"
 import { stripAdminNotes } from "@/lib/listings/admin-notes"
@@ -32,12 +32,6 @@ export interface WorkshopOrganizerDetailContentProps {
   childListings: ChildListingSummary[]
   showAllDates: boolean
   onShowAllDatesChange: (showAll: boolean) => void
-  isAuthed: boolean
-  isSaved: boolean
-  saving: boolean
-  savingLoading: boolean
-  saveError: string | null
-  onToggleSave: () => void
   onListingClick?: (listingId: string) => void
   parentListingId?: string | null
   backToParentLabel?: string | null
@@ -50,12 +44,6 @@ export function WorkshopOrganizerDetailContent({
   childListings,
   showAllDates,
   onShowAllDatesChange,
-  isAuthed,
-  isSaved,
-  saving,
-  savingLoading,
-  saveError,
-  onToggleSave,
   onListingClick,
   parentListingId,
   backToParentLabel,
@@ -97,22 +85,7 @@ export function WorkshopOrganizerDetailContent({
         <Badge variant="primary" size="sm">
           {typeLabel}
         </Badge>
-        {isAuthed && (
-          <div className="flex items-center gap-2">
-            {saveError && <Text className="text-status-error-fg">{saveError}</Text>}
-            <FavoriteButton
-              active={isSaved}
-              onToggle={() => {
-                if (!saving && !savingLoading) {
-                  onToggleSave()
-                }
-              }}
-              size="md"
-              disabled={saving || savingLoading}
-              aria-label={isSaved ? "Remove from favorites" : "Add to favorites"}
-            />
-          </div>
-        )}
+        <SaveListingFavoriteButton listingId={listing.id} />
       </div>
 
       {parentListingId && backToParentLabel && onListingClick && (

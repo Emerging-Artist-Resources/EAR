@@ -1,3 +1,4 @@
+import type { AdminListingDateBasis } from "@/lib/admin/listing-date-filter"
 import { createListingOwnedRepo, listEvents, listCalendarItemsRepo, getEventPublicRepo, listMyEventsRepo, getEventForOwnerRepo, listAdminEventsRepo, getAdminEventDetailRepo, submitListingRepo } from "./repository"
 import { eventFormSchema, type EventFormData } from "@/lib/validations/events"
 import type { SupabaseClient } from "@supabase/supabase-js"
@@ -99,8 +100,16 @@ export async function getEventForOwner(eventId: string) {
   return await getEventForOwnerRepo(eventId)
 }
 
-export async function listAdminEvents(status: 'pending'|'approved'|'rejected', limit = 50) {
-  return await listAdminEventsRepo({ status, limit })
+export async function listAdminEvents(
+  status: "pending" | "approved" | "rejected",
+  limit = 50,
+  options?: {
+    dateFrom?: string
+    dateTo?: string
+    dateBasis?: AdminListingDateBasis
+  },
+) {
+  return await listAdminEventsRepo({ status, limit, ...options })
 }
 
 export async function getAdminEventDetail(eventId: string) {

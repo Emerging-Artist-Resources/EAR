@@ -53,6 +53,8 @@ export type AdminAnalytics = {
   sponsorDonationsAmountCents: number
   donationsInPeriod: number
   donationsAmountInPeriodCents: number
+  earDonationsAmountInPeriodCents: number
+  sponsorDonationsAmountInPeriodCents: number
   listingFeesCents: number
   listingFeesInPeriodCents: number
   totalSavedListings: number

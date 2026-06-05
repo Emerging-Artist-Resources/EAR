@@ -8,6 +8,7 @@ import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { LocationSection } from "@/components/forms/blocks/LocationSection"
+import { LOCATION_UNDISCLOSED_TOOLTIP } from "@/lib/location/tooltips"
 import { SelectBlock } from "@/components/forms/blocks/Select"
 import { ListingWebsiteField } from "@/components/forms/blocks/ListingWebsiteField"
 import { Button } from "@/components/ui/button"
@@ -79,18 +80,18 @@ export function AuditionStep({ form }: AuditionStepProps) {
   return (
     <>
       <Section title="Audition Details">
-        <TextField form={form} name={"title"} label="Audition Name" required />
+        <TextField form={form} name={"title"} label="Audition name" required />
         <TextField
           form={form}
           name={"host"}
-          label="Hosting Organization/Individual(s)"
+          label="Hosting organization or individual(s)"
           required
         />
         <ListingWebsiteField form={form} />
         <TextAreaField
           form={form}
           name={"description"}
-          label="Opportunity Description"
+          label="Audition description"
           required
           placeholder="Provide an overview of the company, contract terms, and key details. Include duration, compensation, location, and rehearsal/performance commitments."
         />
@@ -121,7 +122,7 @@ export function AuditionStep({ form }: AuditionStepProps) {
         <TextAreaField
           form={form}
           name={"preAuditionClasses"}
-          label="Pre-Audition Opportunities"
+          label="Pre-audition opportunities"
           placeholder="Are there any recommended classes, workshops, or intensives prior to auditioning?"
         />
         </Section>
@@ -137,7 +138,7 @@ export function AuditionStep({ form }: AuditionStepProps) {
           />
         </div>
         {isFee && (
-          <TextField form={form} name={"feeAmount"} label="Audition Fee Amount" required placeholder="$ or description" />
+          <TextField form={form} name={"feeAmount"} label="Audition fee amount" required placeholder="$ or description" />
         )}
         </Section>
 
@@ -192,6 +193,7 @@ export function AuditionStep({ form }: AuditionStepProps) {
           latName={"lat"}
           lngName={"lng"}
           instructionsName={"locationInstructions"}
+          labelTooltip={LOCATION_UNDISCLOSED_TOOLTIP}
           required
         />
       </Section>

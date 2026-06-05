@@ -8,6 +8,7 @@ import { SelectBlock } from "@/components/forms/blocks/Select"
 import { EventFormData } from "@/lib/validations/events"
 import { apiGet } from "@/lib/client/fetch-utils"
 import { DEFAULT_LOCATION_MODE } from "@/lib/location/mode"
+import { LOCATION_UNDISCLOSED_TOOLTIP } from "@/lib/location/tooltips"
 
 interface ParentEventData {
   event_occurrences?: Array<{ id: string; starts_at_utc: string; tz: string }>
@@ -190,6 +191,7 @@ export function ClassOccurrencesPicker({ form, label, showEndTime = false }: Cla
             lngName: "lng",
             instructionsName: "locationInstructions",
             label: "Location",
+            labelTooltip: LOCATION_UNDISCLOSED_TOOLTIP,
             required: true,
           }}
         />
@@ -246,6 +248,7 @@ export function ClassOccurrencesPicker({ form, label, showEndTime = false }: Cla
                 lngName: "lng",
                 instructionsName: "locationInstructions",
                 label: "Location",
+                labelTooltip: LOCATION_UNDISCLOSED_TOOLTIP,
                 required: true,
               }}
             />

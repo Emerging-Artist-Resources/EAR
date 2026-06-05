@@ -1,12 +1,8 @@
-"use client"
-
-import { useEffect, useState } from "react"
 import Link from "next/link"
+import { AlertCircle } from "lucide-react"
 import { H2, Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { CheckCircle2 } from "lucide-react"
-import { ResendVerificationEmailForm } from "@/components/auth/ResendVerificationEmailForm"
 import {
   AUTH_LINK_CLASS,
   AUTH_MUTED_TEXT_CLASS,
@@ -14,14 +10,13 @@ import {
   AUTH_PAGE_SHELL_CLASS,
 } from "@/lib/auth/page-styles"
 
-export default function SignUpConfirmPage() {
-  const [email, setEmail] = useState("")
+type AuthLinkErrorCardProps = {
+  title: string
+  description: string
+  children?: React.ReactNode
+}
 
-  useEffect(() => {
-    const q = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "")
-    setEmail(q.get("email") ?? "")
-  }, [])
-
+export function AuthLinkErrorCard({ title, description, children }: AuthLinkErrorCardProps) {
   return (
     <div className={AUTH_PAGE_SHELL_CLASS}>
       <div className="max-w-md w-full">
@@ -29,28 +24,26 @@ export default function SignUpConfirmPage() {
           <CardContent className="px-6 pb-8 pt-8">
             <div className="space-y-6 text-center">
               <div className="flex justify-center">
-                <CheckCircle2 className="h-16 w-16 text-ear-dark-sage" />
+                <AlertCircle className="h-16 w-16 text-ear-dark-red" aria-hidden />
               </div>
 
               <div className="space-y-2">
-                <H2 className="text-ear-black">Account created successfully</H2>
-                <Text className={AUTH_MUTED_TEXT_CLASS}>
-                  Check your email to verify your account. Once verified, you can sign in.
-                </Text>
+                <H2 className="text-ear-black">{title}</H2>
+                <Text className={AUTH_MUTED_TEXT_CLASS}>{description}</Text>
               </div>
 
-              {email ? <ResendVerificationEmailForm initialEmail={email} /> : null}
+              {children}
 
               <div className="pt-2">
-                <Button asChild className="w-full">
-                  <Link href="/auth/signin">Go to sign in</Link>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/auth/signin">Back to sign in</Link>
                 </Button>
               </div>
 
               <Text className={`text-sm ${AUTH_MUTED_TEXT_CLASS}`}>
-                Didn&apos;t receive an email? Check your spam folder or{" "}
+                Check your spam folder if you don&apos;t see the email. Already verified?{" "}
                 <Link href="/auth/signin" className={`${AUTH_LINK_CLASS} underline`}>
-                  try signing in
+                  Sign in
                 </Link>
                 .
               </Text>
