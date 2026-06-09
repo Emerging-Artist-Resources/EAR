@@ -27,6 +27,7 @@ export const ROUTES = {
   PROFILE: "/profile",
   PROFILE_LISTINGS: "/profile/listings",
   PROFILE_SAVED: "/profile/saved",
+  PROFILE_FISCAL_SPONSORSHIP: "/profile/fiscal-sponsorship",
   PROFILE_ACCOUNT: "/profile/account",
   PROFILE_SETTINGS: "/profile/settings",
   ADMIN: "/admin",

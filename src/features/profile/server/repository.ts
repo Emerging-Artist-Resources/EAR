@@ -4,8 +4,11 @@ import {
   SavedListing,
   ActivityOverview,
   ServiceInquirySummary,
+  FiscalSponsorshipDashboard,
+  ReceivedDonationSummary,
 } from "./types";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getPublicAppUrl } from "@/lib/config/app-url";
 import { getListingTitle } from "@/features/events/server/listing-utils";
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections";
 import type { FiscalSponsorshipStatus } from "@/lib/types/fiscal-sponsorship";
@@ -617,4 +620,63 @@ export async function fetchServiceInquiriesForUser(userId: string): Promise<Serv
       service_title: title,
     }
   })
+}
+
+export const FISCAL_SPONSORSHIP_DONATIONS_PAGE_SIZE = 10;
+
+export async function fetchFiscalSponsorshipDashboardRepo(
+  userId: string,
+  options: { page: number; limit: number },
+): Promise<FiscalSponsorshipDashboard> {
+  const profile = await getProfileRepo(userId);
+  if (!profile) {
+    throw new Error("Profile not found");
+  }
+
+  const { page, limit } = options;
+  const from = page * limit;
+  const to = from + limit - 1;
+
+  const supabase = await getSupabaseServerClient();
+
+  const { data, error, count } = await supabase
+    .from("donations")
+    .select(
+      "id, created_at, donor_name, base_gift_cents, message, designation_label_snapshot",
+      { count: "exact" },
+    )
+    .eq("recipient_user_id", userId)
+    .eq("payment_status", "paid")
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    throw error;
+  }
+
+  const slug = profile.slug?.trim() || null;
+  const donation_link = slug
+    ? `${getPublicAppUrl()}/donate/${encodeURIComponent(slug)}`
+    : null;
+
+  const donations: ReceivedDonationSummary[] = (data ?? []).map((row) => ({
+    id: row.id as string,
+    created_at: row.created_at as string,
+    donor_name: (row.donor_name as string | null) ?? null,
+    base_gift_cents: row.base_gift_cents as number,
+    message: (row.message as string | null) ?? null,
+    designation_label_snapshot: (row.designation_label_snapshot as string | null) ?? null,
+  }));
+
+  return {
+    fiscal_sponsorship_status: profile.fiscal_sponsorship_status,
+    fiscal_sponsorship_approved_at: profile.fiscal_sponsorship_approved_at,
+    fiscal_sponsorship_note: profile.fiscal_sponsorship_note,
+    slug,
+    donation_link,
+    donations,
+    donations_total_count: count ?? 0,
+    page,
+    limit,
+  };
 }

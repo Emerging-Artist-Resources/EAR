@@ -6,6 +6,8 @@ import {
   checkListingSavedRepo,
   getActivityOverviewRepo,
   fetchServiceInquiriesForUser,
+  fetchFiscalSponsorshipDashboardRepo,
+  FISCAL_SPONSORSHIP_DONATIONS_PAGE_SIZE,
 } from "./repository";
 import {
   ProfileSavedEventsFilter,
@@ -13,6 +15,7 @@ import {
   SavedListing,
   ActivityOverview,
   ServiceInquirySummary,
+  FiscalSponsorshipDashboard,
 } from "./types";
 import { sendProfileEmail } from "@/lib/email/sendProfileEmail";
 import { getPublicAppUrl } from "@/lib/config/app-url";
@@ -53,6 +56,15 @@ export async function getActivityOverview(userId: string): Promise<ActivityOverv
 
 export async function getServiceInquiries(userId: string): Promise<ServiceInquirySummary[]> {
   return await fetchServiceInquiriesForUser(userId);
+}
+
+export async function getFiscalSponsorshipDashboard(
+  userId: string,
+  options?: { page?: number; limit?: number },
+): Promise<FiscalSponsorshipDashboard> {
+  const page = options?.page ?? 0;
+  const limit = options?.limit ?? FISCAL_SPONSORSHIP_DONATIONS_PAGE_SIZE;
+  return fetchFiscalSponsorshipDashboardRepo(userId, { page, limit });
 }
 
 function extractFirstName(fullName: string | null | undefined): string {

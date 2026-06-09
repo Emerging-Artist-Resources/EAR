@@ -1,0 +1,32 @@
+import { NextRequest } from "next/server";
+import { getAuthenticatedUser } from "@/lib/auth/helpers";
+import {
+  handleApiError,
+  createSuccessResponse,
+  getQueryParamNumber,
+} from "@/lib/api/utils";
+import { getFiscalSponsorshipDashboard } from "@/features/profile/server/service";
+import { FISCAL_SPONSORSHIP_DONATIONS_PAGE_SIZE } from "@/features/profile/server/repository";
+
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await getAuthenticatedUser();
+    if (!auth) {
+      return handleApiError(new Error("Unauthorized"));
+    }
+
+    const page = getQueryParamNumber(request, "page", 0, 0);
+    const limit = getQueryParamNumber(
+      request,
+      "limit",
+      FISCAL_SPONSORSHIP_DONATIONS_PAGE_SIZE,
+      1,
+    );
+
+    const dashboard = await getFiscalSponsorshipDashboard(auth.user.id, { page, limit });
+
+    return createSuccessResponse(dashboard);
+  } catch (error) {
+    return handleApiError(error);
+  }
+}

@@ -1,5 +1,7 @@
 // Basic types you can expand later
 
+import type { FiscalSponsorshipStatus } from "@/lib/types/fiscal-sponsorship"
+
 export type EventType =
   | "performance"
   | "audition"
@@ -61,4 +63,25 @@ export interface MyListing {
   resubmitted_at?: string | null;
   reviewed_at?: string | null;
   admin_notes?: string | null;
+}
+
+export interface ReceivedDonationSummary {
+  id: string;
+  created_at: string;
+  donor_name: string | null;
+  base_gift_cents: number;
+  message: string | null;
+  designation_label_snapshot: string | null;
+}
+
+export interface FiscalSponsorshipDashboard {
+  fiscal_sponsorship_status: FiscalSponsorshipStatus;
+  fiscal_sponsorship_approved_at: string | null;
+  fiscal_sponsorship_note: string | null;
+  slug: string | null;
+  donation_link: string | null;
+  donations: ReceivedDonationSummary[];
+  donations_total_count: number;
+  page: number;
+  limit: number;
 }
