@@ -348,7 +348,7 @@ When a new user signs up, an email verification email is automatically sent:
   - Local dev: `http://localhost:3000/auth/callback`, `http://localhost:3000/auth/callback/recovery`, etc.
 - **Resend:** Users can trigger `resendVerificationEmailAction` from the signup confirm page (`src/features/profile/server/resendVerification.ts`).
 - **Expired/invalid links:** Supabase may redirect to **Site URL** with query params such as `error=access_denied&error_code=otp_expired`. The app middleware and home page (`src/app/page.tsx`) forward those visits to `/auth/signin` with a clear message instead of silently sending users to announcements.
-- Link expires according to Supabase configuration.
+- Link expires after **24 hours** (`otp_expiry = 86400` in `supabase/config.toml`; keep in sync with Supabase dashboard **Auth → Email** settings).
 
 ### Password reset email
 

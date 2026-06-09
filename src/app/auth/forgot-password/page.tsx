@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
 import { Card, CardContent } from "@/components/ui/card"
+import { AUTH_EMAIL_LINK_EXPIRY_LABEL } from "@/lib/auth/email-link-expiry"
 import {
   AUTH_LINK_CLASS,
   AUTH_MUTED_TEXT_CLASS,
@@ -51,7 +52,8 @@ export default function ForgotPasswordPage() {
         <div>
           <H2 className="text-center text-ear-black">Reset your password</H2>
           <Text className={`mt-2 text-center text-sm ${AUTH_MUTED_TEXT_CLASS}`}>
-            Enter your email and we&apos;ll send you a link to choose a new password.
+            Enter your email and we&apos;ll send you a link to choose a new password. The link
+            expires in {AUTH_EMAIL_LINK_EXPIRY_LABEL}.
           </Text>
         </div>
 

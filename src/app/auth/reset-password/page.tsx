@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
 import { Card, CardContent } from "@/components/ui/card"
+import { AUTH_EMAIL_LINK_EXPIRY_LABEL } from "@/lib/auth/email-link-expiry"
 import {
   AUTH_LINK_CLASS,
   AUTH_MUTED_TEXT_CLASS,
@@ -133,7 +134,8 @@ export default function ResetPasswordPage() {
       <div className={`${AUTH_PAGE_SHELL_CLASS} flex-col gap-6`}>
         <H2 className="text-center text-ear-black">Link invalid or expired</H2>
         <Text className={`text-center max-w-md ${AUTH_MUTED_TEXT_CLASS}`}>
-          Request a new password reset link and try again.
+          Reset links expire after {AUTH_EMAIL_LINK_EXPIRY_LABEL}. Request a new link and try
+          again.
         </Text>
         <Button asChild variant="primary">
           <Link href="/auth/forgot-password">Request new link</Link>
