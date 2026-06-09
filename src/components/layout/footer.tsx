@@ -19,14 +19,14 @@ export function Footer() {
   return (
     <footer className="mt-0 shrink-0 bg-ear-black text-ear-off-white">
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-6 sm:py-10 lg:px-10 lg:py-12">
-        <div className="grid grid-cols-2 items-start gap-x-6 gap-y-8 md:grid-cols-3 md:gap-x-8 md:gap-y-0 lg:gap-x-12">
+        <div className="grid grid-cols-2 items-start gap-x-6 gap-y-8 md:flex md:justify-between md:gap-y-0 lg:gap-x-12">
           <div className="flex flex-col items-start gap-3 md:gap-4">
             <Image
               src={EAR_LOGO_05_SRC}
               alt="EAR"
               width={420}
               height={120}
-              className="block h-auto w-full max-w-36 sm:max-w-44 md:w-56 md:max-w-none"
+              className="block h-auto w-full max-w-28 sm:max-w-36 md:w-44 md:max-w-none"
             />
             <SocialLinks
               className="gap-2.5 text-ear-off-white sm:gap-3"
@@ -34,7 +34,7 @@ export function Footer() {
             />
           </div>
 
-          <div className="flex flex-col gap-3 md:gap-4">
+          <div className="flex flex-col items-start gap-3 md:gap-4">
             <h2 className={footerHeadingClass}>Contact Us</h2>
             <address className="not-italic font-sans text-sm leading-6 md:text-base md:leading-7">
               <a
@@ -43,7 +43,7 @@ export function Footer() {
               >
                 {SITE_CONTACT_EMAIL}
               </a>
-              <Text className="mt-1 block text-ear-off-white">
+              <Text className="mt-4 block text-ear-off-white">
                 {SITE_CONTACT_ADDRESS.line1}
                 <br />
                 {SITE_CONTACT_ADDRESS.line2}
@@ -51,7 +51,7 @@ export function Footer() {
             </address>
           </div>
 
-          <div className="col-span-2 flex flex-col gap-3 md:col-span-1 md:gap-4">
+          <div className="col-span-2 flex flex-col items-start gap-3 md:col-span-1 md:max-w-sm md:gap-4">
             <h2 className={footerHeadingClass}>Subscribe</h2>
             <Text className="text-sm text-ear-off-white/95 md:text-base">
               Enter your email to get notified about new events.

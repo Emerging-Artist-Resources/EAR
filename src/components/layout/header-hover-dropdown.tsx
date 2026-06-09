@@ -9,6 +9,8 @@ export const headerDropdownMenuClass =
 export const headerDropdownMenuItemClass =
   "h-auto w-full justify-start rounded-none px-4 py-2 text-sm font-normal"
 
+const CLOSE_DELAY_MS = 150
+
 type HeaderDropdownTriggerProps = {
   isOpen: boolean
   toggle: () => void
@@ -22,7 +24,7 @@ interface HeaderHoverDropdownProps {
   className?: string
 }
 
-/** Opens on click; closes on outside click, Escape, or menu item selection. */
+/** Opens on trigger hover or click; closes on outside click, Escape, or menu item selection. */
 export function HeaderHoverDropdown({
   trigger,
   children,
@@ -32,9 +34,36 @@ export function HeaderHoverDropdown({
 }: HeaderHoverDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const toggle = () => setIsOpen((prev) => !prev)
-  const close = () => setIsOpen(false)
+  const clearCloseTimer = () => {
+    if (closeTimerRef.current !== null) {
+      clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+  }
+
+  const open = () => {
+    clearCloseTimer()
+    setIsOpen(true)
+  }
+
+  const scheduleClose = () => {
+    clearCloseTimer()
+    closeTimerRef.current = setTimeout(() => setIsOpen(false), CLOSE_DELAY_MS)
+  }
+
+  const toggle = () => {
+    clearCloseTimer()
+    setIsOpen((prev) => !prev)
+  }
+
+  const close = () => {
+    clearCloseTimer()
+    setIsOpen(false)
+  }
+
+  useEffect(() => () => clearCloseTimer(), [])
 
   useEffect(() => {
     if (!isOpen) return
@@ -70,7 +99,9 @@ export function HeaderHoverDropdown({
       ref={containerRef}
       className={cn("relative inline-flex flex-col items-center", className)}
     >
-      {triggerNode}
+      <div onMouseEnter={open} onMouseLeave={scheduleClose}>
+        {triggerNode}
+      </div>
 
       <div
         className={cn(
@@ -78,7 +109,10 @@ export function HeaderHoverDropdown({
           align === "center" && "left-1/2 min-w-[12rem] -translate-x-1/2",
           align === "right" && "right-0 min-w-[10rem]",
           align === "left" && "left-0 min-w-[12rem]",
+          !isOpen && "pointer-events-none",
         )}
+        onMouseEnter={clearCloseTimer}
+        onMouseLeave={scheduleClose}
       >
         <div
           className={cn(
