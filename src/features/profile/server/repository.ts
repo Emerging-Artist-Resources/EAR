@@ -14,6 +14,7 @@ import {
   type DonationDesignationConfigParsed,
   parseActiveDonationDesignationConfig,
 } from "@/lib/donations/donationDesignationConfig";
+import { parseDonationPresetAmounts } from "@/lib/donations/donationPresetAmounts";
 import { resolveDonationRecipientDisplayName } from "@/lib/profile/donationRecipientDisplayName";
 import { formatOccurrenceRangeEST } from "@/lib/datetime/utils";
 
@@ -358,6 +359,8 @@ export interface PublicDonationProfile {
   donation_page_image_url: string | null;
   /** Parsed active config for designation dropdown; null when feature off. */
   donation_designation: DonationDesignationConfigParsed | null;
+  /** Validated preset button amounts in USD; null = use app default on donate page. */
+  donation_preset_amounts: number[] | null;
   /**
    * Name to show on donation pages (e.g. "Support …").
    * For company/festival, prefers organization_name when set; otherwise profile name.
@@ -403,7 +406,7 @@ export async function getProfileBySlugForDonationRepo(slug: string): Promise<Pub
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, name, slug, fiscal_sponsorship_status, donation_page_message, donation_page_image_path, donation_designation_config, profile_type, organization_name",
+      "id, name, slug, fiscal_sponsorship_status, donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts, profile_type, organization_name",
     )
     .eq("slug", slug)
     .eq("fiscal_sponsorship_status", "approved")
@@ -429,6 +432,7 @@ export async function getProfileBySlugForDonationRepo(slug: string): Promise<Pub
     donation_page_message: string | null;
     donation_page_image_path: string | null;
     donation_designation_config?: unknown;
+    donation_preset_amounts?: unknown;
     profile_type: string | null;
     organization_name: string | null;
   };
@@ -441,6 +445,7 @@ export async function getProfileBySlugForDonationRepo(slug: string): Promise<Pub
     donation_page_message: row.donation_page_message ?? null,
     donation_page_image_url,
     donation_designation: parseActiveDonationDesignationConfig(row.donation_designation_config),
+    donation_preset_amounts: parseDonationPresetAmounts(row.donation_preset_amounts),
     donation_recipient_display_name: resolveDonationRecipientDisplayName({
       name: row.name,
       organization_name: row.organization_name,
@@ -489,6 +494,7 @@ export async function getProfileBySlugForDonationSuccessRepo(
     donation_page_message: null,
     donation_page_image_url: null,
     donation_designation: null,
+    donation_preset_amounts: null,
     donation_recipient_display_name: resolveDonationRecipientDisplayName({
       name: row.name,
       organization_name: row.organization_name,
