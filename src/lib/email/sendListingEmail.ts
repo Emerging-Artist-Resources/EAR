@@ -10,6 +10,7 @@
 
 import { getPublicAppUrl } from "@/lib/config/app-url"
 import { ROUTES } from "@/lib/config/constants"
+import { LISTING_SUBMISSION_FEEDBACK_FORM_URL } from "@/lib/config/site-contact"
 import { postmarkClient } from "./postmark"
 
 type ListingEmailType = "listing-received" | "listing-updated" | "admin-listing-received"
@@ -70,6 +71,10 @@ export async function sendListingEmail(
 
   if (submitterEmail) {
     templateModel.submitter_email = submitterEmail
+  }
+
+  if (type === "listing-received") {
+    templateModel.feedback_url = LISTING_SUBMISSION_FEEDBACK_FORM_URL
   }
 
   const emailData = {

@@ -9,6 +9,7 @@
  */
 
 import { getPublicAppUrl } from "@/lib/config/app-url"
+import { SIGNUP_ACCOUNT_FEEDBACK_FORM_URL } from "@/lib/config/site-contact"
 import { postmarkClient } from "./postmark"
 
 type ProfileEmailType =
@@ -16,6 +17,7 @@ type ProfileEmailType =
   | "profile-approved"
   | "email-confirmation"
   | "password-reset"
+  | "welcome-email"
 
 type SendAdminNewUserEmailArgs = {
   to: string
@@ -46,11 +48,17 @@ type SendPasswordResetArgs = {
   resetUrl: string
 }
 
+type SendWelcomeEmailArgs = {
+  to: string
+  firstName: string
+}
+
 type SendProfileEmailArgs =
   | SendAdminNewUserEmailArgs
   | SendProfileApprovedEmailArgs
   | SendEmailConfirmationArgs
   | SendPasswordResetArgs
+  | SendWelcomeEmailArgs
 
 export async function sendProfileEmail(
   type: ProfileEmailType,
@@ -104,6 +112,13 @@ export async function sendProfileEmail(
     templateModel = {
       first_name: confirmationArgs.firstName,
       verification_url: confirmationArgs.verificationUrl,
+    }
+  } else if (type === "welcome-email") {
+    const welcomeArgs = args as SendWelcomeEmailArgs
+    templateModel = {
+      first_name: welcomeArgs.firstName,
+      dashboard_url: `${baseUrl}/profile`,
+      feedback_url: SIGNUP_ACCOUNT_FEEDBACK_FORM_URL,
     }
   } else {
     const resetArgs = args as SendPasswordResetArgs
