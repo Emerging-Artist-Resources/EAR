@@ -1,9 +1,9 @@
-import type { Metadata } from "next"
 import { FiscalSponsorshipBenefitsSection } from "@/components/services/FiscalSponsorshipBenefitsSection"
 import { FiscalSponsorshipCtaBand } from "@/components/services/FiscalSponsorshipCtaBand"
 import { FiscalSponsorshipExplainer } from "@/components/services/FiscalSponsorshipExplainer"
 import { FiscalSponsorshipPartnershipSection } from "@/components/services/FiscalSponsorshipPartnershipSection"
 import { ServicesHero } from "@/components/services/ServicesHero"
+import { buildPageMetadata } from "@/lib/config/site-metadata"
 import {
   FISCAL_SPONSORSHIP_INQUIRY_HREF,
   FISCAL_SPONSORSHIP_EXPLAINER_IMAGE,
@@ -16,11 +16,12 @@ import {
   fiscalSponsorshipPartnership,
 } from "@/lib/content/fiscal-sponsorship"
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "Fiscal Sponsorship",
   description:
-    "Learn about fiscal sponsorship through Emerging Artist Resources—what it is, how it works, and how to get started.",
-}
+    "Learn about fiscal sponsorship for emerging artists in NYC through Emerging Artist Resources—what it is, how it works, and how to get started.",
+  path: "/services/fiscal-sponsorship",
+})
 
 export default function FiscalSponsorshipPage() {
   return (

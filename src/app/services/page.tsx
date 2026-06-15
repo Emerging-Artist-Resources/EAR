@@ -1,11 +1,19 @@
 import { ServiceOverviewCard } from "@/components/services/ServiceOverviewCard"
 import { ServicesHero } from "@/components/services/ServicesHero"
 import { Text } from "@/components/ui/typography"
+import { buildPageMetadata } from "@/lib/config/site-metadata"
 import {
   SERVICES_OVERVIEW_HERO_IMAGE,
   serviceOverviewItems,
   servicesOverviewHero,
 } from "@/lib/content/services-overview"
+
+export const metadata = buildPageMetadata({
+  title: "Artist Services",
+  description:
+    "Fiscal sponsorship, bookkeeping, and documentation for emerging artists and collectives in the NYC area.",
+  path: "/services",
+})
 
 export default function ServicesPage() {
   return (

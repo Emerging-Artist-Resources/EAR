@@ -1,18 +1,19 @@
-import type { Metadata } from "next"
 import { FiscalSponsorshipFaqApplySection } from "@/components/services/FiscalSponsorshipFaqApplySection"
 import { FiscalSponsorshipFaqContent } from "@/components/services/FiscalSponsorshipFaqContent"
 import { H1 } from "@/components/ui/typography"
+import { buildPageMetadata } from "@/lib/config/site-metadata"
 import {
   FISCAL_SPONSORSHIP_FAQ_APPLY_IMAGE,
   fiscalSponsorshipFaqApply,
   fiscalSponsorshipFaqPage,
 } from "@/lib/content/fiscal-sponsorship-faq"
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "Fiscal Sponsorship FAQ",
   description:
-    "Frequently asked questions about fiscal sponsorship through Emerging Artist Resources—Type C sponsorship, fees, application process, and more.",
-}
+    "Frequently asked questions about fiscal sponsorship for emerging artists in NYC through Emerging Artist Resources—Type C sponsorship, fees, application process, and more.",
+  path: "/services/fiscal-sponsorship/faq",
+})
 
 export default function FiscalSponsorshipFaqPage() {
   return (
