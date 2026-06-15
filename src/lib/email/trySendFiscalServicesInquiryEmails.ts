@@ -13,7 +13,7 @@ import {
   getServiceNotificationRecipients,
   serviceNotificationRecipientsEnvName,
 } from "@/lib/email/service-notification-recipients"
-import { splitSubmitterName } from "@/lib/service-inquiries/service-inquiry-pdf-types"
+import { greetingNameFromFullName } from "@/lib/names/person-name"
 
 type QuestionRow = {
   id: string
@@ -64,11 +64,8 @@ export async function trySendFiscalServicesInquiryEmails(params: {
 
   const pdfFileName = buildFiscalServicesInquiryPdfFileName(params.submitterName, submittedAt)
 
-  const { firstName } = splitSubmitterName(params.submitterName)
-  const firstNameDisplay = firstName || params.submitterName
-
   const sharedModel: Record<string, unknown> = {
-    first_name: firstNameDisplay,
+    first_name: greetingNameFromFullName(params.submitterName),
     submitter_name: params.submitterName,
     submitter_email: params.submitterEmail,
     inquiry_id: params.inquiryId,

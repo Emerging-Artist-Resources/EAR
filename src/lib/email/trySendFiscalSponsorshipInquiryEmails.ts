@@ -1,6 +1,5 @@
 import {
   buildFiscalSponsorshipInquiryPdfInput,
-  splitSubmitterName,
 } from "@/lib/service-inquiries/fiscal-sponsorship-inquiry-pdf-model"
 import {
   buildFiscalSponsorshipInquiryPdfFileName,
@@ -16,6 +15,7 @@ import {
   getServiceNotificationRecipients,
   serviceNotificationRecipientsEnvName,
 } from "@/lib/email/service-notification-recipients"
+import { greetingNameFromFullName } from "@/lib/names/person-name"
 
 type QuestionRow = {
   id: string
@@ -71,11 +71,8 @@ export async function trySendFiscalSponsorshipInquiryEmails(params: {
     submittedAt,
   )
 
-  const { firstName } = splitSubmitterName(params.submitterName)
-  const firstNameDisplay = firstName || params.submitterName
-
   const sharedModel: Record<string, unknown> = {
-    first_name: firstNameDisplay,
+    first_name: greetingNameFromFullName(params.submitterName),
     submitter_name: params.submitterName,
     submitter_email: params.submitterEmail,
     inquiry_id: params.inquiryId,

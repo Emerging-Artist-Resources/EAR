@@ -11,6 +11,7 @@ import { ROUTES } from "@/lib/config/constants"
 import { publicNavItems } from "@/lib/navigation/public-nav"
 import { servicesNavItems } from "@/lib/navigation/services-nav"
 import { dashboardNavItems } from "@/lib/navigation/dashboard-nav"
+import { greetingNameFromFullName } from "@/lib/names/person-name"
 
 interface MobileNavProps {
   onSubmitPerformance?: () => void
@@ -174,7 +175,7 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
                       Dashboard
                     </p>
                     <p className="px-1 pt-1 text-sm text-text-muted">
-                      Welcome, {userName || "User"}
+                      Welcome, {greetingNameFromFullName(userName)}
                     </p>
                   </div>
                   {dashboardNavItems.map((item) => (

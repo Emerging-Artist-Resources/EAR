@@ -15,6 +15,7 @@ import {
   ServiceInquirySummary,
 } from "./types";
 import { sendProfileEmail } from "@/lib/email/sendProfileEmail";
+import { greetingNameFromFullName } from "@/lib/names/person-name";
 import { getPublicAppUrl } from "@/lib/config/app-url";
 import { normalizeSupabaseVerifyActionLink } from "@/lib/supabase/normalizeVerifyActionLink";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
@@ -53,12 +54,6 @@ export async function getActivityOverview(userId: string): Promise<ActivityOverv
 
 export async function getServiceInquiries(userId: string): Promise<ServiceInquirySummary[]> {
   return await fetchServiceInquiriesForUser(userId);
-}
-
-function extractFirstName(fullName: string | null | undefined): string {
-  if (!fullName) return "there"
-  const parts = fullName.trim().split(/\s+/)
-  return parts[0] || "there"
 }
 
 export async function sendNewProfileAdminEmail(
@@ -101,7 +96,7 @@ export async function sendProfileApprovalEmail(
     return
   }
 
-  const firstName = extractFirstName(userName)
+  const firstName = greetingNameFromFullName(userName)
 
   await sendProfileEmail("profile-approved", {
     to: userEmail,
@@ -140,7 +135,7 @@ export async function sendEmailVerificationEmail(
   }
 
   const verificationUrl = normalizeSupabaseVerifyActionLink(data.properties.action_link)
-  const firstName = extractFirstName(userName)
+  const firstName = greetingNameFromFullName(userName)
 
   await sendProfileEmail("email-confirmation", {
     to: userEmail,
@@ -171,7 +166,7 @@ export async function sendPasswordResetEmail(
   }
 
   const resetUrl = normalizeSupabaseVerifyActionLink(data.properties.action_link)
-  const firstName = extractFirstName(userName)
+  const firstName = greetingNameFromFullName(userName)
 
   await sendProfileEmail("password-reset", {
     to: userEmail,

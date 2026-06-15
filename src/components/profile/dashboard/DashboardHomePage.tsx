@@ -15,11 +15,7 @@ import { useEffect } from "react"
 import { DashboardPageSkeleton } from "./DashboardPageSkeleton"
 import { DashboardPageLayout } from "./DashboardPageLayout"
 import { PlusIcon } from "lucide-react"
-
-function firstNameFromUserName(userName: string | null): string {
-  if (!userName?.trim()) return "there"
-  return userName.trim().split(/\s+/)[0] || "there"
-}
+import { greetingNameFromFullName } from "@/lib/names/person-name"
 
 function DashboardStatsRow() {
   const [overview, setOverview] = useState<ActivityOverview | null>(null)
@@ -81,7 +77,7 @@ function DashboardStatsRow() {
 export function DashboardHomePage() {
   const { userName } = useAuth()
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const firstName = firstNameFromUserName(userName)
+  const firstName = greetingNameFromFullName(userName)
 
   return (
     <DashboardPageLayout

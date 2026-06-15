@@ -1,16 +1,11 @@
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { postmarkClient } from "@/lib/email/postmark"
 import { sendProfileEmail } from "@/lib/email/sendProfileEmail"
+import { greetingNameFromFullName } from "@/lib/names/person-name"
 
 export type TrySendWelcomeEmailResult =
   | { sent: true }
   | { sent: false; reason: "disabled" | "not_configured" | "not_confirmed" | "already_sent" | "no_email" }
-
-function extractFirstName(fullName: string | null | undefined): string {
-  if (!fullName) return "there"
-  const parts = fullName.trim().split(/\s+/)
-  return parts[0] || "there"
-}
 
 export async function trySendWelcomeEmail({
   userId,
@@ -67,7 +62,7 @@ export async function trySendWelcomeEmail({
     return { sent: false, reason: "no_email" }
   }
 
-  const firstName = extractFirstName(profile.name)
+  const firstName = greetingNameFromFullName(profile.name)
 
   try {
     await sendProfileEmail("welcome-email", { to, firstName })
