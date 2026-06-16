@@ -10,6 +10,7 @@ import { ToastProvider } from "@/contexts/ToastContext"
 import { ToastContainer } from "@/components/ui/ToastContainer"
 import { AppTooltipProvider } from "@/components/providers/app-tooltip-provider"
 import { Analytics } from "@vercel/analytics/react"
+import { SiteJsonLd } from "@/components/seo/SiteJsonLd"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} flex min-h-dvh flex-col antialiased`}
       >
+        <SiteJsonLd />
         <AppTooltipProvider>
           <ToastProvider>
             <ErrorBoundary>

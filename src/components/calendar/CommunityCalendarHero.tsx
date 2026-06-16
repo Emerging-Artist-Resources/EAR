@@ -7,6 +7,7 @@ export default function CommunityCalendarHero() {
       headingId="community-calendar-hero-heading"
       title={calendarHero.title}
       imageSrc={CALENDAR_HERO_IMAGE_SRC}
+      imageAlt="Emerging artists at a community performance in New York City"
       imagePosition="left"
       growWithContent
       compact

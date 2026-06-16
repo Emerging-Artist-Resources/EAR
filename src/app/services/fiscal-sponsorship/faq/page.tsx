@@ -1,7 +1,9 @@
+import { JsonLd } from "@/components/seo/JsonLd"
 import { FiscalSponsorshipFaqApplySection } from "@/components/services/FiscalSponsorshipFaqApplySection"
 import { FiscalSponsorshipFaqContent } from "@/components/services/FiscalSponsorshipFaqContent"
 import { H1 } from "@/components/ui/typography"
 import { buildPageMetadata } from "@/lib/config/site-metadata"
+import { buildFiscalSponsorshipFaqJsonLd } from "@/lib/seo/faq-schema"
 import {
   FISCAL_SPONSORSHIP_FAQ_APPLY_IMAGE,
   fiscalSponsorshipFaqApply,
@@ -18,6 +20,7 @@ export const metadata = buildPageMetadata({
 export default function FiscalSponsorshipFaqPage() {
   return (
     <main>
+      <JsonLd data={buildFiscalSponsorshipFaqJsonLd()} />
       <div className="bg-secondary-50">
         <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-5 sm:py-12 lg:px-6 lg:py-20">
         <H1

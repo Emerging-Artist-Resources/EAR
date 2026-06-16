@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest"
 import { greetingNameFromFullName } from "./person-name"
 
 describe("greetingNameFromFullName", () => {

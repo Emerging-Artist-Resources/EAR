@@ -23,7 +23,7 @@ export function Footer() {
           <div className="flex flex-col items-start gap-3 md:gap-4">
             <Image
               src={EAR_LOGO_05_SRC}
-              alt="EAR"
+              alt="Emerging Artist Resources"
               width={420}
               height={120}
               className="block h-auto w-full max-w-28 sm:max-w-36 md:w-44 md:max-w-none"

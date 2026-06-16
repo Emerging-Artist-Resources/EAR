@@ -1,8 +1,8 @@
 import type { ReactNode } from "react"
-import { buildPageMetadata } from "@/lib/config/site-metadata"
+import { buildPageMetadata, DEFAULT_TITLE } from "@/lib/config/site-metadata"
 
 export const metadata = buildPageMetadata({
-  title: "Emerging Artist Resources",
+  title: DEFAULT_TITLE,
   description:
     "Free arts opportunities, performances, classes, auditions, and artist resources in New York City. Community calendar, fiscal sponsorship, and support for emerging artists.",
   path: "/",

@@ -25,7 +25,7 @@ export function FinalBandSection() {
         <div className="flex flex-col items-start gap-6 text-ear-off-white">
           <Image
             src={EAR_LOGO_04_SRC}
-            alt="EAR"
+            alt="Emerging Artist Resources"
             width={500}
             height={120}
             className="h-auto w-64 max-w-full md:w-72"

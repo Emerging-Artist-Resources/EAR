@@ -9,7 +9,7 @@ import {
 } from "@/lib/content/services-overview"
 
 export const metadata = buildPageMetadata({
-  title: "Artist Services",
+  title: servicesOverviewHero.title,
   description:
     "Fiscal sponsorship, bookkeeping, and documentation for emerging artists and collectives in the NYC area.",
   path: "/services",
