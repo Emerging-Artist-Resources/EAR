@@ -3,7 +3,6 @@
 import { AdminProfileItem, isNewProfile } from "./profile-types"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/typography"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { AdminProfileCard } from "./AdminProfileCard"
 import { ADMIN_LIGHT_SURFACE } from "@/components/admin/shared/admin-light-surface"
@@ -11,7 +10,6 @@ import { ADMIN_LIGHT_SURFACE } from "@/components/admin/shared/admin-light-surfa
 export function AdminProfileList({
   items,
   onUpdate,
-  onMarkReviewed,
 }: {
   items: AdminProfileItem[]
   onUpdate: (
@@ -23,7 +21,6 @@ export function AdminProfileList({
           fiscalSponsorshipNote?: string
         },
   ) => Promise<void>
-  onMarkReviewed: (id: string) => Promise<void>
 }) {
   if (!items.length) {
     return (
@@ -79,23 +76,7 @@ export function AdminProfileList({
                 <td className="px-3 py-2 capitalize">{profile.fiscalSponsorshipStatus}</td>
                 <td className="px-3 py-2">{created}</td>
                 <td className="px-3 py-2 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    {isNew && !isReviewed && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onMarkReviewed(profile.id)}
-                        className="text-[var(--success-600)] border-[var(--success-300)] hover:bg-[var(--success-50)]"
-                      >
-                        ✓ Mark Reviewed
-                      </Button>
-                    )}
-                    <AdminProfileCard
-                      profile={profile}
-                      onUpdate={onUpdate}
-                      onMarkReviewed={onMarkReviewed}
-                    />
-                  </div>
+                  <AdminProfileCard profile={profile} onUpdate={onUpdate} />
                 </td>
               </tr>
             )

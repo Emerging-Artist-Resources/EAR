@@ -52,6 +52,7 @@ export default async function DonateToArtistPage({ params, searchParams }: PageP
           donationPageImageUrl: profile.donation_page_image_url,
           donationDesignation: profile.donation_designation,
         }}
+        presetAmounts={profile.donation_preset_amounts}
         statusMessage={statusMessage}
       />
     </div>

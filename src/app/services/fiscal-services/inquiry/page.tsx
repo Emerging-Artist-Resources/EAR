@@ -1,11 +1,12 @@
-import type { Metadata } from "next"
 import { FiscalServicesInquiryForm } from "@/components/forms/fiscal-services-inquiry/FiscalServicesInquiryForm"
+import { buildPageMetadata } from "@/lib/config/site-metadata"
 
-export const metadata: Metadata = {
-  title: "Fiscal services inquiry",
+export const metadata = buildPageMetadata({
+  title: "Fiscal Services Inquiry",
   description:
     "Inquire about bookkeeping, fiscal mentorship, and other fiscal services with Emerging Artist Resources.",
-}
+  path: "/services/fiscal-services/inquiry",
+})
 
 export default function FiscalServicesInquiryPage() {
   return (

@@ -1,7 +1,7 @@
-import type { Metadata } from "next"
 import { FiscalServiceSection } from "@/components/services/FiscalServiceSection"
 import { FiscalServicesCustomSupportSection } from "@/components/services/FiscalServicesCustomSupportSection"
 import { ServicesHero } from "@/components/services/ServicesHero"
+import { buildPageMetadata } from "@/lib/config/site-metadata"
 import {
   FISCAL_SERVICES_FINAL_IMAGE,
   FISCAL_SERVICES_HERO_IMAGE,
@@ -11,11 +11,12 @@ import {
   fiscalServicesHero,
 } from "@/lib/content/fiscal-services"
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "Fiscal Services",
   description:
-    "Hourly fiscal services, fiscal mentorship, and bookkeeping support for artists, fiscally sponsored projects, and small nonprofit organizations through Emerging Artist Resources.",
-}
+    "Hourly fiscal services, fiscal mentorship, and bookkeeping support for emerging artists, fiscally sponsored projects, and small nonprofits in NYC through Emerging Artist Resources.",
+  path: "/services/fiscal-services",
+})
 
 export default function FiscalServicesPage() {
   return (

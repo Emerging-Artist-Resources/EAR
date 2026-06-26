@@ -11,9 +11,10 @@ import {
   HeaderHoverDropdown,
   headerDropdownMenuItemClass,
 } from "@/components/layout/header-hover-dropdown"
+import { greetingNameFromFullName } from "@/lib/names/person-name"
 
 interface UserDropdownProps {
-  userName: string
+  userName: string | null
   isMobile?: boolean
 }
 
@@ -49,7 +50,7 @@ export function UserDropdown({ userName, isMobile = false }: UserDropdownProps) 
           aria-expanded={isOpen}
           onClick={toggle}
         >
-          <span>Welcome, {userName}</span>
+          <span>Welcome, {greetingNameFromFullName(userName)}</span>
           <ChevronDown
             className={cn(
               "h-4 w-4 shrink-0 transition-transform duration-150",

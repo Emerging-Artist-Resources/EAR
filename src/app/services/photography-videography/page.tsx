@@ -1,7 +1,7 @@
-import type { Metadata } from "next"
 import { DocumentationBioSection } from "@/components/services/DocumentationBioSection"
 import { DocumentationServiceRow } from "@/components/services/DocumentationServiceRow"
 import { ServicesHero } from "@/components/services/ServicesHero"
+import { buildPageMetadata } from "@/lib/config/site-metadata"
 import {
   DOCUMENTATION_BIO_PORTRAIT,
   DOCUMENTATION_BIO_SECTION_SRC,
@@ -12,11 +12,12 @@ import {
   documentationServiceRows,
 } from "@/lib/content/documentation"
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "Photography & Videography",
   description:
-    "Professional photography and videography for performances, rehearsals, and events—documentary-style documentation through Emerging Artist Resources.",
-}
+    "Professional photography and videography for performances, rehearsals, and events in NYC—documentary-style documentation through Emerging Artist Resources.",
+  path: "/services/photography-videography",
+})
 
 export default function PhotographyVideographyPage() {
   return (

@@ -4,7 +4,7 @@ import { getPublicAppUrl } from "@/lib/config/app-url"
 export const SITE_NAME = "EAR"
 export const DEFAULT_TITLE = "Emerging Artist Resources"
 export const DEFAULT_DESCRIPTION =
-  "Performance opportunities, classes, and resources for emerging artists."
+  "Free arts opportunities, performances, classes, auditions, and resources for emerging artists in New York City."
 export const DEFAULT_OG_IMAGE = "/images/og-image.png"
 
 export const ORG_DONATION_HERO_MESSAGE =
@@ -68,6 +68,9 @@ export function buildSiteMetadata(): Metadata {
       template: `%s | ${SITE_NAME}`,
     },
     description,
+    alternates: {
+      canonical: "/",
+    },
     ...buildOpenGraphAndTwitter({
       title,
       description,
@@ -94,6 +97,9 @@ export function buildPageMetadata(options: PageMetadataOptions): Metadata {
   return {
     title: options.title,
     description: options.description,
+    alternates: {
+      canonical: options.path,
+    },
     ...buildOpenGraphAndTwitter({
       title: ogTitle,
       description: options.description,
@@ -129,4 +135,14 @@ export function buildArtistDonationMetadata(options: {
     images: options.imageUrl ? [options.imageUrl] : [DEFAULT_OG_IMAGE],
     imageAlt: `Donate to ${displayName}`,
   })
+}
+
+/** Metadata for authenticated or internal routes that should not appear in search results. */
+export function buildNoIndexMetadata(): Metadata {
+  return {
+    robots: {
+      index: false,
+      follow: false,
+    },
+  }
 }

@@ -29,7 +29,7 @@ export function InquiryPage3Sponsorship() {
     <InquiryFieldStep title={meta.title} description={meta.description}>
       <div className={inquiryLayoutSpacing.stepSectionGroups}>
         <section className={inquiryLayoutSpacing.section}>
-          <h3 className="text-lg font-semibold text-foreground">Budget & goals</h3>
+          <h3 className="text-lg font-semibold text-ear-dark-red">Budget & goals</h3>
           <SelectBlock
             form={form}
             name="annualBudget"
@@ -63,7 +63,7 @@ export function InquiryPage3Sponsorship() {
         </section>
 
         <section className={inquiryLayoutSpacing.section}>
-          <h3 className="text-lg font-semibold text-foreground">Legal & history</h3>
+          <h3 className="text-lg font-semibold text-ear-dark-red">Legal & history</h3>
           <SelectBlock
             form={form}
             name="legalEntity"
@@ -94,7 +94,7 @@ export function InquiryPage3Sponsorship() {
         </section>
 
         <section className={inquiryLayoutSpacing.section}>
-          <h3 className="text-lg font-semibold text-foreground">Additional info</h3>
+          <h3 className="text-lg font-semibold text-ear-dark-red">Additional info</h3>
           <SelectBlock
             form={form}
             name="additionalServicesInterest"

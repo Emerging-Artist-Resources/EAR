@@ -1,3 +1,5 @@
+import { AUTH_EMAIL_LINK_EXPIRY_LABEL } from "@/lib/auth/email-link-expiry"
+
 export type AuthLinkErrorKind =
   | "verification_expired"
   | "auth_link_invalid"
@@ -18,7 +20,7 @@ export function getAuthLinkErrorContent(kind: AuthLinkErrorKind): {
       return {
         title: "This verification link has expired",
         description:
-          "Email verification links expire for security. Enter the email you used to sign up and we’ll send a new link.",
+          `Email verification links expire after ${AUTH_EMAIL_LINK_EXPIRY_LABEL} for security. Enter the email you used to sign up and we’ll send a new link.`,
       }
     case "auth_link_invalid":
       return {

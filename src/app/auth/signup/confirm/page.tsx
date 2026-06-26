@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle2 } from "lucide-react"
 import { ResendVerificationEmailForm } from "@/components/auth/ResendVerificationEmailForm"
+import { AUTH_EMAIL_LINK_EXPIRY_LABEL } from "@/lib/auth/email-link-expiry"
 import {
   AUTH_LINK_CLASS,
   AUTH_MUTED_TEXT_CLASS,
@@ -36,6 +37,9 @@ export default function SignUpConfirmPage() {
                 <H2 className="text-ear-black">Account created successfully</H2>
                 <Text className={AUTH_MUTED_TEXT_CLASS}>
                   Check your email to verify your account. Once verified, you can sign in.
+                </Text>
+                <Text className={`text-sm ${AUTH_MUTED_TEXT_CLASS}`}>
+                  For security, the verification link expires in {AUTH_EMAIL_LINK_EXPIRY_LABEL}.
                 </Text>
               </div>
 

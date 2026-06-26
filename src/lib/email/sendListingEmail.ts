@@ -10,6 +10,8 @@
 
 import { getPublicAppUrl } from "@/lib/config/app-url"
 import { ROUTES } from "@/lib/config/constants"
+import { LISTING_SUBMISSION_FEEDBACK_FORM_URL } from "@/lib/config/site-contact"
+import { greetingNameFromFullName } from "@/lib/names/person-name"
 import { postmarkClient } from "./postmark"
 
 type ListingEmailType = "listing-received" | "listing-updated" | "admin-listing-received"
@@ -63,6 +65,7 @@ export async function sendListingEmail(
       : `${baseUrl}${ROUTES.PROFILE_LISTINGS}?listingId=${encodeURIComponent(listingId)}`
 
   const templateModel: Record<string, string> = {
+    first_name: greetingNameFromFullName(submitterName),
     submitter_name: submitterName,
     listing_title: listingTitle,
     cta_url: ctaUrl,
@@ -70,6 +73,10 @@ export async function sendListingEmail(
 
   if (submitterEmail) {
     templateModel.submitter_email = submitterEmail
+  }
+
+  if (type === "listing-received") {
+    templateModel.feedback_url = LISTING_SUBMISSION_FEEDBACK_FORM_URL
   }
 
   const emailData = {

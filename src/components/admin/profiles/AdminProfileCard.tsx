@@ -17,7 +17,6 @@ import { ADMIN_LIGHT_SURFACE } from "@/components/admin/shared/admin-light-surfa
 export function AdminProfileCard({
   profile,
   onUpdate,
-  onMarkReviewed,
 }: {
   profile: AdminProfileItem
   onUpdate: (
@@ -26,7 +25,6 @@ export function AdminProfileCard({
       | { status: "emerging" | "established" }
       | { fiscalSponsorshipStatus: FiscalSponsorshipStatus; fiscalSponsorshipNote?: string },
   ) => Promise<void>
-  onMarkReviewed?: (id: string) => Promise<void>
 }) {
   const [open, setOpen] = useState(false)
   const [updating, setUpdating] = useState(false)
@@ -376,24 +374,6 @@ export function AdminProfileCard({
             >
               {updating ? "Updating…" : "Update Status"}
             </Button>
-            {onMarkReviewed && needsReview(profile) && (
-              <Button
-                onClick={async () => {
-                  try {
-                    await onMarkReviewed(profile.id)
-                    setOpen(false)
-                  } catch (error) {
-                    console.error("Failed to mark as reviewed:", error)
-                    alert("Failed to mark as reviewed")
-                  }
-                }}
-                variant="outline"
-                disabled={updating}
-                className="text-[var(--success-600)] border-[var(--success-300)] hover:bg-[var(--success-50)]"
-              >
-                ✓ Mark as Reviewed
-              </Button>
-            )}
             <Button
               onClick={() => setOpen(false)}
               variant="outline"

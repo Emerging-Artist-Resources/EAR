@@ -10,6 +10,7 @@ import {
   type DonationFormData,
 } from "@/lib/validations/donations"
 import type { DonationDesignationConfigParsed } from "@/lib/donations/donationDesignationConfig"
+import { resolveDonationPresetAmounts } from "@/lib/donations/donationPresetAmounts"
 import { Button } from "@/components/ui/button"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
@@ -24,8 +25,6 @@ import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnel
 import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
 import { Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-const PRESET_AMOUNTS = [25, 50, 100, 250, 500, 1000]
 
 interface ProfileData {
   name: string | null
@@ -55,14 +54,21 @@ interface DonationFormProps {
   lockedRecipient?: DonationLockedRecipient
   statusMessage?: "canceled" | null
   orgDonationHero?: OrgDonationHero
+  /** Preset quick-select amounts in USD; omit for app default (EAR /donate). */
+  presetAmounts?: number[] | null
 }
 
-export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }: DonationFormProps) {
+export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, presetAmounts }: DonationFormProps) {
   const { user, userName } = useAuth()
   const { showToast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
+
+  const resolvedPresetAmounts = useMemo(
+    () => resolveDonationPresetAmounts(presetAmounts),
+    [presetAmounts],
+  )
 
   const effectiveOrgHero = !lockedRecipient ? orgDonationHero : undefined
   const orgHeroMessageText = effectiveOrgHero?.message?.trim() ?? ""
@@ -372,7 +378,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero }
             Donation Amount <span className="text-error-600">*</span>
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
-            {PRESET_AMOUNTS.map((amount) => (
+            {resolvedPresetAmounts.map((amount) => (
               <Button
                 key={amount}
                 type="button"

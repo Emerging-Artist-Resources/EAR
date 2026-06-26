@@ -97,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
                   </Button>
                 )}
                 
-                <UserDropdown userName={userName || "User"} />
+                <UserDropdown userName={userName} />
               </>
             ) : (
               <Link href="/auth/signin">

@@ -17,7 +17,7 @@ Both emails include a PDF attachment with the full inquiry (all form fields, mat
 
 | Variable | Description |
 |----------|-------------|
-| `{{first_name}}` | First name parsed from submitter name (or full name if single word) |
+| `{{first_name}}` | Greeting name: first token if multi-word, else full name, else `there` |
 | `{{submitter_name}}` | Full name from inquiry |
 | `{{submitter_email}}` | Submitter email |
 | `{{inquiry_id}}` | UUID of `service_inquiries` row |

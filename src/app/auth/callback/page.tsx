@@ -58,6 +58,8 @@ function AuthCallbackInner() {
         return
       }
 
+      void fetch("/api/auth/welcome-email", { method: "POST" }).catch(() => {})
+
       const dest = new URL(nextPath, window.location.origin)
       dest.searchParams.set("verified", "1")
       router.replace(`${dest.pathname}${dest.search}`)

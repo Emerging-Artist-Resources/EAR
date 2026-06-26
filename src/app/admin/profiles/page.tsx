@@ -93,23 +93,6 @@ export default function AdminProfilesPage() {
     }
   }, [fetchProfiles])
 
-  const onMarkReviewed = useCallback(async (id: string) => {
-    try {
-      const res = await fetch("/api/admin/profiles", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: id, reviewedAt: true }),
-      })
-      if (!res.ok) {
-        throw new Error("Failed to mark as reviewed")
-      }
-      await fetchProfiles()
-    } catch (error) {
-      console.error("Failed to mark as reviewed:", error)
-      throw error
-    }
-  }, [fetchProfiles])
-
   return (
     <AdminLayout>
       <AdminProfileHeader
@@ -125,11 +108,7 @@ export default function AdminProfilesPage() {
       {loading ? (
         <AdminLoadingState />
       ) : (
-        <AdminProfileList
-          items={items}
-          onUpdate={onUpdate}
-          onMarkReviewed={onMarkReviewed}
-        />
+        <AdminProfileList items={items} onUpdate={onUpdate} />
       )}
     </AdminLayout>
   )
