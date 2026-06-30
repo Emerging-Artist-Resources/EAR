@@ -9,6 +9,7 @@ import { apiGet } from "@/lib/client/fetch-utils"
 import type { FiscalSponsorshipDashboard } from "@/features/profile/server/types"
 import { FiscalSponsorshipStatusBadge } from "./FiscalSponsorshipStatusBadge"
 import { DonationLinkCard } from "./DonationLinkCard"
+import { CustomizeDonationPageModal } from "./CustomizeDonationPageModal"
 import { DonationSummaryCard } from "./DonationSummaryCard"
 import { ReceivedDonationsList } from "./ReceivedDonationsList"
 import {
@@ -44,6 +45,7 @@ interface FiscalSponsorshipSectionProps {
   loading: boolean
   error: string | null
   onPageChange: (page: number) => void
+  onDonationPageUpdated?: () => void
 }
 
 export function FiscalSponsorshipSection({
@@ -51,7 +53,9 @@ export function FiscalSponsorshipSection({
   loading,
   error,
   onPageChange,
+  onDonationPageUpdated,
 }: FiscalSponsorshipSectionProps) {
+  const [customizeOpen, setCustomizeOpen] = useState(false)
   if (loading && !data) {
     return (
       <Card border="dashed" padding="md">
@@ -138,7 +142,24 @@ export function FiscalSponsorshipSection({
             ) : null}
           </div>
           {showDonationLink && data.donation_link && data.slug ? (
-            <DonationLinkCard donationLink={data.donation_link} slug={data.slug} />
+            <div className="space-y-1">
+              <DonationLinkCard donationLink={data.donation_link} slug={data.slug} />
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="h-auto px-0 text-sm"
+                onClick={() => setCustomizeOpen(true)}
+              >
+                {fiscalSponsorshipDashboard.customizeDonationPage.trigger}
+              </Button>
+              <CustomizeDonationPageModal
+                isOpen={customizeOpen}
+                onClose={() => setCustomizeOpen(false)}
+                initialSettings={data.donation_page}
+                onSuccess={() => onDonationPageUpdated?.()}
+              />
+            </div>
           ) : (
             <Text className="text-sm text-gray-600">
               {fiscalSponsorshipDashboard.approved.missingSlug}
@@ -218,5 +239,8 @@ export function useFiscalSponsorshipDashboard() {
     loading,
     error,
     setPage,
+    reload: () => {
+      void load(page)
+    },
   }
 }

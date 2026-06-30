@@ -14,7 +14,7 @@ import {
 } from "@/lib/content/fiscal-sponsorship-dashboard"
 
 export function FiscalSponsorshipPage() {
-  const { data, loading, error, setPage } = useFiscalSponsorshipDashboard()
+  const { data, loading, error, setPage, reload } = useFiscalSponsorshipDashboard()
   const showApplyActions =
     data != null && data.fiscal_sponsorship_status !== "approved"
 
@@ -40,6 +40,7 @@ export function FiscalSponsorshipPage() {
         loading={loading}
         error={error}
         onPageChange={setPage}
+        onDonationPageUpdated={reload}
       />
     </DashboardPageLayout>
   )

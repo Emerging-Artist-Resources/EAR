@@ -7,6 +7,7 @@ import {
   getActivityOverviewRepo,
   fetchServiceInquiriesForUser,
   fetchFiscalSponsorshipDashboardRepo,
+  updateDonationPageRepo,
   FISCAL_SPONSORSHIP_DONATIONS_PAGE_SIZE,
 } from "./repository";
 import {
@@ -17,6 +18,9 @@ import {
   ServiceInquirySummary,
   FiscalSponsorshipDashboard,
 } from "./types";
+import type { DonationPageSettings } from "@/lib/donations/donationPageSettings";
+import type { UpdateDonationPageData } from "@/lib/validations/donation-page";
+import { toDonationPagePersistPayload } from "@/lib/validations/donation-page";
 import { sendProfileEmail } from "@/lib/email/sendProfileEmail";
 import { greetingNameFromFullName } from "@/lib/names/person-name";
 import { getPublicAppUrl } from "@/lib/config/app-url";
@@ -66,6 +70,14 @@ export async function getFiscalSponsorshipDashboard(
   const page = options?.page ?? 0;
   const limit = options?.limit ?? FISCAL_SPONSORSHIP_DONATIONS_PAGE_SIZE;
   return fetchFiscalSponsorshipDashboardRepo(userId, { page, limit });
+}
+
+export async function updateDonationPage(
+  userId: string,
+  data: UpdateDonationPageData,
+): Promise<DonationPageSettings> {
+  const payload = toDonationPagePersistPayload(data);
+  return updateDonationPageRepo(userId, payload);
 }
 
 export async function sendNewProfileAdminEmail(

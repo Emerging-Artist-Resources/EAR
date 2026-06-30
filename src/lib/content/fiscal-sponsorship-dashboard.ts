@@ -50,6 +50,39 @@ export const fiscalSponsorshipDashboard = {
     countLabel: "Donations",
     averageLabel: "Average donation",
   },
+  customizeDonationPage: {
+    trigger: "Customize donation page",
+    modalTitle: "Customize donation page",
+    saveLabel: "Save changes",
+    savingLabel: "Saving…",
+    cancelLabel: "Cancel",
+    saveSuccess: "Donation page updated",
+    message: {
+      title: "Message",
+      description: "Optional text shown on your public donation page below the headline.",
+      label: "Page message",
+      placeholder: "Share why you're fundraising or how donations will be used…",
+    },
+    presets: {
+      title: "Donation amount presets",
+      description:
+        "Quick-select amounts donors see on your page. Enter 1–6 unique whole-dollar values of $1 or more. Empty rows are ignored when you save.",
+      addLabel: "Add amount",
+      removeLabel: "Remove",
+      defaultHint: "When unset, donors see the default quick-select amounts on the public donate page.",
+    },
+    designation: {
+      title: "Donation designation",
+      description: "Optional dropdown so donors can direct their gift to a project or fund.",
+      enabledLabel: "Show designation dropdown",
+      fieldLabel: "Dropdown label",
+      fieldPlaceholder: "e.g. Designate your gift to",
+      optionLabel: "Option",
+      optionPlaceholder: "e.g. General support",
+      addOptionLabel: "Add option",
+      removeOptionLabel: "Remove option",
+    },
+  },
 } as const;
 
 export const FISCAL_STATUS_LABELS: Record<FiscalSponsorshipStatus, string> = {

@@ -18,6 +18,8 @@ import {
   type DonationDesignationConfigParsed,
   parseActiveDonationDesignationConfig,
 } from "@/lib/donations/donationDesignationConfig";
+import { mapDonationPageSettingsFromRow } from "@/lib/donations/donationPageSettings";
+import type { DonationPageSettings } from "@/lib/donations/donationPageSettings";
 import { parseDonationPresetAmounts } from "@/lib/donations/donationPresetAmounts";
 import { resolveDonationRecipientDisplayName } from "@/lib/profile/donationRecipientDisplayName";
 import { formatOccurrenceRangeEST } from "@/lib/datetime/utils";
@@ -351,6 +353,8 @@ export interface ProfileData {
   fiscal_sponsorship_note: string | null;
   donation_page_message: string | null;
   donation_page_image_path: string | null;
+  donation_designation_config: unknown | null;
+  donation_preset_amounts: unknown | null;
 }
 
 export interface PublicDonationProfile {
@@ -389,7 +393,7 @@ export async function getProfileRepo(userId: string): Promise<ProfileData | null
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug, fiscal_sponsorship_status, fiscal_sponsorship_approved_at, fiscal_sponsorship_approved_by, fiscal_sponsorship_note, donation_page_message, donation_page_image_path",
+      "id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug, fiscal_sponsorship_status, fiscal_sponsorship_approved_at, fiscal_sponsorship_approved_by, fiscal_sponsorship_note, donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts",
     )
     .eq("id", userId)
     .single();
@@ -529,7 +533,7 @@ export async function updateProfileRepo(
     .update(updateData)
     .eq("id", userId)
     .select(
-      "id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug, fiscal_sponsorship_status, fiscal_sponsorship_approved_at, fiscal_sponsorship_approved_by, fiscal_sponsorship_note, donation_page_message, donation_page_image_path",
+      "id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug, fiscal_sponsorship_status, fiscal_sponsorship_approved_at, fiscal_sponsorship_approved_by, fiscal_sponsorship_note, donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts",
     )
     .single();
 
@@ -542,6 +546,46 @@ export async function updateProfileRepo(
   }
 
   return data;
+}
+
+export interface UpdateDonationPagePayload {
+  donation_page_message: string | null;
+  donation_preset_amounts: number[];
+  donation_designation_config: unknown | null;
+}
+
+export async function updateDonationPageRepo(
+  userId: string,
+  payload: UpdateDonationPagePayload,
+): Promise<DonationPageSettings> {
+  const supabase = await getSupabaseServerClient();
+
+  const updateData: Record<string, unknown> = {
+    donation_page_message: payload.donation_page_message,
+    donation_preset_amounts: payload.donation_preset_amounts,
+    donation_designation_config: payload.donation_designation_config,
+  };
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update(updateData)
+    .eq("id", userId)
+    .select("donation_page_message, donation_designation_config, donation_preset_amounts")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    throw new Error("Profile not found");
+  }
+
+  return mapDonationPageSettingsFromRow({
+    donation_page_message: data.donation_page_message as string | null,
+    donation_designation_config: data.donation_designation_config,
+    donation_preset_amounts: data.donation_preset_amounts,
+  });
 }
 
 export async function getEligibilitySubmissionsRepo(userId: string): Promise<EligibilitySubmission[]> {
@@ -721,12 +765,19 @@ export async function fetchFiscalSponsorshipDashboardRepo(
     (amountRows ?? []).map((row) => row.amount as number),
   );
 
+  const donation_page = mapDonationPageSettingsFromRow({
+    donation_page_message: profile.donation_page_message,
+    donation_designation_config: profile.donation_designation_config,
+    donation_preset_amounts: profile.donation_preset_amounts,
+  });
+
   return {
     fiscal_sponsorship_status: profile.fiscal_sponsorship_status,
     fiscal_sponsorship_approved_at: profile.fiscal_sponsorship_approved_at,
     fiscal_sponsorship_note: profile.fiscal_sponsorship_note,
     slug,
     donation_link,
+    donation_page,
     donations_summary,
     donations,
     donations_total_count: count ?? 0,

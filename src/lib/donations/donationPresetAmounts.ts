@@ -34,3 +34,28 @@ export function resolveDonationPresetAmounts(custom?: number[] | null): number[]
   if (custom == null) return [...DEFAULT_DONATION_PRESET_AMOUNTS]
   return parseDonationPresetAmounts(custom) ?? [...DEFAULT_DONATION_PRESET_AMOUNTS]
 }
+
+export function isBlankPresetAmountString(value: string): boolean {
+  return value.trim() === ""
+}
+
+/** Drop empty preset inputs before validation or save. */
+export function normalizePresetAmountStrings(values: string[]): string[] {
+  return values.filter((value) => !isBlankPresetAmountString(value))
+}
+
+export function parsePresetAmountString(value: string): number | null {
+  const trimmed = value.trim()
+  if (trimmed === "") return null
+  const amount = Number(trimmed)
+  if (!Number.isInteger(amount)) return null
+  return amount
+}
+
+export function presetAmountMinErrorMessage(): string {
+  return `Enter a whole-dollar amount of $${DONATION_PRESET_MIN_DOLLARS} or more`
+}
+
+export function presetAmountsRangeErrorMessage(): string {
+  return `Enter ${DONATION_PRESET_MIN_COUNT}–${DONATION_PRESET_MAX_COUNT} unique whole-dollar amounts between $${DONATION_PRESET_MIN_DOLLARS} and $${DONATION_PRESET_MAX_DOLLARS.toLocaleString()}`
+}

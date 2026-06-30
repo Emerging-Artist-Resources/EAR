@@ -1,6 +1,9 @@
 // Basic types you can expand later
 
+import type { DonationPageSettings } from "@/lib/donations/donationPageSettings"
 import type { FiscalSponsorshipStatus } from "@/lib/types/fiscal-sponsorship"
+
+export type { DonationPageSettings }
 
 export type EventType =
   | "performance"
@@ -90,6 +93,7 @@ export interface FiscalSponsorshipDashboard {
   fiscal_sponsorship_note: string | null;
   slug: string | null;
   donation_link: string | null;
+  donation_page: DonationPageSettings;
   donations_summary: DonationSummaryStats;
   donations: ReceivedDonationSummary[];
   donations_total_count: number;
