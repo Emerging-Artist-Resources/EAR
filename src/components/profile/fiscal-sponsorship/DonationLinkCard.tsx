@@ -1,9 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import { Card } from "@/components/ui/card"
-import { H3, Text } from "@/components/ui/typography"
+import { Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import { fiscalSponsorshipDashboard, fiscalDashboardButtonClass } from "@/lib/content/fiscal-sponsorship-dashboard"
 
@@ -16,6 +14,7 @@ export function DonationLinkCard({
 }) {
   const [copied, setCopied] = useState(false)
   const copy = fiscalSponsorshipDashboard.donationLink
+  const donatePath = `/donate/${encodeURIComponent(slug)}`
 
   const handleCopy = async () => {
     try {
@@ -28,24 +27,25 @@ export function DonationLinkCard({
   }
 
   return (
-    <Card border="dashed" padding="md" className="space-y-3">
-      <H3 className="text-base font-semibold text-gray-900">{copy.heading}</H3>
-      <Text className="break-all text-sm text-gray-700">{donationLink}</Text>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          variant="secondary"
-          className={fiscalDashboardButtonClass.secondary}
-          onClick={() => void handleCopy()}
-        >
-          {copied ? copy.copiedLabel : copy.copyLabel}
-        </Button>
-        <Button asChild variant="ghost">
-          <Link href={`/donate/${encodeURIComponent(slug)}`} target="_blank" rel="noopener noreferrer">
-            {copy.openLabel}
-          </Link>
-        </Button>
-      </div>
-    </Card>
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <Text className="text-sm text-gray-600">{copy.heading}:</Text>
+      <a
+        href={donatePath}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="break-all text-sm font-medium text-primary underline-offset-4 hover:underline"
+      >
+        {donationLink}
+      </a>
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        className={fiscalDashboardButtonClass.secondary}
+        onClick={() => void handleCopy()}
+      >
+        {copied ? copy.copiedLabel : copy.copyLabel}
+      </Button>
+    </div>
   )
 }

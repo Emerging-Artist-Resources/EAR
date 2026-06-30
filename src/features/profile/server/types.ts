@@ -69,9 +69,19 @@ export interface ReceivedDonationSummary {
   id: string;
   created_at: string;
   donor_name: string | null;
-  base_gift_cents: number;
+  donor_email: string | null;
+  /** Total charged in cents (Stripe gross). */
+  amount: number;
   message: string | null;
   designation_label_snapshot: string | null;
+}
+
+export interface DonationSummaryStats {
+  /** Sum of total charged amounts in cents across all paid donations. */
+  total_amount_cents: number;
+  donation_count: number;
+  /** Rounded mean of total charged amounts in cents. */
+  average_amount_cents: number;
 }
 
 export interface FiscalSponsorshipDashboard {
@@ -80,6 +90,7 @@ export interface FiscalSponsorshipDashboard {
   fiscal_sponsorship_note: string | null;
   slug: string | null;
   donation_link: string | null;
+  donations_summary: DonationSummaryStats;
   donations: ReceivedDonationSummary[];
   donations_total_count: number;
   page: number;

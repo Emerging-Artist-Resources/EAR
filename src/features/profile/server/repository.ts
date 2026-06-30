@@ -5,6 +5,7 @@ import {
   ActivityOverview,
   ServiceInquirySummary,
   FiscalSponsorshipDashboard,
+  DonationSummaryStats,
   ReceivedDonationSummary,
 } from "./types";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -630,6 +631,41 @@ export async function fetchServiceInquiriesForUser(userId: string): Promise<Serv
 
 export const FISCAL_SPONSORSHIP_DONATIONS_PAGE_SIZE = 10;
 
+type ReceivedDonationDbRow = {
+  id: unknown;
+  created_at: unknown;
+  donor_name: unknown;
+  donor_email: unknown;
+  amount: unknown;
+  message: unknown;
+  designation_label_snapshot: unknown;
+};
+
+export function mapReceivedDonationSummary(row: ReceivedDonationDbRow): ReceivedDonationSummary {
+  return {
+    id: row.id as string,
+    created_at: row.created_at as string,
+    donor_name: (row.donor_name as string | null) ?? null,
+    donor_email: (row.donor_email as string | null) ?? null,
+    amount: row.amount as number,
+    message: (row.message as string | null) ?? null,
+    designation_label_snapshot: (row.designation_label_snapshot as string | null) ?? null,
+  };
+}
+
+export function computeDonationSummaryStats(amounts: number[]): DonationSummaryStats {
+  const donation_count = amounts.length;
+  const total_amount_cents = amounts.reduce((sum, amount) => sum + amount, 0);
+  const average_amount_cents =
+    donation_count > 0 ? Math.round(total_amount_cents / donation_count) : 0;
+
+  return {
+    total_amount_cents,
+    donation_count,
+    average_amount_cents,
+  };
+}
+
 export async function fetchFiscalSponsorshipDashboardRepo(
   userId: string,
   options: { page: number; limit: number },
@@ -645,10 +681,10 @@ export async function fetchFiscalSponsorshipDashboardRepo(
 
   const supabase = await getSupabaseServerClient();
 
-  const { data, error, count } = await supabase
+  const donationsQuery = supabase
     .from("donations")
     .select(
-      "id, created_at, donor_name, base_gift_cents, message, designation_label_snapshot",
+      "id, created_at, donor_name, donor_email, amount, message, designation_label_snapshot",
       { count: "exact" },
     )
     .eq("recipient_user_id", userId)
@@ -656,8 +692,23 @@ export async function fetchFiscalSponsorshipDashboardRepo(
     .order("created_at", { ascending: false })
     .range(from, to);
 
+  const summaryAmountsQuery = supabase
+    .from("donations")
+    .select("amount")
+    .eq("recipient_user_id", userId)
+    .eq("payment_status", "paid");
+
+  const [{ data, error, count }, { data: amountRows, error: summaryError }] = await Promise.all([
+    donationsQuery,
+    summaryAmountsQuery,
+  ]);
+
   if (error) {
     throw error;
+  }
+
+  if (summaryError) {
+    throw summaryError;
   }
 
   const slug = profile.slug?.trim() || null;
@@ -665,14 +716,10 @@ export async function fetchFiscalSponsorshipDashboardRepo(
     ? `${getPublicAppUrl()}/donate/${encodeURIComponent(slug)}`
     : null;
 
-  const donations: ReceivedDonationSummary[] = (data ?? []).map((row) => ({
-    id: row.id as string,
-    created_at: row.created_at as string,
-    donor_name: (row.donor_name as string | null) ?? null,
-    base_gift_cents: row.base_gift_cents as number,
-    message: (row.message as string | null) ?? null,
-    designation_label_snapshot: (row.designation_label_snapshot as string | null) ?? null,
-  }));
+  const donations: ReceivedDonationSummary[] = (data ?? []).map(mapReceivedDonationSummary);
+  const donations_summary = computeDonationSummaryStats(
+    (amountRows ?? []).map((row) => row.amount as number),
+  );
 
   return {
     fiscal_sponsorship_status: profile.fiscal_sponsorship_status,
@@ -680,6 +727,7 @@ export async function fetchFiscalSponsorshipDashboardRepo(
     fiscal_sponsorship_note: profile.fiscal_sponsorship_note,
     slug,
     donation_link,
+    donations_summary,
     donations,
     donations_total_count: count ?? 0,
     page,

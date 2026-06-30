@@ -9,6 +9,7 @@ import { apiGet } from "@/lib/client/fetch-utils"
 import type { FiscalSponsorshipDashboard } from "@/features/profile/server/types"
 import { FiscalSponsorshipStatusBadge } from "./FiscalSponsorshipStatusBadge"
 import { DonationLinkCard } from "./DonationLinkCard"
+import { DonationSummaryCard } from "./DonationSummaryCard"
 import { ReceivedDonationsList } from "./ReceivedDonationsList"
 import {
   fiscalSponsorshipDashboard,
@@ -124,7 +125,7 @@ export function FiscalSponsorshipSection({
       ) : null}
 
       {status === "approved" ? (
-        <div className="space-y-4">
+        <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <FiscalSponsorshipStatusBadge status={status} />
             {data.fiscal_sponsorship_approved_at ? (
@@ -139,11 +140,9 @@ export function FiscalSponsorshipSection({
           {showDonationLink && data.donation_link && data.slug ? (
             <DonationLinkCard donationLink={data.donation_link} slug={data.slug} />
           ) : (
-            <Card border="dashed" padding="md">
-              <Text className="text-sm text-gray-600">
-                {fiscalSponsorshipDashboard.approved.missingSlug}
-              </Text>
-            </Card>
+            <Text className="text-sm text-gray-600">
+              {fiscalSponsorshipDashboard.approved.missingSlug}
+            </Text>
           )}
         </div>
       ) : null}
@@ -171,13 +170,16 @@ export function FiscalSponsorshipSection({
         loading ? (
           <LoadingSkeleton />
         ) : (
-          <ReceivedDonationsList
-            donations={data.donations}
-            totalCount={data.donations_total_count}
-            page={data.page}
-            limit={data.limit}
-            onPageChange={onPageChange}
-          />
+          <>
+            <DonationSummaryCard summary={data.donations_summary} />
+            <ReceivedDonationsList
+              donations={data.donations}
+              totalCount={data.donations_total_count}
+              page={data.page}
+              limit={data.limit}
+              onPageChange={onPageChange}
+            />
+          </>
         )
       ) : null}
     </div>

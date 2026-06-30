@@ -19,8 +19,16 @@ export const fiscalSponsorshipDashboard = {
   },
   approved: {
     donationsHeading: "Received donations",
+    donationsAmountHelper:
+      "Amount reflects what the donor was charged, including any fees they chose to cover.",
     emptyDonations: "No donations yet. Share your donation link to get started.",
     missingSlug: "Your fiscal sponsorship is approved, but your public donation link is not set up yet. Contact EAR to configure your page.",
+    donationColumns: {
+      donor: "Donor",
+      email: "Email",
+      date: "Date",
+      amount: "Amount",
+    },
   },
   paused: {
     title: "Fiscal sponsorship paused",
@@ -35,6 +43,12 @@ export const fiscalSponsorshipDashboard = {
     copyLabel: "Copy link",
     copiedLabel: "Copied!",
     openLabel: "Open page",
+  },
+  donationSummary: {
+    heading: "Donation summary",
+    totalLabel: "Total received",
+    countLabel: "Donations",
+    averageLabel: "Average donation",
   },
 } as const;
 
