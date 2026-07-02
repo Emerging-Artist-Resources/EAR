@@ -7,6 +7,7 @@ import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { SelectBlock } from "@/components/forms/blocks/Select"
+import { form as formSpacing } from "@/lib/spacing"
 
 import { OrganizerFlow } from "@/components/event-forms/event-wizard/steps/performance/OrganizerFlow"
 import { PieceSubmissionFlow } from "@/components/event-forms/event-wizard/steps/performance/PieceSubmissionFlow"
@@ -62,31 +63,31 @@ export function PerformanceDetailsStep({
   }, [perfType, form])
 
   return (
-    <Section title="Select your role">
-      <SelectBlock
-        form={form}
-        name={"type"}
-        label="Select your role"
-        labelTooltip={PERFORMANCE_ROLE_TOOLTIP}
-        required
-        options={[
-          {
-            label:
-              "Primary Lister (Organizer, Producer, Presenter) - I am the primary event lister submitting my own performance or event.",
-            value: "ORGANIZER",
-          },
-          {
-            label:
-              "Participating Artist - I am submitting my own work that's part of a larger performance, shared program, or festival.",
-            value: "PIECE",
-          },
-        ]}
-      />
+    <div className={formSpacing.step}>
+      <Section title="Select your role" titleTooltip={PERFORMANCE_ROLE_TOOLTIP}>
+        <SelectBlock
+          form={form}
+          name={"type"}
+          required
+          options={[
+            {
+              label:
+                "Primary Lister (Organizer, Producer, Presenter) - I am the primary event lister submitting my own performance or event.",
+              value: "ORGANIZER",
+            },
+            {
+              label:
+                "Participating Artist - I am submitting my own work that's part of a larger performance, shared program, or festival.",
+              value: "PIECE",
+            },
+          ]}
+        />
+      </Section>
 
       {perfType === "ORGANIZER" && (
         <OrganizerFlow form={form} organizerPiecePhotosByIdRef={organizerPiecePhotosByIdRef} />
       )}
       {perfType === "PIECE" && <PieceSubmissionFlow form={form} />}
-    </Section>
+    </div>
   )
 }

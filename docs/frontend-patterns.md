@@ -105,6 +105,14 @@ Import named stacks from `@/lib/spacing` instead of ad-hoc `space-y-*` for stand
 | `stack.xl` | `space-y-8` | Page sections |
 | `stack["2xl"]` | `space-y-10` | Wizard step groups |
 
+**Form density** (`form.*` in `spacing.ts`) — use in modals and wizards:
+
+| Constant | Tailwind | Typical use |
+|----------|----------|-------------|
+| `form.step` | `space-y-6` | Between sections in a wizard step |
+| `form.section` | `space-y-2` | Section title to fields |
+| `form.fields` | `space-y-3` | Between fields in a section |
+
 `page.container` is the standard max-width page shell (`max-w-7xl` + horizontal padding).
 
 Domain-specific layout (e.g. service inquiry forms) may extend these in local constants; prefer importing `stack` over duplicating values.

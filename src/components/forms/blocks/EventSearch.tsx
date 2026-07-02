@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { apiGet } from "@/lib/client/fetch-utils"
 import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
+import { stack } from "@/lib/spacing"
 
 type EventType = "performance" | "audition" | "creative" | "class" | "funding"
 
@@ -84,6 +85,8 @@ interface EventSearchProps<T extends Record<string, unknown>> {
   eventIdField: Path<T>
   eventModeField?: Path<T>
   label?: string
+  /** When false, the field label is omitted (e.g. when a parent Section supplies the title). */
+  showLabel?: boolean
   placeholder?: string
   showCantLocateButton?: boolean
   /** Overrides default "Can't Locate Event" button label. */
@@ -100,6 +103,7 @@ export function EventSearch<T extends Record<string, unknown>>({
   eventIdField,
   eventModeField,
   label = "Search for EAR event",
+  showLabel = true,
   placeholder = "Start typing the event title...",
   showCantLocateButton = false,
   cantLocateButtonLabel = "Event not listed with EAR? Enter manually.",
@@ -238,11 +242,13 @@ export function EventSearch<T extends Record<string, unknown>>({
   const displayTitle = eventTitle || searchState.selectedEventTitle || "Event"
 
   return (
-    <div className="space-y-4">
+    <div className={stack.sm}>
       <div ref={containerRef} className="event-search-container">
-        <label className="mb-1 block text-sm font-medium text-gray-700">
-          {label} {required && <span className="text-error-600">*</span>}
-        </label>
+        {showLabel && (
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            {label} {required && <span className="text-error-600">*</span>}
+          </label>
+        )}
         
         {isEventSelected ? (
           <div className="rounded-md border border-gray-200 bg-gray-50 p-4">

@@ -9,7 +9,7 @@ import { PieceOccurrencesPicker } from "@/components/forms/blocks/PieceOccurrenc
 import { PieceDetails } from "@/components/forms/blocks/PieceDetails"
 import { EventSearch } from "@/components/forms/blocks/EventSearch"
 import { InviteRecipientEmailsSection } from "@/components/event-forms/event-wizard/steps/performance/InviteRecipientEmailsSection"
-import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
+import { form } from "@/lib/spacing"
 
 const MANUAL_LINK_TOOLTIP =
   "Once the organizer submits their event to EAR, your work will be linked to their listing."
@@ -18,54 +18,54 @@ const INVITE_ORGANIZER_TITLE = "Invite the organizer or presenter"
 const INVITE_ORGANIZER_DESCRIPTION =
   "Enter the email address(es) of the organizer, presenter, or collaborators. Once your listing has been approved, we'll notify them and invite them to create connected listings for the event."
 
-export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormData> }) {
+export function PieceSubmissionFlow({ form: eventForm }: { form: UseFormReturn<EventFormData> }) {
   const parentEventMode = useWatch({
-    control: form.control,
+    control: eventForm.control,
     name: "parentEventMode" as Path<EventFormData>,
     defaultValue: "SELECT",
   }) as "SELECT" | "MANUAL" | undefined
 
   const parentEventId = useWatch({
-    control: form.control,
+    control: eventForm.control,
     name: "parentEventId" as Path<EventFormData>,
   }) as string | undefined
 
   return (
-    <>
-      <Section title="Search for EAR event">
-        {parentEventMode !== "MANUAL" && (
+    <div className={form.step}>
+      {parentEventMode !== "MANUAL" && (
+        <Section title="Search for EAR event">
           <EventSearch
-            form={form}
+            form={eventForm}
             eventType="PERFORMANCE"
             eventIdField={"parentEventId" as Path<EventFormData>}
             eventModeField={"parentEventMode" as Path<EventFormData>}
-            label="Search for event"
+            showLabel={false}
             placeholder="Type to search for event..."
             showCantLocateButton={true}
             cantLocateButtonLabel="Event not listed with EAR? Enter manually."
             cantLocateTooltip={MANUAL_LINK_TOOLTIP}
             required={true}
           />
-        )}
-      </Section>
+        </Section>
+      )}
 
       {parentEventMode === "MANUAL" && (
-        <Section title="Event not listed with EAR? Enter manually.">
-          <p className="text-sm text-muted-foreground mb-3 flex flex-wrap items-center gap-2">
-            <span>Provide what you know so we can link your listing later.</span>
-            <FormFieldTooltip text={MANUAL_LINK_TOOLTIP} />
-          </p>
-          <TextField form={form} name={"parentEventName" as Path<EventFormData>} label="Event title" required />
-          <TextField form={form} name={"organizer"} label="Organizer name" />
+        <Section
+          title="Event not listed with EAR? Enter manually."
+          description="Provide what you know so we can link your listing later."
+          titleTooltip={MANUAL_LINK_TOOLTIP}
+        >
+          <TextField form={eventForm} name={"parentEventName" as Path<EventFormData>} label="Event title" required />
+          <TextField form={eventForm} name={"organizer"} label="Organizer name" />
           <TextField
-            form={form}
+            form={eventForm}
             name={"parentEventContactEmail" as Path<EventFormData>}
             label="Organizer email"
             type="email"
             placeholder="contact@..."
           />
           <TextField
-            form={form}
+            form={eventForm}
             name={"parentEventWebsite" as Path<EventFormData>}
             label="Website / social"
             type="url"
@@ -73,8 +73,8 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
           />
           <button
             type="button"
-            className="mt-2 text-sm underline"
-            onClick={() => form.setValue("parentEventMode", "SELECT" as unknown as never)}
+            className="text-sm underline"
+            onClick={() => eventForm.setValue("parentEventMode", "SELECT" as unknown as never)}
           >
             Back to search
           </button>
@@ -82,29 +82,30 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
       )}
 
       <InviteRecipientEmailsSection
-        form={form}
+        form={eventForm}
         title={INVITE_ORGANIZER_TITLE}
         description={INVITE_ORGANIZER_DESCRIPTION}
       />
 
       <Section title="Details">
         <PieceDetails
-          form={form}
+          form={eventForm}
           index={0}
           canRemove={false}
           onRemove={() => {}}
           showOccurrences={false}
           occurrencesMode="CUSTOM_ONLY"
+          nestedInSection
         />
       </Section>
 
       <Section title="Performance schedule">
         <PieceOccurrencesPicker
-          form={form}
+          form={eventForm}
           label="Select performance date(s) & time(s)"
           mode={parentEventId ? "SELECT_FROM_PARENT" : "CUSTOM_ONLY"}
         />
       </Section>
-    </>
+    </div>
   )
 }

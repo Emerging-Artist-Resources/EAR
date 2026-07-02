@@ -5,7 +5,9 @@ import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Caption } from "@/components/ui/typography"
 import { MAX_SHARE_RECIPIENT_EMAILS } from "@/lib/listings/share"
+import { stack } from "@/lib/spacing"
 
 export interface InviteRecipientEmailsSectionProps {
   form: UseFormReturn<EventFormData>
@@ -55,11 +57,10 @@ export function InviteRecipientEmailsSection({
   }
 
   return (
-    <Section title={title}>
-      <p className="text-sm text-muted-foreground mb-3">{description}</p>
-      <div className="space-y-2">
+    <Section title={title} description={description}>
+      <div className={stack.sm}>
         {list.map((value, index) => (
-          <div key={index} className="flex gap-2 items-center">
+          <div key={index} className="flex items-center gap-2">
             <Input
               type="email"
               placeholder="email@example.com"
@@ -72,15 +73,13 @@ export function InviteRecipientEmailsSection({
             </Button>
           </div>
         ))}
+        {list.length < MAX_SHARE_RECIPIENT_EMAILS && (
+          <Button type="button" variant="secondary" size="sm" onClick={append}>
+            {addEmailLabel}
+          </Button>
+        )}
+        <Caption className="text-text-muted">Add up to {MAX_SHARE_RECIPIENT_EMAILS} addresses.</Caption>
       </div>
-      {list.length < MAX_SHARE_RECIPIENT_EMAILS && (
-        <Button type="button" variant="secondary" size="sm" className="mt-3" onClick={append}>
-          {addEmailLabel}
-        </Button>
-      )}
-      <p className="text-xs text-muted-foreground mt-2">
-        Add up to {MAX_SHARE_RECIPIENT_EMAILS} addresses.
-      </p>
     </Section>
   )
 }

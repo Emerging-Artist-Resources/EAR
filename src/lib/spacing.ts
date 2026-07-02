@@ -8,6 +8,16 @@ export const stack = {
   "2xl": "space-y-10",
 } as const
 
+/** Tighter rhythm for dense forms (modals, wizards). */
+export const form = {
+  /** Between sections within a step. */
+  step: "space-y-6",
+  /** Section title block to field group. */
+  section: "space-y-2",
+  /** Between fields inside a section. */
+  fields: "space-y-3",
+} as const
+
 export const page = {
   container: "mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8",
 } as const

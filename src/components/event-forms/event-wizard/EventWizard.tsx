@@ -31,6 +31,7 @@ import {
 import { ownerListingToFormLoad } from "./owner-listing-to-form"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { resetModalFormView } from "@/lib/forms/reset-scroll-ancestors"
+import { form as formSpacing } from "@/lib/spacing"
 
 interface EventWizardProps {
   onSuccess: (info?: { wasApprovedResubmit?: boolean }) => void
@@ -516,7 +517,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
   )
 
   return (
-    <div ref={wizardRootRef} className="space-y-6">
+    <div ref={wizardRootRef} className={formSpacing.step}>
       <div
         ref={wizardFocusSentinelRef}
         tabIndex={-1}
