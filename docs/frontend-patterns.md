@@ -90,6 +90,8 @@ Import roles from `@/components/ui/typography`. Components set **type only** (fo
 
 **Avoid:** Overriding heading sizes with redundant classes (e.g. `H2 className="text-2xl"`). Prefer semantic text colors (`text-text-primary`, `text-text-muted`) over `text-gray-*`.
 
+**Inline form actions:** use a `<button type="button">` with TextSmall-equivalent classes (`font-sans text-body-sm leading-body`) plus `underline text-primary`. Do not use `<p>`-based typography components for interactive controls.
+
 Type scale tokens live in `globals.css` (`--type-h1-size`, etc.) and map to Tailwind utilities (`text-h1`, `text-body-sm`, `leading-body`, `tracking-eyebrow`).
 
 ### Spacing

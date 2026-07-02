@@ -10,6 +10,7 @@ import { PieceDetails } from "@/components/forms/blocks/PieceDetails"
 import { EventSearch } from "@/components/forms/blocks/EventSearch"
 import { InviteRecipientEmailsSection } from "@/components/event-forms/event-wizard/steps/performance/InviteRecipientEmailsSection"
 import { form } from "@/lib/spacing"
+import { cn } from "@/lib/utils"
 
 const MANUAL_LINK_TOOLTIP =
   "Once the organizer submits their event to EAR, your work will be linked to their listing."
@@ -73,7 +74,9 @@ export function PieceSubmissionFlow({ form: eventForm }: { form: UseFormReturn<E
           />
           <button
             type="button"
-            className="text-sm underline"
+            className={cn(
+              "font-sans text-body-sm leading-body underline text-primary hover:text-primary/80"
+            )}
             onClick={() => eventForm.setValue("parentEventMode", "SELECT" as unknown as never)}
           >
             Back to search

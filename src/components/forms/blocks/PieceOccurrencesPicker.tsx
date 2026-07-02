@@ -4,10 +4,12 @@ import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { useMemo, useState, useEffect, useRef } from "react"
 import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { SelectBlock } from "@/components/forms/blocks/Select"
+import { Muted } from "@/components/ui/typography"
 import { EventFormData } from "@/lib/validations/events"
 import { apiGet } from "@/lib/client/fetch-utils"
 import { convertUTCToEST, formatTime12Hour } from "@/lib/datetime/utils"
 import { debugScheduleLog } from "@/lib/debug-log"
+import { cn } from "@/lib/utils"
 
 type Mode = "SELECT_FROM_PARENT" | "SELECT_FROM_EVENT" | "CUSTOM_ONLY"
 
@@ -369,7 +371,9 @@ export function PieceOccurrencesPicker({
               onClick={() => {
                 setUseCustomDateTime(true)
               }}
-              className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+              className={cn(
+                "font-sans text-body-sm leading-body underline text-primary hover:text-primary/80"
+              )}
             >
               Don&apos;t see your date/time?
             </button>
@@ -378,25 +382,23 @@ export function PieceOccurrencesPicker({
       )}
 
       {flags.isSelectFromEvent && !displayConfirmed && (
-        <p className="text-sm text-gray-500">
-          Please confirm schedule in the Date & Time section above.
-        </p>
+        <Muted>Please confirm schedule in the Date & Time section above.</Muted>
       )}
 
       {flags.isSelectFromEvent && displayConfirmed && derivedOccurrences.length === 0 && (
-        <p className="text-sm text-gray-500">
+        <Muted>
           No dates & times available. Please add dates & times in the Date & Time section above and confirm them.
-        </p>
+        </Muted>
       )}
 
       {flags.isSelectFromParent && !flags.shouldShowSelection && (loadingParent || !displayConfirmed) && (
-        <p className="text-sm text-gray-500">
+        <Muted>
           {loadingParent ? "Loading event schedule..." : "Please wait for the event schedule to load."}
-        </p>
+        </Muted>
       )}
 
       {flags.isSelectFromParent && !flags.shouldShowSelection && displayConfirmed && derivedOccurrences.length === 0 && (
-        <p className="text-sm text-gray-500">No dates & times available from the event schedule.</p>
+        <Muted>No dates & times available from the event schedule.</Muted>
       )}
 
       {flags.shouldShowCustomDateTime && (
@@ -420,9 +422,9 @@ export function PieceOccurrencesPicker({
             }}
           />
           {flags.isSelectFromParent && useCustomDateTime && parentOccurrences.length > 0 && (
-            <p className="mt-2 text-sm text-gray-500">
+            <Muted>
               Your custom dates/times will be added to the parent event&apos;s schedule once your piece is approved.
-            </p>
+            </Muted>
           )}
         </>
       )}

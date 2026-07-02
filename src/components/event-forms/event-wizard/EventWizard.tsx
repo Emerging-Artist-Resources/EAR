@@ -32,6 +32,7 @@ import { ownerListingToFormLoad } from "./owner-listing-to-form"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { resetModalFormView } from "@/lib/forms/reset-scroll-ancestors"
 import { form as formSpacing } from "@/lib/spacing"
+import { Caption } from "@/components/ui/typography"
 
 interface EventWizardProps {
   onSuccess: (info?: { wasApprovedResubmit?: boolean }) => void
@@ -525,9 +526,9 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
         className="sr-only outline-none"
       />
       {loadError && (
-        <p className="text-sm text-red-600 text-center" role="alert">
+        <Caption className="text-center text-error-600" role="alert">
           {loadError}
-        </p>
+        </Caption>
       )}
       <ConfirmDialog
         isOpen={showApprovedResubmitConfirm}

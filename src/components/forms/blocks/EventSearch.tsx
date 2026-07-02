@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { apiGet } from "@/lib/client/fetch-utils"
 import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
+import { Label, Muted, TextSmall } from "@/components/ui/typography"
 import { stack } from "@/lib/spacing"
+import { cn } from "@/lib/utils"
 
 type EventType = "performance" | "audition" | "creative" | "class" | "funding"
 
@@ -245,25 +247,27 @@ export function EventSearch<T extends Record<string, unknown>>({
     <div className={stack.sm}>
       <div ref={containerRef} className="event-search-container">
         {showLabel && (
-          <label className="mb-1 block text-sm font-medium text-gray-700">
+          <Label className="text-text-primary">
             {label} {required && <span className="text-error-600">*</span>}
-          </label>
+          </Label>
         )}
         
         {isEventSelected ? (
-          <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
+          <div className="rounded-md border border-border bg-surface-panel p-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 {loadingTitle ? (
-                  <p className="text-sm text-gray-500">Loading event...</p>
+                  <Muted>Loading event...</Muted>
                 ) : (
-                  <p className="text-sm font-medium text-gray-900">{displayTitle}</p>
+                  <TextSmall className="font-medium text-text-primary">{displayTitle}</TextSmall>
                 )}
               </div>
               <button
                 type="button"
                 onClick={handleBackToSearch}
-                className="ml-4 text-sm text-blue-600 hover:text-blue-800 underline"
+                className={cn(
+                  "ml-4 shrink-0 font-sans text-body-sm leading-body underline text-primary hover:text-primary/80"
+                )}
               >
                 Back to search
               </button>
@@ -279,25 +283,21 @@ export function EventSearch<T extends Record<string, unknown>>({
               onFocus={() => searchState.query && dispatch({ type: "SET_SHOW_RESULTS", payload: true })}
             />
             {searchState.isSearching && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
-                Searching...
-              </div>
+              <Muted className="absolute right-3 top-1/2 -translate-y-1/2">Searching...</Muted>
             )}
             {searchState.showResults && searchState.results.length > 0 && (
-              <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg max-h-60 overflow-auto">
+              <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-md border border-border bg-card shadow-lg">
                 {searchState.results.map((item) => (
                   <button
                     key={item.listingId}
                     type="button"
                     onClick={() => handleSelectEvent(item.listingId, item.title)}
-                    className="w-full px-4 py-2 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
+                    className="w-full px-4 py-2 text-left hover:bg-surface-interactive-hover focus:bg-surface-interactive-hover focus:outline-none"
                   >
-                    <div className="font-medium text-gray-900">{item.title || "Untitled Event"}</div>
-                    {item.start && (
-                      <div className="text-sm text-gray-500">
-                        {new Date(item.start).toLocaleDateString()}
-                      </div>
-                    )}
+                    <TextSmall className="font-medium text-text-primary">
+                      {item.title || "Untitled Event"}
+                    </TextSmall>
+                    {item.start && <Muted>{new Date(item.start).toLocaleDateString()}</Muted>}
                   </button>
                 ))}
               </div>
@@ -306,8 +306,8 @@ export function EventSearch<T extends Record<string, unknown>>({
               searchState.query &&
               !searchState.isSearching &&
               searchState.results.length === 0 && (
-                <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-500 shadow-lg">
-                  No events found. Try a different search term.
+                <div className="absolute z-10 mt-1 w-full rounded-md border border-border bg-card p-4 shadow-lg">
+                  <Muted>No events found. Try a different search term.</Muted>
                 </div>
               )}
           </div>
