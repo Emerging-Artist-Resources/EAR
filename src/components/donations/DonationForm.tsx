@@ -19,7 +19,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/contexts/ToastContext"
 import { apiPost, apiGet } from "@/lib/client/fetch-utils"
-import { H2, Text } from "@/components/ui/typography"
+import { H2, Text, Label, Muted, Caption, TextSmall } from "@/components/ui/typography"
+import { stack } from "@/lib/spacing"
 import { Card } from "@/components/ui/card"
 import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnelTrustHeader"
 import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
@@ -303,13 +304,16 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
         </div>
       ) : null}
       <div className="mb-4">
-        <H2 className="text-2xl font-bold text-gray-900 mb-1">
+        <H2 className="mb-1 text-text-primary">
           {lockedRecipient ? `Support ${recipientLabel}` : "Make a Donation"}
         </H2>
         {lockedRecipient || effectiveOrgHero ? (
-          <Text className="text-gray-600">Emerging Artist Resources x mignolo is a 501(c)(3) tax-exempt organization. <br />Your gift is tax-deductible to the extent permitted by law.</Text>
+          <Text className="text-text-muted">
+            Emerging Artist Resources x mignolo is a 501(c)(3) tax-exempt organization. <br />
+            Your gift is tax-deductible to the extent permitted by law.
+          </Text>
         ) : (
-          <Text className="text-gray-600">
+          <Text className="text-text-muted">
             Your support helps us continue providing resources for emerging artists.
           </Text>
         )}
@@ -319,7 +323,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
           <p
             ref={artistMessageRef}
             className={cn(
-              "text-sm leading-6 text-gray-700 whitespace-pre-wrap",
+              "font-sans text-body-sm leading-body whitespace-pre-wrap text-text-primary",
               !artistMessageExpanded && "line-clamp-2",
             )}
           >
@@ -328,7 +332,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
           {(artistMessageOverflows || artistMessageExpanded) && (
             <button
               type="button"
-              className="mt-2 text-sm font-medium text-primary hover:underline"
+              className="mt-2 text-body-sm font-medium text-primary hover:underline"
               aria-expanded={artistMessageExpanded}
               onClick={() => setArtistMessageExpanded((v) => !v)}
             >
@@ -341,7 +345,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
           <p
             ref={orgMessageRef}
             className={cn(
-              "text-sm leading-6 text-gray-700 whitespace-pre-wrap",
+              "font-sans text-body-sm leading-body whitespace-pre-wrap text-text-primary",
               !orgMessageExpanded && "line-clamp-2",
             )}
           >
@@ -350,7 +354,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
           {(orgMessageOverflows || orgMessageExpanded) && (
             <button
               type="button"
-              className="mt-2 text-sm font-medium text-primary hover:underline"
+              className="mt-2 text-body-sm font-medium text-primary hover:underline"
               aria-expanded={orgMessageExpanded}
               onClick={() => setOrgMessageExpanded((v) => !v)}
             >
@@ -372,12 +376,12 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className={stack.lg}>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <Label className="mb-2">
             Donation Amount <span className="text-error-600">*</span>
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+          </Label>
+          <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {resolvedPresetAmounts.map((amount) => (
               <Button
                 key={amount}
@@ -391,14 +395,14 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
             ))}
           </div>
           <div>
-            <div className="mb-1">
-              <label className="block text-sm font-medium text-gray-700">
+            <div className={stack.xs}>
+              <Label>
                 Custom Amount <span className="text-error-600">*</span>
-              </label>
-              <p className="mt-1 text-sm text-gray-500">Minimum $1.00</p>
+              </Label>
+              <Muted>Minimum $1.00</Muted>
             </div>
             <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+              <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-text-muted">$</span>
               <input
                 type="number"
                 step="0.01"
@@ -415,26 +419,24 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
               />
             </div>
             {form.formState.errors.amount && (
-              <p className="mt-1 text-sm text-error-600">
+              <Caption className="mt-1 text-error-600">
                 {form.formState.errors.amount.message}
-              </p>
+              </Caption>
             )}
             {amountInDollars > 0 && (
-              <p className="mt-1 text-sm text-gray-600">
-                ${totalChargedDollars.toFixed(2)} will be charged
-              </p>
+              <Muted className="mt-1">${totalChargedDollars.toFixed(2)} will be charged</Muted>
             )}
           </div>
         </div>
 
-        <div className="space-y-3 rounded-md border border-gray-200 bg-gray-50 p-4">
-          <p className="text-sm text-gray-700">
+        <div className={cn(stack.sm, "rounded-md border border-gray-200 bg-gray-50 p-4")}>
+          <TextSmall className="text-text-primary">
             {isArtistDonation
               ? "Add these optional fees so the artist receives the full amount of your donation."
               : "Add these optional fees so EAR receives the full amount of your donation."}
-          </p>
+          </TextSmall>
           {isArtistDonation && (
-            <label className="flex items-start gap-2 text-sm text-gray-800">
+            <label className="flex items-start gap-2">
               <Checkbox
                 checked={Boolean(coverFiscalFee)}
                 onChange={(e) => {
@@ -443,10 +445,10 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
                   })
                 }}
               />
-              <span>Cover fiscal sponsorship fee (5.5%)</span>
+              <span className="font-sans text-body-sm leading-body">Cover fiscal sponsorship fee (5.5%)</span>
             </label>
           )}
-          <label className="flex items-start gap-2 text-sm text-gray-800">
+          <label className="flex items-start gap-2">
             <Checkbox
               checked={Boolean(coverCardFee)}
               onChange={(e) => {
@@ -455,33 +457,32 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
                 })
               }}
             />
-            <span>Cover processing fees (2.9% + $0.30)</span>
+            <span className="font-sans text-body-sm leading-body">Cover processing fees (2.9% + $0.30)</span>
           </label>
 
           {amountInDollars > 0 && (
-            <div className="rounded-md p-3 text-sm text-gray-700 space-y-1">
-              <p>
-                <span className="font-medium text-gray-900">Donation:</span> ${amountInDollars.toFixed(2)}
-              </p>
-              <p>
-                <span className="font-medium text-gray-900">Fees covered:</span> ${feesCoveredDollars.toFixed(2)}
-              </p>
-              <p className="font-semibold text-gray-900">Total charged: ${totalChargedDollars.toFixed(2)}</p>
+            <div className={cn(stack.xs, "rounded-md p-3")}>
+              <TextSmall>
+                <span className="font-medium text-text-primary">Donation:</span> ${amountInDollars.toFixed(2)}
+              </TextSmall>
+              <TextSmall>
+                <span className="font-medium text-text-primary">Fees covered:</span> ${feesCoveredDollars.toFixed(2)}
+              </TextSmall>
+              <TextSmall className="font-semibold text-text-primary">
+                Total charged: ${totalChargedDollars.toFixed(2)}
+              </TextSmall>
             </div>
           )}
         </div>
 
         {lockedRecipient?.donationDesignation ? (
           <div>
-            <label
-              htmlFor="donation-designation-option"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <Label htmlFor="donation-designation-option" className="mb-2">
               {lockedRecipient.donationDesignation.fieldLabel}
-            </label>
+            </Label>
             <select
               id="donation-designation-option"
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-body-sm text-text-primary shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               {...form.register("designation_option_id")}
             >
               {lockedRecipient.donationDesignation.options.map((opt) => (
@@ -491,9 +492,9 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
               ))}
             </select>
             {form.formState.errors.designation_option_id && (
-              <p className="mt-1 text-sm text-error-600">
+              <Caption className="mt-1 text-error-600">
                 {form.formState.errors.designation_option_id.message}
-              </p>
+              </Caption>
             )}
           </div>
         ) : null}
@@ -526,11 +527,11 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
           inputClassName="bg-white ring-offset-white"
         />
 
-        <div className="space-y-3">
-          <p className="flex items-center justify-center gap-2 text-xs text-gray-500">
-            <Lock className="size-3.5 shrink-0 text-gray-400" aria-hidden />
+        <div className={stack.sm}>
+          <Caption className="flex items-center justify-center gap-2 text-text-muted">
+            <Lock className="size-3.5 shrink-0 text-text-muted/70" aria-hidden />
             <span>Payments are securely processed by Stripe.</span>
-          </p>
+          </Caption>
           <div className="flex gap-4">
             <Button
               type="submit"
@@ -541,16 +542,16 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
               {isSubmitting ? "Processing..." : "Continue to Payment"}
             </Button>
           </div>
-          <p className="text-center text-xs text-gray-500">
+          <Caption className="text-center text-text-muted">
             Questions? Contact us at{" "}
             <a
               href="mailto:info@eararts.org"
-              className="text-gray-600 underline underline-offset-2 hover:text-gray-900"
+              className="text-text-muted underline underline-offset-2 hover:text-text-primary"
             >
               info@eararts.org
             </a>
             .
-          </p>
+          </Caption>
         </div>
       </form>
     </Card>

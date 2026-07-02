@@ -63,10 +63,51 @@ TypeScript path aliases (see `tsconfig.json`):
 ## 5. Styling rules
 
 1. **Tailwind-first:** Use utility classes for layout, spacing, and responsive behavior (`sm:`, `lg:`, etc.).
-2. **Design tokens:** Prefer semantic/theme variables defined in `src/app/globals.css` (e.g. `primary`, `error-600`, spacing/radius variables) over hard-coded hex values in JSX—unless you are matching a one-off design spec.
+2. **Design tokens:** Prefer semantic/theme variables defined in `src/app/globals.css` (e.g. `primary`, `error-600`, `text-text-muted`) over hard-coded hex values in JSX—unless you are matching a one-off design spec.
 3. **Merging classes:** Use `cn()` whenever `className` is composed from props, variants, or conditionals so Tailwind classes merge correctly.
 4. **Variants:** For buttons, cards, and similar primitives, follow the **CVA** pattern used in `src/components/ui/button.tsx` (`cva`, `VariantProps`, `defaultVariants`).
 5. **Dark mode:** The codebase defines `@custom-variant dark`; follow existing `dark:` usage when adding surfaces that must work in both themes.
+
+### Typography
+
+Import roles from `@/components/ui/typography`. Components set **type only** (font, size, weight, leading); pass color via `className` when needed.
+
+| Component | Use |
+|-----------|-----|
+| `Display` | Marketing heroes only (large uppercase title font) |
+| `H1` | Page titles (dashboard, auth) |
+| `H2` | Section headings |
+| `H3` | Subsections, form section titles |
+| `H4` | Card or group titles |
+| `Text` | Body copy |
+| `TextSmall` | Secondary body, inline descriptions |
+| `Muted` | Helper text, field notes |
+| `Label` | Form field labels (`<label>`) |
+| `Caption` | Fine print, errors, footnotes |
+| `Eyebrow` | Uppercase taglines (marketing/footer) |
+
+**App vs marketing:** Dashboards and forms use `H1`–`H4` and `Text`. Public marketing pages may additionally use `Display` and hero constants in `src/lib/marketing/page-hero.ts`.
+
+**Avoid:** Overriding heading sizes with redundant classes (e.g. `H2 className="text-2xl"`). Prefer semantic text colors (`text-text-primary`, `text-text-muted`) over `text-gray-*`.
+
+Type scale tokens live in `globals.css` (`--type-h1-size`, etc.) and map to Tailwind utilities (`text-h1`, `text-body-sm`, `leading-body`, `tracking-eyebrow`).
+
+### Spacing
+
+Import named stacks from `@/lib/spacing` instead of ad-hoc `space-y-*` for standard vertical rhythm:
+
+| Constant | Tailwind | Typical use |
+|----------|----------|-------------|
+| `stack.xs` | `space-y-1` | Tight label groups |
+| `stack.sm` | `space-y-2` | Form field internals |
+| `stack.md` | `space-y-4` | Section children |
+| `stack.lg` | `space-y-6` | Form sections, card content |
+| `stack.xl` | `space-y-8` | Page sections |
+| `stack["2xl"]` | `space-y-10` | Wizard step groups |
+
+`page.container` is the standard max-width page shell (`max-w-7xl` + horizontal padding).
+
+Domain-specific layout (e.g. service inquiry forms) may extend these in local constants; prefer importing `stack` over duplicating values.
 
 ---
 
@@ -148,6 +189,8 @@ Jest + Testing Library are configured (`npm test`). Add tests for non-trivial ho
 ## 14. Related files
 
 - Global styles and tokens: `src/app/globals.css`  
+- Typography components: `src/components/ui/typography.tsx`  
+- Spacing constants: `src/lib/spacing.ts`  
 - Root shell: `src/app/layout.tsx`  
 - Class helper: `src/lib/utils.ts`  
 - Example form: `src/components/donations/DonationForm.tsx`  

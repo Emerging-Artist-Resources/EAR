@@ -1,8 +1,10 @@
 import React from "react"
 import { UseFormReturn, useFormState } from "react-hook-form"
 import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
+import { Caption, Label, Muted } from "@/components/ui/typography"
 import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
+import { stack } from "@/lib/spacing"
+import { cn } from "@/lib/utils"
 
 interface TextFieldProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>
@@ -47,20 +49,22 @@ export function TextField<T extends Record<string, unknown>>({
       form.formState.isSubmitted ||
       form.formState.submitCount > 0)
   return (
-    <div className={className}>
-      <div className="mb-1">
+    <div className={cn(stack.sm, className)}>
+      <div className={stack.xs}>
         <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-          <label className="block text-sm font-medium text-gray-700">
+          <Label>
             {label} {required && showAsterisk && <span className="text-error-600">*</span>}
-          </label>
+          </Label>
           {labelTooltip?.trim() ? <FormFieldTooltip text={labelTooltip.trim()} /> : null}
         </div>
-        {note && (
-          <p className="mt-1 whitespace-pre-line text-sm text-gray-500">{note}</p>
-        )}
+        {note && <Muted className="whitespace-pre-line">{note}</Muted>}
       </div>
       <div className="relative">
-        {prefix && <span className="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">{prefix}</span>}
+        {prefix && (
+          <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-text-muted">
+            {prefix}
+          </span>
+        )}
         <Input
           {...register(name as unknown as never)}
           type={type}
@@ -72,9 +76,7 @@ export function TextField<T extends Record<string, unknown>>({
         />
       </div>
       {showError && state.error?.message && (
-        <p className="mt-1 text-xs text-error-600">
-          {state.error.message}
-        </p>
+        <Caption className="text-error-600">{state.error.message}</Caption>
       )}
     </div>
   )

@@ -123,6 +123,18 @@
   --brand-font-header: "Canela Text", "Times New Roman", Times, serif;
   --brand-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
+  /* Type scale */
+  --type-h1-size: 1.875rem;
+  --type-h2-size: 1.5rem;
+  --type-h3-size: 1.25rem;
+  --type-h4-size: 1.125rem;
+  --type-body-size: 1rem;
+  --type-body-sm-size: 0.875rem;
+  --type-caption-size: 0.75rem;
+  --type-body-leading: 1.5;
+  --type-heading-leading: 1.25;
+  --type-eyebrow-tracking: 0.18em;
+
   /* Spacing */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
@@ -248,6 +260,25 @@
   --font-title: var(--brand-font-title);
   --font-header: var(--brand-font-header);
   --font-mono: var(--brand-font-mono);
+
+  --text-h1: var(--type-h1-size);
+  --text-h1--line-height: var(--type-heading-leading);
+  --text-h2: var(--type-h2-size);
+  --text-h2--line-height: var(--type-heading-leading);
+  --text-h3: var(--type-h3-size);
+  --text-h3--line-height: var(--type-heading-leading);
+  --text-h4: var(--type-h4-size);
+  --text-h4--line-height: var(--type-heading-leading);
+  --text-body: var(--type-body-size);
+  --text-body--line-height: var(--type-body-leading);
+  --text-body-sm: var(--type-body-sm-size);
+  --text-body-sm--line-height: var(--type-body-leading);
+  --text-caption: var(--type-caption-size);
+  --text-caption--line-height: var(--type-body-leading);
+  --leading-body: var(--type-body-leading);
+  --leading-heading: var(--type-heading-leading);
+  --tracking-eyebrow: var(--type-eyebrow-tracking);
+
   --color-ear-black: var(--ear-black);
   --color-ear-off-white: var(--ear-off-white);
   --color-ear-baby-blue: var(--ear-baby-blue);

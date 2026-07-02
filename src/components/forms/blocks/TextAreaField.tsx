@@ -1,5 +1,7 @@
 import { UseFormReturn, useFormState } from "react-hook-form"
 import { Textarea } from "@/components/ui/textarea"
+import { Caption, Label, Muted } from "@/components/ui/typography"
+import { stack } from "@/lib/spacing"
 import { cn } from "@/lib/utils"
 
 interface TextAreaFieldProps<T extends Record<string, unknown>> {
@@ -40,14 +42,12 @@ export function TextAreaField<T extends Record<string, unknown>>({
       form.formState.isSubmitted ||
       form.formState.submitCount > 0)
   return (
-    <div className={className}>
-      <div className="mb-1">
-        <label className="block text-sm font-medium text-gray-700">
+    <div className={cn(stack.sm, className)}>
+      <div className={stack.xs}>
+        <Label>
           {label} {required && showAsterisk && <span className="text-error-600">*</span>}
-        </label>
-        {note && (
-          <p className="mt-1 whitespace-pre-line text-sm text-gray-500">{note}</p>
-        )}
+        </Label>
+        {note && <Muted className="whitespace-pre-line">{note}</Muted>}
       </div>
       <Textarea
         {...register(name as unknown as never)}
@@ -56,12 +56,8 @@ export function TextAreaField<T extends Record<string, unknown>>({
         className={cn(inputClassName)}
       />
       {showError && state.error?.message && (
-        <p className="mt-1 text-xs text-error-600">
-          {state.error.message}
-        </p>
+        <Caption className="text-error-600">{state.error.message}</Caption>
       )}
     </div>
   )
 }
-
-
