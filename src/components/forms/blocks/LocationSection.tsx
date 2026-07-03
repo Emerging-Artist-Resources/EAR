@@ -4,6 +4,7 @@ import { useEffect, useId } from "react"
 import { Controller, Path, UseFormReturn } from "react-hook-form"
 import { LocationField } from "@/components/forms/blocks/LocationField"
 import { Input } from "@/components/ui/input"
+import { Caption, Label, Muted } from "@/components/ui/typography"
 import { cn } from "@/lib/utils"
 import {
   clearedInPersonLocationFields,
@@ -15,6 +16,7 @@ import {
   type LocationMode,
 } from "@/lib/location/mode"
 import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
+import { form as formSpacing, stack } from "@/lib/spacing"
 
 export type LocationSectionProps<T extends Record<string, unknown>> = {
   form: UseFormReturn<T>
@@ -106,8 +108,8 @@ export function LocationSection<T extends Record<string, unknown>>({
       form.formState.submitCount > 0)
 
   return (
-    <div className={className}>
-      <div className={cn(compact ? "mb-1.5" : "mb-2")}>
+    <div className={cn(formSpacing.section, className)}>
+      <div className={stack.xs}>
         <div
           className={cn(
             "flex flex-wrap items-center gap-x-2 gap-y-1",
@@ -116,9 +118,9 @@ export function LocationSection<T extends Record<string, unknown>>({
         >
           {showLabel ? (
             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-              <span className="text-sm font-medium text-gray-700">
+              <Label className="text-text-primary">
                 {label} {required && showAsterisk ? <span className="text-error-600">*</span> : null}
-              </span>
+              </Label>
               {labelTooltip?.trim() ? <FormFieldTooltip text={labelTooltip.trim()} /> : null}
             </div>
           ) : null}
@@ -158,9 +160,9 @@ export function LocationSection<T extends Record<string, unknown>>({
             </div>
           </fieldset>
         </div>
-        {note && !compact ? <p className="mt-1 text-sm text-gray-500">{note}</p> : null}
+        {note && !compact ? <Muted>{note}</Muted> : null}
         {showModeErr && modeState.error?.message ? (
-          <p className="mt-1 text-xs text-error-600">{String(modeState.error.message)}</p>
+          <Caption className="text-error-600">{String(modeState.error.message)}</Caption>
         ) : null}
       </div>
 
@@ -226,13 +228,13 @@ function OnlineInstructionsField<T extends Record<string, unknown>>({
       form.formState.submitCount > 0)
 
   return (
-    <div>
-      <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor={fieldId}>
-        {label} {required ? <span className="text-error-600">*</span> : null}
-      </label>
-      <p className="mb-2 text-xs text-gray-500">
-        Share how people join — link, platform, or other access details.
-      </p>
+    <div className={stack.sm}>
+      <div className={stack.xs}>
+        <Label htmlFor={fieldId}>
+          {label} {required ? <span className="text-error-600">*</span> : null}
+        </Label>
+        <Muted>Share how people join — link, platform, or other access details.</Muted>
+      </div>
       <Controller
         control={form.control}
         name={instructionsName}
@@ -254,7 +256,7 @@ function OnlineInstructionsField<T extends Record<string, unknown>>({
         )}
       />
       {showErr && state.error?.message ? (
-        <p className="mt-1 text-xs text-error-600">{String(state.error.message)}</p>
+        <Caption className="text-error-600">{String(state.error.message)}</Caption>
       ) : null}
     </div>
   )

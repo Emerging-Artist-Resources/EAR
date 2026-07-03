@@ -3,7 +3,10 @@
 import { Controller, UseFormReturn, useFormState } from "react-hook-form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card } from "@/components/ui/card"
+import { Caption, Label, Muted, TextSmall } from "@/components/ui/typography"
 import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
+import { stack } from "@/lib/spacing"
+import { cn } from "@/lib/utils"
 
 type Option = {
   value: string
@@ -83,21 +86,21 @@ export function SelectBlock<T extends Record<string, unknown>>({
   const labelTooltipText = labelTooltip?.trim()
 
   return (
-    <div className={className}>
+    <div className={cn(stack.sm, className)}>
       {label && (
-        <div className="mb-1">
+        <div className={stack.xs}>
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            <label className="text-sm font-medium text-text-primary">
+            <Label className="text-text-primary">
               {label}
               {required && showAsterisk ? <span className="text-error-600"> *</span> : null}
-            </label>
+            </Label>
             {labelTooltipText ? <FormFieldTooltip text={labelTooltipText} /> : null}
           </div>
           {(note || description) && (
-            <p className="mt-1 whitespace-pre-line text-sm text-text-muted">{note || description}</p>
+            <Muted className="whitespace-pre-line">{note || description}</Muted>
           )}
         </div>
-      )}    
+      )}
         <Controller
           control={form.control}
           name={name as unknown as never}
@@ -123,9 +126,9 @@ export function SelectBlock<T extends Record<string, unknown>>({
             }
 
             return (
-              <div className="space-y-2">
+              <div className={stack.sm}>
                 {options.map((opt) => (
-                  <Card key={opt.value} className="flex items-center gap-2 border-border-default bg-surface-panel p-2 text-sm text-text-primary">
+                  <Card key={opt.value} className="flex items-center gap-2 border-border-default bg-surface-panel p-2">
                     {multiple ? (
                       <Checkbox
                         checked={isSelected(opt.value)}
@@ -142,7 +145,7 @@ export function SelectBlock<T extends Record<string, unknown>>({
                         disabled={opt.disabled}
                       />
                     )}
-                    <span>{opt.label ?? opt.value}</span>
+                    <TextSmall className="text-text-primary">{opt.label ?? opt.value}</TextSmall>
                   </Card>
                 ))}
 
@@ -156,7 +159,7 @@ export function SelectBlock<T extends Record<string, unknown>>({
                       form.formState.submitCount > 0)
                   const selected = isSelected(otherValue)
                   return (
-                    <Card className="flex items-center gap-3 border-border-default bg-surface-panel p-2 text-sm text-text-primary">
+                    <Card className="flex items-center gap-3 border-border-default bg-surface-panel p-2">
                       {multiple ? (
                         <Checkbox
                           checked={selected}
@@ -171,7 +174,7 @@ export function SelectBlock<T extends Record<string, unknown>>({
                           onChange={() => toggle(otherValue)}
                         />
                       )}
-                      <span>{otherLabel}:</span>
+                      <TextSmall className="text-text-primary">{otherLabel}:</TextSmall>
                       <input
                         {...form.register(finalOtherName as unknown as never)}
                         placeholder=""
@@ -181,7 +184,7 @@ export function SelectBlock<T extends Record<string, unknown>>({
                         } ${selected ? "focus:ring-0" : "cursor-not-allowed opacity-70"}`}
                       />
                       {selected && showOtherErr && (
-                        <span className="ml-2 text-xs text-error-600">{String(otherState.error?.message)}</span>
+                        <Caption className="ml-2 text-error-600">{String(otherState.error?.message)}</Caption>
                       )}
                     </Card>
                   )
@@ -191,9 +194,7 @@ export function SelectBlock<T extends Record<string, unknown>>({
           }}
         />
       {showError && state.error?.message && (
-        <p className="mt-1 text-xs text-error-600">
-          {state.error.message}
-        </p>
+        <Caption className="text-error-600">{state.error.message}</Caption>
       )}
     </div>
   )

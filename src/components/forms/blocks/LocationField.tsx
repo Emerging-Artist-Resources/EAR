@@ -3,9 +3,12 @@
 import { useEffect, useId, useRef, useState } from "react"
 import { UseFormReturn, Path } from "react-hook-form"
 import { Input } from "@/components/ui/input"
+import { Caption, Label, Muted } from "@/components/ui/typography"
 import { loadPlacesLibrary } from "@/lib/location/google-maps-loader"
 import { coerceLocationFieldString } from "@/lib/location/mode"
 import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
+import { formInlineLink, stack } from "@/lib/spacing"
+import { cn } from "@/lib/utils"
 
 function FieldLabelWithTooltip({
   htmlFor,
@@ -23,10 +26,10 @@ function FieldLabelWithTooltip({
   const tooltipText = tooltip?.trim()
   return (
     <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-      <label className="text-sm font-medium text-gray-700" htmlFor={htmlFor}>
+      <Label className="text-text-primary" htmlFor={htmlFor}>
         {label}
         {required && showAsterisk ? <span className="text-error-600"> *</span> : null}
-      </label>
+      </Label>
       {tooltipText ? <FormFieldTooltip text={tooltipText} /> : null}
     </div>
   )
@@ -86,9 +89,12 @@ export function LocationFieldInstructions<T extends Record<string, unknown>>({
     return (
       <button
         type="button"
-        className={`w-full text-left text-sm font-medium text-primary-700 hover:text-primary-800 sm:w-auto ${
-          addButtonTightTop ? "mt-0" : "mt-2"
-        } ${className ?? ""}`}
+        className={cn(
+          "w-full text-left sm:w-auto",
+          formInlineLink,
+          !addButtonTightTop && "mt-2",
+          className,
+        )}
         onClick={() => setInstructionsOpen(true)}
       >
         + Add instructions
@@ -97,33 +103,27 @@ export function LocationFieldInstructions<T extends Record<string, unknown>>({
   }
 
   return (
-    <div className={className}>
+    <div className={cn(stack.sm, className)}>
       {instructionsCollapsible && instructionsOpen ? (
-        <div className="mb-1.5">
+        <div className={stack.xs}>
           <div className="flex items-center justify-between gap-2">
-            <label className="text-sm font-medium text-gray-700" htmlFor={String(instructionsFieldId)}>
-              {instructionsLabel}
-            </label>
+            <Label htmlFor={String(instructionsFieldId)}>{instructionsLabel}</Label>
             {!hasInstructionsContent && (
               <button
                 type="button"
-                className="shrink-0 text-xs text-gray-500 hover:text-gray-700"
+                className={cn("shrink-0", formInlineLink)}
                 onClick={() => setInstructionsOpen(false)}
               >
                 Close
               </button>
             )}
           </div>
-          <p className="mt-0.5 text-xs text-gray-500">
-            {instructionsNote || "Provide details to help attendees find the space."}
-          </p>
+          <Muted>{instructionsNote || "Provide details to help attendees find the space."}</Muted>
         </div>
       ) : (
-        <div className="mb-1">
-          <label className="block text-sm font-medium text-gray-700" htmlFor={String(instructionsFieldId)}>
-            {instructionsLabel}
-          </label>
-          {instructionsNote ? <p className="mt-1 text-sm text-gray-500">{instructionsNote}</p> : null}
+        <div className={stack.xs}>
+          <Label htmlFor={String(instructionsFieldId)}>{instructionsLabel}</Label>
+          {instructionsNote ? <Muted>{instructionsNote}</Muted> : null}
         </div>
       )}
       <Input
@@ -132,7 +132,7 @@ export function LocationFieldInstructions<T extends Record<string, unknown>>({
         {...form.register(instructionsName)}
         placeholder={instructionsPlaceholder}
       />
-      {instErrMsg ? <p className="mt-1 text-xs text-error-600">{instErrMsg}</p> : null}
+      {instErrMsg ? <Caption className="text-error-600">{instErrMsg}</Caption> : null}
     </div>
   )
 }
@@ -335,8 +335,6 @@ export function LocationField<T extends Record<string, unknown>>({
     }
   }, [form, addressName, venueName, placeIdName, latName, lngName])
 
-  const mapClassName = compact ? "mt-0 border-2" : "mt-2 border-2"
-
   void form.formState.errors
   const addressState = form.getFieldState(addressName, form.formState)
   const showAddressErr =
@@ -350,24 +348,28 @@ export function LocationField<T extends Record<string, unknown>>({
   const showLabel = Boolean(label?.trim())
 
   return (
-    <div className={className}>
+    <div className={cn(stack.sm, className)}>
       {showLabel ? (
-        <div className={compact ? "mb-1.5" : "mb-1"}>
+        <div className={stack.xs}>
           <FieldLabelWithTooltip
             label={label}
             tooltip={labelTooltip}
             required={required}
             showAsterisk={showAsterisk}
           />
-          {note && !compact ? <p className="mt-1 text-sm text-gray-500">{note}</p> : null}
+          {note && !compact ? <Muted>{note}</Muted> : null}
         </div>
       ) : null}
 
-      {apiError ? <div className="text-xs text-error-600 mb-2">{apiError}</div> : null}
-      {addressErrMsg ? <p className="mb-2 text-xs text-error-600" role="alert">{addressErrMsg}</p> : null}
+      {apiError ? <Caption className="text-error-600">{apiError}</Caption> : null}
+      {addressErrMsg ? (
+        <Caption className="text-error-600" role="alert">
+          {addressErrMsg}
+        </Caption>
+      ) : null}
 
       {/* Place picker UI (selection fills placeId/lat/lng/venue) */}
-      <div className={mapClassName} ref={containerRef} />
+      <div className="border-2" ref={containerRef} />
 
       {includeInstructionsInPlace && instructionsName ? (
         <LocationFieldInstructions
