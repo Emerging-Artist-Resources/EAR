@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { apiGet } from "@/lib/client/fetch-utils"
 import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
 import { Label, Muted, TextSmall } from "@/components/ui/typography"
-import { stack } from "@/lib/spacing"
+import { stack, formInlineLink } from "@/lib/spacing"
 import { cn } from "@/lib/utils"
 
 type EventType = "performance" | "audition" | "creative" | "class" | "funding"
@@ -265,9 +265,7 @@ export function EventSearch<T extends Record<string, unknown>>({
               <button
                 type="button"
                 onClick={handleBackToSearch}
-                className={cn(
-                  "ml-4 shrink-0 font-sans text-body-sm leading-body underline text-primary hover:text-primary/80"
-                )}
+                className={cn("ml-4 shrink-0", formInlineLink)}
               >
                 Back to search
               </button>

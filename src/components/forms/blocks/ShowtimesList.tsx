@@ -11,6 +11,9 @@ import {
 } from "@/lib/validations/events/occurrence-row"
 import { createLocationFields, type DateItem, type LocationConfigFull } from "./DateTime"
 import { isOnlineLocationMode } from "@/lib/location/mode"
+import { Label, Muted } from "@/components/ui/typography"
+import { form as formSpacing, stack } from "@/lib/spacing"
+import { cn } from "@/lib/utils"
 import { ShowtimeRow } from "./ShowtimeRow"
 import { FormFieldTooltip } from "./FormFieldTooltip"
 import { buildEmptyShowtimeRow } from "@/lib/datetime/showtimes-empty-row"
@@ -208,23 +211,23 @@ export function ShowtimesList<T extends FieldValues>({
   )
 
   return (
-    <div className="space-y-4">
+    <div className={stack.md}>
       {title && (
-        <header className="space-y-1 border-b border-border-default/70 pb-3">
+        <header className={cn(stack.xs, "border-b border-border-default/70 pb-3")}>
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            <label className="text-base font-semibold tracking-tight text-gray-900">
+            <Label className="text-text-primary">
               {title}
               {required && showAsterisk ? <span className="text-error-600"> *</span> : null}
-            </label>
+            </Label>
             {hasTitleTooltip && tooltipText ? <FormFieldTooltip text={tooltipText} /> : null}
           </div>
-          {headerNote ? <p className="text-sm leading-snug text-gray-600">{headerNote}</p> : null}
+          {headerNote ? <Muted className="leading-snug">{headerNote}</Muted> : null}
         </header>
       )}
 
       {betweenNoteAndRows}
 
-      <div className="space-y-3">
+      <div className={formSpacing.fields}>
         {fields.map((field, index) => {
           const dateInputId = `${String(name).replace(/[^a-zA-Z0-9-_]/g, "-")}-showtime-date-${index}`
           return (
@@ -270,19 +273,6 @@ export function ShowtimesList<T extends FieldValues>({
           >
             + Add another date
           </Button>
-          {/* {!canAddShowtime && (
-            <p className="text-xs text-amber-800" role="status">
-              {requireLocation
-                ? "Add a date, a time, and a location to the showtime above before you add another."
-                : "Add a date and a time to the slot above before you add another."}
-            </p>
-          )} */}
-          {/* <p className="text-xs text-gray-500">
-            <span className="font-medium text-gray-600">Tip: </span>
-            {requireLocation
-              ? "New showtimes copy from the one above: location always; time only when that showtime has a single time. The date is left blank to fill in."
-              : "New rows copy the previous slot’s time when it has a single time. The date is left blank to fill in."}
-          </p> */}
         </div>
       )}
     </div>

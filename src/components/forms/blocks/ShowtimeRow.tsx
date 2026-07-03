@@ -5,11 +5,14 @@ import { useLayoutEffect, forwardRef } from "react"
 import { UseFormReturn, FieldValues, useFieldArray, Path, useWatch } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
+import { Caption, H4, Label } from "@/components/ui/typography"
 import { LocationFieldInstructions } from "./LocationField"
 import { LocationSection } from "./LocationSection"
 import { isOnlineLocationMode } from "@/lib/location/mode"
 import type { LocationConfigFull } from "./DateTime/types"
 import { focusFormFieldNoScroll } from "@/lib/forms/focus-field"
+import { form as formSpacing, formInlineLink, stack } from "@/lib/spacing"
+import { cn } from "@/lib/utils"
 
 function getTodayDateString(): string {
   const today = new Date()
@@ -188,12 +191,12 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
     return (
       <Card
         ref={ref}
-        className="space-y-4 rounded-2xl border border-border-default bg-surface-panel p-4 shadow-sm max-sm:overflow-x-clip"
+        className={cn(stack.md, "rounded-2xl border border-border-default bg-surface-panel p-4 shadow-sm max-sm:overflow-x-clip")}
       >
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <h4 className="text-sm font-semibold text-text-primary">
+          <H4 className="text-text-primary">
             {showLabelIndex ? `${rowLabel} ${labelIndex}` : rowLabel}
-          </h4>
+          </H4>
           {canRemove && (
             <button
               type="button"
@@ -212,10 +215,10 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
         <div
           className={`grid w-full min-w-0 max-w-full grid-cols-1 items-start gap-x-4 gap-y-3 max-sm:overflow-x-clip ${gridColsClass}`}
         >
-            <div className="grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[12.5rem] md:max-w-none">
-              <label htmlFor={dateInputId} className="mb-1.5 block text-sm font-medium text-text-primary">
+            <div className={cn("grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[12.5rem] md:max-w-none", stack.xs)}>
+              <Label htmlFor={dateInputId}>
                 Date <span className="text-error-600">*</span>
-              </label>
+              </Label>
               <Input
                 id={dateInputId}
                 type="date"
@@ -224,14 +227,14 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                 className="w-full min-w-0 max-w-full"
                 {...register(dateFieldName as any)}
               />
-              {dateErrMsg && <p className="mt-1 text-xs text-red-600">{dateErrMsg}</p>}
+              {dateErrMsg && <Caption className="text-error-600">{dateErrMsg}</Caption>}
             </div>
 
             {hasTime && (
-              <div className="grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[9.5rem] md:max-w-none">
-                <label className="mb-1.5 block text-sm font-medium text-text-primary" htmlFor={`${dateInputId}-time-0`}>
+              <div className={cn("grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[9.5rem] md:max-w-none", stack.xs)}>
+                <Label htmlFor={`${dateInputId}-time-0`}>
                   Time <span className="text-error-600">*</span>
-                </label>
+                </Label>
                 <Input
                   id={`${dateInputId}-time-0`}
                   type="time"
@@ -239,18 +242,15 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                   className="w-full min-w-0 max-w-full"
                   {...register(firstTimeFieldName as any)}
                 />
-                {firstTimeErrMsg && <p className="mt-1 text-xs text-red-600">{firstTimeErrMsg}</p>}
+                {firstTimeErrMsg && <Caption className="text-error-600">{firstTimeErrMsg}</Caption>}
               </div>
             )}
 
             {hasTime && showEndTime && (
-              <div className="grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[9.5rem] md:max-w-none">
-                <label
-                  className="mb-1.5 block text-sm font-medium text-text-primary"
-                  htmlFor={`${dateInputId}-end-0`}
-                >
+              <div className={cn("grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[9.5rem] md:max-w-none", stack.xs)}>
+                <Label htmlFor={`${dateInputId}-end-0`}>
                   End time
-                </label>
+                </Label>
                 <Input
                   id={`${dateInputId}-end-0`}
                   type="time"
@@ -258,7 +258,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                   className="w-full min-w-0 max-w-full"
                   {...register(firstEndTimeFieldName as any)}
                 />
-                {firstEndErrMsg && <p className="mt-1 text-xs text-red-600">{firstEndErrMsg}</p>}
+                {firstEndErrMsg && <Caption className="text-error-600">{firstEndErrMsg}</Caption>}
               </div>
             )}
 
@@ -312,7 +312,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
         </div>
 
         {showTime && times.length > 1 && (
-          <div className="space-y-3 border-t border-border-default/70 pt-3">
+          <div className={cn(formSpacing.fields, "border-t border-border-default/70 pt-3")}>
             {times.slice(1).map((timeField, sliceIndex) => {
               const timeIndex = sliceIndex + 1
               const timeFieldName = `${name}.${index}.times.${timeIndex}.time`
@@ -325,13 +325,10 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
 
               return (
                 <div key={timeField.id} className="flex w-full min-w-0 max-w-full flex-wrap items-end gap-2 overflow-x-hidden sm:gap-3">
-                  <div className="grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[9.5rem] sm:flex-1">
-                    <label
-                      className="mb-1.5 block text-sm font-medium text-text-primary"
-                      htmlFor={`${dateInputId}-time-${timeIndex}`}
-                    >
+                  <div className={cn("grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[9.5rem] sm:flex-1", stack.xs)}>
+                    <Label htmlFor={`${dateInputId}-time-${timeIndex}`}>
                       Additional time <span className="text-error-600">*</span>
-                    </label>
+                    </Label>
                     <Input
                       id={`${dateInputId}-time-${timeIndex}`}
                       type="time"
@@ -339,16 +336,13 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                       className="w-full min-w-0 max-w-full"
                       {...register(timeFieldName as any)}
                     />
-                    {timeErrMsgLocal && <p className="mt-1 text-xs text-red-600">{timeErrMsgLocal}</p>}
+                    {timeErrMsgLocal && <Caption className="text-error-600">{timeErrMsgLocal}</Caption>}
                   </div>
                   {showEndTime && (
-                    <div className="grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[9.5rem] sm:flex-1">
-                      <label
-                        className="mb-1.5 block text-sm font-medium text-text-primary"
-                        htmlFor={`${dateInputId}-end-${timeIndex}`}
-                      >
+                    <div className={cn("grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] max-sm:overflow-hidden sm:max-w-[9.5rem] sm:flex-1", stack.xs)}>
+                      <Label htmlFor={`${dateInputId}-end-${timeIndex}`}>
                         End time
-                      </label>
+                      </Label>
                       <Input
                         id={`${dateInputId}-end-${timeIndex}`}
                         type="time"
@@ -356,7 +350,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
                         className="w-full min-w-0 max-w-full"
                         {...register(endTimeFieldName as any)}
                       />
-                      {endErrMsgLocal && <p className="mt-1 text-xs text-red-600">{endErrMsgLocal}</p>}
+                      {endErrMsgLocal && <Caption className="text-error-600">{endErrMsgLocal}</Caption>}
                     </div>
                   )}
                   <button
@@ -376,7 +370,7 @@ export const ShowtimeRow = forwardRef<HTMLDivElement, ShowtimeRowProps<any>>(
           <button
             type="button"
             onClick={handleAddTime}
-            className="w-full text-left text-sm font-medium text-text-primary hover:underline sm:w-auto"
+            className={cn("w-full text-left sm:w-auto", formInlineLink)}
           >
             + Add another time
           </button>

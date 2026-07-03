@@ -22,7 +22,7 @@ export function FormFieldTooltip({ text, className }: FormFieldTooltipProps) {
         <button
           type="button"
           className={cn(
-            "inline-flex shrink-0 rounded-full text-gray-500 hover:text-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-1",
+            "inline-flex shrink-0 rounded-full text-text-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-1",
             className
           )}
           aria-label={text}

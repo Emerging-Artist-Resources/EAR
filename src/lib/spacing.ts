@@ -21,3 +21,7 @@ export const form = {
 export const page = {
   container: "mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8",
 } as const
+
+/** Inline text actions in forms (e.g. "Back to search", "+ Add another time"). */
+export const formInlineLink =
+  "font-sans text-body-sm leading-body underline text-primary hover:text-primary/80" as const

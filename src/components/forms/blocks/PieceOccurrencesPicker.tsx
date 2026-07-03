@@ -9,7 +9,7 @@ import { EventFormData } from "@/lib/validations/events"
 import { apiGet } from "@/lib/client/fetch-utils"
 import { convertUTCToEST, formatTime12Hour } from "@/lib/datetime/utils"
 import { debugScheduleLog } from "@/lib/debug-log"
-import { cn } from "@/lib/utils"
+import { formInlineLink } from "@/lib/spacing"
 
 type Mode = "SELECT_FROM_PARENT" | "SELECT_FROM_EVENT" | "CUSTOM_ONLY"
 
@@ -371,9 +371,7 @@ export function PieceOccurrencesPicker({
               onClick={() => {
                 setUseCustomDateTime(true)
               }}
-              className={cn(
-                "font-sans text-body-sm leading-body underline text-primary hover:text-primary/80"
-              )}
+              className={formInlineLink}
             >
               Don&apos;t see your date/time?
             </button>
