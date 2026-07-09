@@ -1,19 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { Muted } from "@/components/ui/typography"
+import { stack } from "@/lib/spacing"
+import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabase/client"
 import { storageService } from "@/services/storage"
 
 const BUCKET = "event-photos"
 
 export function PieceExistingImageThumbnails({ paths }: { paths: string[] }) {
-  const [urls, setUrls] = useState<string[]>([])
+  const pathsKey = useMemo(() => paths.join("|"), [paths])
+  const [fetchedUrls, setFetchedUrls] = useState<string[]>([])
 
   useEffect(() => {
-    if (!paths.length) {
-      setUrls([])
-      return
-    }
+    if (!paths.length) return
+
     let cancelled = false
     const run = async () => {
       const next: string[] = []
@@ -26,26 +28,29 @@ export function PieceExistingImageThumbnails({ paths }: { paths: string[] }) {
           // ignore broken path
         }
       }
-      if (!cancelled) setUrls(next)
+      if (!cancelled) setFetchedUrls(next)
     }
     void run()
     return () => {
       cancelled = true
     }
-  }, [paths.join("|")])
+  }, [pathsKey, paths])
 
+  const urls = paths.length ? fetchedUrls : []
   if (!urls.length) return null
 
   return (
-    <div className="flex flex-wrap gap-2 mt-2">
-      <p className="text-xs text-gray-600 w-full">Current images (upload new images below to replace)</p>
+    <div className={cn(stack.xs, "flex flex-wrap gap-2")}>
+      <Muted className="w-full">
+        Current images (upload new images below to replace)
+      </Muted>
       {urls.map((src) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           key={src}
           src={src}
           alt=""
-          className="h-20 w-20 rounded-md object-cover border border-gray-200"
+          className="h-20 w-20 rounded-md border border-border object-cover"
         />
       ))}
     </div>

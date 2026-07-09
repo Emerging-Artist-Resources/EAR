@@ -65,7 +65,9 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
   const [showApprovedResubmitConfirm, setShowApprovedResubmitConfirm] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const existingPhotosRef = useRef<Array<{ path: string; credit?: string | null }>>([])
-  const organizerPiecePhotosRef = useRef<Record<string, OrganizerProgramPiecePhoto[]>>({})
+  const [organizerPiecePhotosById, setOrganizerPiecePhotosById] = useState<
+    Record<string, OrganizerProgramPiecePhoto[]>
+  >({})
   const { user, userName } = useAuth()
   const { showToast } = useToast()
 
@@ -101,7 +103,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       setInitialPersistedStatus(null)
       setLoadError(null)
       existingPhotosRef.current = []
-      organizerPiecePhotosRef.current = {}
+      setOrganizerPiecePhotosById({})
       return
     }
 
@@ -112,10 +114,15 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       try {
         const row = await apiGet<Record<string, unknown>>(`/api/events/${listingId}/owner`)
         if (cancelled) return
-        const { eventType: et, defaults, initialPersistedStatus: st, existingPhotos, organizerPiecePhotosById } =
-          ownerListingToFormLoad(row)
+        const {
+          eventType: et,
+          defaults,
+          initialPersistedStatus: st,
+          existingPhotos,
+          organizerPiecePhotosById: loadedOrganizerPiecePhotos,
+        } = ownerListingToFormLoad(row)
         existingPhotosRef.current = existingPhotos
-        organizerPiecePhotosRef.current = organizerPiecePhotosById
+        setOrganizerPiecePhotosById(loadedOrganizerPiecePhotos)
         setEventType(et)
         setInitialPersistedStatus(st)
         form.reset({
@@ -356,8 +363,8 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
                 }
               }
               piece.photos = uploaded
-            } else if (organizerPiecePhotosRef.current[piece.id]?.length) {
-              piece.photos = organizerPiecePhotosRef.current[piece.id].map((ph, idx) => ({
+            } else if (organizerPiecePhotosById[piece.id]?.length) {
+              piece.photos = organizerPiecePhotosById[piece.id].map((ph, idx) => ({
                 path: ph.path,
                 credit: credit ?? ph.credit ?? null,
                 sort_order: idx,
@@ -575,7 +582,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       )}
       {step === 2 && (
         eventType === 'PERFORMANCE' ? (
-          <PerformanceDetailsStep form={form} organizerPiecePhotosByIdRef={organizerPiecePhotosRef} />
+          <PerformanceDetailsStep form={form} organizerPiecePhotosById={organizerPiecePhotosById} />
         ) : eventType === 'CLASS' ? (
           <ClassesWorkshopsStep form={form} />
         ) : eventType === 'AUDITION' ? (

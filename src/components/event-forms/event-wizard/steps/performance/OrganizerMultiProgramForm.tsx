@@ -1,6 +1,5 @@
 "use client"
 
-import type { MutableRefObject } from "react"
 import { UseFormReturn, useFieldArray, Path, useWatch } from "react-hook-form"
 import { useEffect } from "react"
 
@@ -15,10 +14,10 @@ import { pieceFieldPrefix, type OrganizerProgramPiecePhoto } from "@/lib/listing
 
 export function OrganizerMultiProgramForm({
   form,
-  organizerPiecePhotosByIdRef,
+  organizerPiecePhotosById,
 }: {
   form: UseFormReturn<EventFormData>
-  organizerPiecePhotosByIdRef?: MutableRefObject<Record<string, OrganizerProgramPiecePhoto[]>>
+  organizerPiecePhotosById?: Record<string, OrganizerProgramPiecePhoto[]>
 }) {
   const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
@@ -86,7 +85,7 @@ export function OrganizerMultiProgramForm({
                 occurrencesMode="SELECT_FROM_EVENT"
                 showPieceImageUploader
                 namespacedPieceSchedule
-                organizerPiecePhotosByIdRef={organizerPiecePhotosByIdRef}
+                organizerPiecePhotosById={organizerPiecePhotosById}
               />
             ))}
 

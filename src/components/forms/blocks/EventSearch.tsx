@@ -194,15 +194,18 @@ export function EventSearch<T extends Record<string, unknown>>({
       setLoadingTitle(true)
       apiGet<{ data: { performance_details?: { title: string } | null; audition_details?: { title: string } | null; creative_details?: { title: string } | null; class_workshop_details?: { title: string } | null; type: string } }>(`/api/events/${selectedEventId}`)
         .then((response) => {
-          const data = (response as any)?.data || response
+          const data =
+            response && typeof response === "object" && "data" in response
+              ? response.data
+              : response
           const title =
             data.type === "performance" ? data.performance_details?.title :
             data.type === "audition" ? data.audition_details?.title :
             data.type === "creative" ? data.creative_details?.title :
             data.type === "class" ? data.class_workshop_details?.title :
             null
-          setEventTitle(title)
-          dispatch({ type: "SET_SELECTED_TITLE", payload: title })
+          setEventTitle(title ?? null)
+          dispatch({ type: "SET_SELECTED_TITLE", payload: title ?? null })
         })
         .catch((error) => {
           console.error("Error fetching event title:", error)

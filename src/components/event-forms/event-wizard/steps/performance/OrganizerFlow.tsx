@@ -1,6 +1,5 @@
 "use client"
 
-import type { MutableRefObject } from "react"
 import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { EventFormData } from "@/lib/validations/events"
 import { useSyncArtistTypeFromProfile } from "@/hooks/use-sync-artist-type-from-profile"
@@ -13,10 +12,10 @@ type EventType = "SOLO" | "SPLIT_BILL" | "FESTIVAL"
 
 export function OrganizerFlow({
   form,
-  organizerPiecePhotosByIdRef,
+  organizerPiecePhotosById,
 }: {
   form: UseFormReturn<EventFormData>
-  organizerPiecePhotosByIdRef?: MutableRefObject<Record<string, OrganizerProgramPiecePhoto[]>>
+  organizerPiecePhotosById?: Record<string, OrganizerProgramPiecePhoto[]>
 }) {
   const eventType = useWatch({
     control: form.control,
@@ -30,7 +29,7 @@ export function OrganizerFlow({
     <>
       <OrganizerBasics form={form} />
       {isMulti ? (
-        <OrganizerMultiProgramForm form={form} organizerPiecePhotosByIdRef={organizerPiecePhotosByIdRef} />
+        <OrganizerMultiProgramForm form={form} organizerPiecePhotosById={organizerPiecePhotosById} />
       ) : (
         <OrganizerSoloForm form={form} />
       )}

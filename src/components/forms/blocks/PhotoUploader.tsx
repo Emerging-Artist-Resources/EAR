@@ -2,7 +2,9 @@ import { useRef, useEffect, useState } from "react"
 import { UseFormReturn, Controller, useWatch, useFormState } from "react-hook-form"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Text } from "@/components/ui/typography"
+import { Caption, Label, Muted, Text, TextSmall } from "@/components/ui/typography"
+import { stack } from "@/lib/spacing"
+import { cn } from "@/lib/utils"
 
 interface PhotoUploaderProps<T extends Record<string, unknown>> {
   form: UseFormReturn<T>
@@ -195,43 +197,45 @@ function PhotoUploaderInner<T extends Record<string, unknown>>({
   const disabled = processing || files.length >= max
 
   return (
-    <div className="space-y-2">
-      {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label} {required && showAsterisk && <span className="text-error-600">*</span>}
-        </label>
+    <div className={stack.sm}>
+      {(label || description) && (
+        <div className={stack.xs}>
+          {label && (
+            <Label className="text-text-primary">
+              {label} {required && showAsterisk && <span className="text-error-600">*</span>}
+            </Label>
+          )}
+          {description && <Muted>{description}</Muted>}
+        </div>
       )}
 
-      {description && <Text className="text-xs text-gray-500 mb-1">{description}</Text>}
-
       <Card
-        className={`p-4 border-dashed border-2 ${
-          showError ? "border-error-600" : "border-gray-400"
-        } bg-ear-off-white`}
+        className={cn(
+          "border-2 border-dashed bg-ear-off-white p-4",
+          showError ? "border-error-600" : "border-border",
+        )}
       >
         <div
-          className="rounded-md bg-ear-off-white p-6 text-center"
+          className={cn(stack.sm, "rounded-md bg-ear-off-white p-6 text-center")}
           onDragOver={(e) => e.preventDefault()}
           onDrop={async (e) => {
             e.preventDefault()
             await addFiles(e.dataTransfer.files)
           }}
         >
-          <Text className="text-gray-700">Click to upload photos or drag and drop</Text>
-          <Text className="text-xs text-gray-500">
+          <Text className="text-text-primary">Click to upload photos or drag and drop</Text>
+          <TextSmall className="text-text-muted">
             Up to {max} images, optimized for web (~5MB each max)
-          </Text>
+          </TextSmall>
 
-          <div className="mt-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => inputRef.current?.click()}
-              disabled={disabled}
-            >
-              {processing ? "Processing..." : "Choose Files"}
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => inputRef.current?.click()}
+            disabled={disabled}
+          >
+            {processing ? "Processing..." : "Choose Files"}
+          </Button>
 
           <input
             ref={inputRef}
@@ -247,11 +251,11 @@ function PhotoUploaderInner<T extends Record<string, unknown>>({
         </div>
 
         {files.length > 0 && (
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className={cn(stack.sm, "grid grid-cols-2 gap-3 sm:grid-cols-3")}>
             {files.map((f, idx) => (
               <div
                 key={`${f.name}-${f.size}-${f.lastModified}-${idx}`}
-                className="relative rounded-md border border-gray-200 overflow-hidden"
+                className="relative overflow-hidden rounded-md border border-border"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={previewUrls[idx]} alt={f.name} className="h-24 w-full object-cover" />
@@ -267,11 +271,11 @@ function PhotoUploaderInner<T extends Record<string, unknown>>({
                     X
                   </Button>
                 </div>
-                <div className="p-2">
-                  <Text className="text-xs text-gray-600 truncate">{f.name}</Text>
-                  <Text className="text-xs text-gray-400">
+                <div className={cn(stack.xs, "p-2")}>
+                  <Caption className="truncate text-text-primary">{f.name}</Caption>
+                  <Caption className="text-text-muted">
                     {(f.size / 1024 / 1024).toFixed(2)}MB
-                  </Text>
+                  </Caption>
                 </div>
               </div>
             ))}
@@ -280,7 +284,7 @@ function PhotoUploaderInner<T extends Record<string, unknown>>({
       </Card>
 
       {showError && state.error?.message && (
-        <Text className="text-xs text-error-600">{String(state.error.message)}</Text>
+        <Caption className="text-error-600">{String(state.error.message)}</Caption>
       )}
     </div>
   )

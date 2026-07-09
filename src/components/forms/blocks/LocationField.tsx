@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useEffect, useId, useRef, useState } from "react"
@@ -77,13 +78,8 @@ export function LocationFieldInstructions<T extends Record<string, unknown>>({
   const hasInstructionsContent = Boolean(
     instructionsWatched && String(instructionsWatched).trim() !== ""
   )
-  const [instructionsOpen, setInstructionsOpen] = useState(
-    !instructionsCollapsible || hasInstructionsContent
-  )
-
-  useEffect(() => {
-    if (hasInstructionsContent) setInstructionsOpen(true)
-  }, [hasInstructionsContent])
+  const [userExpanded, setUserExpanded] = useState(false)
+  const instructionsOpen = !instructionsCollapsible || hasInstructionsContent || userExpanded
 
   if (instructionsCollapsible && !instructionsOpen) {
     return (
@@ -95,7 +91,7 @@ export function LocationFieldInstructions<T extends Record<string, unknown>>({
           !addButtonTightTop && "mt-2",
           className,
         )}
-        onClick={() => setInstructionsOpen(true)}
+        onClick={() => setUserExpanded(true)}
       >
         + Add instructions
       </button>
@@ -112,7 +108,7 @@ export function LocationFieldInstructions<T extends Record<string, unknown>>({
               <button
                 type="button"
                 className={cn("shrink-0", formInlineLink)}
-                onClick={() => setInstructionsOpen(false)}
+                onClick={() => setUserExpanded(false)}
               >
                 Close
               </button>
@@ -219,6 +215,7 @@ export function LocationField<T extends Record<string, unknown>>({
 
   useEffect(() => {
     let cancelled = false
+    const container = containerRef.current
 
     async function init() {
       try {
@@ -330,7 +327,7 @@ export function LocationField<T extends Record<string, unknown>>({
     return () => {
       cancelled = true
       cleanupPromise?.then?.((cleanup) => cleanup?.())
-      if (containerRef.current) containerRef.current.innerHTML = ""
+      if (container) container.innerHTML = ""
       elementRef.current = null
     }
   }, [form, addressName, venueName, placeIdName, latName, lngName])

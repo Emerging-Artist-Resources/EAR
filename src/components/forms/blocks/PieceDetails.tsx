@@ -1,6 +1,5 @@
 "use client"
 
-import type { MutableRefObject } from "react"
 import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { EventFormData } from "@/lib/validations/events"
 import { TextField } from "@/components/forms/blocks/TextField"
@@ -10,7 +9,7 @@ import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
 import { PieceExistingImageThumbnails } from "@/components/forms/blocks/PieceExistingImageThumbnails"
 import { Button } from "@/components/ui/button"
 import { piecePromoFilesFieldName, type OrganizerProgramPiecePhoto } from "@/lib/listings/organizer-program-pieces"
-import { form } from "@/lib/spacing"
+import { form as formSpacing } from "@/lib/spacing"
 
 interface PieceDetailsProps {
   form: UseFormReturn<EventFormData>
@@ -24,7 +23,7 @@ interface PieceDetailsProps {
   showChoreographerField?: boolean
   showPieceImageUploader?: boolean
   namespacedPieceSchedule?: boolean
-  organizerPiecePhotosByIdRef?: MutableRefObject<Record<string, OrganizerProgramPiecePhoto[]>>
+  organizerPiecePhotosById?: Record<string, OrganizerProgramPiecePhoto[]>
   /** When true, parent `Section` owns field spacing — skip inner `form.fields` wrapper. */
   nestedInSection?: boolean
 }
@@ -40,7 +39,7 @@ export function PieceDetails({
   showChoreographerField = false,
   showPieceImageUploader = false,
   namespacedPieceSchedule = false,
-  organizerPiecePhotosByIdRef,
+  organizerPiecePhotosById,
   nestedInSection = false,
 }: PieceDetailsProps) {
   const prefix = index === 0 ? "piece" : `pieces.${index}`
@@ -53,8 +52,8 @@ export function PieceDetails({
   }) as string | undefined
 
   const existingPaths: string[] =
-    pieceId && organizerPiecePhotosByIdRef?.current?.[pieceId]
-      ? organizerPiecePhotosByIdRef.current[pieceId].map((p) => p.path).filter(Boolean)
+    pieceId && organizerPiecePhotosById?.[pieceId]
+      ? organizerPiecePhotosById[pieceId].map((p) => p.path).filter(Boolean)
       : []
 
   const fields = (
@@ -140,14 +139,14 @@ export function PieceDetails({
             variant="outline"
             size="sm"
             onClick={onRemove}
-            className="text-red-600 hover:text-red-700"
+            className="text-error-600 hover:text-error-600/80"
           >
             Remove
           </Button>
         </div>
       )}
 
-      {nestedInSection ? fields : <div className={form.fields}>{fields}</div>}
+      {nestedInSection ? fields : <div className={formSpacing.fields}>{fields}</div>}
 
       {/* After visible fields so `space-y-*` does not add gap before the first input. */}
       <input type="hidden" {...form.register(idField)} />

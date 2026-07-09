@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import type { MutableRefObject } from "react"
 import { UseFormReturn, Path, useWatch } from "react-hook-form"
 
 import { EventFormData } from "@/lib/validations/events"
@@ -19,12 +18,12 @@ type PerfType = "ORGANIZER" | "PIECE"
 
 interface PerformanceDetailsStepProps {
   form: UseFormReturn<EventFormData>
-  organizerPiecePhotosByIdRef?: MutableRefObject<Record<string, OrganizerProgramPiecePhoto[]>>
+  organizerPiecePhotosById?: Record<string, OrganizerProgramPiecePhoto[]>
 }
 
 export function PerformanceDetailsStep({
   form,
-  organizerPiecePhotosByIdRef,
+  organizerPiecePhotosById,
 }: PerformanceDetailsStepProps) {
   const perfType = useWatch({
     control: form.control,
@@ -85,7 +84,7 @@ export function PerformanceDetailsStep({
       </Section>
 
       {perfType === "ORGANIZER" && (
-        <OrganizerFlow form={form} organizerPiecePhotosByIdRef={organizerPiecePhotosByIdRef} />
+        <OrganizerFlow form={form} organizerPiecePhotosById={organizerPiecePhotosById} />
       )}
       {perfType === "PIECE" && <PieceSubmissionFlow form={form} />}
     </div>

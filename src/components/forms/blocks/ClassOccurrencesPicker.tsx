@@ -5,10 +5,13 @@ import { useMemo, useState, useEffect } from "react"
 import { Section } from "@/components/forms/blocks/Section"
 import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { SelectBlock } from "@/components/forms/blocks/Select"
+import { Caption, Muted } from "@/components/ui/typography"
 import { EventFormData } from "@/lib/validations/events"
 import { apiGet } from "@/lib/client/fetch-utils"
 import { DEFAULT_LOCATION_MODE } from "@/lib/location/mode"
 import { LOCATION_UNDISCLOSED_TOOLTIP } from "@/lib/location/tooltips"
+import { formInlineLink, stack } from "@/lib/spacing"
+import { cn } from "@/lib/utils"
 
 interface ParentEventData {
   event_occurrences?: Array<{ id: string; starts_at_utc: string; tz: string }>
@@ -169,7 +172,7 @@ export function ClassOccurrencesPicker({ form, label, showEndTime = false }: Cla
           <button
             type="button"
             onClick={() => setUseManualEntry(false)}
-            className="mb-4 text-sm text-blue-600 hover:text-blue-800 underline"
+            className={formInlineLink}
           >
             ← Select dates from festival/workshop
           </button>
@@ -201,17 +204,15 @@ export function ClassOccurrencesPicker({ form, label, showEndTime = false }: Cla
 
   return (
     <Section title={label}>
-      {loadingParent && (
-        <p className="text-sm text-gray-500">Loading festival/workshop dates...</p>
-      )}
+      {loadingParent && <Muted>Loading festival/workshop dates...</Muted>}
 
       {parentEventError && (
-        <div className="mb-4">
-          <p className="text-sm text-red-600">{parentEventError}</p>
+        <div className={stack.xs}>
+          <Caption className="text-error-600">{parentEventError}</Caption>
           <button
             type="button"
             onClick={() => setUseManualEntry(true)}
-            className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+            className={formInlineLink}
           >
             Enter dates manually instead
           </button>
@@ -257,9 +258,9 @@ export function ClassOccurrencesPicker({ form, label, showEndTime = false }: Cla
           <button
             type="button"
             onClick={() => setUseManualEntry(true)}
-            className="text-sm text-blue-600 hover:text-blue-800 underline"
+            className={cn("text-left", formInlineLink)}
           >
-            Don't see your dates? Enter manually instead
+            Don&apos;t see your dates? Enter manually instead
           </button>
         </>
       )}
