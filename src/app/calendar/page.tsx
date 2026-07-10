@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect, useCallback, Suspense } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
 import { subMonths, addMonths, startOfMonth, endOfMonth } from "date-fns"
 import { CallToAction } from "@/components/layout/call-to-action"
 import PerformanceModal from "@/components/performance-modal"
 import { useCalendar } from "@/hooks/use-calendar"
+import { useCalendarListingLink } from "@/hooks/use-calendar-listing-link"
 import { useAuth } from "@/hooks/use-auth"
 import { Calendar } from "@/components/calendar/calendar"
 import { Text } from "@/components/ui/typography"
@@ -20,11 +20,9 @@ import { PAGE_HERO_HEIGHT_CLASS } from "@/lib/marketing/page-hero"
 import { cn } from "@/lib/utils"
 
 function CalendarViewContent() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [authPromptOpen, setAuthPromptOpen] = useState(false)
-  const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
+  const { selectedListingId, openListing, closeListing } = useCalendarListingLink()
   const [recentListings, setRecentListings] = useState<Array<{
     id: string
     type: string
@@ -47,23 +45,6 @@ function CalendarViewContent() {
   }>>([])
   const { isAuthed } = useAuth()
   const { items, deadlines, loading, fetchCalendar } = useCalendar()
-
-  // Handle listingId query parameter
-  useEffect(() => {
-    const listingId = searchParams.get("listingId")
-    if (listingId) {
-      setSelectedListingId(listingId)
-    }
-  }, [searchParams])
-
-  const handleModalClose = useCallback(() => {
-    setSelectedListingId(null)
-    // Remove listingId from URL without page reload
-    const params = new URLSearchParams(searchParams.toString())
-    params.delete("listingId")
-    const newUrl = params.toString() ? `/calendar?${params.toString()}` : "/calendar"
-    router.replace(newUrl)
-  }, [searchParams, router])
 
   useEffect(() => {
     const now = new Date()
@@ -134,7 +115,7 @@ function CalendarViewContent() {
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className={`calendar-chrome px-4 py-6 sm:px-0 transition-opacity duration-200 ${isModalOpen ? 'opacity-50' : ''}`}>
           <CallToAction onSubmitPerformance={handleOpenSubmit} />
-          <Calendar items={items} deadlines={deadlines} />
+          <Calendar items={items} deadlines={deadlines} onListingSelect={openListing} />
           
           {recentListings.length > 0 && (
             <div className="mt-8">
@@ -146,7 +127,7 @@ function CalendarViewContent() {
                   onCardClick={(index) => {
                     const listing = recentListings[index]
                     if (listing) {
-                      setSelectedListingId(listing.id)
+                      openListing(listing.id)
                     }
                   }}
                 >
@@ -165,7 +146,7 @@ function CalendarViewContent() {
                       starts_at_utc={listing.starts_at_utc}
                       ends_at_utc={listing.ends_at_utc}
                       occurrences={listing.occurrences}
-                      onClick={() => setSelectedListingId(listing.id)}
+                      onClick={() => openListing(listing.id)}
                     />
                   ))}
                 </HorizontalScrollCards>
@@ -188,9 +169,9 @@ function CalendarViewContent() {
       />
       <ListingDetailsModal
         isOpen={selectedListingId !== null}
-        onClose={handleModalClose}
+        onClose={closeListing}
         listingId={selectedListingId}
-        onListingClick={setSelectedListingId}
+        onListingClick={openListing}
       />
     </div>
   )

@@ -63,6 +63,29 @@ export function createSuccessResponse<T>(
   return NextResponse.json({ data }, { status })
 }
 
+/** Supabase/Postgres errors when a listing id is invalid or missing. */
+export function isListingNotFoundError(error: unknown): boolean {
+  if (error == null) return false
+
+  const code =
+    typeof error === "object" && "code" in error && typeof error.code === "string"
+      ? error.code
+      : ""
+  const message =
+    typeof error === "object" && "message" in error && typeof error.message === "string"
+      ? error.message
+      : error instanceof Error
+        ? error.message
+        : ""
+
+  if (code === "PGRST116" || code === "22P02") return true
+  if (/not found/i.test(message)) return true
+  if (/invalid input syntax for type uuid/i.test(message)) return true
+  if (/JSON object requested, multiple \(or no\) rows returned/i.test(message)) return true
+
+  return false
+}
+
 /**
  * Handles errors in API routes with consistent error responses
  */

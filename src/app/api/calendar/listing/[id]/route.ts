@@ -8,6 +8,7 @@ import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { storageService } from "@/services/storage"
 import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/listings/organizer-program-pieces"
 import { normalizePublicListingRelations } from "@/lib/listings/display"
+import { isListingNotFoundError } from "@/lib/api/utils"
 
 export async function GET(
   _req: NextRequest,
@@ -140,10 +141,12 @@ export async function GET(
       { headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" } },
     )
   } catch (err) {
-    console.error("Listing public GET error:", err instanceof Error ? err.message : String(err))
-    if (err instanceof Error && err.message.includes("not found")) {
-      return NextResponse.json({ error: { code: 'NOT_FOUND' } }, { status: 404 })
+    if (!isListingNotFoundError(err)) {
+      console.error("Listing public GET error:", err instanceof Error ? err.message : String(err))
     }
-    return NextResponse.json({ error: { code: 'INTERNAL' } }, { status: 500 })
+    if (isListingNotFoundError(err)) {
+      return NextResponse.json({ error: { code: "NOT_FOUND" } }, { status: 404 })
+    }
+    return NextResponse.json({ error: { code: "INTERNAL" } }, { status: 500 })
   }
 }

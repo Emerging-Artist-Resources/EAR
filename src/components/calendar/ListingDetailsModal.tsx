@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, type CSSProperties } from "react"
 import { Modal } from "@/components/ui/modal"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
+import { CopyListingLinkButton } from "@/components/shared/CopyListingLinkButton"
 import { SaveListingFavoriteButton } from "@/components/shared/SaveListingFavoriteButton"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { getListingTitle } from "@/features/events/server/listing-utils"
@@ -85,25 +86,28 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
     fetch(`/api/calendar/listing/${listingId}`, { signal: abortController.signal })
       .then(async (res) => {
         if (!res.ok) {
-          if (res.status === 404) {
-            throw new Error("Listing not found")
+          const message = res.status === 404 ? "Listing not found" : "Failed to load listing"
+          if (!abortController.signal.aborted) {
+            setError(message)
+            setLoading(false)
           }
-          throw new Error("Failed to load listing")
+          return null
         }
         const json = await res.json()
         return json.data
       })
       .then((data) => {
+        if (data == null) return
         if (!abortController.signal.aborted) {
           setListing(normalizePublicListingRelations(data))
           setLoading(false)
         }
       })
       .catch((err) => {
-        if (err.name === 'AbortError') return
+        if (err.name === "AbortError") return
         console.error("Error loading listing:", err)
         if (!abortController.signal.aborted) {
-          setError(err.message || "Failed to load listing")
+          setError("Failed to load listing")
           setLoading(false)
         }
       })
@@ -351,7 +355,12 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                   <Text className="text-text-muted">{listing.company}</Text>
                 )}
               </div>
-              {listingId ? <SaveListingFavoriteButton listingId={listingId} /> : null}
+              {listingId ? (
+                <div className="flex items-center gap-2">
+                  <CopyListingLinkButton listingId={listingId} status={listing.status} />
+                  <SaveListingFavoriteButton listingId={listingId} />
+                </div>
+              ) : null}
             </div>
             {parentListingId && backToParentLabel && onListingClick && (
               <div>
