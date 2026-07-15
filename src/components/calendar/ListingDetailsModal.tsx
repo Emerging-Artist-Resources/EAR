@@ -59,12 +59,36 @@ interface ListingDetailsModalProps {
   onClose: () => void
   listingId: string | null
   onListingClick?: (listingId: string) => void
+  /** When provided and matches listingId, skip the initial fetch (e.g. deep-link prefetch). */
+  initialListing?: PublicListingDetail | null
+  /** Prefetched error for deep links when the listing could not be loaded. */
+  initialError?: string | null
 }
 
-export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick }: ListingDetailsModalProps) {
-  const [loading, setLoading] = useState(false)
-  const [listing, setListing] = useState<PublicListingDetail | null>(null)
-  const [error, setError] = useState<string | null>(null)
+export function ListingDetailsModal({
+  isOpen,
+  onClose,
+  listingId,
+  onListingClick,
+  initialListing = null,
+  initialError = null,
+}: ListingDetailsModalProps) {
+  const [loading, setLoading] = useState(() => {
+    if (!isOpen || !listingId) return false
+    if (initialListing && initialListing.id === listingId) return false
+    if (initialError) return false
+    return true
+  })
+  const [listing, setListing] = useState<PublicListingDetail | null>(() => {
+    if (initialListing && listingId && initialListing.id === listingId) {
+      return normalizePublicListingRelations(initialListing)
+    }
+    return null
+  })
+  const [error, setError] = useState<string | null>(() => {
+    if (initialListing && listingId && initialListing.id === listingId) return null
+    return initialError
+  })
   const [showAllDates, setShowAllDates] = useState(false)
   const [selectedOrganizerPieceId, setSelectedOrganizerPieceId] = useState<string | null>(null)
   const [childListings, setChildListings] = useState<ChildListingSummary[]>([])
@@ -76,6 +100,24 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       setShowAllDates(false)
       setSelectedOrganizerPieceId(null)
       setChildListings([])
+      return
+    }
+
+    if (initialListing && initialListing.id === listingId) {
+      setListing(normalizePublicListingRelations(initialListing))
+      setError(null)
+      setLoading(false)
+      setShowAllDates(false)
+      setSelectedOrganizerPieceId(null)
+      return
+    }
+
+    if (initialError) {
+      setListing(null)
+      setError(initialError)
+      setLoading(false)
+      setShowAllDates(false)
+      setSelectedOrganizerPieceId(null)
       return
     }
 
@@ -115,7 +157,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
     return () => {
       abortController.abort()
     }
-  }, [isOpen, listingId])
+  }, [isOpen, listingId, initialListing, initialError])
 
   useEffect(() => {
     if (!isOpen || !listingId) {

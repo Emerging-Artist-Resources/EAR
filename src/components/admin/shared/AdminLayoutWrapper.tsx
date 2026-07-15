@@ -60,14 +60,18 @@ function SidebarShell({
   )
 }
 
+/** Stable shell for calendar / home so auth resolve does not remount page content. */
+function FullWidthShell({ children }: { children: ReactNode }) {
+  return <div className="min-h-0 flex-1 w-full min-w-0">{children}</div>
+}
+
 export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
   const { role, isLoading } = useAuth()
   const pathname = usePathname()
-  const mode = getAppLayoutMode(pathname, role)
-
-  if (isLoading) {
-    return <>{children}</>
-  }
+  // Path-only mode while auth loads — avoids remounting calendar/home when the
+  // wrapper later switches from Fragment → FullWidthShell. Admin chrome still
+  // waits until role is known.
+  const mode = getAppLayoutMode(pathname, isLoading ? undefined : role)
 
   if (mode.type === "dashboard") {
     return (
@@ -77,7 +81,7 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
     )
   }
 
-  if (mode.type === "admin") {
+  if (!isLoading && mode.type === "admin") {
     return (
       <SidebarShell sidebar={<AdminSidebar />} padding={mode.contentPadding}>
         {children}
@@ -89,12 +93,8 @@ export function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
     return <>{children}</>
   }
 
-  if (mode.type === "fullBleed") {
-    return <div className="min-h-0 flex-1 w-full min-w-0">{children}</div>
-  }
-
-  if (mode.type === "calendar") {
-    return <div className="min-h-0 flex-1 w-full min-w-0">{children}</div>
+  if (mode.type === "fullBleed" || mode.type === "calendar") {
+    return <FullWidthShell>{children}</FullWidthShell>
   }
 
   return <>{children}</>

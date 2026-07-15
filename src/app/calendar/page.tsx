@@ -19,10 +19,31 @@ import CommunityCalendarHero from "@/components/calendar/CommunityCalendarHero"
 import { PAGE_HERO_HEIGHT_CLASS } from "@/lib/marketing/page-hero"
 import { cn } from "@/lib/utils"
 
+function CalendarPageLoader() {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <section
+        className={cn("shrink-0 bg-ear-black", PAGE_HERO_HEIGHT_CLASS)}
+        aria-hidden
+      />
+      <div className="flex flex-1 items-center justify-center bg-surface-panel text-text-primary">
+        <Text className="text-lg">Loading calendar...</Text>
+      </div>
+    </div>
+  )
+}
+
 function CalendarViewContent() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [authPromptOpen, setAuthPromptOpen] = useState(false)
-  const { selectedListingId, openListing, closeListing } = useCalendarListingLink()
+  const {
+    selectedListingId,
+    openListing,
+    closeListing,
+    prefetchedListing,
+    prefetchError,
+    isDeepLinkPending,
+  } = useCalendarListingLink()
   const [recentListings, setRecentListings] = useState<Array<{
     id: string
     type: string
@@ -94,66 +115,69 @@ function CalendarViewContent() {
     }
   }, [isAuthed])
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <section
-          className={cn("shrink-0 bg-ear-black", PAGE_HERO_HEIGHT_CLASS)}
-          aria-hidden
-        />
-        <div className="flex flex-1 items-center justify-center bg-surface-panel text-text-primary">
-          <Text className="text-lg">Loading calendar...</Text>
-        </div>
-      </div>
-    )
+  // Hold a single loader until calendar + deep-link prefetch are both ready.
+  if (loading || isDeepLinkPending) {
+    return <CalendarPageLoader />
   }
+
+  const hydratedListing =
+    prefetchedListing && selectedListingId && prefetchedListing.id === selectedListingId
+      ? prefetchedListing
+      : null
+  const hydratedError =
+    !hydratedListing && selectedListingId && prefetchError ? prefetchError : null
 
   return (
     <div className="flex min-h-screen flex-col">
       <CommunityCalendarHero />
       <div className="flex-1 bg-surface-panel text-text-primary">
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className={`calendar-chrome px-4 py-6 sm:px-0 transition-opacity duration-200 ${isModalOpen ? 'opacity-50' : ''}`}>
-          <CallToAction onSubmitPerformance={handleOpenSubmit} />
-          <Calendar items={items} deadlines={deadlines} onListingSelect={openListing} />
-          
-          {recentListings.length > 0 && (
-            <div className="mt-8">
-              <Card className="p-6 shadow-md">
-                <HorizontalScrollCards
-                  title="Recently Added"
-                  // description={`Submitted in the last ${RECENTLY_ADDED_MAX_AGE_DAYS} days`}
-                  cardsPerView={4}
-                  onCardClick={(index) => {
-                    const listing = recentListings[index]
-                    if (listing) {
-                      openListing(listing.id)
-                    }
-                  }}
-                >
-                  {recentListings.map((listing) => (
-                    <ListingCard
-                      key={listing.id}
-                      id={listing.id}
-                      type={listing.type}
-                      title={listing.title}
-                      host={listing.host}
-                      description={listing.description}
-                      venue={listing.venue}
-                      price={listing.price}
-                      link={listing.link}
-                      submittedAt={listing.submitted_at}
-                      starts_at_utc={listing.starts_at_utc}
-                      ends_at_utc={listing.ends_at_utc}
-                      occurrences={listing.occurrences}
-                      onClick={() => openListing(listing.id)}
-                    />
-                  ))}
-                </HorizontalScrollCards>
-              </Card>
-            </div>
-          )}
-        </div>
+          <div
+            className={`calendar-chrome px-4 py-6 sm:px-0 transition-opacity duration-200 ${isModalOpen ? "opacity-50" : ""}`}
+          >
+            <CallToAction onSubmitPerformance={handleOpenSubmit} />
+            <Calendar
+              items={items}
+              deadlines={deadlines}
+              onListingSelect={openListing}
+            />
+
+            {recentListings.length > 0 && (
+              <div className="mt-8">
+                <Card className="p-6 shadow-md">
+                  <HorizontalScrollCards
+                    title="Recently Added"
+                    cardsPerView={4}
+                    onCardClick={(index) => {
+                      const listing = recentListings[index]
+                      if (listing) {
+                        openListing(listing.id)
+                      }
+                    }}
+                  >
+                    {recentListings.map((listing) => (
+                      <ListingCard
+                        key={listing.id}
+                        id={listing.id}
+                        type={listing.type}
+                        title={listing.title}
+                        host={listing.host}
+                        description={listing.description}
+                        venue={listing.venue}
+                        price={listing.price}
+                        link={listing.link}
+                        submittedAt={listing.submitted_at}
+                        starts_at_utc={listing.starts_at_utc}
+                        ends_at_utc={listing.ends_at_utc}
+                        occurrences={listing.occurrences}
+                        onClick={() => openListing(listing.id)}
+                      />
+                    ))}
+                  </HorizontalScrollCards>
+                </Card>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <PerformanceModal
@@ -172,6 +196,8 @@ function CalendarViewContent() {
         onClose={closeListing}
         listingId={selectedListingId}
         onListingClick={openListing}
+        initialListing={hydratedListing}
+        initialError={hydratedError}
       />
     </div>
   )
@@ -179,17 +205,7 @@ function CalendarViewContent() {
 
 export default function CalendarView() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen flex-col">
-        <section
-          className={cn("shrink-0 bg-ear-black", PAGE_HERO_HEIGHT_CLASS)}
-          aria-hidden
-        />
-        <div className="flex flex-1 items-center justify-center bg-surface-panel text-text-primary">
-          <Text className="text-lg">Loading calendar...</Text>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<CalendarPageLoader />}>
       <CalendarViewContent />
     </Suspense>
   )
