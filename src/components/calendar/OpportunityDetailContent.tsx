@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
+import { CopyListingLinkButton } from "@/components/shared/CopyListingLinkButton"
 import { SaveListingFavoriteButton } from "@/components/shared/SaveListingFavoriteButton"
 import { H3 } from "@/components/ui/typography"
 import { formatOccurrenceRangeEST } from "@/lib/datetime/utils"
@@ -107,7 +108,10 @@ export function OpportunityDetailContent({
         <Badge variant="primary" size="sm">
           {typeLabel}
         </Badge>
-        <SaveListingFavoriteButton listingId={listing.id} />
+        <div className="flex items-center gap-2">
+          <CopyListingLinkButton listingId={listing.id} status={listing.status} />
+          <SaveListingFavoriteButton listingId={listing.id} />
+        </div>
       </div>
 
       {parentListingId && backToParentLabel && onListingClick && (

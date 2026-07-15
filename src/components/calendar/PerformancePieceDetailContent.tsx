@@ -3,6 +3,7 @@
 import { useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { CopyListingLinkButton } from "@/components/shared/CopyListingLinkButton"
 import { SaveListingFavoriteButton } from "@/components/shared/SaveListingFavoriteButton"
 import { H3 } from "@/components/ui/typography"
 import {
@@ -116,6 +117,9 @@ export function PerformancePieceDetailContent({
                 ← {backToParentLabel}
               </button>
             )}
+            {showSave ? (
+              <CopyListingLinkButton listingId={listing.id} status={listing.status} />
+            ) : null}
             {showSave ? <SaveListingFavoriteButton listingId={listing.id} /> : null}
           </div>
         )}

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, type CSSProperties } from "react"
 import { Modal } from "@/components/ui/modal"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
+import { CopyListingLinkButton } from "@/components/shared/CopyListingLinkButton"
 import { SaveListingFavoriteButton } from "@/components/shared/SaveListingFavoriteButton"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { getListingTitle } from "@/features/events/server/listing-utils"
@@ -58,12 +59,36 @@ interface ListingDetailsModalProps {
   onClose: () => void
   listingId: string | null
   onListingClick?: (listingId: string) => void
+  /** When provided and matches listingId, skip the initial fetch (e.g. deep-link prefetch). */
+  initialListing?: PublicListingDetail | null
+  /** Prefetched error for deep links when the listing could not be loaded. */
+  initialError?: string | null
 }
 
-export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick }: ListingDetailsModalProps) {
-  const [loading, setLoading] = useState(false)
-  const [listing, setListing] = useState<PublicListingDetail | null>(null)
-  const [error, setError] = useState<string | null>(null)
+export function ListingDetailsModal({
+  isOpen,
+  onClose,
+  listingId,
+  onListingClick,
+  initialListing = null,
+  initialError = null,
+}: ListingDetailsModalProps) {
+  const [loading, setLoading] = useState(() => {
+    if (!isOpen || !listingId) return false
+    if (initialListing && initialListing.id === listingId) return false
+    if (initialError) return false
+    return true
+  })
+  const [listing, setListing] = useState<PublicListingDetail | null>(() => {
+    if (initialListing && listingId && initialListing.id === listingId) {
+      return normalizePublicListingRelations(initialListing)
+    }
+    return null
+  })
+  const [error, setError] = useState<string | null>(() => {
+    if (initialListing && listingId && initialListing.id === listingId) return null
+    return initialError
+  })
   const [showAllDates, setShowAllDates] = useState(false)
   const [selectedOrganizerPieceId, setSelectedOrganizerPieceId] = useState<string | null>(null)
   const [childListings, setChildListings] = useState<ChildListingSummary[]>([])
@@ -78,6 +103,24 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       return
     }
 
+    if (initialListing && initialListing.id === listingId) {
+      setListing(normalizePublicListingRelations(initialListing))
+      setError(null)
+      setLoading(false)
+      setShowAllDates(false)
+      setSelectedOrganizerPieceId(null)
+      return
+    }
+
+    if (initialError) {
+      setListing(null)
+      setError(initialError)
+      setLoading(false)
+      setShowAllDates(false)
+      setSelectedOrganizerPieceId(null)
+      return
+    }
+
     const abortController = new AbortController()
     setLoading(true)
     setError(null)
@@ -85,25 +128,28 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
     fetch(`/api/calendar/listing/${listingId}`, { signal: abortController.signal })
       .then(async (res) => {
         if (!res.ok) {
-          if (res.status === 404) {
-            throw new Error("Listing not found")
+          const message = res.status === 404 ? "Listing not found" : "Failed to load listing"
+          if (!abortController.signal.aborted) {
+            setError(message)
+            setLoading(false)
           }
-          throw new Error("Failed to load listing")
+          return null
         }
         const json = await res.json()
         return json.data
       })
       .then((data) => {
+        if (data == null) return
         if (!abortController.signal.aborted) {
           setListing(normalizePublicListingRelations(data))
           setLoading(false)
         }
       })
       .catch((err) => {
-        if (err.name === 'AbortError') return
+        if (err.name === "AbortError") return
         console.error("Error loading listing:", err)
         if (!abortController.signal.aborted) {
-          setError(err.message || "Failed to load listing")
+          setError("Failed to load listing")
           setLoading(false)
         }
       })
@@ -111,7 +157,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
     return () => {
       abortController.abort()
     }
-  }, [isOpen, listingId])
+  }, [isOpen, listingId, initialListing, initialError])
 
   useEffect(() => {
     if (!isOpen || !listingId) {
@@ -351,7 +397,12 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                   <Text className="text-text-muted">{listing.company}</Text>
                 )}
               </div>
-              {listingId ? <SaveListingFavoriteButton listingId={listingId} /> : null}
+              {listingId ? (
+                <div className="flex items-center gap-2">
+                  <CopyListingLinkButton listingId={listingId} status={listing.status} />
+                  <SaveListingFavoriteButton listingId={listingId} />
+                </div>
+              ) : null}
             </div>
             {parentListingId && backToParentLabel && onListingClick && (
               <div>

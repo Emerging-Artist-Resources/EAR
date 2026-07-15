@@ -6,6 +6,7 @@ import { SignInRequiredModal } from "@/components/auth/SignInRequiredModal"
 import { Text } from "@/components/ui/typography"
 import { useAuth } from "@/hooks/use-auth"
 import { useSavedListings } from "@/hooks/use-saved-listings"
+import { getCalendarListingUrl } from "@/lib/config/constants"
 
 export const SAVE_LISTING_SIGN_IN_MESSAGE =
   "You must be signed in to save listings to your favorites."
@@ -24,7 +25,7 @@ export function SaveListingFavoriteButton({
   const { isAuthed } = useAuth()
   const { isSaved, loading, saving, error, toggleSave } = useSavedListings(listingId)
   const [authPromptOpen, setAuthPromptOpen] = useState(false)
-  const resolvedReturnTo = returnTo ?? `/calendar?listingId=${listingId}`
+  const resolvedReturnTo = returnTo ?? getCalendarListingUrl(listingId)
 
   const handleToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()

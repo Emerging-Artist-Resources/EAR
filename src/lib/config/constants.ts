@@ -36,6 +36,10 @@ export const ROUTES = {
   SIGN_UP: "/auth/signup/basic",
 } as const
 
+export function getCalendarListingUrl(listingId: string) {
+  return `${ROUTES.CALENDAR}?listingId=${encodeURIComponent(listingId)}`
+}
+
 export const API_ENDPOINTS = {
   PERFORMANCES: "/api/performances",
   NOTIFICATIONS: "/api/announcements",
