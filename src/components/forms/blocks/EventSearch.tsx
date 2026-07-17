@@ -91,6 +91,8 @@ interface EventSearchProps<T extends Record<string, unknown>> {
   /** Shown beside the "can't locate" control when search is visible. */
   cantLocateTooltip?: string
   onCantLocate?: () => void
+  /** Fired when the selected EAR parent id is set or cleared (piece schedule depends on this). */
+  onParentIdChange?: (listingId: string | null) => void
   required?: boolean
 }
 
@@ -105,6 +107,7 @@ export function EventSearch<T extends Record<string, unknown>>({
   cantLocateButtonLabel = "Event not listed with EAR? Enter manually.",
   cantLocateTooltip,
   onCantLocate,
+  onParentIdChange,
   required = false,
 }: EventSearchProps<T>) {
   const eventTypes = Array.isArray(eventType) ? eventType : [eventType]
@@ -166,6 +169,7 @@ export function EventSearch<T extends Record<string, unknown>>({
 
 
   const handleSelectEvent = (listingId: string, title: string | null) => {
+    const previousId = form.getValues(eventIdField) as string | undefined
     form.setValue(eventIdField, listingId as unknown as never)
     if (eventModeField) {
       form.setValue(eventModeField, "SELECT" as unknown as never)
@@ -174,12 +178,16 @@ export function EventSearch<T extends Record<string, unknown>>({
     setEventTitle(title)
     dispatch({ type: "SET_SHOW_RESULTS", payload: false })
     dispatch({ type: "SET_QUERY", payload: "" })
+    if (previousId !== listingId) {
+      onParentIdChange?.(listingId)
+    }
   }
 
   const handleBackToSearch = () => {
     form.setValue(eventIdField, "" as unknown as never)
     dispatch({ type: "RESET" })
     setEventTitle(null)
+    onParentIdChange?.(null)
   }
 
   // Fetch event title when selectedEventId changes (if we don't already have it)
@@ -215,6 +223,7 @@ export function EventSearch<T extends Record<string, unknown>>({
     form.setValue(eventIdField, "" as unknown as never)
     dispatch({ type: "RESET" })
     setEventTitle(null)
+    onParentIdChange?.(null)
     if (onCantLocate) {
       onCantLocate()
     }

@@ -10,6 +10,7 @@ import { PieceDetails } from "@/components/forms/blocks/PieceDetails"
 import { EventSearch } from "@/components/forms/blocks/EventSearch"
 import { InviteRecipientEmailsSection } from "@/components/event-forms/event-wizard/steps/performance/InviteRecipientEmailsSection"
 import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
+import { resetPieceParentToSearch, clearPieceParentDependentSchedule } from "@/components/event-forms/event-wizard/steps/performance/reset-piece-parent-to-search"
 
 const MANUAL_LINK_TOOLTIP =
   "Once the organizer submits their event to EAR, your work will be linked to their listing."
@@ -44,6 +45,7 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
             showCantLocateButton={true}
             cantLocateButtonLabel="Event not listed with EAR? Enter manually."
             cantLocateTooltip={MANUAL_LINK_TOOLTIP}
+            onParentIdChange={() => clearPieceParentDependentSchedule(form)}
             required={true}
           />
         )}
@@ -71,10 +73,25 @@ export function PieceSubmissionFlow({ form }: { form: UseFormReturn<EventFormDat
             type="url"
             placeholder="https://..."
           />
+          <TextField
+            form={form}
+            name={"link"}
+            label="Ticket link"
+            type="url"
+            placeholder="https://..."
+            required
+          />
+          <TextField
+            form={form}
+            name={"price"}
+            label="Ticket price"
+            placeholder="e.g., $20 / Free / Sliding scale"
+            required
+          />
           <button
             type="button"
             className="mt-2 text-sm underline"
-            onClick={() => form.setValue("parentEventMode", "SELECT" as unknown as never)}
+            onClick={() => resetPieceParentToSearch(form)}
           >
             Back to search
           </button>

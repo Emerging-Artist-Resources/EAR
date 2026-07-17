@@ -189,17 +189,22 @@ export function ownerListingToFormLoad(row: UnknownRecord): OwnerListingLoadResu
     const eventOccs = occRows.filter((o) => (o as { occurrence_type?: string }).occurrence_type !== "deadline")
     const extraOccurrences = eventOccs.map((o) => occurrenceRowToForm(o as Parameters<typeof occurrenceRowToForm>[0]))
 
+    const parentListingId = (piece?.parent_listing_id as string) || undefined
+
     const defaults: Partial<EventFormData> = {
       ...baseDefaults,
       type: "PIECE",
       // Load all stored showtimes as custom schedule so the wizard matches the saved payload without parent refetch.
       pieceScheduleMode: "CUSTOM",
       selectedSlots: [],
-      parentEventId: (piece?.parent_listing_id as string) || undefined,
+      parentEventMode: parentListingId ? "SELECT" : "MANUAL",
+      parentEventId: parentListingId,
       parentEventName: (piece?.parent_event_name as string) || undefined,
       parentEventWebsite: (piece?.parent_event_website as string) || undefined,
       parentEventTicketLink: (piece?.parent_event_ticket_link as string) || undefined,
       parentEventContactEmail: (piece?.parent_event_contact_email as string) || undefined,
+      link: (pd?.link as string) || "",
+      price: (pd?.price as string) || "",
       piece_title: (piece?.piece_title as string) || "",
       piece_company: (piece?.piece_company as string) || "",
       piece_companyWebsite: (piece?.piece_company_website as string) || "",

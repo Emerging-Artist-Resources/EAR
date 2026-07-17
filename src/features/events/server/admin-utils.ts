@@ -101,11 +101,10 @@ export function computeListingTitle(
     const perfDetails = normalizeSupabaseRelation(listing.performance_details)
     if (perfDetails?.subtype === "PIECE") {
       const pieceDetails = normalizeSupabaseRelation(listing.piece_details)
-      const parentEventName = pieceDetails?.parent_event_name
-      const parentListingTitle = pieceDetails?.parent_listing_id 
-        ? parentTitles?.[pieceDetails.parent_listing_id] 
-        : null
-      const festivalName = parentListingTitle || parentEventName
+      // Linked piece: use the real parent listing's title, never the stale manual name.
+      const festivalName = pieceDetails?.parent_listing_id
+        ? parentTitles?.[pieceDetails.parent_listing_id] ?? null
+        : pieceDetails?.parent_event_name ?? null
       
       const pieceTitle = pieceDetails?.piece_title || pieceDetails?.piece_company || null
       
@@ -130,11 +129,10 @@ export function computeListingTitle(
   } else if (listing.type === "class") {
     const classDetails = normalizeSupabaseRelation(listing.class_workshop_details)
     if (classDetails?.class_workshop_type === "CLASS") {
-      const parentWorkshopName = classDetails?.parent_workshop_name
-      const parentListingTitle = classDetails?.parent_listing_id 
-        ? parentTitles?.[classDetails.parent_listing_id] 
-        : null
-      const workshopName = parentListingTitle || parentWorkshopName
+      // Linked class: use the real parent workshop's title, never the stale manual name.
+      const workshopName = classDetails?.parent_listing_id
+        ? parentTitles?.[classDetails.parent_listing_id] ?? null
+        : classDetails?.parent_workshop_name ?? null
       
       const className = classDetails?.title || null
       
