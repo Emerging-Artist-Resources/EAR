@@ -103,12 +103,16 @@ describe("resetPieceParentToSearch", () => {
       shouldDirty: true,
       shouldValidate: false,
     })
-    expect(clearErrors).toHaveBeenCalledWith("selectedSlots")
+    expect(setValue).toHaveBeenCalledWith("occurrences", [], {
+      shouldDirty: true,
+      shouldValidate: false,
+    })
+    expect(clearErrors).toHaveBeenCalledWith(["selectedSlots", "occurrences"])
   })
 })
 
 describe("clearPieceParentDependentSchedule", () => {
-  it("clears selectedSlots and related errors", () => {
+  it("clears selectedSlots, parent occurrences cache, and related errors", () => {
     const setValue = jest.fn()
     const clearErrors = jest.fn()
 
@@ -118,7 +122,11 @@ describe("clearPieceParentDependentSchedule", () => {
       shouldDirty: true,
       shouldValidate: false,
     })
-    expect(clearErrors).toHaveBeenCalledWith("selectedSlots")
+    expect(setValue).toHaveBeenCalledWith("occurrences", [], {
+      shouldDirty: true,
+      shouldValidate: false,
+    })
+    expect(clearErrors).toHaveBeenCalledWith(["selectedSlots", "occurrences"])
   })
 })
 
@@ -262,5 +270,70 @@ describe("buildPerformancePayload piece ticket fields", () => {
     // Only the custom extraOccurrence should be persisted — not the stale parent slot.
     expect(payload.occurrences).toHaveLength(1)
     expect(payload.occurrences[0]?.venue_name).toBe("The Kitchen")
+  })
+
+  it("copies parent slot locations from form.occurrences onto linked-piece showtimes", async () => {
+    const payload = await buildPerformancePayload(
+      {
+        type: "PIECE",
+        parentEventMode: "SELECT",
+        parentEventId: PARENT_LISTING_ID,
+        piece_company: "Dance Co",
+        piece_title: "New Work",
+        piece_description: "A short piece.",
+        pieceScheduleMode: "FROM_PARENT",
+        selectedSlots: ["2026-09-15|19:30", "2026-09-16|20:00"],
+        // Written by PieceOccurrencesPicker after fetching the parent schedule
+        occurrences: [
+          {
+            date: "2026-09-15",
+            times: [
+              {
+                time: "19:30",
+                venueName: "The Joyce",
+                address: "175 8th Ave, New York, NY",
+                placeId: "place-joyce",
+                lat: 40.742,
+                lng: -74.0,
+              },
+            ],
+            venueName: "The Joyce",
+            address: "175 8th Ave, New York, NY",
+            placeId: "place-joyce",
+            lat: 40.742,
+            lng: -74.0,
+          },
+          {
+            date: "2026-09-16",
+            times: [
+              {
+                time: "20:00",
+                venueName: "Online",
+                locationInstructions: "Zoom link sent day-of",
+              },
+            ],
+            locationMode: "ONLINE",
+            venueName: "Online",
+            locationInstructions: "Zoom link sent day-of",
+          },
+        ],
+        contactName: "Test User",
+        contactEmail: "test@example.com",
+      } as EventFormData,
+      userInfo,
+      "America/New_York",
+    )
+
+    expect(payload.occurrences).toHaveLength(2)
+
+    const joyce = payload.occurrences.find((o) => o.venue_name === "The Joyce")
+    expect(joyce?.address).toBe("175 8th Ave, New York, NY")
+    expect(joyce?.place_id).toBe("place-joyce")
+    expect(joyce?.lat).toBe(40.742)
+    expect(joyce?.lng).toBe(-74.0)
+
+    const online = payload.occurrences.find((o) => o.venue_name === "Online")
+    expect(online?.location_instructions).toBe("Zoom link sent day-of")
+    expect(online?.address).toBeNull()
   })
 })

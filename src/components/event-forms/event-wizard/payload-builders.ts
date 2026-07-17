@@ -94,7 +94,10 @@ function occurrenceLocationFromRow(row: Record<string, unknown>): PersistedLocat
     lat: row.lat as number | undefined,
     lng: row.lng as number | undefined,
     venueName: row.venueName as string | undefined,
-    locationInstructions: row.locationInstructions as string | undefined,
+    // Prefer the form schema field; accept legacy `instructions` if present.
+    locationInstructions:
+      (row.locationInstructions as string | undefined) ??
+      (row.instructions as string | undefined),
   })
 }
 
@@ -205,7 +208,10 @@ export async function buildPerformancePayload(
           placeId: timeSlot?.placeId ?? parentOcc?.placeId,
           venueName: timeSlot?.venueName ?? parentOcc?.venueName,
           locationInstructions:
-            timeSlot?.locationInstructions ?? timeSlot?.instructions ?? parentOcc?.locationInstructions,
+            timeSlot?.locationInstructions ??
+            timeSlot?.instructions ??
+            parentOcc?.locationInstructions ??
+            parentOcc?.instructions,
           lat: timeSlot?.lat ?? parentOcc?.lat,
           lng: timeSlot?.lng ?? parentOcc?.lng,
         })
@@ -269,7 +275,7 @@ export async function buildPerformancePayload(
             (d as any).address,
             (d as any).placeId,
             (d as any).venueName,
-            (d as any).locationInstructions
+            (d as any).locationInstructions ?? (d as any).instructions,
           )) {
             continue
           }

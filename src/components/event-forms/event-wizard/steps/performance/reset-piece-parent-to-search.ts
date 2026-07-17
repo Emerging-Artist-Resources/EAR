@@ -12,15 +12,17 @@ const MANUAL_PARENT_FIELDS = [
 ] as const
 
 /**
- * Clears parent-derived schedule selection.
+ * Clears parent-derived schedule selection and parent showtimes cached on the form.
  * Call when the EAR parent changes, is cleared, or the user switches to MANUAL —
- * otherwise stale selectedSlots can submit as location-less dates.
+ * otherwise stale selectedSlots can submit as location-less dates, or stale
+ * parent locations can attach to newly selected slots.
  */
 export function clearPieceParentDependentSchedule(
   form: Pick<UseFormReturn<EventFormData>, "setValue" | "clearErrors">,
 ): void {
   form.setValue("selectedSlots", [] as never, { shouldDirty: true, shouldValidate: false })
-  form.clearErrors("selectedSlots")
+  form.setValue("occurrences", [] as never, { shouldDirty: true, shouldValidate: false })
+  form.clearErrors(["selectedSlots", "occurrences"])
 }
 
 /** Clears MANUAL parent + ticket fields when returning to EAR parent search (avoids stale hidden values). */

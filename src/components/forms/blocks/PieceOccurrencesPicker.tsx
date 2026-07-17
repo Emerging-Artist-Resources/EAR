@@ -4,9 +4,13 @@ import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { useMemo, useState, useEffect, useRef } from "react"
 import { ShowtimesList } from "@/components/forms/blocks/ShowtimesList"
 import { SelectBlock } from "@/components/forms/blocks/Select"
+import {
+  formatParentListingOccurrencesForForm,
+  type ParentOccurrenceFormRow,
+} from "@/components/forms/blocks/format-parent-listing-occurrences"
 import { EventFormData } from "@/lib/validations/events"
 import { apiGet } from "@/lib/client/fetch-utils"
-import { convertUTCToEST, formatTime12Hour } from "@/lib/datetime/utils"
+import { formatTime12Hour } from "@/lib/datetime/utils"
 import { debugScheduleLog } from "@/lib/debug-log"
 
 type Mode = "SELECT_FROM_PARENT" | "SELECT_FROM_EVENT" | "CUSTOM_ONLY"
@@ -78,7 +82,7 @@ export function PieceOccurrencesPicker({
     placeId?: string
     lat?: number
     lng?: number
-    instructions?: string
+    locationInstructions?: string
   }> | undefined) ?? []
 
   const isConfirmed = useWatch({
@@ -132,18 +136,16 @@ export function PieceOccurrencesPicker({
     }
   }, [selectedSlots, mode, form, paths.extraOccurrences, paths.pieceScheduleMode])
 
-  const [parentOccurrences, setParentOccurrences] = useState<
-    Array<{
-      date: string
-      times: Array<{ time: string }>
-      venueName?: string
-      address?: string
-      placeId?: string
-      lat?: number
-      lng?: number
-      instructions?: string
-    }>
-  >([])
+  const [parentOccurrences, setParentOccurrences] = useState<ParentOccurrenceFormRow[]>([])
+
+  /** Keep form.occurrences in sync with parent showtimes so payload location lookup works. */
+  const syncParentOccurrencesToForm = (rows: ParentOccurrenceFormRow[]) => {
+    setParentOccurrences(rows)
+    form.setValue("occurrences" as Path<EventFormData>, rows as never, {
+      shouldDirty: false,
+      shouldValidate: false,
+    })
+  }
 
   const hasInitializedRef = useRef(false)
   useEffect(() => {
@@ -170,8 +172,14 @@ export function PieceOccurrencesPicker({
   }, [useCustomDateTime, mode, form, paths.extraOccurrences])
 
   useEffect(() => {
-    if (mode !== "SELECT_FROM_PARENT" || !parentEventId) {
+    // SELECT_FROM_EVENT uses form.occurrences as its source of truth — never clear it here.
+    if (mode !== "SELECT_FROM_PARENT") {
       setParentOccurrences([])
+      return
+    }
+
+    if (!parentEventId) {
+      syncParentOccurrencesToForm([])
       return
     }
 
@@ -182,51 +190,11 @@ export function PieceOccurrencesPicker({
         const data = (response as { data?: ParentEventData }).data ?? (response as ParentEventData)
 
         if (data?.listing_occurrences && data.listing_occurrences.length > 0) {
-          const occurrencesByDate = new Map<
-            string,
-            Array<{
-              time: string
-              venueName?: string
-              address?: string
-              placeId?: string
-              lat?: number
-              lng?: number
-              instructions?: string
-            }>
-          >()
+          const formattedOccurrences = formatParentListingOccurrencesForForm(
+            data.listing_occurrences,
+          )
 
-          for (const occ of data.listing_occurrences) {
-            if (!occ.starts_at_utc) continue
-
-            const { date: dateStr, time: estTimeStr } = convertUTCToEST(occ.starts_at_utc)
-
-            if (!occurrencesByDate.has(dateStr)) {
-              occurrencesByDate.set(dateStr, [])
-            }
-
-            occurrencesByDate.get(dateStr)!.push({
-              time: estTimeStr,
-              venueName: occ.venue_name || undefined,
-              address: occ.address || undefined,
-              placeId: occ.place_id || undefined,
-              lat: occ.lat || undefined,
-              lng: occ.lng || undefined,
-              instructions: occ.location_instructions || undefined,
-            })
-          }
-
-          const formattedOccurrences = Array.from(occurrencesByDate.entries()).map(([date, times]) => ({
-            date,
-            times,
-            venueName: times[0]?.venueName,
-            address: times[0]?.address,
-            placeId: times[0]?.placeId,
-            lat: times[0]?.lat,
-            lng: times[0]?.lng,
-            instructions: times[0]?.instructions,
-          }))
-
-          setParentOccurrences(formattedOccurrences)
+          syncParentOccurrencesToForm(formattedOccurrences)
 
           form.setValue("eventDatesConfirmed" as Path<EventFormData>, true as never)
           if (process.env.NODE_ENV !== "production") {
@@ -238,7 +206,7 @@ export function PieceOccurrencesPicker({
             })
           }
         } else {
-          setParentOccurrences([])
+          syncParentOccurrencesToForm([])
           if (process.env.NODE_ENV !== "production") {
             debugScheduleLog("[EAR piece schedule] parent event fetch — no listing_occurrences", {
               parentEventId,
@@ -247,7 +215,7 @@ export function PieceOccurrencesPicker({
         }
       } catch (error) {
         console.error("Error fetching parent event occurrences:", error)
-        setParentOccurrences([])
+        syncParentOccurrencesToForm([])
       } finally {
         setLoadingParent(false)
       }
@@ -414,7 +382,7 @@ export function PieceOccurrencesPicker({
               placeIdName: "placeId",
               latName: "lat",
               lngName: "lng",
-              instructionsName: "instructions",
+              instructionsName: "locationInstructions",
               label: "Location",
               required: true,
             }}
