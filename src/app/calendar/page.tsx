@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect, useCallback, Suspense } from "react"
+import { useState, useEffect, useCallback, useRef, Suspense } from "react"
 import { subMonths, addMonths, startOfMonth, endOfMonth } from "date-fns"
 import { CallToAction } from "@/components/layout/call-to-action"
 import PerformanceModal from "@/components/performance-modal"
-import { useCalendar } from "@/hooks/use-calendar"
+import { useCalendar, type RefreshOptions } from "@/hooks/use-calendar"
 import { useCalendarListingLink } from "@/hooks/use-calendar-listing-link"
 import { useAuth } from "@/hooks/use-auth"
 import { Calendar } from "@/components/calendar/calendar"
@@ -39,6 +39,8 @@ type RecentListing = {
     occurrence_type?: string | null
   }>
 }
+
+type RecentStatus = "idle" | "loading" | "success" | "error"
 
 function CalendarPageLoader() {
   return (
@@ -107,45 +109,79 @@ function CalendarViewContent() {
     isDeepLinkPending,
   } = useCalendarListingLink()
   const [recentListings, setRecentListings] = useState<RecentListing[]>([])
-  const [recentStatus, setRecentStatus] = useState<"loading" | "ready">("loading")
+  const [recentStatus, setRecentStatus] = useState<RecentStatus>("idle")
+  const hasLoadedRecentRef = useRef(false)
+  const lastRefreshAtRef = useRef(0)
   const { isAuthed } = useAuth()
   const { items, deadlines, isInitialLoading, fetchCalendar } = useCalendar()
 
-  useEffect(() => {
-    fetchCalendar(getDefaultCalendarRange())
-  }, [fetchCalendar])
+  const fetchRecentListings = useCallback(
+    async ({ bypassCache = false }: RefreshOptions = {}) => {
+      const isInitialLoad = !hasLoadedRecentRef.current
+      if (isInitialLoad) setRecentStatus("loading")
 
-  useEffect(() => {
-    let cancelled = false
+      try {
+        const qs = new URLSearchParams({ limit: "12" })
+        if (bypassCache) qs.set("refresh", String(Date.now()))
 
-    fetch("/api/calendar/recent?limit=12")
-      .then(async (res) => {
+        const res = await fetch(`/api/calendar/recent?${qs.toString()}`, {
+          ...(bypassCache ? { cache: "no-store" as const } : {}),
+        })
         if (!res.ok) {
-          return [] as RecentListing[]
+          throw new Error(`HTTP ${res.status}`)
         }
         const json = await res.json()
-        return (json.data || []) as RecentListing[]
-      })
-      .then((data) => {
-        if (cancelled) return
-        setRecentListings(data)
-        setRecentStatus("ready")
-      })
-      .catch((err) => {
-        console.error("Error loading recent listings:", err)
-        if (cancelled) return
-        setRecentListings([])
-        setRecentStatus("ready")
-      })
+        const data = (json.data || []) as RecentListing[]
 
-    return () => {
-      cancelled = true
+        setRecentListings(data)
+        setRecentStatus("success")
+        hasLoadedRecentRef.current = true
+      } catch (err) {
+        console.error("Error loading recent listings:", err)
+        if (isInitialLoad) {
+          setRecentStatus("error")
+        }
+        // Background failure: leave status as "success" and keep current cards.
+      }
+    },
+    []
+  )
+
+  const refreshCalendarPage = useCallback(
+    ({ bypassCache = false }: RefreshOptions = {}) => {
+      lastRefreshAtRef.current = Date.now()
+      void fetchCalendar(getDefaultCalendarRange(), { bypassCache })
+      void fetchRecentListings({ bypassCache })
+    },
+    [fetchCalendar, fetchRecentListings]
+  )
+
+  useEffect(() => {
+    refreshCalendarPage()
+  }, [refreshCalendarPage])
+
+  const refreshIfStale = useCallback(() => {
+    const now = Date.now()
+    if (now - lastRefreshAtRef.current < 30_000) return
+    refreshCalendarPage({ bypassCache: true })
+  }, [refreshCalendarPage])
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshIfStale()
+      }
     }
-  }, [])
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [refreshIfStale])
 
   const handleModalSuccess = () => {
     // Background refresh — do not flip isInitialLoading / unmount the page.
-    fetchCalendar(getDefaultCalendarRange())
+    refreshCalendarPage({ bypassCache: true })
   }
 
   const handleOpenSubmit = useCallback(() => {
