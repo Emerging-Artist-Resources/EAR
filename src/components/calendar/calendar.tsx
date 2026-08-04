@@ -243,7 +243,7 @@ export function Calendar({ items, deadlines = [], onMonthChange, onListingSelect
 
         <div className="lg:col-span-1">
           <Card className="p-6 shadow-md">
-            <H3 className="text-primary mb-4">Upcoming Deadlines</H3>
+            <H3 className="text-primary mb-4">Open Opportunities</H3>
 
             {/* ~5 rows (title + date + padding + gap), then scroll */}
             <div className="max-h-[34rem] space-y-3 overflow-y-auto overscroll-y-contain pr-1 md:max-h-[30rem] sm:max-h-[15rem]">
