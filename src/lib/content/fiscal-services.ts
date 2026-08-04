@@ -62,7 +62,7 @@ export const fiscalServiceSections: FiscalServiceBlock[] = [
     ],
     action: {
       type: "static",
-      label: "Application opens June 15th",
+      label: "Application coming soon",
     },
   },
   {

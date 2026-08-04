@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { apiGet } from "@/lib/client/fetch-utils"
 
 export type CalendarItem = {
@@ -25,17 +25,31 @@ export interface CalendarParams {
   limit?: number
 }
 
+/**
+ * Calendar feed hook.
+ *
+ * `isInitialLoading` is true only until the first successful/failed fetch.
+ * Later calls update items in place via `isRefreshing` so the page can stay mounted.
+ */
 export function useCalendar() {
   const [items, setItems] = useState<CalendarItem[]>([])
   const [deadlines, setDeadlines] = useState<CalendarItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const hasLoadedOnceRef = useRef(false)
 
   const fetchCalendar = useCallback(async (params?: CalendarParams) => {
+    const isFirstLoad = !hasLoadedOnceRef.current
+
     try {
-      setLoading(true)
+      if (isFirstLoad) {
+        setIsInitialLoading(true)
+      } else {
+        setIsRefreshing(true)
+      }
       setError(null)
-      
+
       const qs = new URLSearchParams()
       if (params?.from) qs.set("from", params.from)
       if (params?.to) qs.set("to", params.to)
@@ -51,11 +65,18 @@ export function useCalendar() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "An error occurred")
     } finally {
-      setLoading(false)
+      hasLoadedOnceRef.current = true
+      setIsInitialLoading(false)
+      setIsRefreshing(false)
     }
   }, [])
 
-  return { items, deadlines, loading, error, fetchCalendar }
+  return {
+    items,
+    deadlines,
+    isInitialLoading,
+    isRefreshing,
+    error,
+    fetchCalendar,
+  }
 }
-
-
