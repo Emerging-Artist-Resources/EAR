@@ -80,7 +80,7 @@ export const aboutUsTeam = {
       imagePosition: "right",
       paragraphs: [
         [
-          "Harry Sukonik (he/him), Co-Founder and Director of Finance at EAR, brings expertise in fiscal sponsorship, grant writing and management, and financial operations for artists and arts organizations. Prior to EAR, he served as Fiscal Sponsorship Associate at Pentacle, managing the Foundation for Independent Artists, where he worked closely with various dance companies and with EAR co-founder Julia Asher. With a BFA in Dance and a background in Sociology from the Peabody Conservatory of Johns Hopkins University, Harry combines a rigorous financial skill set with a nuanced understanding of the performing arts. Alongside his administrative work, he performs as a freelance dancer with ",
+          "Harry Sukonik (he/him), Co-Founder and Director of Finance at EAR, brings expertise in fiscal sponsorship, grant writing and management, and financial operations for artists and arts organizations. Prior to EAR, he served as Fiscal Sponsorship Associate at Pentacle, managing the Foundation for Independent Artists, where he worked closely with various dance companies and with EAR co-founder, Julia Asher. With a BFA in Dance and a background in Sociology from the Peabody Conservatory of Johns Hopkins University, Harry combines his financial skill set with a nuanced understanding of the performing arts. Alongside his administrative work, he is an MA Candidate at Columbia University and performs as a freelance dancer with ",
           {
             type: "link",
             label: "The Metropolitan Opera",
@@ -88,7 +88,7 @@ export const aboutUsTeam = {
           },
           " and ",
           { type: "link", label: "Jennifer Muller/The Works", href: "https://www.jmtw.org/" },
-          ", grounding EAR's mission in lived creative experience.",
+          ", grounding EAR’s mission in lived creative experience.",
         ],
       ],
     },
