@@ -13,8 +13,9 @@ interface SimpleFeeDisplayProps {
 }
 
 /**
- * EAR listing fee for audition / creative when the listing includes a participant fee (fee === FEE).
- * Organizer-entered feeAmount describes their own fee on the listing, not this charge.
+ * EAR listing fee for audition / creative when charging applies
+ * (`getPlatformListingFeeContext().feeApplies`). Organizer-entered feeAmount is their
+ * participant fee, not this platform charge.
  */
 export function SimpleFeeDisplay({
   form,
