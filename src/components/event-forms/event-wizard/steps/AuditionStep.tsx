@@ -17,6 +17,7 @@ import {
   AUDITION_FEE_LISTING_POLICY_TOOLTIP,
   getPlatformListingFeeContext,
 } from "@/lib/fees/listing-fee-policy"
+import { AUDITION_APPLICATION_DEADLINE_CALENDAR_TOOLTIP } from "@/lib/content/audition-listing-tooltips"
 
 interface AuditionStepProps {
   form: UseFormReturn<EventFormData>
@@ -159,6 +160,7 @@ export function AuditionStep({ form }: AuditionStepProps) {
           maxDates={1}
           maxTimesPerDate={1}
           title="Application Deadline"
+          titleTooltip={AUDITION_APPLICATION_DEADLINE_CALENDAR_TOOLTIP}
           note="If no application deadline exists, you may match it to the audition date and time."
           required
           rowLabel="Application deadline"

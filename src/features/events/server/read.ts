@@ -228,7 +228,7 @@ export async function listCalendarItemsRepo(params: {
     .order("starts_at_utc", { ascending: true })
     .limit(Math.min(limit, 1000))
 
-  // Include both events and deadlines (deadlines only for creative should appear on calendar)
+  // Include both events and deadlines (audition/creative use deadline dates on calendar)
   q = q.or("occurrence_type.eq.event,occurrence_type.eq.deadline")
 
   if (types.length) q = q.in("listings.type", types)
@@ -238,11 +238,16 @@ export async function listCalendarItemsRepo(params: {
 
   return (data ?? [])
     .filter((row: any) => {
-      // For deadlines, only show creative type on calendar (auditions stay on event date)
+      // Auditions and creative opportunities appear on their application deadline date
       if (row.occurrence_type === "deadline") {
-        return row.listings?.type === "creative"
+        return row.listings?.type === "creative" || row.listings?.type === "audition"
       }
-      
+
+      // Audition event dates are kept for detail views but not the calendar grid
+      if (row.listings?.type === "audition") {
+        return false
+      }
+
       if (row.listings?.type === "performance") {
         const subtype = row.listings.performance_details?.subtype
         if (subtype === "PIECE") {
