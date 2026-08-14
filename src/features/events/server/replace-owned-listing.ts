@@ -1,8 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { applyPlatformListingFeePolicy } from "@/lib/fees/listing-fee-policy"
+import { getReusedExistingPhotoPaths } from "@/lib/listings/reused-photo-paths"
+import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { validateClassParentConstraint } from "./create"
 import { calculateListingFee } from "./fee-calculator"
 import { buildPersistableListingMeta } from "./listing-meta-share"
+import {
+  createPhotoMigrateStorage,
+  logMigrationSummary,
+  migrateReusedPhotosBestEffort,
+} from "./migrate-listing-photos"
 import type { CreateListingInput, ListingType, OccurrenceType } from "./repository-types"
 import { detailTable } from "./repository-types"
 
@@ -61,6 +68,23 @@ export async function replaceOwnedListingRepo(
   const priorStatus = row.status as string
   const wasApprovedResubmit = priorStatus === "approved"
 
+  const { data: existingPhotoRows, error: existingPhotoErr } = await supabase
+    .from("listing_photos")
+    .select("path")
+    .eq("listing_id", listingId)
+
+  if (existingPhotoErr) {
+    console.error("Failed to load existing listing photo paths for replace", {
+      listingId,
+      error: existingPhotoErr,
+    })
+  }
+
+  const existingPhotoPaths = (existingPhotoRows ?? [])
+    .map((p) => (p as { path?: string }).path)
+    .filter((path): path is string => Boolean(path))
+  const reusedExistingPaths = getReusedExistingPhotoPaths(existingPhotoPaths, input.photos)
+
   // 1) Demote approved / rejected so child RLS allows full replace (must run before deletes).
   if (priorStatus === "approved" || priorStatus === "rejected") {
     const { error: demoteErr } = await supabase
@@ -74,6 +98,23 @@ export async function replaceOwnedListingRepo(
 
     if (demoteErr) {
       throw new Error(`Failed to reopen listing for edit: ${demoteErr.message}`)
+    }
+  }
+
+  if (wasApprovedResubmit && reusedExistingPaths.length > 0) {
+    try {
+      const svc = getSupabaseServiceClient()
+      const migrationResult = await migrateReusedPhotosBestEffort(
+        createPhotoMigrateStorage(svc),
+        reusedExistingPaths
+      )
+      logMigrationSummary(migrationResult)
+    } catch (migrateError) {
+      console.error("listing_photos_migrate_public_to_private_failed", {
+        listingId,
+        paths: reusedExistingPaths,
+        error: migrateError,
+      })
     }
   }
 

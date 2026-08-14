@@ -8,18 +8,21 @@ import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
 import { PieceExistingImageThumbnails } from "@/components/forms/blocks/PieceExistingImageThumbnails"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { TextField } from "@/components/forms/blocks/TextField"
+import type { ListingStatus } from "@/features/events/server/repository-types"
 import { type EventType } from "../EventTypeSelector"
 
 interface MediaAndAdditionalInfoStepProps {
   form: UseFormReturn<EventFormData>
   eventType: EventType
   existingPhotosRef?: MutableRefObject<Array<{ path: string; credit?: string | null }>>
+  listingStatus?: ListingStatus | null
 }
 
 export function MediaAndAdditionalInfoStep({
   form,
   eventType,
   existingPhotosRef,
+  listingStatus,
 }: MediaAndAdditionalInfoStepProps) {
   const perfSubtype = useWatch({
     control: form.control,
@@ -55,7 +58,7 @@ export function MediaAndAdditionalInfoStep({
     <>
       <Section title="Media Uploads">
         <div>
-          <PieceExistingImageThumbnails paths={existingPhotoPaths} />
+          <PieceExistingImageThumbnails paths={existingPhotoPaths} listingStatus={listingStatus} />
           <PhotoUploader
             form={form}
             name={"promoFiles"}

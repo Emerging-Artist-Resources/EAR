@@ -1,51 +1,171 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import type { ListingStatus } from "@/features/events/server/repository-types"
+import {
+  getExistingImageBucketOrder,
+  resolveExistingImageUrl,
+  transitionExistingImageOnError,
+  uniqueExistingImagePaths,
+  type ExistingImageBucket,
+  type ImageState,
+} from "@/lib/listings/existing-image-resolution"
 import { supabase } from "@/lib/supabase/client"
-import { storageService } from "@/services/storage"
 
-const BUCKET = "event-photos"
+function logExistingImage(
+  event: string,
+  details: {
+    path: string
+    listingStatus?: ListingStatus | null
+    primaryBucket: ExistingImageBucket
+    fallbackBucket: ExistingImageBucket
+    error?: unknown
+  }
+) {
+  console.error(event, details)
+}
 
-export function PieceExistingImageThumbnails({ paths }: { paths: string[] }) {
-  const [urls, setUrls] = useState<string[]>([])
+export function PieceExistingImageThumbnails({
+  paths,
+  listingStatus,
+}: {
+  paths: string[]
+  listingStatus?: ListingStatus | null
+}) {
+  const uniquePaths = useMemo(() => uniqueExistingImagePaths(paths), [paths.join("|")])
+  const buckets = useMemo(() => getExistingImageBucketOrder(listingStatus), [listingStatus])
+  const [imageStates, setImageStates] = useState<Record<string, ImageState>>({})
+  const resolvingFallbackRef = useRef(new Set<string>())
 
   useEffect(() => {
-    if (!paths.length) {
-      setUrls([])
+    if (!uniquePaths.length) {
+      setImageStates({})
       return
     }
     let cancelled = false
     const run = async () => {
-      const next: string[] = []
-      for (const path of paths.slice(0, 5)) {
-        if (!path) continue
+      const next: Record<string, ImageState> = {}
+      for (const path of uniquePaths) {
+        if (cancelled) return
         try {
-          const url = await storageService.createSignedUrl(supabase, BUCKET, path, 3600)
-          next.push(url)
-        } catch {
-          // ignore broken path
+          const url = await resolveExistingImageUrl(supabase, buckets.primary, path)
+          next[path] = { url, fallbackAttempted: false, hidden: false }
+        } catch (error) {
+          logExistingImage("existing_image_preferred_load_failed", {
+            path,
+            listingStatus,
+            primaryBucket: buckets.primary,
+            fallbackBucket: buckets.fallback,
+            error,
+          })
+          try {
+            const url = await resolveExistingImageUrl(supabase, buckets.fallback, path)
+            next[path] = { url, fallbackAttempted: true, hidden: false }
+          } catch (fallbackError) {
+            logExistingImage("existing_image_fallback_resolution_failed", {
+              path,
+              listingStatus,
+              primaryBucket: buckets.primary,
+              fallbackBucket: buckets.fallback,
+              error: fallbackError,
+            })
+            next[path] = { url: "", fallbackAttempted: true, hidden: true }
+          }
         }
       }
-      if (!cancelled) setUrls(next)
+      if (!cancelled) setImageStates(next)
     }
     void run()
     return () => {
       cancelled = true
     }
-  }, [paths.join("|")])
+  }, [uniquePaths.join("|"), buckets.primary, buckets.fallback, listingStatus])
 
-  if (!urls.length) return null
+  const handleError = useCallback(
+    async (path: string) => {
+      let action: ReturnType<typeof transitionExistingImageOnError> | null = null
+
+      setImageStates((current) => {
+        const image = current[path]
+        if (!image || image.hidden) return current
+        action = transitionExistingImageOnError(image)
+        if (action.type === "hide") {
+          if (resolvingFallbackRef.current.has(path)) {
+            return current
+          }
+          logExistingImage("existing_image_fallback_load_failed", {
+            path,
+            listingStatus,
+            primaryBucket: buckets.primary,
+            fallbackBucket: buckets.fallback,
+          })
+          return { ...current, [path]: { ...image, hidden: true } }
+        }
+        resolvingFallbackRef.current.add(path)
+        return { ...current, [path]: { ...image, fallbackAttempted: true } }
+      })
+
+      if (action?.type !== "resolve_fallback") return
+
+      logExistingImage("existing_image_preferred_load_failed", {
+        path,
+        listingStatus,
+        primaryBucket: buckets.primary,
+        fallbackBucket: buckets.fallback,
+      })
+
+      try {
+        const url = await resolveExistingImageUrl(supabase, buckets.fallback, path)
+        setImageStates((current) => {
+          const image = current[path]
+          if (!image || image.hidden || !image.fallbackAttempted) {
+            return current
+          }
+          resolvingFallbackRef.current.delete(path)
+          return { ...current, [path]: { ...image, url } }
+        })
+      } catch (error) {
+        resolvingFallbackRef.current.delete(path)
+        logExistingImage("existing_image_fallback_resolution_failed", {
+          path,
+          listingStatus,
+          primaryBucket: buckets.primary,
+          fallbackBucket: buckets.fallback,
+          error,
+        })
+        setImageStates((current) => {
+          const image = current[path]
+          if (!image) return current
+          return { ...current, [path]: { ...image, hidden: true } }
+        })
+      }
+    },
+    [buckets.fallback, buckets.primary, listingStatus]
+  )
+
+  const visible = uniquePaths
+    .map((path) => {
+      const state = imageStates[path]
+      if (!state || state.hidden || !state.url) return null
+      return { path, url: state.url }
+    })
+    .filter((item): item is { path: string; url: string } => item != null)
+
+  if (!visible.length) return null
 
   return (
     <div className="flex flex-wrap gap-2 mt-2">
       <p className="text-xs text-gray-600 w-full">Current images (upload new images below to replace)</p>
-      {urls.map((src) => (
+      {visible.map(({ path, url }) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          key={src}
-          src={src}
+          key={path}
+          src={url}
           alt=""
           className="h-20 w-20 rounded-md object-cover border border-gray-200"
+          onError={() => {
+            void handleError(path)
+          }}
         />
       ))}
     </div>

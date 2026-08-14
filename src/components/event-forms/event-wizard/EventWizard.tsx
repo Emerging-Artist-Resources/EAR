@@ -28,6 +28,7 @@ import {
   piecePromoFilesFieldName,
   type OrganizerProgramPiecePhoto,
 } from "@/lib/listings/organizer-program-pieces"
+import { toListingStatus } from "@/lib/listings/existing-image-resolution"
 import { ownerListingToFormLoad } from "./owner-listing-to-form"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { resetModalFormView } from "@/lib/forms/reset-scroll-ancestors"
@@ -589,6 +590,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
           form={form}
           eventType={eventType}
           existingPhotosRef={listingId ? existingPhotosRef : undefined}
+          listingStatus={toListingStatus(initialPersistedStatus)}
         />
       )}
 
