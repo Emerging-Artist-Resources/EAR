@@ -29,6 +29,11 @@ import {
   type OrganizerProgramPiecePhoto,
 } from "@/lib/listings/organizer-program-pieces"
 import { toListingStatus } from "@/lib/listings/existing-image-resolution"
+import {
+  buildListingPhotoSubmitPlan,
+  seedListingPhotoDraftFromExisting,
+  type ListingPhotoDraftItem,
+} from "@/lib/listings/listing-photo-draft"
 import { ownerListingToFormLoad } from "./owner-listing-to-form"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { resetModalFormView } from "@/lib/forms/reset-scroll-ancestors"
@@ -63,7 +68,8 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
   const [initialPersistedStatus, setInitialPersistedStatus] = useState<string | null>(null)
   const [showApprovedResubmitConfirm, setShowApprovedResubmitConfirm] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const existingPhotosRef = useRef<Array<{ path: string; credit?: string | null }>>([])
+  /** Edit-only source of truth for listing promo photos (create still uses promoFiles). */
+  const [listingPhotoDraft, setListingPhotoDraft] = useState<ListingPhotoDraftItem[]>([])
   const organizerPiecePhotosRef = useRef<Record<string, OrganizerProgramPiecePhoto[]>>({})
   const { user, userName } = useAuth()
   const { showToast } = useToast()
@@ -99,7 +105,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
     if (!listingId) {
       setInitialPersistedStatus(null)
       setLoadError(null)
-      existingPhotosRef.current = []
+      setListingPhotoDraft([])
       organizerPiecePhotosRef.current = {}
       return
     }
@@ -113,7 +119,8 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
         if (cancelled) return
         const { eventType: et, defaults, initialPersistedStatus: st, existingPhotos, organizerPiecePhotosById } =
           ownerListingToFormLoad(row)
-        existingPhotosRef.current = existingPhotos
+        // existingPhotos is already sorted by sort_order in ownerListingToFormLoad — do not re-sort.
+        setListingPhotoDraft(seedListingPhotoDraftFromExisting(existingPhotos))
         organizerPiecePhotosRef.current = organizerPiecePhotosById
         setEventType(et)
         setInitialPersistedStatus(st)
@@ -269,38 +276,83 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
       }
 
       const photoPaths: Array<{ path: string; credit?: string | null; sort_order?: number }> = []
-      const promoFiles = data.promoFiles as File[] | undefined
+      const listingCredit = data.credits?.trim() || null
 
-      if (promoFiles && Array.isArray(promoFiles) && promoFiles.length > 0) {
+      if (listingId) {
+        // Edit: draft order is the desired sort_order. Upload completion order must not matter.
+        const plan = buildListingPhotoSubmitPlan(listingPhotoDraft)
         const bucket = "event-photos"
         const userId = user.id
 
-        for (let i = 0; i < Math.min(promoFiles.length, 5); i++) {
-          const file = promoFiles[i]
-          if (!file || !(file instanceof File)) continue
+        for (let i = 0; i < plan.orderedItems.length; i++) {
+          const item = plan.orderedItems[i]
+          if (item.kind === "existing") {
+            photoPaths.push({
+              path: item.path,
+              credit: listingCredit,
+              sort_order: i,
+            })
+            continue
+          }
 
           try {
             const timestamp = Date.now()
-            const fileExt = file.name.split(".").pop() || "jpg"
-            const fileName = `${timestamp}-${i}.${fileExt}`
+            const fileExt = item.file.name.split(".").pop() || "jpg"
+            const fileName = `${timestamp}-${item.draftIndex}.${fileExt}`
             const filePath = `listings/${userId}/${fileName}`
 
-            await storageService.uploadFile(supabase, bucket, filePath, file, {
+            await storageService.uploadFile(supabase, bucket, filePath, item.file, {
               cacheControl: "3600",
               upsert: false,
             })
 
             photoPaths.push({
               path: filePath,
-              credit: data.credits || null,
+              credit: listingCredit,
               sort_order: i,
             })
           } catch (uploadError) {
-            console.error(`Failed to upload photo ${i}:`, uploadError)
+            console.error(`Failed to upload photo at draft index ${item.draftIndex}:`, uploadError)
             const errorMsg = uploadError instanceof Error ? uploadError.message : "Failed to upload photo"
             showToast(`Photo upload failed: ${errorMsg}`, "error")
             setIsSubmitting(false)
             return
+          }
+        }
+      } else {
+        const promoFiles = data.promoFiles as File[] | undefined
+
+        if (promoFiles && Array.isArray(promoFiles) && promoFiles.length > 0) {
+          const bucket = "event-photos"
+          const userId = user.id
+
+          for (let i = 0; i < Math.min(promoFiles.length, 5); i++) {
+            const file = promoFiles[i]
+            if (!file || !(file instanceof File)) continue
+
+            try {
+              const timestamp = Date.now()
+              const fileExt = file.name.split(".").pop() || "jpg"
+              const fileName = `${timestamp}-${i}.${fileExt}`
+              const filePath = `listings/${userId}/${fileName}`
+
+              await storageService.uploadFile(supabase, bucket, filePath, file, {
+                cacheControl: "3600",
+                upsert: false,
+              })
+
+              photoPaths.push({
+                path: filePath,
+                credit: listingCredit,
+                sort_order: i,
+              })
+            } catch (uploadError) {
+              console.error(`Failed to upload photo ${i}:`, uploadError)
+              const errorMsg = uploadError instanceof Error ? uploadError.message : "Failed to upload photo"
+              showToast(`Photo upload failed: ${errorMsg}`, "error")
+              setIsSubmitting(false)
+              return
+            }
           }
         }
       }
@@ -312,7 +364,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
         const doc = normalizeOrganizerProgramPiecesFromDb(details.organizer_program_pieces)
         if (doc && doc.pieces.length > 0) {
           const formRec = data as unknown as Record<string, unknown>
-          const credit = data.credits?.trim() || null
+          const credit = listingCredit
           const bucket = "event-photos"
           const userId = user.id
 
@@ -367,14 +419,11 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
         }
       }
 
-      if (photoPaths.length > 0) {
+      if (listingId) {
+        // Always send explicit final photo state for replace (including []).
         payload.photos = photoPaths
-      } else if (existingPhotosRef.current.length > 0) {
-        payload.photos = existingPhotosRef.current.map((p, i) => ({
-          path: p.path,
-          credit: (data.credits && data.credits.trim()) || p.credit || null,
-          sort_order: i,
-        }))
+      } else if (photoPaths.length > 0) {
+        payload.photos = photoPaths
       }
 
       if (eventType === "PERFORMANCE" && payload.occurrences.length === 0) {
@@ -435,6 +484,7 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
         }
 
         form.reset()
+        setListingPhotoDraft([])
         setTimeout(() => {
           onSuccess({ wasApprovedResubmit: Boolean(putResult?.was_approved_resubmit) })
           onClose()
@@ -589,7 +639,8 @@ export function EventWizard({ onSuccess, onClose, listingId }: EventWizardProps)
         <MediaAndAdditionalInfoStep
           form={form}
           eventType={eventType}
-          existingPhotosRef={listingId ? existingPhotosRef : undefined}
+          listingPhotoDraft={listingId ? listingPhotoDraft : undefined}
+          onListingPhotoDraftChange={listingId ? setListingPhotoDraft : undefined}
           listingStatus={toListingStatus(initialPersistedStatus)}
         />
       )}

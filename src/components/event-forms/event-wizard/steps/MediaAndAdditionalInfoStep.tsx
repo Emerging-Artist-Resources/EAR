@@ -1,27 +1,30 @@
 "use client"
 
-import type { MutableRefObject } from "react"
 import { UseFormReturn, Path, useWatch } from "react-hook-form"
 import { EventFormData } from "@/lib/validations/events"
 import { Section } from "@/components/forms/blocks/Section"
 import { PhotoUploader } from "@/components/forms/blocks/PhotoUploader"
-import { PieceExistingImageThumbnails } from "@/components/forms/blocks/PieceExistingImageThumbnails"
+import { ListingPhotoManager } from "@/components/forms/blocks/ListingPhotoManager"
 import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { TextField } from "@/components/forms/blocks/TextField"
 import type { ListingStatus } from "@/features/events/server/repository-types"
+import type { ListingPhotoDraftItem } from "@/lib/listings/listing-photo-draft"
 import { type EventType } from "../EventTypeSelector"
 
 interface MediaAndAdditionalInfoStepProps {
   form: UseFormReturn<EventFormData>
   eventType: EventType
-  existingPhotosRef?: MutableRefObject<Array<{ path: string; credit?: string | null }>>
+  /** Edit mode: single ordered draft for listing promo photos. */
+  listingPhotoDraft?: ListingPhotoDraftItem[]
+  onListingPhotoDraftChange?: (next: ListingPhotoDraftItem[]) => void
   listingStatus?: ListingStatus | null
 }
 
 export function MediaAndAdditionalInfoStep({
   form,
   eventType,
-  existingPhotosRef,
+  listingPhotoDraft,
+  onListingPhotoDraftChange,
   listingStatus,
 }: MediaAndAdditionalInfoStepProps) {
   const perfSubtype = useWatch({
@@ -37,6 +40,8 @@ export function MediaAndAdditionalInfoStep({
   const isAudition = eventType === "AUDITION"
   const isClassListing = eventType === "CLASS"
   const isOpportunity = eventType === "CREATIVE"
+  const isEditingListingPhotos =
+    listingPhotoDraft != null && typeof onListingPhotoDraftChange === "function"
 
   const isFestivalOrSplitOrganizer =
     eventType === "PERFORMANCE" &&
@@ -46,25 +51,37 @@ export function MediaAndAdditionalInfoStep({
   const promoImagesLabel = isFestivalOrSplitOrganizer ? "Festival / program images" : "Promotional Images"
 
   const promoImagesDescription = isFestivalOrSplitOrganizer
+    ? "Promotional images for the overall event, festival, or shared program (not individual pieces). The first image is the listing display image. Keep, remove, or add up to 5 total."
+    : isAudition || isClassListing || isOpportunity
+      ? "The first image is the listing display image. Keep, remove, or add up to 5 total."
+      : "Images are highly encouraged for marketing! The first image is the listing display image. Keep, remove, or add up to 5 total."
+
+  const createPromoDescription = isFestivalOrSplitOrganizer
     ? "Promotional images for the overall event, festival, or shared program (not individual pieces). Upload up to 5 images (recommended)."
     : isAudition || isClassListing || isOpportunity
       ? "Upload up to 5 images (recommended)."
       : "Images are highly encouraged for marketing! Please upload up to 5 images."
 
-  const existingPhotoPaths =
-    existingPhotosRef?.current?.map((p) => p.path).filter(Boolean) ?? []
-
   return (
     <>
       <Section title="Media Uploads">
         <div>
-          <PieceExistingImageThumbnails paths={existingPhotoPaths} listingStatus={listingStatus} />
-          <PhotoUploader
-            form={form}
-            name={"promoFiles"}
-            label={promoImagesLabel}
-            description={promoImagesDescription}
-          />
+          {isEditingListingPhotos ? (
+            <ListingPhotoManager
+              items={listingPhotoDraft}
+              onChange={onListingPhotoDraftChange}
+              listingStatus={listingStatus}
+              label={promoImagesLabel}
+              description={promoImagesDescription}
+            />
+          ) : (
+            <PhotoUploader
+              form={form}
+              name={"promoFiles"}
+              label={promoImagesLabel}
+              description={createPromoDescription}
+            />
+          )}
         </div>
         <TextAreaField
           form={form}
