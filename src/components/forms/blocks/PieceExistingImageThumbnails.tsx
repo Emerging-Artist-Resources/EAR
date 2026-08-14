@@ -35,6 +35,8 @@ export function PieceExistingImageThumbnails({
   const uniquePaths = useMemo(() => uniqueExistingImagePaths(paths), [paths.join("|")])
   const buckets = useMemo(() => getExistingImageBucketOrder(listingStatus), [listingStatus])
   const [imageStates, setImageStates] = useState<Record<string, ImageState>>({})
+  const imageStatesRef = useRef(imageStates)
+  imageStatesRef.current = imageStates
   const resolvingFallbackRef = useRef(new Set<string>())
 
   useEffect(() => {
@@ -83,29 +85,32 @@ export function PieceExistingImageThumbnails({
 
   const handleError = useCallback(
     async (path: string) => {
-      let action: ReturnType<typeof transitionExistingImageOnError> | null = null
+      const current = imageStatesRef.current[path]
+      if (!current || current.hidden) return
 
-      setImageStates((current) => {
-        const image = current[path]
-        if (!image || image.hidden) return current
-        action = transitionExistingImageOnError(image)
-        if (action.type === "hide") {
-          if (resolvingFallbackRef.current.has(path)) {
-            return current
-          }
-          logExistingImage("existing_image_fallback_load_failed", {
-            path,
-            listingStatus,
-            primaryBucket: buckets.primary,
-            fallbackBucket: buckets.fallback,
-          })
-          return { ...current, [path]: { ...image, hidden: true } }
-        }
-        resolvingFallbackRef.current.add(path)
-        return { ...current, [path]: { ...image, fallbackAttempted: true } }
+      const action = transitionExistingImageOnError(current)
+      if (action.type === "hide") {
+        if (resolvingFallbackRef.current.has(path)) return
+        logExistingImage("existing_image_fallback_load_failed", {
+          path,
+          listingStatus,
+          primaryBucket: buckets.primary,
+          fallbackBucket: buckets.fallback,
+        })
+        setImageStates((prev) => {
+          const image = prev[path]
+          if (!image) return prev
+          return { ...prev, [path]: { ...image, hidden: true } }
+        })
+        return
+      }
+
+      resolvingFallbackRef.current.add(path)
+      setImageStates((prev) => {
+        const image = prev[path]
+        if (!image) return prev
+        return { ...prev, [path]: { ...image, fallbackAttempted: true } }
       })
-
-      if (action?.type !== "resolve_fallback") return
 
       logExistingImage("existing_image_preferred_load_failed", {
         path,
@@ -116,13 +121,13 @@ export function PieceExistingImageThumbnails({
 
       try {
         const url = await resolveExistingImageUrl(supabase, buckets.fallback, path)
-        setImageStates((current) => {
-          const image = current[path]
+        setImageStates((prev) => {
+          const image = prev[path]
           if (!image || image.hidden || !image.fallbackAttempted) {
-            return current
+            return prev
           }
           resolvingFallbackRef.current.delete(path)
-          return { ...current, [path]: { ...image, url } }
+          return { ...prev, [path]: { ...image, url } }
         })
       } catch (error) {
         resolvingFallbackRef.current.delete(path)
@@ -133,10 +138,10 @@ export function PieceExistingImageThumbnails({
           fallbackBucket: buckets.fallback,
           error,
         })
-        setImageStates((current) => {
-          const image = current[path]
-          if (!image) return current
-          return { ...current, [path]: { ...image, hidden: true } }
+        setImageStates((prev) => {
+          const image = prev[path]
+          if (!image) return prev
+          return { ...prev, [path]: { ...image, hidden: true } }
         })
       }
     },

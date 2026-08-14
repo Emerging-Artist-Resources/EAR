@@ -6,7 +6,7 @@ import type { EventFormData } from "@/lib/validations/events"
 
 const PARENT_LISTING_ID = "11111111-1111-4111-8111-111111111111"
 
-function issuePaths(result: { success: false; error: { issues: { path: (string | number)[] }[] } }) {
+function issuePaths(result: { success: false; error: { issues: { path: PropertyKey[] }[] } }) {
   return result.error.issues.map((i) => i.path.join("."))
 }
 
@@ -214,7 +214,7 @@ describe("buildPerformancePayload piece ticket fields", () => {
         selectedSlots: ["2026-09-15|19:30"],
         contactName: "Test User",
         contactEmail: "test@example.com",
-      } as EventFormData,
+      } as unknown as EventFormData,
       userInfo,
       "America/New_York",
     )
@@ -240,7 +240,7 @@ describe("buildPerformancePayload piece ticket fields", () => {
         selectedSlots: ["2026-09-15|19:30"],
         contactName: "Test User",
         contactEmail: "test@example.com",
-      } as EventFormData,
+      } as unknown as EventFormData,
       userInfo,
       "America/New_York",
     )
@@ -319,7 +319,7 @@ describe("buildPerformancePayload piece ticket fields", () => {
         ],
         contactName: "Test User",
         contactEmail: "test@example.com",
-      } as EventFormData,
+      } as unknown as EventFormData,
       userInfo,
       "America/New_York",
     )
