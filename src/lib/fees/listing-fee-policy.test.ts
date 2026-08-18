@@ -2,6 +2,7 @@ import {
   applyPlatformListingFeePolicy,
   getPlatformListingFeeContext,
   PLATFORM_LISTING_FEE_RULES,
+  WAIVE_AUDITION_CREATIVE_PLATFORM_LISTING_FEE,
 } from "./listing-fee-policy"
 
 describe("PLATFORM_LISTING_FEE_RULES", () => {
@@ -51,7 +52,7 @@ describe("getPlatformListingFeeContext", () => {
     })
   })
 
-  it("charges audition/creative only when participant fee is indicated", () => {
+  it("does not charge audition/creative when participant fee is not indicated", () => {
     expect(
       getPlatformListingFeeContext({
         listingType: "audition",
@@ -62,17 +63,29 @@ describe("getPlatformListingFeeContext", () => {
       amountUsd: null,
       allowsFeeConfiguration: false,
     })
+  })
 
-    expect(
-      getPlatformListingFeeContext({
-        listingType: "creative",
-        listingFeeOption: "PAY_FEE",
-      })
-    ).toEqual({
-      feeApplies: true,
-      amountUsd: 25,
-      allowsFeeConfiguration: true,
+  it("handles audition/creative when participant fee is indicated", () => {
+    const ctx = getPlatformListingFeeContext({
+      listingType: "creative",
+      listingFeeOption: "PAY_FEE",
     })
+
+    expect(ctx.allowsFeeConfiguration).toBe(true)
+
+    if (WAIVE_AUDITION_CREATIVE_PLATFORM_LISTING_FEE) {
+      expect(ctx).toEqual({
+        feeApplies: false,
+        amountUsd: null,
+        allowsFeeConfiguration: true,
+      })
+    } else {
+      expect(ctx).toEqual({
+        feeApplies: true,
+        amountUsd: 25,
+        allowsFeeConfiguration: true,
+      })
+    }
   })
 })
 
@@ -118,13 +131,24 @@ describe("applyPlatformListingFeePolicy", () => {
     expect(details.fee).toBeNull()
   })
 
-  it("preserves audition fee when participant fee applies", () => {
+  it("preserves audition fee when participant fee applies (even while platform charge is waived)", () => {
     const details = {
       artist_type: "EMERGING",
       fee: "PAY_FEE",
     }
 
     applyPlatformListingFeePolicy("audition", details)
+
+    expect(details.fee).toBe("PAY_FEE")
+  })
+
+  it("preserves creative fee when participant fee applies (even while platform charge is waived)", () => {
+    const details = {
+      artist_type: "ESTABLISHED",
+      fee: "PAY_FEE",
+    }
+
+    applyPlatformListingFeePolicy("creative", details)
 
     expect(details.fee).toBe("PAY_FEE")
   })

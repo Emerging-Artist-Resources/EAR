@@ -5,6 +5,7 @@ import { ClampableText } from "@/components/calendar/ClampableText"
 export type PublicListingDetail = {
   id: string
   type: "performance" | "audition" | "creative" | "class"
+  status?: "pending" | "approved" | "rejected" | "pending_payment" | string
   contact_name?: string | null
   pronouns?: string | null
   contact_email?: string | null

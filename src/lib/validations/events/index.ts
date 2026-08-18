@@ -2,7 +2,7 @@ import { z } from "zod"
 import { flexibleUrlRequiredSchema } from "../flexible-url"
 import { hasCompleteLocation, isOnlineLocationMode, locationValidationIssue } from "@/lib/location/mode"
 import { baseSchema, refineOccurrenceTimeSlotEndAfterStart } from "./base"
-import { performanceFields } from "./performance"
+import { addRequiredTicketLinkAndPriceIssues, performanceFields } from "./performance"
 import {
   addOrganizerListingScheduleIssues,
   addOrganizerMultiProgramPieceSlotAndCustomIssues,
@@ -245,20 +245,7 @@ export const performanceStep2Schema = baseSchema
               : "Organizer / presenting company is required",
         })
       }
-      if (!data.link || data.link.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          path: ["link"],
-          message: "Ticket link is required",
-        })
-      }
-      if (!data.price || data.price.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          path: ["price"],
-          message: "Price is required",
-        })
-      }
+      addRequiredTicketLinkAndPriceIssues(ctx, data)
       const organizerOccs = resolveOrganizerOccurrencesForValidation(
         data.occurrences,
         data.extraOccurrences,
@@ -338,7 +325,7 @@ export const performanceStep2Schema = baseSchema
           })
         }
       } else {
-        // MANUAL mode - require parent event name
+        // MANUAL mode - require parent event name + ticket fields
         if (!data.parentEventName || data.parentEventName.trim() === "") {
           ctx.addIssue({
             code: "custom",
@@ -346,6 +333,7 @@ export const performanceStep2Schema = baseSchema
             message: "Event title is required",
           })
         }
+        addRequiredTicketLinkAndPriceIssues(ctx, data)
       }
 
       // 2. Piece detail fields (before schedule in the form)

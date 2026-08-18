@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { H2, H3, Text } from "@/components/ui/typography"
 import { FilterBar } from "@/components/calendar/FilterBar"
-import { ListingDetailsModal } from "./ListingDetailsModal"
 import { DayEventsPanel } from "./DayEventsPanel"
 import { MonthView } from "./MonthView"
 import { WeekView } from "./WeekView"
@@ -37,13 +36,13 @@ interface CalendarProps {
   items: CalendarItem[]
   deadlines?: CalendarItem[]
   onMonthChange?: (monthStart: Date, monthEnd: Date) => void
+  onListingSelect: (listingId: string) => void
 }
 
-export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps) {
+export function Calendar({ items, deadlines = [], onMonthChange, onListingSelect }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set(['PERFORMANCE', 'CLASS', 'AUDITION', 'CREATIVE']))
-  const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
   const [dayEventsPanel, setDayEventsPanel] = useState<{ date: Date; events: CalendarItem[] } | null>(null)
   const lastFetchedMonthRef = useRef<string | null>(INITIAL_MONTH_KEY)
 
@@ -125,14 +124,6 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
       .filter(it => new Date(String(it.start)).getTime() >= now)
       .sort((a: { start: string | Date }, b: { start: string | Date }) => new Date(String(a.start)).getTime() - new Date(String(b.start)).getTime())
   }, [deadlines])
-
-  const handleItemClick = useCallback((listingId: string) => {
-    setSelectedListingId(listingId)
-  }, [])
-
-  const handleModalClose = useCallback(() => {
-    setSelectedListingId(null)
-  }, [])
 
   const handleShowMoreClick = useCallback((date: Date, events: CalendarItem[]) => {
     setDayEventsPanel({ date, events })
@@ -226,7 +217,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
                 emptyCells={emptyCells}
                 currentDate={currentDate}
                 itemsByDate={itemsByDate}
-                onItemClick={handleItemClick}
+                onItemClick={onListingSelect}
                 onShowMoreClick={handleShowMoreClick}
               />
             )}
@@ -235,7 +226,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
               <WeekView
                 daysOfWeek={weekViewDays}
                 itemsByDate={itemsByDate}
-                onItemClick={handleItemClick}
+                onItemClick={onListingSelect}
               />
             )}
 
@@ -244,7 +235,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
                 currentDate={currentDate}
                 deduplicatedItems={dayViewData.deduplicated}
                 allItems={dayViewData.all}
-                onItemClick={handleItemClick}
+                onItemClick={onListingSelect}
               />
             )}
           </Card>
@@ -252,7 +243,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
 
         <div className="lg:col-span-1">
           <Card className="p-6 shadow-md">
-            <H3 className="text-primary mb-4">Upcoming Deadlines</H3>
+            <H3 className="text-primary mb-4">Open Opportunities</H3>
 
             {/* ~5 rows (title + date + padding + gap), then scroll */}
             <div className="max-h-[34rem] space-y-3 overflow-y-auto overscroll-y-contain pr-1 md:max-h-[30rem] sm:max-h-[15rem]">
@@ -262,7 +253,7 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
                 <button
                   key={it.occurrenceId}
                   type="button"
-                  onClick={() => handleItemClick(it.listingId)}
+                  onClick={() => onListingSelect(it.listingId)}
                   aria-label={`View details: ${it.title || "Untitled"}`}
                   className="group w-full rounded-r-md border-l-4 pl-3 py-1.5 text-left transition-colors hover:bg-surface-panel-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   style={{ borderLeftColor: typeColor.border }}
@@ -283,19 +274,12 @@ export function Calendar({ items, deadlines = [], onMonthChange }: CalendarProps
         </div>
       </div>
 
-      <ListingDetailsModal
-        isOpen={selectedListingId !== null}
-        onClose={handleModalClose}
-        listingId={selectedListingId}
-        onListingClick={handleItemClick}
-      />
-
       <DayEventsPanel
         isOpen={dayEventsPanel !== null}
         onClose={handleDayEventsPanelClose}
         date={dayEventsPanel?.date || null}
         events={dayEventsPanel?.events || []}
-        onEventClick={handleItemClick}
+        onEventClick={onListingSelect}
       />
     </>
   )

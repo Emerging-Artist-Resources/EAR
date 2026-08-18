@@ -259,6 +259,7 @@ export function ClassesWorkshopsStep({ form }: ClassesWorkshopsStepProps) {
                 form={form}
                 name={"dropInClasses"}
                 label="Drop-in pricing"
+                required
                 placeholder="Provide details and pricing if applicable."
                 rows={4}
               />

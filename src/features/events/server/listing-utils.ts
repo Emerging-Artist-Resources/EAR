@@ -48,10 +48,11 @@ function resolvePieceParentName(
   },
   parentTitles?: Record<string, string>
 ): string | null {
-  if (pieceDetails.parent_listing_id && parentTitles?.[pieceDetails.parent_listing_id]) {
-    return parentTitles[pieceDetails.parent_listing_id] || null
+  // Linked piece: use the real parent listing's title, never the stale manual name.
+  if (pieceDetails.parent_listing_id) {
+    return parentTitles?.[pieceDetails.parent_listing_id] || pieceDetails.parent_listing_title || null
   }
-  return pieceDetails.parent_listing_title || pieceDetails.parent_event_name || null
+  return pieceDetails.parent_event_name || null
 }
 
 function classTitleFromDetails(
@@ -79,10 +80,11 @@ function resolveClassParentName(
   },
   parentTitles?: Record<string, string>
 ): string | null {
-  if (classDetails.parent_listing_id && parentTitles?.[classDetails.parent_listing_id]) {
-    return parentTitles[classDetails.parent_listing_id] || null
+  // Linked class: use the real parent workshop's title, never the stale manual name.
+  if (classDetails.parent_listing_id) {
+    return parentTitles?.[classDetails.parent_listing_id] || classDetails.parent_listing_title || null
   }
-  return classDetails.parent_listing_title || classDetails.parent_workshop_name || null
+  return classDetails.parent_workshop_name || null
 }
 
 export function getListingTitle(

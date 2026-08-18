@@ -1,19 +1,34 @@
 export type ListingArtistType = "ESTABLISHED" | "EMERGING"
 export type ListingType = "performance" | "audition" | "creative" | "class"
 
+/**
+ * Temporary: do not charge EAR's platform listing fee for audition / creative
+ * (opportunity) listings when the organizer indicates a participant application fee.
+ *
+ * Set to `false` to resume charging `AUDITION_CREATIVE_FEE_USD`.
+ *
+ * Important: this only skips payment (`feeApplies`). It must still allow fee
+ * configuration so `fee === "PAY_FEE"` (participant-fee marker) is preserved.
+ */
+export const WAIVE_AUDITION_CREATIVE_PLATFORM_LISTING_FEE = true
+
 /** Shown beside the audition fee Yes/No control in the listing wizard. */
-export const AUDITION_FEE_LISTING_POLICY_TOOLTIP =
-  "Please note: auditions with audition fees are subject to a listing fee."
+export const AUDITION_FEE_LISTING_POLICY_TOOLTIP = WAIVE_AUDITION_CREATIVE_PLATFORM_LISTING_FEE
+  ? undefined
+  : "Please note: auditions with audition fees are subject to a listing fee."
 
 /** Shown beside the opportunity application fee Yes/No control in the listing wizard. */
 export const OPPORTUNITY_APPLICATION_FEE_LISTING_POLICY_TOOLTIP =
-  "Please note: opportunities with application fees are subject to a listing fee."
+  WAIVE_AUDITION_CREATIVE_PLATFORM_LISTING_FEE
+    ? undefined
+    : "Please note: opportunities with application fees are subject to a listing fee."
 
 /** Reserved for future tiered pricing. Artist type currently does not affect pricing. */
 export const ESTABLISHED_BASE_FEE_USD = 25
 /** Reserved for future tiered pricing. Artist type currently does not affect pricing. */
 export const EMERGING_BASE_FEE_USD = 35
 export const EXTRA_CLASS_FEE_USD = 5
+/** Platform listing fee when charging is enabled (see `WAIVE_AUDITION_CREATIVE_PLATFORM_LISTING_FEE`). */
 export const AUDITION_CREATIVE_FEE_USD = 25
 
 export type PlatformListingFeeCondition = "participant_fee"
@@ -56,6 +71,13 @@ const WAIVED_CONTEXT: PlatformListingFeeContext = {
   allowsFeeConfiguration: false,
 }
 
+/** No charge, but keep participant-fee fields (e.g. audition/creative `fee`). */
+const CONFIGURED_BUT_NOT_CHARGED_CONTEXT: PlatformListingFeeContext = {
+  feeApplies: false,
+  amountUsd: null,
+  allowsFeeConfiguration: true,
+}
+
 export interface ClassListingFeeCalculation {
   baseFee: number
   extraFees: number
@@ -92,6 +114,9 @@ function evaluateConditionalRule(
 ): PlatformListingFeeContext {
   if (rule.condition === "participant_fee") {
     if (listingFeeOption === "PAY_FEE") {
+      if (WAIVE_AUDITION_CREATIVE_PLATFORM_LISTING_FEE) {
+        return CONFIGURED_BUT_NOT_CHARGED_CONTEXT
+      }
       return {
         feeApplies: true,
         amountUsd: rule.feeUsd,

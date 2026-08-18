@@ -1,6 +1,7 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
+import { CopyListingLinkButton } from "@/components/shared/CopyListingLinkButton"
 import { SaveListingFavoriteButton } from "@/components/shared/SaveListingFavoriteButton"
 import { H3 } from "@/components/ui/typography"
 import { stripAdminNotes } from "@/lib/listings/admin-notes"
@@ -111,6 +112,7 @@ export function ClassDetailContent({
               ← {backToParentLabel}
             </button>
           ) : null}
+          <CopyListingLinkButton listingId={listing.id} status={listing.status} />
           <SaveListingFavoriteButton listingId={listing.id} />
         </div>
       </div>

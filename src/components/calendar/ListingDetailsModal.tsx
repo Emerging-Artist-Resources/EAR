@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, type CSSProperties } from "react"
 import { Modal } from "@/components/ui/modal"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
+import { CopyListingLinkButton } from "@/components/shared/CopyListingLinkButton"
 import { SaveListingFavoriteButton } from "@/components/shared/SaveListingFavoriteButton"
 import type { PublicListingDetail } from "./PublicListingDetailSections"
 import { getListingTitle } from "@/features/events/server/listing-utils"
@@ -58,60 +59,131 @@ interface ListingDetailsModalProps {
   onClose: () => void
   listingId: string | null
   onListingClick?: (listingId: string) => void
+  /** When provided and matches listingId, skip the initial fetch (e.g. deep-link prefetch). */
+  initialListing?: PublicListingDetail | null
+  /** Prefetched error for deep links when the listing could not be loaded. */
+  initialError?: string | null
 }
 
-export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick }: ListingDetailsModalProps) {
-  const [loading, setLoading] = useState(false)
-  const [listing, setListing] = useState<PublicListingDetail | null>(null)
-  const [error, setError] = useState<string | null>(null)
+export function ListingDetailsModal({
+  isOpen,
+  onClose,
+  listingId,
+  onListingClick,
+  initialListing = null,
+  initialError = null,
+}: ListingDetailsModalProps) {
+  const [listing, setListing] = useState<PublicListingDetail | null>(() => {
+    if (initialListing && listingId && initialListing.id === listingId) {
+      return normalizePublicListingRelations(initialListing)
+    }
+    return null
+  })
+  const [error, setError] = useState<string | null>(() => {
+    if (initialListing && listingId && initialListing.id === listingId) return null
+    return initialError
+  })
+  /** Ties `error` to a listing id so a stale failure cannot block the next open's spinner. */
+  const [errorListingId, setErrorListingId] = useState<string | null>(() =>
+    initialError && listingId ? listingId : null,
+  )
   const [showAllDates, setShowAllDates] = useState(false)
   const [selectedOrganizerPieceId, setSelectedOrganizerPieceId] = useState<string | null>(null)
   const [childListings, setChildListings] = useState<ChildListingSummary[]>([])
+
+  const activeListing = useMemo(() => {
+    if (listing && listingId && listing.id === listingId) {
+      return listing
+    }
+    if (initialListing && listingId && initialListing.id === listingId) {
+      return normalizePublicListingRelations(initialListing)
+    }
+    return null
+  }, [listing, listingId, initialListing])
+
+  const activeError =
+    activeListing
+      ? null
+      : initialError && listingId
+        ? initialError
+        : error && errorListingId === listingId
+          ? error
+          : null
+
+  /**
+   * Spinner on the first paint of a click-open (before the fetch effect runs).
+   * Close leaves listing=null; without this derived flag the next open would flash
+   * an empty modal frame for one paint.
+   */
+  const showLoading = Boolean(isOpen && listingId && !activeListing && !activeError)
 
   useEffect(() => {
     if (!isOpen || !listingId) {
       setListing(null)
       setError(null)
+      setErrorListingId(null)
       setShowAllDates(false)
       setSelectedOrganizerPieceId(null)
       setChildListings([])
       return
     }
 
+    if (initialListing && initialListing.id === listingId) {
+      setListing(normalizePublicListingRelations(initialListing))
+      setError(null)
+      setErrorListingId(null)
+      setShowAllDates(false)
+      setSelectedOrganizerPieceId(null)
+      return
+    }
+
+    if (initialError) {
+      setListing(null)
+      setError(initialError)
+      setErrorListingId(listingId)
+      setShowAllDates(false)
+      setSelectedOrganizerPieceId(null)
+      return
+    }
+
     const abortController = new AbortController()
-    setLoading(true)
     setError(null)
-    
+    setErrorListingId(null)
+    // Drop stale content when switching listings so the header/title don't flash.
+    setListing(null)
+
     fetch(`/api/calendar/listing/${listingId}`, { signal: abortController.signal })
       .then(async (res) => {
         if (!res.ok) {
-          if (res.status === 404) {
-            throw new Error("Listing not found")
+          const message = res.status === 404 ? "Listing not found" : "Failed to load listing"
+          if (!abortController.signal.aborted) {
+            setError(message)
+            setErrorListingId(listingId)
           }
-          throw new Error("Failed to load listing")
+          return null
         }
         const json = await res.json()
         return json.data
       })
       .then((data) => {
+        if (data == null) return
         if (!abortController.signal.aborted) {
           setListing(normalizePublicListingRelations(data))
-          setLoading(false)
         }
       })
       .catch((err) => {
-        if (err.name === 'AbortError') return
+        if (err.name === "AbortError") return
         console.error("Error loading listing:", err)
         if (!abortController.signal.aborted) {
-          setError(err.message || "Failed to load listing")
-          setLoading(false)
+          setError("Failed to load listing")
+          setErrorListingId(listingId)
         }
       })
 
     return () => {
       abortController.abort()
     }
-  }, [isOpen, listingId])
+  }, [isOpen, listingId, initialListing, initialError])
 
   useEffect(() => {
     if (!isOpen || !listingId) {
@@ -147,14 +219,14 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
     }
   }, [isOpen, listingId])
 
-  const title = listing ? getListingTitle(listing) : "Listing Details"
-  const typeLabel = listing ? getTypeLabel(listing.type) : ""
-  const isOrganizerPerformance = isOrganizerPerformanceListing(listing)
-  const isPiecePerformance = isPiecePerformanceListing(listing)
-  const isOrganizerWorkshop = isOrganizerWorkshopListing(listing)
-  const isClassDetail = isClassListingDetail(listing)
-  const isAuditionDetail = isAuditionListingDetail(listing)
-  const isOpportunityDetail = isOpportunityListingDetail(listing)
+  const title = activeListing ? getListingTitle(activeListing) : "Listing Details"
+  const typeLabel = activeListing ? getTypeLabel(activeListing.type) : ""
+  const isOrganizerPerformance = isOrganizerPerformanceListing(activeListing)
+  const isPiecePerformance = isPiecePerformanceListing(activeListing)
+  const isOrganizerWorkshop = isOrganizerWorkshopListing(activeListing)
+  const isClassDetail = isClassListingDetail(activeListing)
+  const isAuditionDetail = isAuditionListingDetail(activeListing)
+  const isOpportunityDetail = isOpportunityListingDetail(activeListing)
   const isPerformanceRedesign =
     isOrganizerPerformance ||
     isPiecePerformance ||
@@ -164,36 +236,38 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
     isOpportunityDetail
 
   const parentListingId =
-    listing?.piece_details?.parent_listing_id || listing?.class_workshop_details?.parent_listing_id || null
-  const backToParentLabel = listing?.piece_details?.parent_listing_id
+    activeListing?.piece_details?.parent_listing_id ||
+    activeListing?.class_workshop_details?.parent_listing_id ||
+    null
+  const backToParentLabel = activeListing?.piece_details?.parent_listing_id
     ? "Back to Performance"
-    : listing?.class_workshop_details?.parent_listing_id
+    : activeListing?.class_workshop_details?.parent_listing_id
     ? "Back to Workshop"
     : null
 
   const opportunityDatesSummary =
-    listing?.type === "creative" && listing.creative_details?.dates?.trim()
-      ? listing.creative_details.dates.trim()
+    activeListing?.type === "creative" && activeListing.creative_details?.dates?.trim()
+      ? activeListing.creative_details.dates.trim()
       : null
 
   const sortedPhotos = useMemo(() => {
-    if (!listing?.listing_photos?.length) return []
-    return [...listing.listing_photos].sort(
+    if (!activeListing?.listing_photos?.length) return []
+    return [...activeListing.listing_photos].sort(
       (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
     )
-  }, [listing?.listing_photos])
+  }, [activeListing?.listing_photos])
 
   const displayNotes = useMemo(
-    () => stripAdminNotes(listing?.notes),
-    [listing?.notes]
+    () => stripAdminNotes(activeListing?.notes),
+    [activeListing?.notes]
   )
 
   const organizerProgramPiecesDoc = useMemo(() => {
-    if (listing?.type !== "performance") return null
-    const pd = listing.performance_details
+    if (activeListing?.type !== "performance") return null
+    const pd = activeListing.performance_details
     if (!pd || pd.subtype !== "ORGANIZER") return null
     return normalizeOrganizerProgramPiecesFromDb(pd.organizer_program_pieces)
-  }, [listing])
+  }, [activeListing])
 
   const selectedOrganizerPiece = useMemo(() => {
     if (!selectedOrganizerPieceId || !organizerProgramPiecesDoc) return null
@@ -212,9 +286,9 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
   const showOrganizerPieceOverlay = selectedOrganizerPieceId !== null
 
   const listingDetailThemeStyle: CSSProperties | undefined = useMemo(() => {
-    if (!listing) return undefined
+    if (!activeListing) return undefined
 
-    const colors = getFilterTypeColor(listing.type.toUpperCase())
+    const colors = getFilterTypeColor(activeListing.type.toUpperCase())
 
     return {
       // `Modal` header uses `bg-primary` (primary-600), spinners use `border-primary-600`.
@@ -231,7 +305,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       ["--primary-foreground" as any]: colors.text,
       ["--text-inverse" as any]: colors.text,
     }
-  }, [listing])
+  }, [activeListing])
 
   return (
     <>
@@ -250,7 +324,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       contentClassName="border-border-default bg-surface-modal-warm text-text-primary"
     >
       <div className="min-h-[calc(90vh-9rem)]">
-      {loading && (
+      {showLoading && (
           <div className="flex h-full min-h-[calc(90vh-9rem)] items-center justify-center py-12">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mb-4"></div>
@@ -259,10 +333,10 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
           </div>
         )}
 
-        {error && (
+        {activeError && (
           <div className="flex h-full min-h-[calc(90vh-9rem)] items-center justify-center py-12 text-center">
             <div>
-            <Text className="text-status-error-fg mb-4">{error}</Text>
+            <Text className="text-status-error-fg mb-4">{activeError}</Text>
             <button
               onClick={onClose}
               className="text-brand-primary hover:text-brand-primary-hover underline"
@@ -273,10 +347,10 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
           </div>
         )}
 
-        {!loading && !error && listing && (
+        {!showLoading && !activeError && activeListing && (
           isOrganizerPerformance ? (
             <PerformanceOrganizerDetailContent
-              listing={listing}
+              listing={activeListing}
               typeLabel={typeLabel}
               sortedPhotos={sortedPhotos}
               childListings={childListings}
@@ -290,7 +364,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
             />
           ) : isOrganizerWorkshop ? (
             <WorkshopOrganizerDetailContent
-              listing={listing}
+              listing={activeListing}
               typeLabel={typeLabel}
               sortedPhotos={sortedPhotos}
               childListings={childListings}
@@ -302,7 +376,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
             />
           ) : isPiecePerformance ? (
             <PerformancePieceDetailContent
-              listing={listing}
+              listing={activeListing}
               typeLabel={typeLabel}
               sortedPhotos={sortedPhotos}
               showAllDates={showAllDates}
@@ -313,7 +387,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
             />
           ) : isClassDetail ? (
             <ClassDetailContent
-              listing={listing}
+              listing={activeListing}
               typeLabel={typeLabel}
               sortedPhotos={sortedPhotos}
               showAllDates={showAllDates}
@@ -324,7 +398,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
             />
           ) : isAuditionDetail ? (
             <AuditionDetailContent
-              listing={listing}
+              listing={activeListing}
               typeLabel={typeLabel}
               sortedPhotos={sortedPhotos}
               showAllDates={showAllDates}
@@ -335,7 +409,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
             />
           ) : isOpportunityDetail ? (
             <OpportunityDetailContent
-              listing={listing}
+              listing={activeListing}
               typeLabel={typeLabel}
               sortedPhotos={sortedPhotos}
               onListingClick={navigateToListing}
@@ -347,11 +421,16 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
             <div className="flex items-center justify-between gap-3 pb-4 border-b border-border-default">
               <div className="flex items-center gap-3">
                 <Badge variant="primary" size="sm">{typeLabel}</Badge>
-                {listing.company && (
-                  <Text className="text-text-muted">{listing.company}</Text>
+                {activeListing.company && (
+                  <Text className="text-text-muted">{activeListing.company}</Text>
                 )}
               </div>
-              {listingId ? <SaveListingFavoriteButton listingId={listingId} /> : null}
+              {listingId ? (
+                <div className="flex items-center gap-2">
+                  <CopyListingLinkButton listingId={listingId} status={activeListing.status} />
+                  <SaveListingFavoriteButton listingId={listingId} />
+                </div>
+              ) : null}
             </div>
             {parentListingId && backToParentLabel && onListingClick && (
               <div>
@@ -367,10 +446,10 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
 
             {(() => {
               const hasTypeDetails = 
-                (listing.type === "performance" && listing.performance_details) ||
-                (listing.type === "class" && listing.class_workshop_details) ||
-                (listing.type === "audition" && listing.audition_details) ||
-                (listing.type === "creative" && listing.creative_details)
+                (activeListing.type === "performance" && activeListing.performance_details) ||
+                (activeListing.type === "class" && activeListing.class_workshop_details) ||
+                (activeListing.type === "audition" && activeListing.audition_details) ||
+                (activeListing.type === "creative" && activeListing.creative_details)
               
               if (!hasTypeDetails) return null
               
@@ -378,38 +457,38 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                 <Card className="p-4">
                   <H3 className="mb-3 text-text-primary">Information</H3>
                   <div className="grid min-w-0 max-w-full grid-cols-1 gap-x-6 gap-y-0 sm:grid-cols-2">
-                    {listing.type === "performance" && listing.performance_details && (
+                    {activeListing.type === "performance" && activeListing.performance_details && (
                       <>
-                        {listing.performance_details.subtype === "PIECE" && listing.piece_details && (
-                          <PieceDetails details={listing.piece_details} />
+                        {activeListing.performance_details.subtype === "PIECE" && activeListing.piece_details && (
+                          <PieceDetails details={activeListing.piece_details} />
                         )}
                       </>
                     )}
-                    {listing.type === "class" && listing.class_workshop_details && (
+                    {activeListing.type === "class" && activeListing.class_workshop_details && (
                       <>
-                        {listing.class_workshop_details.class_workshop_type === "WORKSHOP" ? (
-                          <WorkshopDetails details={listing.class_workshop_details} />
+                        {activeListing.class_workshop_details.class_workshop_type === "WORKSHOP" ? (
+                          <WorkshopDetails details={activeListing.class_workshop_details} />
                         ) : (
-                          <ClassDetails details={listing.class_workshop_details} />
+                          <ClassDetails details={activeListing.class_workshop_details} />
                         )}
                       </>
                     )}
-                    {listing.type === "audition" && listing.audition_details && (
-                      <AuditionDetails details={listing.audition_details} />
+                    {activeListing.type === "audition" && activeListing.audition_details && (
+                      <AuditionDetails details={activeListing.audition_details} />
                     )}
-                    {listing.type === "creative" && listing.creative_details && (
-                      <CreativeDetails details={listing.creative_details} />
+                    {activeListing.type === "creative" && activeListing.creative_details && (
+                      <CreativeDetails details={activeListing.creative_details} />
                     )}
                   </div>
                 </Card>
               )
             })()}
 
-            {listingHasOccurrencesSectionContent(listing, opportunityDatesSummary) && (
+            {listingHasOccurrencesSectionContent(activeListing, opportunityDatesSummary) && (
               <Card className="p-4">
                 <H3 className="mb-3 text-text-primary">Dates</H3>
                 <ListingOccurrencesSection
-                  listing={listing}
+                  listing={activeListing}
                   showAllDates={showAllDates}
                   onShowAllDatesChange={setShowAllDates}
                   opportunityDatesSummary={opportunityDatesSummary}
@@ -473,7 +552,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
             })()}
 
             {(sortedPhotos.length > 0) ||
-            listing.social_handles ||
+            activeListing.social_handles ||
             displayNotes ? (
               <Card className="p-4">
                 <H3 className="mb-3 text-text-primary">Additional Information</H3>
@@ -493,12 +572,12 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
                     </div>
                   )}
 
-                  {(listing.social_handles || displayNotes) && (
+                  {(activeListing.social_handles || displayNotes) && (
                     <div className="grid min-w-0 max-w-full grid-cols-1 gap-x-6 gap-y-0 sm:grid-cols-2">
-                      {listing.social_handles && (
+                      {activeListing.social_handles && (
                         <FieldRow
                           label="Social Media"
-                          value={<SocialHandles socialHandles={listing.social_handles} />}
+                          value={<SocialHandles socialHandles={activeListing.social_handles} />}
                         />
                       )}
 
@@ -524,7 +603,7 @@ export function ListingDetailsModal({ isOpen, onClose, listingId, onListingClick
       onClosePiece={() => setSelectedOrganizerPieceId(null)}
       onDismissAll={handleDismissAll}
       piece={selectedOrganizerPiece}
-      parentListing={listing}
+      parentListing={activeListing}
     />
     </>
   )

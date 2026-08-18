@@ -24,6 +24,40 @@ import { parseDonationPresetAmounts } from "@/lib/donations/donationPresetAmount
 import { resolveDonationRecipientDisplayName } from "@/lib/profile/donationRecipientDisplayName";
 import { formatOccurrenceRangeEST } from "@/lib/datetime/utils";
 
+type OccurrenceLike = {
+  starts_at_utc: string;
+  ends_at_utc?: string | null;
+};
+
+/** When an occurrence is over: end time if present, otherwise start. */
+function occurrenceCompletesAt(occ: OccurrenceLike): string {
+  return occ.ends_at_utc ?? occ.starts_at_utc;
+}
+
+/**
+ * Instant when the whole listing is complete — max completion across event
+ * dates, or across deadlines when there are no event occurrences.
+ */
+function listingCompletesAt(
+  eventOccurrences: OccurrenceLike[],
+  deadlineOccurrences: OccurrenceLike[],
+): string | null {
+  const pool = eventOccurrences.length > 0 ? eventOccurrences : deadlineOccurrences;
+  if (pool.length === 0) return null;
+
+  let latest: string | null = null;
+  let latestMs = -Infinity;
+  for (const occ of pool) {
+    const at = occurrenceCompletesAt(occ);
+    const ms = new Date(at).getTime();
+    if (!Number.isNaN(ms) && ms > latestMs) {
+      latestMs = ms;
+      latest = at;
+    }
+  }
+  return latest;
+}
+
 export async function fetchSavedEventsFromDb(
   userId: string,
   filter: ProfileSavedEventsFilter
@@ -107,8 +141,11 @@ export async function fetchSavedEventsFromDb(
       earliestOccurrence?.starts_at_utc ?? earliestDeadline?.starts_at_utc;
     if (!primaryStartsAt) continue;
 
-    const isUpcoming = new Date(primaryStartsAt) >= new Date(now);
-    const isPast = new Date(primaryStartsAt) < new Date(now);
+    const completesAt = listingCompletesAt(eventOccurrences, deadlineOccurrences);
+    if (!completesAt) continue;
+
+    const isUpcoming = new Date(completesAt) >= new Date(now);
+    const isPast = new Date(completesAt) < new Date(now);
 
     // Apply filter
     if (filter.mode === "upcoming" && !isUpcoming) continue;
@@ -172,7 +209,7 @@ export async function fetchSavedEventsFromDb(
       type: listing.type as SavedEvent["type"],
       name: title,
       date,
-      primaryStartsAtIso: primaryStartsAt,
+      completesAtIso: completesAt,
       location,
       deadline,
       description,

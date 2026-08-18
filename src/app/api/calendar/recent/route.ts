@@ -232,7 +232,7 @@ export async function GET(req: NextRequest) {
     
     return NextResponse.json(
       { data: recentListings },
-      { headers: { "Cache-Control": "public, s-maxage=600, stale-while-revalidate=300" } },
+      { headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" } },
     )
   } catch (err) {
     console.error("Recent listings GET error:", err instanceof Error ? err.message : String(err))

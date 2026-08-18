@@ -94,7 +94,10 @@ function occurrenceLocationFromRow(row: Record<string, unknown>): PersistedLocat
     lat: row.lat as number | undefined,
     lng: row.lng as number | undefined,
     venueName: row.venueName as string | undefined,
-    locationInstructions: row.locationInstructions as string | undefined,
+    // Prefer the form schema field; accept legacy `instructions` if present.
+    locationInstructions:
+      (row.locationInstructions as string | undefined) ??
+      (row.instructions as string | undefined),
   })
 }
 
@@ -154,7 +157,11 @@ export async function buildPerformancePayload(
 
   const isPiece = data.type === "PIECE"
   const scheduleMode = data.pieceScheduleMode ?? "FROM_PARENT"
-  const hasSelectedSlots = data.selectedSlots && data.selectedSlots.length > 0
+  // Parent-derived slots are only valid while linked to an EAR parent.
+  const canUseSelectedSlots =
+    Boolean(data.parentEventId) && (data.parentEventMode ?? "SELECT") === "SELECT"
+  const hasSelectedSlots =
+    canUseSelectedSlots && Array.isArray(data.selectedSlots) && data.selectedSlots.length > 0
   const hasCustomOccurrences = data.extraOccurrences && data.extraOccurrences.length > 0
 
   // For pieces, handle different scenarios:
@@ -201,7 +208,10 @@ export async function buildPerformancePayload(
           placeId: timeSlot?.placeId ?? parentOcc?.placeId,
           venueName: timeSlot?.venueName ?? parentOcc?.venueName,
           locationInstructions:
-            timeSlot?.locationInstructions ?? timeSlot?.instructions ?? parentOcc?.locationInstructions,
+            timeSlot?.locationInstructions ??
+            timeSlot?.instructions ??
+            parentOcc?.locationInstructions ??
+            parentOcc?.instructions,
           lat: timeSlot?.lat ?? parentOcc?.lat,
           lng: timeSlot?.lng ?? parentOcc?.lng,
         })
@@ -265,7 +275,7 @@ export async function buildPerformancePayload(
             (d as any).address,
             (d as any).placeId,
             (d as any).venueName,
-            (d as any).locationInstructions
+            (d as any).locationInstructions ?? (d as any).instructions,
           )) {
             continue
           }
@@ -380,12 +390,13 @@ export async function buildPerformancePayload(
     
     pieceDetails = {
       parent_listing_id: parentListingId,
-      parent_event_name: data.parentEventName || null,
-      parent_event_website: data.parentEventWebsite || null,
-      parent_event_ticket_link: data.parentEventTicketLink || null,
-      parent_event_contact_email: data.parentEventContactEmail || null,
+      // Manual parent metadata only applies when there is no linked EAR parent.
+      parent_event_name: parentListingId ? null : (data.parentEventName || null),
+      parent_event_website: parentListingId ? null : (data.parentEventWebsite || null),
+      parent_event_ticket_link: parentListingId ? null : (data.parentEventTicketLink || null),
+      parent_event_contact_email: parentListingId ? null : (data.parentEventContactEmail || null),
       piece_schedule_mode: data.pieceScheduleMode || null,
-      selected_slots: data.selectedSlots || null,
+      selected_slots: canUseSelectedSlots ? data.selectedSlots || null : null,
       piece_title: pieceTitle,
       piece_company: pieceCompany,
       piece_company_website: pieceCompanyWebsite,
@@ -428,8 +439,9 @@ export async function buildPerformancePayload(
       description: data.description ?? null,
       organizer: data.organizer ?? null,
       website: data.website || null,
-      link: data.link ?? null,
-      price: data.price ?? null,
+      // Empty strings → null so linked pieces (after clearing MANUAL ticket fields) do not persist blanks.
+      link: data.link || null,
+      price: data.price || null,
       participants: isPiece
         ? data.piece_credits?.trim() || data.participants?.trim() || null
         : data.participants ?? null,

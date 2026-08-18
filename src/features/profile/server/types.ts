@@ -18,8 +18,12 @@ export interface SavedEvent {
   name: string;
   /** Display: start (and end when present), EST — from `formatOccurrenceRangeEST`. */
   date: string;
-  /** ISO start of the primary occurrence or deadline; for reliable past/upcoming checks. */
-  primaryStartsAtIso?: string;
+  /**
+   * ISO instant when the listing is fully complete: latest event occurrence
+   * `ends_at_utc ?? starts_at_utc` (or latest deadline when there are no event dates).
+   * Used for upcoming/past filters and attendance UI.
+   */
+  completesAtIso?: string;
   location: string;
   deadline?: string;
   description?: string;

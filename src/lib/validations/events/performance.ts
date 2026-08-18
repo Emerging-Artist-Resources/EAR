@@ -14,6 +14,27 @@ import {
   pieceFieldPrefix,
 } from "@/lib/listings/organizer-program-pieces"
 
+/** Shared by performanceFields and performanceStep2Schema so organizer/piece ticket rules stay aligned. */
+export function addRequiredTicketLinkAndPriceIssues(
+  ctx: z.RefinementCtx,
+  fields: { link?: string; price?: string },
+): void {
+  if (!fields.link?.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["link"],
+      message: "Ticket link is required",
+    })
+  }
+  if (!fields.price?.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["price"],
+      message: "Price is required",
+    })
+  }
+}
+
 /**
  * Performance-only fields
  * - Adds canonical: occurrences
@@ -197,20 +218,7 @@ export const performanceFields = z
               : "Organizer / presenting company is required",
         })
       }
-      if (!data.link || data.link.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          path: ["link"],
-          message: "Ticket link is required",
-        })
-      }
-      if (!data.price || data.price.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          path: ["price"],
-          message: "Price is required",
-        })
-      }
+      addRequiredTicketLinkAndPriceIssues(ctx, data)
       addOrganizerListingScheduleIssues(ctx, {
         occurrences: organizerOccs,
         eventType: data.eventType,
@@ -297,6 +305,7 @@ export const performanceFields = z
             message: "Event title is required",
           })
         }
+        addRequiredTicketLinkAndPriceIssues(ctx, data)
       }
 
       // 2. Piece schedule validation
