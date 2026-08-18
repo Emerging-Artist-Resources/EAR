@@ -8,7 +8,18 @@ import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { storageService } from "@/services/storage"
 import { normalizeOrganizerProgramPiecesFromDb } from "@/lib/listings/organizer-program-pieces"
 import { normalizePublicListingRelations } from "@/lib/listings/display"
+import { LISTING_DETAIL_CACHE_CONTROL } from "@/lib/listings/listing-detail-cache"
 import { isListingNotFoundError } from "@/lib/api/utils"
+
+function jsonWithListingDetailCache(
+  body: unknown,
+  init?: { status?: number },
+) {
+  return NextResponse.json(body, {
+    ...init,
+    headers: { "Cache-Control": LISTING_DETAIL_CACHE_CONTROL },
+  })
+}
 
 export async function GET(
   _req: NextRequest,
@@ -136,17 +147,14 @@ export async function GET(
       contact_email: additionalData?.contact_email ?? null,
     }
     
-    return NextResponse.json(
-      { data: result },
-      { headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" } },
-    )
+    return jsonWithListingDetailCache({ data: result })
   } catch (err) {
     if (!isListingNotFoundError(err)) {
       console.error("Listing public GET error:", err instanceof Error ? err.message : String(err))
     }
     if (isListingNotFoundError(err)) {
-      return NextResponse.json({ error: { code: "NOT_FOUND" } }, { status: 404 })
+      return jsonWithListingDetailCache({ error: { code: "NOT_FOUND" } }, { status: 404 })
     }
-    return NextResponse.json({ error: { code: "INTERNAL" } }, { status: 500 })
+    return jsonWithListingDetailCache({ error: { code: "INTERNAL" } }, { status: 500 })
   }
 }
