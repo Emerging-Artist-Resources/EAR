@@ -25,6 +25,9 @@ import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnel
 import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
 import { Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { LinkifiedText } from "@/components/shared/LinkifiedText"
+
+const donationMessageLinkClass = "text-primary hover:underline break-all"
 
 interface ProfileData {
   name: string | null
@@ -323,7 +326,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
               !artistMessageExpanded && "line-clamp-2",
             )}
           >
-            {artistMessageText}
+            <LinkifiedText text={artistMessageText} linkClassName={donationMessageLinkClass} />
           </p>
           {(artistMessageOverflows || artistMessageExpanded) && (
             <button
@@ -345,7 +348,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
               !orgMessageExpanded && "line-clamp-2",
             )}
           >
-            {orgHeroMessageText}
+            <LinkifiedText text={orgHeroMessageText} linkClassName={donationMessageLinkClass} />
           </p>
           {(orgMessageOverflows || orgMessageExpanded) && (
             <button
