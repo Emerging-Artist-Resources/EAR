@@ -1,13 +1,16 @@
 import { mapReceivedDonationSummary, computeDonationSummaryStats } from "./repository"
+import { computeDonationFeeBreakdown } from "@/lib/payments/computeDonationCharge"
 
 describe("mapReceivedDonationSummary", () => {
-  it("maps donor email and total charged amount from a DB row", () => {
+  it("maps donor email, total charged amount, and estimated fee breakdown", () => {
+    const amount = 5250
+    const fees = computeDonationFeeBreakdown(amount)
     const summary = mapReceivedDonationSummary({
       id: "donation-1",
       created_at: "2026-06-01T12:00:00.000Z",
       donor_name: "Jane Donor",
       donor_email: "jane@example.com",
-      amount: 5250,
+      amount,
       message: "Keep creating!",
       designation_label_snapshot: "General support",
     })
@@ -17,7 +20,10 @@ describe("mapReceivedDonationSummary", () => {
       created_at: "2026-06-01T12:00:00.000Z",
       donor_name: "Jane Donor",
       donor_email: "jane@example.com",
-      amount: 5250,
+      amount,
+      stripe_fee_cents: fees.stripeFeeCents,
+      fiscal_fee_cents: fees.fiscalFeeCents,
+      net_cents: fees.netCents,
       message: "Keep creating!",
       designation_label_snapshot: "General support",
     })
@@ -39,6 +45,9 @@ describe("mapReceivedDonationSummary", () => {
     expect(summary.message).toBeNull()
     expect(summary.designation_label_snapshot).toBeNull()
     expect(summary.amount).toBe(1000)
+    expect(summary.net_cents).toBe(
+      summary.amount - summary.stripe_fee_cents - summary.fiscal_fee_cents,
+    )
   })
 })
 

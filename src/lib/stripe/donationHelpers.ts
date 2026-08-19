@@ -60,3 +60,11 @@ export function resolveCreatedUnix(
 export function formatReceiptDate(createdUnix: number): string {
   return new Date(createdUnix * 1000).toLocaleDateString("en-US", { dateStyle: "long" })
 }
+
+/** Unix seconds from an ISO timestamp; falls back to now when the value is missing or invalid. */
+export function unixSecondsFromIso(iso: string | null | undefined): number {
+  if (!iso) return Math.floor(Date.now() / 1000)
+  const ms = new Date(iso).getTime()
+  if (Number.isNaN(ms)) return Math.floor(Date.now() / 1000)
+  return Math.floor(ms / 1000)
+}

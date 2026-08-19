@@ -1,11 +1,15 @@
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/typography"
+import { Button } from "@/components/ui/button"
 import { formatUsdFromCents } from "@/lib/payments/formatUsdFromCents"
+import { donorDisplayName } from "@/lib/donations/donor-display"
 import type { ReceivedDonationSummary } from "@/features/profile/server/types"
 import { fiscalSponsorshipDashboard } from "@/lib/content/fiscal-sponsorship-dashboard"
+import { fiscalSponsorshipReceiptPath } from "@/lib/profile/fiscal-sponsorship-query"
 
 const EMPTY_VALUE = "—"
 const columns = fiscalSponsorshipDashboard.approved.donationColumns
+const COLUMN_COUNT = Object.keys(columns).length
 
 function formatDonationDate(iso: string): string {
   try {
@@ -19,7 +23,7 @@ function formatDonationDate(iso: string): string {
 }
 
 function donorLabel(donation: ReceivedDonationSummary): string {
-  return donation.donor_name?.trim() || "Anonymous"
+  return donorDisplayName(donation.donor_name)
 }
 
 function donorEmail(donation: ReceivedDonationSummary): string {
@@ -48,6 +52,34 @@ function DonationSecondaryDetails({ donation }: { donation: ReceivedDonationSumm
   )
 }
 
+function ReceiptLink({ donationId }: { donationId: string }) {
+  return (
+    <Button asChild variant="link" size="sm" className="h-auto px-0">
+      <a href={fiscalSponsorshipReceiptPath(donationId)}>{columns.receipt}</a>
+    </Button>
+  )
+}
+
+function MoneyCell({
+  cents,
+  emphasized = false,
+}: {
+  cents: number
+  emphasized?: boolean
+}) {
+  return (
+    <td className="px-3 py-3 align-top text-right">
+      <Text
+        className={
+          emphasized ? "text-sm font-semibold text-gray-900" : "text-sm text-gray-600"
+        }
+      >
+        {formatUsdFromCents(cents)}
+      </Text>
+    </td>
+  )
+}
+
 export function ReceivedDonationTableRow({ donation }: { donation: ReceivedDonationSummary }) {
   const hasSecondaryDetails =
     Boolean(donation.designation_label_snapshot) || Boolean(donation.message)
@@ -64,15 +96,17 @@ export function ReceivedDonationTableRow({ donation }: { donation: ReceivedDonat
         <td className="px-3 py-3 align-top">
           <Text className="text-sm text-gray-600">{formatDonationDate(donation.created_at)}</Text>
         </td>
-        <td className="px-3 py-3 align-top text-right">
-          <Text className="text-sm font-semibold text-gray-900">
-            {formatUsdFromCents(donation.amount)}
-          </Text>
+        <MoneyCell cents={donation.amount} emphasized />
+        <MoneyCell cents={donation.stripe_fee_cents} />
+        <MoneyCell cents={donation.fiscal_fee_cents} />
+        <MoneyCell cents={donation.net_cents} emphasized />
+        <td className="px-3 py-3 align-top">
+          <ReceiptLink donationId={donation.id} />
         </td>
       </tr>
       {hasSecondaryDetails ? (
         <tr className="border-t border-gray-100">
-          <td colSpan={4} className="px-3 pb-3 pt-0">
+          <td colSpan={COLUMN_COUNT} className="px-3 pb-3 pt-0">
             <DonationSecondaryDetails donation={donation} />
           </td>
         </tr>
@@ -98,6 +132,10 @@ export function ReceivedDonationMobileCard({ donation }: { donation: ReceivedDon
         <MobileField label={columns.email} value={donorEmail(donation)} />
         <MobileField label={columns.date} value={formatDonationDate(donation.created_at)} />
         <MobileField label={columns.amount} value={formatUsdFromCents(donation.amount)} />
+        <MobileField label={columns.stripeFee} value={formatUsdFromCents(donation.stripe_fee_cents)} />
+        <MobileField label={columns.fiscalFee} value={formatUsdFromCents(donation.fiscal_fee_cents)} />
+        <MobileField label={columns.net} value={formatUsdFromCents(donation.net_cents)} />
+        <ReceiptLink donationId={donation.id} />
         <DonationSecondaryDetails donation={donation} />
       </div>
     </Card>

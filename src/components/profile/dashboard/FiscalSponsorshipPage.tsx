@@ -3,10 +3,8 @@
 import Link from "next/link"
 import { DashboardPageLayout } from "./DashboardPageLayout"
 import { Button } from "@/components/ui/button"
-import {
-  FiscalSponsorshipSection,
-  useFiscalSponsorshipDashboard,
-} from "@/components/profile/fiscal-sponsorship/FiscalSponsorshipSection"
+import { FiscalSponsorshipSection } from "@/components/profile/fiscal-sponsorship/FiscalSponsorshipSection"
+import { useFiscalSponsorshipDashboard } from "@/components/profile/fiscal-sponsorship/useFiscalSponsorshipDashboard"
 import {
   FISCAL_SPONSORSHIP_INQUIRY_HREF,
   FISCAL_SPONSORSHIP_PAGE_HREF,
@@ -14,7 +12,8 @@ import {
 } from "@/lib/content/fiscal-sponsorship-dashboard"
 
 export function FiscalSponsorshipPage() {
-  const { data, loading, error, setPage, reload } = useFiscalSponsorshipDashboard()
+  const { data, loading, error, dateFrom, dateTo, setPage, setDateRange, reload } =
+    useFiscalSponsorshipDashboard()
   const showApplyActions =
     data != null && data.fiscal_sponsorship_status !== "approved"
 
@@ -39,7 +38,10 @@ export function FiscalSponsorshipPage() {
         data={data}
         loading={loading}
         error={error}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
         onPageChange={setPage}
+        onDateRangeChange={setDateRange}
         onDonationPageUpdated={reload}
       />
     </DashboardPageLayout>

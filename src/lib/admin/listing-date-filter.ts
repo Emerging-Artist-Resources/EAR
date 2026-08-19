@@ -1,3 +1,8 @@
+import {
+  parseInclusiveDateRange,
+  type InclusiveDateRange,
+} from "@/lib/dates/parse-inclusive-date-range"
+
 export type AdminListingDateBasis = "submitted" | "event" | "deadline"
 
 export function parseAdminListingDateBasis(
@@ -7,24 +12,14 @@ export function parseAdminListingDateBasis(
   return "submitted"
 }
 
-export type AdminListingDateRange = {
-  fromISO?: string
-  toISO?: string
-}
+export type AdminListingDateRange = InclusiveDateRange
 
 /** Matches client date-input semantics: YYYY-MM-DD is UTC midnight through end of day. */
 export function parseAdminListingDateRange(
   dateFrom?: string,
   dateTo?: string,
 ): AdminListingDateRange | null {
-  if (!dateFrom && !dateTo) return null
-
-  const fromISO = dateFrom ? new Date(dateFrom).toISOString() : undefined
-  const toISO = dateTo
-    ? new Date(new Date(dateTo).getTime() + 24 * 60 * 60 * 1000 - 1).toISOString()
-    : undefined
-
-  return { fromISO, toISO }
+  return parseInclusiveDateRange(dateFrom, dateTo)
 }
 
 export function adminListingDateColumnLabel(

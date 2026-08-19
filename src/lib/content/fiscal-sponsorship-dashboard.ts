@@ -22,12 +22,28 @@ export const fiscalSponsorshipDashboard = {
     donationsAmountHelper:
       "Amount reflects what the donor was charged, including any fees they chose to cover.",
     emptyDonations: "No donations yet. Share your donation link to get started.",
+    emptyFilteredDonations: "No donations in this date range.",
     missingSlug: "Your fiscal sponsorship is approved, but your public donation link is not set up yet. Contact EAR to configure your page.",
+    dateFilter: {
+      fromLabel: "From",
+      toLabel: "To",
+      clearLabel: "Clear dates",
+    },
+    exportExcel: {
+      label: "Export to Excel",
+      sheetName: "Donations",
+      designation: "Designation",
+      message: "Message",
+    },
     donationColumns: {
       donor: "Donor",
       email: "Email",
       date: "Date",
       amount: "Amount",
+      stripeFee: "Stripe fee",
+      fiscalFee: "5.5%",
+      net: "Net",
+      receipt: "Receipt",
     },
   },
   paused: {

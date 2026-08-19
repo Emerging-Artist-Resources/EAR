@@ -1,17 +1,17 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { H3, Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
-import { apiGet } from "@/lib/client/fetch-utils"
 import type { FiscalSponsorshipDashboard } from "@/features/profile/server/types"
 import { FiscalSponsorshipStatusBadge } from "./FiscalSponsorshipStatusBadge"
 import { DonationLinkCard } from "./DonationLinkCard"
 import { CustomizeDonationPageModal } from "./CustomizeDonationPageModal"
 import { DonationSummaryCard } from "./DonationSummaryCard"
 import { ReceivedDonationsList } from "./ReceivedDonationsList"
+import type { DonationDateRange } from "./DonationDateFilter"
 import {
   fiscalSponsorshipDashboard,
   FISCAL_SPONSORSHIP_INQUIRY_HREF,
@@ -44,7 +44,10 @@ interface FiscalSponsorshipSectionProps {
   data: FiscalSponsorshipDashboard | null
   loading: boolean
   error: string | null
+  dateFrom?: string
+  dateTo?: string
   onPageChange: (page: number) => void
+  onDateRangeChange: (range: DonationDateRange) => void
   onDonationPageUpdated?: () => void
 }
 
@@ -52,7 +55,10 @@ export function FiscalSponsorshipSection({
   data,
   loading,
   error,
+  dateFrom,
+  dateTo,
   onPageChange,
+  onDateRangeChange,
   onDonationPageUpdated,
 }: FiscalSponsorshipSectionProps) {
   const [customizeOpen, setCustomizeOpen] = useState(false)
@@ -188,9 +194,9 @@ export function FiscalSponsorshipSection({
       ) : null}
 
       {showDonationsList ? (
-        loading ? (
+        loading && !data ? (
           <LoadingSkeleton />
-        ) : (
+        ) : data ? (
           <>
             <DonationSummaryCard summary={data.donations_summary} />
             <ReceivedDonationsList
@@ -199,48 +205,14 @@ export function FiscalSponsorshipSection({
               page={data.page}
               limit={data.limit}
               onPageChange={onPageChange}
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+              onDateRangeChange={onDateRangeChange}
+              isDateFiltered={Boolean(dateFrom || dateTo)}
             />
           </>
-        )
+        ) : null
       ) : null}
     </div>
   )
-}
-
-export function useFiscalSponsorshipDashboard() {
-  const [data, setData] = useState<FiscalSponsorshipDashboard | null>(null)
-  const [page, setPage] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const load = useCallback(async (requestPage: number) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const result = await apiGet<FiscalSponsorshipDashboard>(
-        `/api/profile/fiscal-sponsorship?page=${requestPage}`,
-      )
-      setData(result)
-      setPage(result.page)
-    } catch (err) {
-      setData(null)
-      setError(err instanceof Error ? err.message : "Failed to load fiscal sponsorship data")
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    void load(page)
-  }, [load, page])
-
-  return {
-    data,
-    loading,
-    error,
-    setPage,
-    reload: () => {
-      void load(page)
-    },
-  }
 }

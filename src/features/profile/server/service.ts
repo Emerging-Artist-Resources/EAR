@@ -7,6 +7,8 @@ import {
   getActivityOverviewRepo,
   fetchServiceInquiriesForUser,
   fetchFiscalSponsorshipDashboardRepo,
+  fetchPaidDonationsForExportRepo,
+  fetchPaidDonationReceiptRepo,
   updateDonationPageRepo,
   FISCAL_SPONSORSHIP_DONATIONS_PAGE_SIZE,
 } from "./repository";
@@ -17,10 +19,16 @@ import {
   ActivityOverview,
   ServiceInquirySummary,
   FiscalSponsorshipDashboard,
+  FiscalSponsorshipDashboardQuery,
 } from "./types";
 import type { DonationPageSettings } from "@/lib/donations/donationPageSettings";
 import type { UpdateDonationPageData } from "@/lib/validations/donation-page";
 import { toDonationPagePersistPayload } from "@/lib/validations/donation-page";
+import { buildDonationExportFileName } from "@/lib/donations/donation-export-rows";
+import { buildDonationsWorkbook } from "@/lib/donations/donation-excel-export";
+import { renderDonationReceiptPdf, toDonationReceiptPdfInput } from "@/lib/pdf/donation-receipt";
+import { buildDonationPdfAttachmentName } from "@/lib/email/sendInternalDonationEmail";
+import { formatReceiptDate, unixSecondsFromIso } from "@/lib/stripe/donationHelpers";
 import { sendProfileEmail } from "@/lib/email/sendProfileEmail";
 import { greetingNameFromFullName } from "@/lib/names/person-name";
 import { getPublicAppUrl } from "@/lib/config/app-url";
@@ -65,11 +73,51 @@ export async function getServiceInquiries(userId: string): Promise<ServiceInquir
 
 export async function getFiscalSponsorshipDashboard(
   userId: string,
-  options?: { page?: number; limit?: number },
+  options?: FiscalSponsorshipDashboardQuery,
 ): Promise<FiscalSponsorshipDashboard> {
   const page = options?.page ?? 0;
   const limit = options?.limit ?? FISCAL_SPONSORSHIP_DONATIONS_PAGE_SIZE;
-  return fetchFiscalSponsorshipDashboardRepo(userId, { page, limit });
+  return fetchFiscalSponsorshipDashboardRepo(userId, {
+    page,
+    limit,
+    dateFrom: options?.dateFrom,
+    dateTo: options?.dateTo,
+  });
+}
+
+export async function exportFiscalSponsorshipDonations(
+  userId: string,
+  options?: Pick<FiscalSponsorshipDashboardQuery, "dateFrom" | "dateTo">,
+): Promise<{ bytes: Buffer; fileName: string }> {
+  const donations = await fetchPaidDonationsForExportRepo(userId, {
+    dateFrom: options?.dateFrom,
+    dateTo: options?.dateTo,
+  });
+  const bytes = await buildDonationsWorkbook(donations);
+  return {
+    bytes,
+    fileName: buildDonationExportFileName(options?.dateFrom, options?.dateTo),
+  };
+}
+
+export async function getDonationReceiptPdf(
+  userId: string,
+  donationId: string,
+): Promise<{ bytes: Uint8Array; fileName: string }> {
+  const row = await fetchPaidDonationReceiptRepo(userId, donationId);
+  if (!row) {
+    throw new Error("Donation receipt not found");
+  }
+
+  const createdUnix = unixSecondsFromIso(row.created_at);
+  const input = toDonationReceiptPdfInput(row, {
+    dateLabel: formatReceiptDate(createdUnix),
+  });
+  const bytes = await renderDonationReceiptPdf(input);
+  return {
+    bytes,
+    fileName: buildDonationPdfAttachmentName(input.artistDisplayName, createdUnix),
+  };
 }
 
 export async function updateDonationPage(

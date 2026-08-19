@@ -190,6 +190,15 @@ export function getQueryParam(
   return url.searchParams.get(key) ?? defaultValue
 }
 
+/** Trimmed query param, or undefined when missing/blank. */
+export function getOptionalQueryParam(
+  req: NextRequest,
+  key: string,
+): string | undefined {
+  const value = getQueryParam(req, key)?.trim()
+  return value || undefined
+}
+
 /**
  * Gets query parameter as array
  */

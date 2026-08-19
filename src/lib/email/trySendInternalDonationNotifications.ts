@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type Stripe from "stripe"
-import { generateDonationPdf, generateMinimalDonationPdfFallback } from "@/lib/pdf/generateDonationPdf"
+import { renderDonationReceiptPdf, toDonationReceiptPdfInput } from "@/lib/pdf/donation-receipt"
 import {
   type DonationAmountRow,
   formatCurrencyFromCents,
@@ -17,6 +17,7 @@ import {
 } from "@/lib/email/sendInternalDonationEmail"
 
 type DonationRow = DonationAmountRow & {
+  id: string
   recipient_user_id: string | null
   internal_notification_sent_at: string | null
   cover_card_fee: boolean | null
@@ -230,38 +231,15 @@ export async function trySendInternalDonationNotifications({
     ...sharedTemplateFields,
   }
 
-  let pdfBytes: Uint8Array
-  try {
-    pdfBytes = await generateDonationPdf({
-      donorName,
-      donorEmail: donorEmailResolved || undefined,
-      artistDisplayName: artistDisplayForTemplates,
+  const pdfBytes = await renderDonationReceiptPdf(
+    toDonationReceiptPdfInput(row, {
+      donorName: session?.customer_details?.name,
+      donorEmail: donorEmailResolved,
       amountCents,
-      dateLabel: dateStr,
-      donationId,
       donorMessage: msg,
-      designationLabel: hasDesignation ? designationLabel : undefined,
-      feeCoverage: row.recipient_user_id
-        ? {
-            coverFiscalFee: Boolean(row.cover_fiscal_fee),
-            coverCardFee: Boolean(row.cover_card_fee),
-          }
-        : {
-            coverCardFee: Boolean(row.cover_card_fee),
-          },
-    })
-  } catch (pdfErr) {
-    console.error(
-      `${logPrefix(donationId)} Donation PDF failed (Noto + Helvetica with sanitized input); using minimal fallback`,
-      { error: pdfErr },
-    )
-    pdfBytes = await generateMinimalDonationPdfFallback({
-      amountCents,
       dateLabel: dateStr,
-      donationId,
-      designationLabel: hasDesignation ? designationLabel : undefined,
-    })
-  }
+    }),
+  )
 
   const pdfFileName = buildDonationPdfAttachmentName(artistDisplayForTemplates, createdUnix)
 

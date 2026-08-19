@@ -13,6 +13,8 @@ import { getPublicAppUrl } from "@/lib/config/app-url";
 import { getListingTitle } from "@/features/events/server/listing-utils";
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections";
 import type { FiscalSponsorshipStatus } from "@/lib/types/fiscal-sponsorship";
+import { computeDonationFeeBreakdown } from "@/lib/payments/computeDonationCharge";
+import { parseInclusiveDateRange } from "@/lib/dates/parse-inclusive-date-range";
 import { donationPageImagePublicUrl } from "@/lib/storage/donationPagePhotos";
 import {
   type DonationDesignationConfigParsed,
@@ -22,6 +24,7 @@ import { mapDonationPageSettingsFromRow } from "@/lib/donations/donationPageSett
 import type { DonationPageSettings } from "@/lib/donations/donationPageSettings";
 import { parseDonationPresetAmounts } from "@/lib/donations/donationPresetAmounts";
 import { resolveDonationRecipientDisplayName } from "@/lib/profile/donationRecipientDisplayName";
+import type { DonationReceiptRow } from "@/lib/pdf/donation-receipt";
 import { formatOccurrenceRangeEST } from "@/lib/datetime/utils";
 
 type OccurrenceLike = {
@@ -711,6 +714,26 @@ export async function fetchServiceInquiriesForUser(userId: string): Promise<Serv
 }
 
 export const FISCAL_SPONSORSHIP_DONATIONS_PAGE_SIZE = 10;
+export const FISCAL_SPONSORSHIP_EXPORT_MAX_ROWS = 2000;
+
+const RECEIVED_DONATION_COLUMNS =
+  "id, created_at, donor_name, donor_email, amount, message, designation_label_snapshot";
+
+function applyCreatedAtRange<
+  Query extends {
+    gte: (column: string, value: string) => Query;
+    lte: (column: string, value: string) => Query;
+  },
+>(query: Query, dateFrom?: string, dateTo?: string): Query {
+  const dateRange = parseInclusiveDateRange(dateFrom, dateTo);
+  if (dateRange?.fromISO) {
+    query = query.gte("created_at", dateRange.fromISO);
+  }
+  if (dateRange?.toISO) {
+    query = query.lte("created_at", dateRange.toISO);
+  }
+  return query;
+}
 
 type ReceivedDonationDbRow = {
   id: unknown;
@@ -723,12 +746,18 @@ type ReceivedDonationDbRow = {
 };
 
 export function mapReceivedDonationSummary(row: ReceivedDonationDbRow): ReceivedDonationSummary {
+  const amount = row.amount as number;
+  const fees = computeDonationFeeBreakdown(amount);
+
   return {
     id: row.id as string,
     created_at: row.created_at as string,
     donor_name: (row.donor_name as string | null) ?? null,
     donor_email: (row.donor_email as string | null) ?? null,
-    amount: row.amount as number,
+    amount,
+    stripe_fee_cents: fees.stripeFeeCents,
+    fiscal_fee_cents: fees.fiscalFeeCents,
+    net_cents: fees.netCents,
     message: (row.message as string | null) ?? null,
     designation_label_snapshot: (row.designation_label_snapshot as string | null) ?? null,
   };
@@ -749,38 +778,36 @@ export function computeDonationSummaryStats(amounts: number[]): DonationSummaryS
 
 export async function fetchFiscalSponsorshipDashboardRepo(
   userId: string,
-  options: { page: number; limit: number },
+  options: { page: number; limit: number; dateFrom?: string; dateTo?: string },
 ): Promise<FiscalSponsorshipDashboard> {
   const profile = await getProfileRepo(userId);
   if (!profile) {
     throw new Error("Profile not found");
   }
 
-  const { page, limit } = options;
+  const { page, limit, dateFrom, dateTo } = options;
   const from = page * limit;
   const to = from + limit - 1;
 
   const supabase = await getSupabaseServerClient();
 
-  const donationsQuery = supabase
+  let donationsQuery = supabase
     .from("donations")
-    .select(
-      "id, created_at, donor_name, donor_email, amount, message, designation_label_snapshot",
-      { count: "exact" },
-    )
+    .select(RECEIVED_DONATION_COLUMNS, { count: "exact" })
     .eq("recipient_user_id", userId)
-    .eq("payment_status", "paid")
-    .order("created_at", { ascending: false })
-    .range(from, to);
+    .eq("payment_status", "paid");
 
-  const summaryAmountsQuery = supabase
+  let summaryAmountsQuery = supabase
     .from("donations")
     .select("amount")
     .eq("recipient_user_id", userId)
     .eq("payment_status", "paid");
 
+  donationsQuery = applyCreatedAtRange(donationsQuery, dateFrom, dateTo);
+  summaryAmountsQuery = applyCreatedAtRange(summaryAmountsQuery, dateFrom, dateTo);
+
   const [{ data, error, count }, { data: amountRows, error: summaryError }] = await Promise.all([
-    donationsQuery,
+    donationsQuery.order("created_at", { ascending: false }).range(from, to),
     summaryAmountsQuery,
   ]);
 
@@ -820,5 +847,70 @@ export async function fetchFiscalSponsorshipDashboardRepo(
     donations_total_count: count ?? 0,
     page,
     limit,
+  };
+}
+
+export async function fetchPaidDonationsForExportRepo(
+  userId: string,
+  options: { dateFrom?: string; dateTo?: string },
+): Promise<ReceivedDonationSummary[]> {
+  const supabase = await getSupabaseServerClient();
+
+  let query = supabase
+    .from("donations")
+    .select(RECEIVED_DONATION_COLUMNS)
+    .eq("recipient_user_id", userId)
+    .eq("payment_status", "paid");
+
+  query = applyCreatedAtRange(query, options.dateFrom, options.dateTo);
+
+  const { data, error } = await query
+    .order("created_at", { ascending: false })
+    .limit(FISCAL_SPONSORSHIP_EXPORT_MAX_ROWS);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map(mapReceivedDonationSummary);
+}
+
+const RECEIPT_DONATION_COLUMNS =
+  "id, created_at, donor_name, donor_email, message, recipient_name, recipient_user_id, amount, cover_card_fee, cover_fiscal_fee, designation_option_id, designation_label_snapshot";
+
+export async function fetchPaidDonationReceiptRepo(
+  userId: string,
+  donationId: string,
+): Promise<DonationReceiptRow | null> {
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("donations")
+    .select(RECEIPT_DONATION_COLUMNS)
+    .eq("id", donationId)
+    .eq("recipient_user_id", userId)
+    .eq("payment_status", "paid")
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return {
+    id: data.id as string,
+    created_at: (data.created_at as string | null) ?? null,
+    donor_name: (data.donor_name as string | null) ?? null,
+    donor_email: (data.donor_email as string | null) ?? null,
+    recipient_name: (data.recipient_name as string | null) ?? null,
+    recipient_user_id: (data.recipient_user_id as string | null) ?? null,
+    amount: data.amount as number,
+    message: (data.message as string | null) ?? null,
+    cover_card_fee: (data.cover_card_fee as boolean | null) ?? null,
+    cover_fiscal_fee: (data.cover_fiscal_fee as boolean | null) ?? null,
+    designation_option_id: (data.designation_option_id as string | null) ?? null,
+    designation_label_snapshot: (data.designation_label_snapshot as string | null) ?? null,
   };
 }

@@ -1,8 +1,9 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth/helpers";
 import {
   handleApiError,
   createSuccessResponse,
+  getOptionalQueryParam,
   getQueryParamNumber,
 } from "@/lib/api/utils";
 import { getFiscalSponsorshipDashboard } from "@/features/profile/server/service";
@@ -22,8 +23,15 @@ export async function GET(request: NextRequest) {
       FISCAL_SPONSORSHIP_DONATIONS_PAGE_SIZE,
       1,
     );
+    const dateFrom = getOptionalQueryParam(request, "dateFrom");
+    const dateTo = getOptionalQueryParam(request, "dateTo");
 
-    const dashboard = await getFiscalSponsorshipDashboard(auth.user.id, { page, limit });
+    const dashboard = await getFiscalSponsorshipDashboard(auth.user.id, {
+      page,
+      limit,
+      dateFrom,
+      dateTo,
+    });
 
     return createSuccessResponse(dashboard);
   } catch (error) {

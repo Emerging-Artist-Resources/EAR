@@ -79,6 +79,12 @@ export interface ReceivedDonationSummary {
   donor_email: string | null;
   /** Total charged in cents (Stripe gross). */
   amount: number;
+  /** Estimated Stripe processing fee in cents (2.9% + $0.30 of `amount`). */
+  stripe_fee_cents: number;
+  /** Estimated EAR fiscal sponsorship fee in cents (5.5% of `amount`). */
+  fiscal_fee_cents: number;
+  /** Estimated net in cents after Stripe and 5.5% fees. */
+  net_cents: number;
   message: string | null;
   designation_label_snapshot: string | null;
 }
@@ -89,6 +95,15 @@ export interface DonationSummaryStats {
   donation_count: number;
   /** Rounded mean of total charged amounts in cents. */
   average_amount_cents: number;
+}
+
+export interface FiscalSponsorshipDashboardQuery {
+  page?: number;
+  limit?: number;
+  /** Inclusive YYYY-MM-DD from HTML date input. */
+  dateFrom?: string;
+  /** Inclusive YYYY-MM-DD from HTML date input. */
+  dateTo?: string;
 }
 
 export interface FiscalSponsorshipDashboard {
