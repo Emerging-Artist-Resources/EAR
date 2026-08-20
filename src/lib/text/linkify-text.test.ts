@@ -69,4 +69,29 @@ describe("linkifyText", () => {
     expect(segments[0]).toEqual({ type: "text", value: "Line one\nApply: " })
     expect(segments[2]).toEqual({ type: "text", value: "\nLine three" })
   })
+
+  it("does not linkify bare all-numeric dotted strings", () => {
+    for (const text of ["Version 3.3.3 is live", "Server at 10.0.0.1 on the LAN"]) {
+      const segments = linkifyText(text)
+      expect(segments.some((s) => s.type === "link")).toBe(false)
+      expect(segments.map((s) => s.value).join("")).toBe(text)
+    }
+  })
+
+  it("still linkifies bare domains with letters", () => {
+    const segments = linkifyText("Visit example.com today")
+    expect(segments).toEqual([
+      { type: "text", value: "Visit " },
+      { type: "link", href: "https://example.com", label: "example.com" },
+      { type: "text", value: " today" },
+    ])
+  })
+
+  it("linkifies explicit http(s) IP URLs", () => {
+    const segments = linkifyText("Connect at https://10.0.0.1/setup")
+    expect(segments).toEqual([
+      { type: "text", value: "Connect at " },
+      { type: "link", href: "https://10.0.0.1/setup", label: "https://10.0.0.1/setup" },
+    ])
+  })
 })

@@ -19,6 +19,15 @@ const URL_PATTERN =
 const EMAIL_PATTERN = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
 
 const TRAILING_PUNCTUATION = /[.,;:!?)}\]"']+$/
+const EXPLICIT_HTTP_SCHEME = /^https?:\/\//i
+
+/** Bare strings like 3.3.3 or 10.0.0.1 — not auto-linked without an explicit scheme. */
+function isAllNumericDottedHost(candidate: string): boolean {
+  const host = candidate.split(/[/:?#]/, 1)[0]?.trim() ?? ""
+  if (!host.includes(".")) return false
+  const labels = host.split(".")
+  return labels.length >= 2 && labels.every((label) => label.length > 0 && /^\d+$/.test(label))
+}
 
 function stripTrailingPunctuation(raw: string): { core: string; trailing: string } {
   const match = raw.match(TRAILING_PUNCTUATION)
@@ -42,6 +51,10 @@ function toSafeHttpLink(raw: string): { href: string; label: string } | null {
   const { core, trailing } = stripTrailingPunctuation(unwrapped)
   const candidate = core.trim()
   if (!candidate) return null
+
+  if (!EXPLICIT_HTTP_SCHEME.test(candidate) && isAllNumericDottedHost(candidate)) {
+    return null
+  }
 
   const href = normalizeUserEnteredUrl(candidate)
   if (!isValidHttpUrl(href)) return null
