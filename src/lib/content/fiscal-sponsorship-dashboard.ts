@@ -99,8 +99,9 @@ export const fiscalSponsorshipDashboard = {
       removeOptionLabel: "Remove option",
     },
     image: {
-      title: "Page image",
-      description: "Optional hero image shown at the top of your public donation page.",
+      title: "Page image",    
+      description:
+        "Optional hero image shown at the top of your public donation page. Use JPG, JPEG, PNG, or WebP (HEIC from iPhone is not supported).",
       removeLabel: "Remove",
       replaceLabel: "Replace",
       removedHint: "Image will be removed when you save.",
@@ -108,8 +109,13 @@ export const fiscalSponsorshipDashboard = {
       uploadingLabel: "Uploading image…",
       chooseLabel: "Choose image",
       dropHint: "Click to upload an image or drag and drop",
-      sizeHint: "You’ll crop it to the donation page banner next",
+      sizeHint: "JPEG, PNG, or WebP. You’ll crop it to the donation page banner next.",
       processingLabel: "Processing…",
+      unsupportedTypeError:
+        "This image format isn’t supported. Please use a JPG, JPEG, PNG, or WebP file. HEIC photos from iPhone aren’t supported—save or export as JPEG first.",
+      notImageError: "Please choose an image file (JPG, JPEG, PNG, or WebP).",
+      processError:
+        "We couldn’t process that image. Please try a different JPEG, PNG, or WebP file.",
       cropTitle: "Frame your page image",
       cropHint:
         "Drag to reposition. Zoom out to show the full image; empty areas use the background fill.",

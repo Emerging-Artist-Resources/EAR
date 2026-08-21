@@ -14,9 +14,28 @@ import {
   DONATION_PAGE_IMAGE_OUTPUT_WIDTH,
 } from "@/lib/images/donation-page-image-frame"
 import { compressListingImage } from "@/lib/listings/compress-listing-image"
+import {
+  SUPPORTED_WEB_IMAGE_ACCEPT,
+  isSupportedWebImageFile,
+} from "@/lib/images/supported-web-image"
 import type { CustomizeDonationPageFormData } from "@/lib/validations/donation-page"
 
 const copy = fiscalSponsorshipDashboard.customizeDonationPage.image
+
+function toFriendlyImageProcessError(error: unknown): string {
+  const message = error instanceof Error ? error.message : ""
+  if (
+    /failed to load image/i.test(message) ||
+    /image compression failed/i.test(message) ||
+    /could not get canvas context/i.test(message)
+  ) {
+    return copy.processError
+  }
+  if (/too large after compression/i.test(message)) {
+    return message
+  }
+  return message || copy.processError
+}
 
 type DonationPageImageFieldProps = {
   form: UseFormReturn<CustomizeDonationPageFormData>
@@ -98,8 +117,13 @@ export function DonationPageImageField({
     const file = fileList?.[0]
     if (!file || processingPick) return
 
-    if (!file.type.startsWith("image/")) {
-      setPickError("Please choose an image file")
+    if (!isSupportedWebImageFile(file)) {
+      setPickError(
+        file.type.startsWith("image/") || /\.(hei[cf]|gif|bmp|tiff?|svg)$/i.test(file.name)
+          ? copy.unsupportedTypeError
+          : copy.notImageError,
+      )
+      if (inputRef.current) inputRef.current.value = ""
       return
     }
 
@@ -130,7 +154,7 @@ export function DonationPageImageField({
       onRemoveExistingChange(false)
       clearCropSource()
     } catch (err) {
-      setPickError(err instanceof Error ? err.message : "Failed to process image")
+      setPickError(toFriendlyImageProcessError(err))
       clearCropSource()
     }
   }
@@ -210,7 +234,7 @@ export function DonationPageImageField({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={SUPPORTED_WEB_IMAGE_ACCEPT}
         className="hidden"
         onChange={async (event) => {
           await handleFileSelected(event.target.files)
@@ -239,6 +263,7 @@ export function DonationPageImageField({
         colorFillLabel={copy.colorFillLabel}
         zoomLabel={copy.zoomLabel}
         hint={copy.cropHint}
+        processErrorMessage={copy.processError}
       />
     </div>
   )

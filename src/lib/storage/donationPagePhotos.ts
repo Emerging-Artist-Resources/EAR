@@ -4,9 +4,9 @@ import { DONATION_PAGE_PHOTOS_BUCKET } from "@/lib/storage/donationPagePhotoPath
 
 export { DONATION_PAGE_PHOTOS_BUCKET } from "@/lib/storage/donationPagePhotoPaths"
 export {
-  donationPageImageStoragePath,
-  isDonationPageImagePathForUser,
-  assertDonationPageImagePathForUser,
+  createDonationPageImageStoragePath,
+  isDonationPageImageStoragePathOwnedByUser,
+  assertDonationPageImageStoragePathOwnedByUser,
 } from "@/lib/storage/donationPagePhotoPaths"
 
 export async function donationPageImagePublicUrl(imagePath: string): Promise<string> {

@@ -61,13 +61,13 @@ describe("updateDonationPageSchema", () => {
     expect(result.success).toBe(true)
   })
 
-  it("accepts the canonical hero image path", () => {
+  it("accepts a versioned hero image path", () => {
     const userId = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
     const result = updateDonationPageSchema.safeParse({
       donation_page_message: null,
       donation_preset_amounts: [25, 50],
       designation_enabled: false,
-      donation_page_image_path: `profiles/${userId}/donation-hero.jpg`,
+      donation_page_image_path: `profiles/${userId}/donation-hero-11111111-1111-1111-1111-111111111111.jpg`,
     })
 
     expect(result.success).toBe(true)
@@ -99,10 +99,12 @@ describe("toDonationPagePersistPayload", () => {
         donation_page_message: null,
         donation_preset_amounts: [10, 20],
         designation_enabled: false,
-        donation_page_image_path: "profiles/user/donation-hero.jpg",
+        donation_page_image_path: "profiles/user/donation-hero-11111111-1111-1111-1111-111111111111.jpg",
       }),
     )
-    expect(withImage.donation_page_image_path).toBe("profiles/user/donation-hero.jpg")
+    expect(withImage.donation_page_image_path).toBe(
+      "profiles/user/donation-hero-11111111-1111-1111-1111-111111111111.jpg",
+    )
 
     const withoutImage = toDonationPagePersistPayload(
       updateDonationPageSchema.parse({

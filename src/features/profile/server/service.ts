@@ -24,7 +24,7 @@ import {
 import type { DonationPageSettings } from "@/lib/donations/donationPageSettings";
 import type { UpdateDonationPageData } from "@/lib/validations/donation-page";
 import { toDonationPagePersistPayload } from "@/lib/validations/donation-page";
-import { assertDonationPageImagePathForUser } from "@/lib/storage/donationPagePhotoPaths";
+import { assertDonationPageImageStoragePathOwnedByUser } from "@/lib/storage/donationPagePhotoPaths";
 import { buildDonationExportFileName } from "@/lib/donations/donation-export-rows";
 import { buildDonationsWorkbook } from "@/lib/donations/donation-excel-export";
 import { renderDonationReceiptPdf, toDonationReceiptPdfInput } from "@/lib/pdf/donation-receipt";
@@ -126,7 +126,7 @@ export async function updateDonationPage(
   data: UpdateDonationPageData,
 ): Promise<DonationPageSettings> {
   if (data.donation_page_image_path) {
-    assertDonationPageImagePathForUser(userId, data.donation_page_image_path);
+    assertDonationPageImageStoragePathOwnedByUser(data.donation_page_image_path, userId);
   }
 
   const payload = toDonationPagePersistPayload(data);

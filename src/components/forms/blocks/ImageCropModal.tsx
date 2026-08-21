@@ -35,6 +35,8 @@ type ImageCropModalProps = {
   colorFillLabel?: string
   zoomLabel?: string
   hint?: string
+  /** Replaces technical load/process errors shown after Confirm fails. */
+  processErrorMessage?: string
 }
 
 export function ImageCropModal({
@@ -53,6 +55,7 @@ export function ImageCropModal({
   colorFillLabel = "Solid background",
   zoomLabel = "Zoom",
   hint = "Drag to reposition. Zoom out to show the full image; empty areas use the background fill.",
+  processErrorMessage = "We couldn’t process that image. Please try a different file.",
 }: ImageCropModalProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(DEFAULT_ZOOM)
@@ -109,7 +112,12 @@ export function ImageCropModal({
       })
       onComplete(file)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to process image")
+      const message = err instanceof Error ? err.message : ""
+      setError(
+        /failed to load image|image compression failed|could not get canvas context/i.test(message)
+          ? processErrorMessage
+          : message || processErrorMessage,
+      )
     } finally {
       setProcessing(false)
     }

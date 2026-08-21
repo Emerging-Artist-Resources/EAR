@@ -27,12 +27,12 @@ import {
   mapCustomizeFormToUpdatePayload,
   sanitizeCustomizeDonationPageFormData,
   type CustomizeDonationPageFormData,
-  type UpdateDonationPageData,
 } from "@/lib/validations/donation-page"
 import {
   removeDonationPageImageFromStorage,
   uploadDonationPageImage,
 } from "@/lib/storage/uploadDonationPageImage"
+import { saveDonationPageWithImageChanges } from "@/lib/storage/saveDonationPageImageChanges"
 import { fiscalSponsorshipDashboard } from "@/lib/content/fiscal-sponsorship-dashboard"
 import { DonationPageImageField } from "@/components/profile/fiscal-sponsorship/DonationPageImageField"
 
@@ -49,24 +49,6 @@ function mapSettingsToFormValues(settings: DonationPageSettings): CustomizeDonat
     designation_options: designation.options,
     donation_page_image_files: [],
   }
-}
-
-async function buildImagePathUpdate(
-  userId: string,
-  pendingFile: File | undefined,
-  removeExisting: boolean,
-): Promise<Pick<UpdateDonationPageData, "donation_page_image_path"> | null> {
-  if (pendingFile) {
-    const path = await uploadDonationPageImage(userId, pendingFile)
-    return { donation_page_image_path: path }
-  }
-
-  if (removeExisting) {
-    await removeDonationPageImageFromStorage(userId)
-    return { donation_page_image_path: null }
-  }
-
-  return null
 }
 
 export function CustomizeDonationPageModal({
@@ -144,11 +126,18 @@ export function CustomizeDonationPageModal({
     try {
       const payload = mapCustomizeFormToUpdatePayload(sanitizedValues, buildDesignationConfigFromFormRows)
       const pendingFile = sanitizedValues.donation_page_image_files?.[0]
-      const imageUpdate = await buildImagePathUpdate(user.id, pendingFile, removeExistingImage)
 
-      await apiPatch<DonationPageSettings>("/api/profile/donation-page", {
-        ...payload,
-        ...imageUpdate,
+      await saveDonationPageWithImageChanges({
+        userId: user.id,
+        payload,
+        pendingFile,
+        removeExisting: removeExistingImage,
+        previousImagePath: initialSettings.donation_page_image_path,
+        deps: {
+          upload: uploadDonationPageImage,
+          remove: removeDonationPageImageFromStorage,
+          patch: (body) => apiPatch<DonationPageSettings>("/api/profile/donation-page", body),
+        },
       })
       showToast(copy.saveSuccess, "success")
       onSuccess()
@@ -160,13 +149,20 @@ export function CustomizeDonationPageModal({
     }
   }
 
+  const handleClose = () => {
+    if (!saving) {
+      onClose()
+    }
+  }
+
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title={copy.modalTitle}
       size="lg"
       closeOnOverlay={false}
+      showCloseButton={!saving}
     >
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
@@ -316,7 +312,7 @@ export function CustomizeDonationPageModal({
         </Section>
 
         <div className="flex justify-end gap-2 border-t border-gray-200 pt-4">
-          <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
+          <Button type="button" variant="outline" onClick={handleClose} disabled={saving}>
             {copy.cancelLabel}
           </Button>
           <Button type="submit" variant="primary" disabled={saving}>
