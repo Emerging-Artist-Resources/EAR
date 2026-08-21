@@ -592,6 +592,32 @@ export interface UpdateDonationPagePayload {
   donation_page_message: string | null;
   donation_preset_amounts: number[];
   donation_designation_config: unknown | null;
+  donation_page_image_path?: string | null;
+}
+
+async function resolveDonationPageSettings(
+  row: {
+    donation_page_message: string | null;
+    donation_page_image_path?: string | null;
+    donation_designation_config: unknown;
+    donation_preset_amounts: unknown;
+  },
+): Promise<DonationPageSettings> {
+  const settings = mapDonationPageSettingsFromRow({
+    donation_page_message: row.donation_page_message,
+    donation_page_image_path: row.donation_page_image_path ?? null,
+    donation_designation_config: row.donation_designation_config,
+    donation_preset_amounts: row.donation_preset_amounts,
+  });
+
+  if (!settings.donation_page_image_path) {
+    return settings;
+  }
+
+  return {
+    ...settings,
+    donation_page_image_url: await donationPageImagePublicUrl(settings.donation_page_image_path),
+  };
 }
 
 export async function updateDonationPageRepo(
@@ -606,11 +632,17 @@ export async function updateDonationPageRepo(
     donation_designation_config: payload.donation_designation_config,
   };
 
+  if (payload.donation_page_image_path !== undefined) {
+    updateData.donation_page_image_path = payload.donation_page_image_path;
+  }
+
   const { data, error } = await supabase
     .from("profiles")
     .update(updateData)
     .eq("id", userId)
-    .select("donation_page_message, donation_designation_config, donation_preset_amounts")
+    .select(
+      "donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts",
+    )
     .single();
 
   if (error) {
@@ -621,8 +653,9 @@ export async function updateDonationPageRepo(
     throw new Error("Profile not found");
   }
 
-  return mapDonationPageSettingsFromRow({
+  return resolveDonationPageSettings({
     donation_page_message: data.donation_page_message as string | null,
+    donation_page_image_path: data.donation_page_image_path as string | null,
     donation_designation_config: data.donation_designation_config,
     donation_preset_amounts: data.donation_preset_amounts,
   });
@@ -829,8 +862,9 @@ export async function fetchFiscalSponsorshipDashboardRepo(
     (amountRows ?? []).map((row) => row.amount as number),
   );
 
-  const donation_page = mapDonationPageSettingsFromRow({
+  const donation_page = await resolveDonationPageSettings({
     donation_page_message: profile.donation_page_message,
+    donation_page_image_path: profile.donation_page_image_path,
     donation_designation_config: profile.donation_designation_config,
     donation_preset_amounts: profile.donation_preset_amounts,
   });

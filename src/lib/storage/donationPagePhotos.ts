@@ -1,8 +1,13 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { storageService } from "@/services/storage"
+import { DONATION_PAGE_PHOTOS_BUCKET } from "@/lib/storage/donationPagePhotoPaths"
 
-/** Public bucket; must allow anonymous read for logged-out donors. See runbook. */
-export const DONATION_PAGE_PHOTOS_BUCKET = "donation-page-photos"
+export { DONATION_PAGE_PHOTOS_BUCKET } from "@/lib/storage/donationPagePhotoPaths"
+export {
+  donationPageImageStoragePath,
+  isDonationPageImagePathForUser,
+  assertDonationPageImagePathForUser,
+} from "@/lib/storage/donationPagePhotoPaths"
 
 export async function donationPageImagePublicUrl(imagePath: string): Promise<string> {
   const supabase = await getSupabaseServerClient()

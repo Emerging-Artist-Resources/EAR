@@ -23,6 +23,7 @@ import { H2, Text } from "@/components/ui/typography"
 import { Card } from "@/components/ui/card"
 import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnelTrustHeader"
 import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
+import { DONATION_PAGE_IMAGE_ASPECT } from "@/lib/images/donation-page-image-frame"
 import { Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { LinkifiedText } from "@/components/shared/LinkifiedText"
@@ -283,12 +284,15 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
       />
     <Card className="max-w-3xl mx-auto px-6 py-5 bg-white">
       {lockedRecipient?.donationPageImageUrl ? (
-        <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+        <div
+          className="relative mb-4 w-full overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
+          style={{ aspectRatio: DONATION_PAGE_IMAGE_ASPECT }}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element -- public Supabase URL; avoid next/image remote config */}
           <img
             src={lockedRecipient.donationPageImageUrl}
             alt={heroImageAlt}
-            className="w-full max-h-64 object-cover"
+            className="absolute inset-0 h-full w-full object-cover"
             onError={(e) => {
               e.currentTarget.style.display = "none"
             }}

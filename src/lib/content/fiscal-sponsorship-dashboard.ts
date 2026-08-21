@@ -98,6 +98,27 @@ export const fiscalSponsorshipDashboard = {
       addOptionLabel: "Add option",
       removeOptionLabel: "Remove option",
     },
+    image: {
+      title: "Page image",
+      description: "Optional hero image shown at the top of your public donation page.",
+      removeLabel: "Remove",
+      replaceLabel: "Replace",
+      removedHint: "Image will be removed when you save.",
+      previewAlt: "Current donation page image",
+      uploadingLabel: "Uploading image…",
+      chooseLabel: "Choose image",
+      dropHint: "Click to upload an image or drag and drop",
+      sizeHint: "You’ll crop it to the donation page banner next",
+      processingLabel: "Processing…",
+      cropTitle: "Frame your page image",
+      cropHint:
+        "Drag to reposition. Zoom out to show the full image; empty areas use the background fill.",
+      cropConfirmLabel: "Use image",
+      cropCancelLabel: "Cancel",
+      blurFillLabel: "Blur background",
+      colorFillLabel: "Solid background",
+      zoomLabel: "Zoom",
+    },
   },
 } as const;
 

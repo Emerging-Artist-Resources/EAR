@@ -42,6 +42,8 @@ export const updateDonationPageSchema = z
       }),
     designation_enabled: z.boolean(),
     donation_designation_config: donationDesignationConfigSchema.nullable().optional(),
+    /** Omit to leave unchanged; null clears; string must match the user's canonical storage path. */
+    donation_page_image_path: z.string().nullable().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.designation_enabled) {
@@ -123,6 +125,8 @@ export const customizeDonationPageFormSchema = z
     designation_enabled: z.boolean(),
     designation_field_label: z.string(),
     designation_options: z.array(designationOptionFormRowSchema),
+    /** Pending hero upload; not sent to PATCH — handled in modal submit. */
+    donation_page_image_files: z.array(z.custom<File>((value) => value instanceof File)).optional(),
   })
   .superRefine((data, ctx) => {
     if (!data.designation_enabled) return
@@ -191,17 +195,29 @@ export function toDonationPagePersistPayload(data: UpdateDonationPageData): {
   donation_page_message: string | null
   donation_preset_amounts: number[]
   donation_designation_config: unknown | null
+  donation_page_image_path?: string | null
 } {
   const validatedPresets = parseDonationPresetAmounts(data.donation_preset_amounts)
   if (!validatedPresets) {
     throw new Error("Invalid donation preset amounts")
   }
 
-  return {
+  const payload: {
+    donation_page_message: string | null
+    donation_preset_amounts: number[]
+    donation_designation_config: unknown | null
+    donation_page_image_path?: string | null
+  } = {
     donation_page_message: data.donation_page_message ?? null,
     donation_preset_amounts: validatedPresets,
     donation_designation_config: data.designation_enabled
       ? data.donation_designation_config ?? null
       : null,
   }
+
+  if (data.donation_page_image_path !== undefined) {
+    payload.donation_page_image_path = data.donation_page_image_path
+  }
+
+  return payload
 }

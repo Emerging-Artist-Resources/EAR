@@ -13,6 +13,10 @@ interface PhotoUploaderProps<T extends Record<string, unknown>> {
   max?: number
   required?: boolean
   showAsterisk?: boolean
+  /** When true, selecting a new file replaces existing ones once max is reached. */
+  replaceWhenFull?: boolean
+  /** Hide the built-in label/description — useful when a parent renders its own header. */
+  hideHeader?: boolean
 }
 
 function PhotoUploaderInner<T extends Record<string, unknown>>({
@@ -23,7 +27,9 @@ function PhotoUploaderInner<T extends Record<string, unknown>>({
   max,
   required,
   showAsterisk,
-}: Required<PhotoUploaderProps<T>> & { max: number }) {
+  replaceWhenFull,
+  hideHeader,
+}: Required<PhotoUploaderProps<T>> & { max: number; replaceWhenFull: boolean; hideHeader: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [processing, setProcessing] = useState(false)
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
@@ -60,7 +66,7 @@ function PhotoUploaderInner<T extends Record<string, unknown>>({
 
     try {
       for (const file of Array.from(fileList)) {
-        if (files.length + toAdd.length >= max) break
+        if (!replaceWhenFull && files.length + toAdd.length >= max) break
 
         if (!file.type.startsWith("image/")) {
           errors.push(`${file.name} is not an image file`)
@@ -70,13 +76,16 @@ function PhotoUploaderInner<T extends Record<string, unknown>>({
         try {
           const compressed = await compressListingImage(file)
           toAdd.push(compressed)
+          if (replaceWhenFull) break
         } catch (err) {
           errors.push(err instanceof Error ? err.message : `Failed to process ${file.name}`)
         }
       }
 
       if (toAdd.length > 0) {
-        form.setValue(name as unknown as never, [...files, ...toAdd] as unknown as never, {
+        const baseFiles = replaceWhenFull && files.length >= max ? [] : files
+        const nextFiles = [...baseFiles, ...toAdd].slice(0, max)
+        form.setValue(name as unknown as never, nextFiles as unknown as never, {
           shouldDirty: true,
           shouldTouch: true,
           shouldValidate: true,
@@ -111,17 +120,19 @@ function PhotoUploaderInner<T extends Record<string, unknown>>({
     }
   }
 
-  const disabled = processing || files.length >= max
+  const atCapacity = files.length >= max
+  const disabled = processing || (atCapacity && !replaceWhenFull)
+  const isSingle = max === 1
 
   return (
     <div className="space-y-2">
-      {label && (
+      {!hideHeader && label && (
         <label className="block text-sm font-medium text-gray-700 mb-1">
           {label} {required && showAsterisk && <span className="text-error-600">*</span>}
         </label>
       )}
 
-      {description && <Text className="text-xs text-gray-500 mb-1">{description}</Text>}
+      {!hideHeader && description && <Text className="text-xs text-gray-500 mb-1">{description}</Text>}
 
       <Card
         className={`p-4 border-dashed border-2 ${
@@ -136,9 +147,13 @@ function PhotoUploaderInner<T extends Record<string, unknown>>({
             await addFiles(e.dataTransfer.files)
           }}
         >
-          <Text className="text-gray-700">Click to upload photos or drag and drop</Text>
+          <Text className="text-gray-700">
+            {isSingle ? "Click to upload an image or drag and drop" : "Click to upload photos or drag and drop"}
+          </Text>
           <Text className="text-xs text-gray-500">
-            Up to {max} images, optimized for web (~5MB each max)
+            {isSingle
+              ? "Optimized for web (~5MB max)"
+              : `Up to ${max} images, optimized for web (~5MB each max)`}
           </Text>
 
           <div className="mt-3">
@@ -148,7 +163,7 @@ function PhotoUploaderInner<T extends Record<string, unknown>>({
               onClick={() => inputRef.current?.click()}
               disabled={disabled}
             >
-              {processing ? "Processing..." : "Choose Files"}
+              {processing ? "Processing..." : isSingle ? "Choose file" : "Choose Files"}
             </Button>
           </div>
 
@@ -156,7 +171,7 @@ function PhotoUploaderInner<T extends Record<string, unknown>>({
             ref={inputRef}
             type="file"
             accept="image/*"
-            multiple
+            multiple={!isSingle}
             className="hidden"
             onChange={async (e) => {
               await addFiles(e.target.files)
@@ -214,6 +229,8 @@ export function PhotoUploader<T extends Record<string, unknown>>(props: PhotoUpl
     max = 5,
     required = false,
     showAsterisk = true,
+    replaceWhenFull = false,
+    hideHeader = false,
   } = props
 
   return (
@@ -230,6 +247,8 @@ export function PhotoUploader<T extends Record<string, unknown>>(props: PhotoUpl
           max={max}
           required={required}
           showAsterisk={showAsterisk}
+          replaceWhenFull={replaceWhenFull}
+          hideHeader={hideHeader}
         />
       )}
     />

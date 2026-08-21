@@ -13,6 +13,7 @@ import { Section } from "@/components/forms/blocks/Section"
 import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
 import { apiPatch } from "@/lib/client/fetch-utils"
 import { useToast } from "@/contexts/ToastContext"
+import { useAuth } from "@/hooks/use-auth"
 import type { DonationPageSettings } from "@/lib/donations/donationPageSettings"
 import {
   buildDesignationConfigFromFormRows,
@@ -26,8 +27,14 @@ import {
   mapCustomizeFormToUpdatePayload,
   sanitizeCustomizeDonationPageFormData,
   type CustomizeDonationPageFormData,
+  type UpdateDonationPageData,
 } from "@/lib/validations/donation-page"
+import {
+  removeDonationPageImageFromStorage,
+  uploadDonationPageImage,
+} from "@/lib/storage/uploadDonationPageImage"
 import { fiscalSponsorshipDashboard } from "@/lib/content/fiscal-sponsorship-dashboard"
+import { DonationPageImageField } from "@/components/profile/fiscal-sponsorship/DonationPageImageField"
 
 const copy = fiscalSponsorshipDashboard.customizeDonationPage
 
@@ -40,7 +47,26 @@ function mapSettingsToFormValues(settings: DonationPageSettings): CustomizeDonat
     designation_enabled: settings.designation_enabled,
     designation_field_label: designation.fieldLabel,
     designation_options: designation.options,
+    donation_page_image_files: [],
   }
+}
+
+async function buildImagePathUpdate(
+  userId: string,
+  pendingFile: File | undefined,
+  removeExisting: boolean,
+): Promise<Pick<UpdateDonationPageData, "donation_page_image_path"> | null> {
+  if (pendingFile) {
+    const path = await uploadDonationPageImage(userId, pendingFile)
+    return { donation_page_image_path: path }
+  }
+
+  if (removeExisting) {
+    await removeDonationPageImageFromStorage(userId)
+    return { donation_page_image_path: null }
+  }
+
+  return null
 }
 
 export function CustomizeDonationPageModal({
@@ -54,9 +80,11 @@ export function CustomizeDonationPageModal({
   initialSettings: DonationPageSettings
   onSuccess: () => void
 }) {
+  const { user } = useAuth()
   const { showToast } = useToast()
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [removeExistingImage, setRemoveExistingImage] = useState(false)
 
   const form = useForm<CustomizeDonationPageFormData>({
     resolver: zodResolver(customizeDonationPageFormSchema),
@@ -94,11 +122,17 @@ export function CustomizeDonationPageModal({
   useEffect(() => {
     if (isOpen) {
       form.reset(mapSettingsToFormValues(initialSettings))
+      setRemoveExistingImage(false)
       setSaveError(null)
     }
   }, [isOpen, initialSettings, form])
 
   const handleSubmit = async (values: CustomizeDonationPageFormData) => {
+    if (!user?.id) {
+      setSaveError("Please sign in to save your donation page settings")
+      return
+    }
+
     setSaveError(null)
     setSaving(true)
 
@@ -109,7 +143,13 @@ export function CustomizeDonationPageModal({
 
     try {
       const payload = mapCustomizeFormToUpdatePayload(sanitizedValues, buildDesignationConfigFromFormRows)
-      await apiPatch<DonationPageSettings>("/api/profile/donation-page", payload)
+      const pendingFile = sanitizedValues.donation_page_image_files?.[0]
+      const imageUpdate = await buildImagePathUpdate(user.id, pendingFile, removeExistingImage)
+
+      await apiPatch<DonationPageSettings>("/api/profile/donation-page", {
+        ...payload,
+        ...imageUpdate,
+      })
       showToast(copy.saveSuccess, "success")
       onSuccess()
       onClose()
@@ -147,6 +187,15 @@ export function CustomizeDonationPageModal({
             rows={4}
             showAsterisk={false}
             inputClassName="bg-white"
+          />
+        </Section>
+
+        <Section title={copy.image.title} description={copy.image.description}>
+          <DonationPageImageField
+            form={form}
+            existingImageUrl={initialSettings.donation_page_image_url}
+            removeExisting={removeExistingImage}
+            onRemoveExistingChange={setRemoveExistingImage}
           />
         </Section>
 
