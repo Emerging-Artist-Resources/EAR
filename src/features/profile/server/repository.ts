@@ -5,7 +5,6 @@ import {
   ActivityOverview,
   ServiceInquirySummary,
   FiscalSponsorshipDashboard,
-  DonationSummaryStats,
   ReceivedDonationSummary,
 } from "./types";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -23,9 +22,18 @@ import {
 import { mapDonationPageSettingsFromRow } from "@/lib/donations/donationPageSettings";
 import type { DonationPageSettings } from "@/lib/donations/donationPageSettings";
 import { parseDonationPresetAmounts } from "@/lib/donations/donationPresetAmounts";
+import {
+  buildDonationSummaryStats,
+  normalizeAggregateSumCents,
+} from "@/lib/donations/donation-summary-stats";
 import { resolveDonationRecipientDisplayName } from "@/lib/profile/donationRecipientDisplayName";
 import type { DonationReceiptRow } from "@/lib/pdf/donation-receipt";
 import { formatOccurrenceRangeEST } from "@/lib/datetime/utils";
+
+export {
+  buildDonationSummaryStats,
+  computeDonationSummaryStats,
+} from "@/lib/donations/donation-summary-stats";
 
 type OccurrenceLike = {
   starts_at_utc: string;
@@ -796,19 +804,6 @@ export function mapReceivedDonationSummary(row: ReceivedDonationDbRow): Received
   };
 }
 
-export function computeDonationSummaryStats(amounts: number[]): DonationSummaryStats {
-  const donation_count = amounts.length;
-  const total_amount_cents = amounts.reduce((sum, amount) => sum + amount, 0);
-  const average_amount_cents =
-    donation_count > 0 ? Math.round(total_amount_cents / donation_count) : 0;
-
-  return {
-    total_amount_cents,
-    donation_count,
-    average_amount_cents,
-  };
-}
-
 export async function fetchFiscalSponsorshipDashboardRepo(
   userId: string,
   options: { page: number; limit: number; dateFrom?: string; dateTo?: string },
@@ -823,6 +818,7 @@ export async function fetchFiscalSponsorshipDashboardRepo(
   const to = from + limit - 1;
 
   const supabase = await getSupabaseServerClient();
+  const dateRange = parseInclusiveDateRange(dateFrom, dateTo);
 
   let donationsQuery = supabase
     .from("donations")
@@ -830,18 +826,15 @@ export async function fetchFiscalSponsorshipDashboardRepo(
     .eq("recipient_user_id", userId)
     .eq("payment_status", "paid");
 
-  let summaryAmountsQuery = supabase
-    .from("donations")
-    .select("amount")
-    .eq("recipient_user_id", userId)
-    .eq("payment_status", "paid");
-
   donationsQuery = applyCreatedAtRange(donationsQuery, dateFrom, dateTo);
-  summaryAmountsQuery = applyCreatedAtRange(summaryAmountsQuery, dateFrom, dateTo);
 
-  const [{ data, error, count }, { data: amountRows, error: summaryError }] = await Promise.all([
+  const [{ data, error, count }, { data: sumCents, error: summaryError }] = await Promise.all([
     donationsQuery.order("created_at", { ascending: false }).range(from, to),
-    summaryAmountsQuery,
+    supabase.rpc("sum_paid_donations_for_recipient", {
+      p_recipient_user_id: userId,
+      p_created_from: dateRange?.fromISO ?? null,
+      p_created_to: dateRange?.toISO ?? null,
+    }),
   ]);
 
   if (error) {
@@ -858,9 +851,11 @@ export async function fetchFiscalSponsorshipDashboardRepo(
     : null;
 
   const donations: ReceivedDonationSummary[] = (data ?? []).map(mapReceivedDonationSummary);
-  const donations_summary = computeDonationSummaryStats(
-    (amountRows ?? []).map((row) => row.amount as number),
-  );
+  const donations_total_count = count ?? 0;
+  const donations_summary = buildDonationSummaryStats({
+    totalAmountCents: normalizeAggregateSumCents(sumCents),
+    donationCount: donations_total_count,
+  });
 
   const donation_page = await resolveDonationPageSettings({
     donation_page_message: profile.donation_page_message,
@@ -878,7 +873,7 @@ export async function fetchFiscalSponsorshipDashboardRepo(
     donation_page,
     donations_summary,
     donations,
-    donations_total_count: count ?? 0,
+    donations_total_count,
     page,
     limit,
   };

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth/helpers";
 import {
   handleApiError,
@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
       "limit",
       FISCAL_SPONSORSHIP_DONATIONS_PAGE_SIZE,
       1,
+      FISCAL_SPONSORSHIP_DONATIONS_PAGE_SIZE,
     );
     const dateFrom = getOptionalQueryParam(request, "dateFrom");
     const dateTo = getOptionalQueryParam(request, "dateTo");
