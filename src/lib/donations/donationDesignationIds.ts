@@ -1,28 +1,59 @@
 import type { DonationDesignationConfigParsed } from "@/lib/donations/donationDesignationConfig"
 
 export type DesignationOptionFormRow = {
+  /** Stable option id. Set when loading saved options or when adding a row in the form. */
+  id?: string
   label: string
 }
 
-/** Stable 1-based id for designation options (option-1, option-2, …). */
-export function designationOptionId(index: number): string {
-  return `option-${index + 1}`
+/**
+ * Create a stable id for a new designation option.
+ * Identity follows the option itself — never its label or form index.
+ */
+export function createDesignationOptionId(): string {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID()
+  }
+
+  // Jest / older runtimes without Web Crypto UUID support
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (char) => {
+    const nibble = (Math.random() * 16) | 0
+    const value = char === "x" ? nibble : (nibble & 0x3) | 0x8
+    return value.toString(16)
+  })
+}
+
+/** New empty form row with a fresh id so delete→add in one session cannot recycle a removed id. */
+export function createEmptyDesignationOptionFormRow(): DesignationOptionFormRow {
+  return {
+    id: createDesignationOptionId(),
+    label: "",
+  }
+}
+
+function resolveDesignationOptionId(existingId: string | undefined): string {
+  const trimmed = existingId?.trim()
+  return trimmed ? trimmed : createDesignationOptionId()
 }
 
 /**
  * Map form rows to a validated designation config payload.
- * Ids are assigned by row order among non-empty labels.
+ * Keeps existing option ids; assigns a UUID only for rows that still lack one.
+ * Blank-label rows are dropped and do not consume or recycle ids.
  */
 export function buildDesignationConfigFromFormRows(params: {
   fieldLabel: string
   options: DesignationOptionFormRow[]
 }): DonationDesignationConfigParsed {
   const options = params.options
-    .map((row) => row.label.trim())
-    .filter((label) => label.length > 0)
-    .map((label, index) => ({
-      id: designationOptionId(index),
-      label,
+    .map((row) => ({
+      id: row.id,
+      label: row.label.trim(),
+    }))
+    .filter((row) => row.label.length > 0)
+    .map((row) => ({
+      id: resolveDesignationOptionId(row.id),
+      label: row.label,
     }))
 
   return {
@@ -32,6 +63,9 @@ export function buildDesignationConfigFromFormRows(params: {
   }
 }
 
+/**
+ * Map saved designation config into form rows, preserving option ids.
+ */
 export function mapDesignationToFormRows(
   config: DonationDesignationConfigParsed | null,
 ): {
@@ -41,13 +75,14 @@ export function mapDesignationToFormRows(
   if (!config) {
     return {
       fieldLabel: "",
-      options: [{ label: "" }],
+      options: [createEmptyDesignationOptionFormRow()],
     }
   }
 
   return {
     fieldLabel: config.fieldLabel,
     options: config.options.map((option) => ({
+      id: option.id,
       label: option.label,
     })),
   }

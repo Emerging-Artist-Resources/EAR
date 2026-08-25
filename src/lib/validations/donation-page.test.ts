@@ -125,7 +125,7 @@ describe("customizeDonationPageFormSchema", () => {
       designation_enabled: true,
       designation_field_label: "Designate to",
       designation_options: [
-        { label: "General support" },
+        { id: "keep-general", label: "General support" },
         { label: "No preference" },
       ],
     })
@@ -134,10 +134,15 @@ describe("customizeDonationPageFormSchema", () => {
 
     expect(payload.donation_preset_amounts).toEqual([25, 50])
     expect(payload.donation_designation_config?.allowNoPreference).toBe(false)
-    expect(payload.donation_designation_config?.options).toEqual([
-      { id: "option-1", label: "General support" },
-      { id: "option-2", label: "No preference" },
-    ])
+    expect(payload.donation_designation_config?.options).toHaveLength(2)
+    expect(payload.donation_designation_config?.options[0]).toEqual({
+      id: "keep-general",
+      label: "General support",
+    })
+    expect(payload.donation_designation_config?.options[1].label).toBe("No preference")
+    expect(payload.donation_designation_config?.options[1].id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    )
   })
 
   it("rejects zero preset amounts with a field error", () => {

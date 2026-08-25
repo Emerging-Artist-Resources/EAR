@@ -60,6 +60,15 @@ export const updateDonationPageSchema = z
 export type UpdateDonationPageData = z.infer<typeof updateDonationPageSchema>
 
 const designationOptionFormRowSchema = z.object({
+  // Empty string from a hidden input on newly added rows → treat as missing.
+  id: z
+    .string()
+    .max(120)
+    .optional()
+    .transform((value) => {
+      const trimmed = value?.trim()
+      return trimmed ? trimmed : undefined
+    }),
   label: z.string(),
 })
 
@@ -164,7 +173,7 @@ export function mapCustomizeFormToUpdatePayload(
   data: CustomizeDonationPageFormData,
   buildDesignationConfig: (params: {
     fieldLabel: string
-    options: { label: string }[]
+    options: { id?: string; label: string }[]
   }) => DonationDesignationConfigParsed,
 ): UpdateDonationPageData {
   const sanitized = sanitizeCustomizeDonationPageFormData(data)

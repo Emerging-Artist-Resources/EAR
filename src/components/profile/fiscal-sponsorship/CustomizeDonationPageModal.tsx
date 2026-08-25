@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/use-auth"
 import type { DonationPageSettings } from "@/lib/donations/donationPageSettings"
 import {
   buildDesignationConfigFromFormRows,
+  createEmptyDesignationOptionFormRow,
   mapDesignationToFormRows,
 } from "@/lib/donations/donationDesignationIds"
 import {
@@ -82,6 +83,8 @@ export function CustomizeDonationPageModal({
   } = useFieldArray({
     control: form.control,
     name: "designation_options",
+    // Keep our stable option `id` as form data; RHF needs a different key name.
+    keyName: "fieldKey",
   })
 
   const designationEnabled = form.watch("designation_enabled")
@@ -268,7 +271,12 @@ export function CustomizeDonationPageModal({
 
               <div className="space-y-3">
                 {optionFields.map((field, index) => (
-                  <div key={field.id} className="flex items-start gap-2">
+                  <div key={field.fieldKey} className="flex items-start gap-2">
+                    {/* Keep option id in form state without colliding with RHF's fieldKey. */}
+                    <input
+                      type="hidden"
+                      {...form.register(`designation_options.${index}.id`)}
+                    />
                     <TextField
                       form={form}
                       name={`designation_options.${index}.label`}
@@ -300,9 +308,7 @@ export function CustomizeDonationPageModal({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    appendOption({ label: "" })
-                  }
+                  onClick={() => appendOption(createEmptyDesignationOptionFormRow())}
                 >
                   {copy.designation.addOptionLabel}
                 </Button>
