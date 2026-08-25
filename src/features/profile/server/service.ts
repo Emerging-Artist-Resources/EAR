@@ -89,8 +89,14 @@ export async function getFiscalSponsorshipDashboard(
 export async function exportFiscalSponsorshipDonations(
   userId: string,
   options?: Pick<FiscalSponsorshipDashboardQuery, "dateFrom" | "dateTo">,
-): Promise<{ bytes: Buffer; fileName: string }> {
-  const donations = await fetchPaidDonationsForExportRepo(userId, {
+): Promise<{
+  bytes: Buffer;
+  fileName: string;
+  rowCount: number;
+  totalCount: number;
+  truncated: boolean;
+}> {
+  const { donations, totalCount, truncated } = await fetchPaidDonationsForExportRepo(userId, {
     dateFrom: options?.dateFrom,
     dateTo: options?.dateTo,
   });
@@ -98,6 +104,9 @@ export async function exportFiscalSponsorshipDonations(
   return {
     bytes,
     fileName: buildDonationExportFileName(options?.dateFrom, options?.dateTo),
+    rowCount: donations.length,
+    totalCount,
+    truncated,
   };
 }
 

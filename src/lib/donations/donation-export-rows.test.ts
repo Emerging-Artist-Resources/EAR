@@ -62,6 +62,15 @@ describe("toDonationExportRow", () => {
 })
 
 describe("buildDonationExportFileName", () => {
+  beforeEach(() => {
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date("2026-08-21T15:00:00.000Z"))
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
+  })
+
   it("includes both bounds when a range is selected", () => {
     expect(buildDonationExportFileName("2026-08-01", "2026-08-18")).toBe(
       "donations-2026-08-01-to-2026-08-18.xlsx",
@@ -73,5 +82,20 @@ describe("buildDonationExportFileName", () => {
     expect(buildDonationExportFileName(undefined, "2026-08-18")).toBe(
       "donations-through-2026-08-18.xlsx",
     )
+  })
+
+  it("uses the date-less fallback when either provided bound is invalid", () => {
+    expect(buildDonationExportFileName("2026-08-01", "not-a-date")).toBe(
+      "donations-2026-08-21.xlsx",
+    )
+    expect(buildDonationExportFileName("2026-02-30", "2026-08-18")).toBe(
+      "donations-2026-08-21.xlsx",
+    )
+    expect(buildDonationExportFileName("nope")).toBe("donations-2026-08-21.xlsx")
+  })
+
+  it("uses the date-less fallback when neither bound is set", () => {
+    expect(buildDonationExportFileName()).toBe("donations-2026-08-21.xlsx")
+    expect(buildDonationExportFileName("", "")).toBe("donations-2026-08-21.xlsx")
   })
 })

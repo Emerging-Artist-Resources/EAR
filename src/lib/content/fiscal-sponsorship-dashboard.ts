@@ -31,9 +31,13 @@ export const fiscalSponsorshipDashboard = {
     },
     exportExcel: {
       label: "Export to Excel",
+      exportingLabel: "Exporting…",
       sheetName: "Donations",
       designation: "Designation",
       message: "Message",
+      successToast: "Donations exported",
+      truncatedToast: "Exported the first {rowCount} of {totalCount} donations",
+      errorToast: "Couldn't export donations. Please try again.",
     },
     donationColumns: {
       donor: "Donor",

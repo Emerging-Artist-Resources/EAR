@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from "react"
 import { H3, Text } from "@/components/ui/typography"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,7 +15,11 @@ import {
   fiscalSponsorshipDashboard,
   fiscalDashboardButtonClass,
 } from "@/lib/content/fiscal-sponsorship-dashboard"
-import { fiscalSponsorshipExportPath } from "@/lib/profile/fiscal-sponsorship-query"
+import {
+  downloadFiscalSponsorshipExport,
+  formatDonationExportTruncatedToast,
+} from "@/lib/profile/download-fiscal-sponsorship-export"
+import { useToast } from "@/contexts/ToastContext"
 
 const MONEY_COLUMN_KEYS = new Set(["amount", "stripeFee", "fiscalFee", "net"])
 
@@ -40,8 +47,31 @@ export function ReceivedDonationsList({
   const copy = fiscalSponsorshipDashboard.approved
   const columnLabels = copy.donationColumns
   const emptyCopy = isDateFiltered ? copy.emptyFilteredDonations : copy.emptyDonations
-  const exportHref = fiscalSponsorshipExportPath({ dateFrom, dateTo })
   const canExport = totalCount > 0
+  const { showToast } = useToast()
+  const [exporting, setExporting] = useState(false)
+
+  async function handleExport() {
+    if (!canExport || exporting) return
+
+    setExporting(true)
+    try {
+      const meta = await downloadFiscalSponsorshipExport({ dateFrom, dateTo })
+      if (meta.truncated) {
+        showToast(formatDonationExportTruncatedToast(meta), "warning")
+      } else {
+        showToast(copy.exportExcel.successToast, "success")
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message.trim()
+          ? error.message
+          : copy.exportExcel.errorToast
+      showToast(message, "error")
+    } finally {
+      setExporting(false)
+    }
+  }
 
   return (
     <section className="space-y-3" aria-labelledby="received-donations-heading">
@@ -60,20 +90,16 @@ export function ReceivedDonationsList({
             dateTo={dateTo}
             onChange={onDateRangeChange}
           />
-          {canExport ? (
-            <Button
-              asChild
-              size="sm"
-              variant="secondary"
-              className={fiscalDashboardButtonClass.secondary}
-            >
-              <a href={exportHref}>{copy.exportExcel.label}</a>
-            </Button>
-          ) : (
-            <Button size="sm" variant="outline" disabled>
-              {copy.exportExcel.label}
-            </Button>
-          )}
+          <Button
+            type="button"
+            size="sm"
+            variant={canExport ? "secondary" : "outline"}
+            className={canExport ? fiscalDashboardButtonClass.secondary : undefined}
+            disabled={!canExport || exporting}
+            onClick={handleExport}
+          >
+            {exporting ? copy.exportExcel.exportingLabel : copy.exportExcel.label}
+          </Button>
         </div>
       </div>
 

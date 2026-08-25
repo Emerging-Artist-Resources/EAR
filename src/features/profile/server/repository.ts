@@ -26,6 +26,7 @@ import {
   buildDonationSummaryStats,
   normalizeAggregateSumCents,
 } from "@/lib/donations/donation-summary-stats";
+import { isDonationExportTruncated } from "@/lib/donations/donation-export-meta";
 import { resolveDonationRecipientDisplayName } from "@/lib/profile/donationRecipientDisplayName";
 import type { DonationReceiptRow } from "@/lib/pdf/donation-receipt";
 import { formatOccurrenceRangeEST } from "@/lib/datetime/utils";
@@ -879,21 +880,27 @@ export async function fetchFiscalSponsorshipDashboardRepo(
   };
 }
 
+export type PaidDonationsExportResult = {
+  donations: ReceivedDonationSummary[];
+  totalCount: number;
+  truncated: boolean;
+};
+
 export async function fetchPaidDonationsForExportRepo(
   userId: string,
   options: { dateFrom?: string; dateTo?: string },
-): Promise<ReceivedDonationSummary[]> {
+): Promise<PaidDonationsExportResult> {
   const supabase = await getSupabaseServerClient();
 
   let query = supabase
     .from("donations")
-    .select(RECEIVED_DONATION_COLUMNS)
+    .select(RECEIVED_DONATION_COLUMNS, { count: "exact" })
     .eq("recipient_user_id", userId)
     .eq("payment_status", "paid");
 
   query = applyCreatedAtRange(query, options.dateFrom, options.dateTo);
 
-  const { data, error } = await query
+  const { data, error, count } = await query
     .order("created_at", { ascending: false })
     .limit(FISCAL_SPONSORSHIP_EXPORT_MAX_ROWS);
 
@@ -901,7 +908,14 @@ export async function fetchPaidDonationsForExportRepo(
     throw error;
   }
 
-  return (data ?? []).map(mapReceivedDonationSummary);
+  const donations = (data ?? []).map(mapReceivedDonationSummary);
+  const totalCount = count ?? 0;
+
+  return {
+    donations,
+    totalCount,
+    truncated: isDonationExportTruncated(totalCount, FISCAL_SPONSORSHIP_EXPORT_MAX_ROWS),
+  };
 }
 
 const RECEIPT_DONATION_COLUMNS =

@@ -1,4 +1,5 @@
 import type { ReceivedDonationSummary } from "@/features/profile/server/types"
+import { isDateInputDay } from "@/lib/dates/parse-inclusive-date-range"
 import { donorDisplayName } from "@/lib/donations/donor-display"
 import { centsToUsdAmount } from "@/lib/payments/formatUsdFromCents"
 
@@ -28,10 +29,30 @@ export function toDonationExportRow(donation: ReceivedDonationSummary): Donation
   }
 }
 
-export function buildDonationExportFileName(dateFrom?: string, dateTo?: string): string {
-  if (dateFrom && dateTo) return `donations-${dateFrom}-to-${dateTo}.xlsx`
-  if (dateFrom) return `donations-from-${dateFrom}.xlsx`
-  if (dateTo) return `donations-through-${dateTo}.xlsx`
+function dateLessExportFileName(): string {
   const today = new Date().toISOString().slice(0, 10)
   return `donations-${today}.xlsx`
+}
+
+/**
+ * Build a Content-Disposition filename from optional date filters.
+ * Only embed calendar days that pass `isDateInputDay`. If either provided bound
+ * is non-empty but invalid, use the date-less fallback (never partially embed).
+ */
+export function buildDonationExportFileName(dateFrom?: string, dateTo?: string): string {
+  const fromRaw = dateFrom?.trim() || ""
+  const toRaw = dateTo?.trim() || ""
+  const fromProvided = fromRaw.length > 0
+  const toProvided = toRaw.length > 0
+  const fromValid = isDateInputDay(fromRaw)
+  const toValid = isDateInputDay(toRaw)
+
+  if ((fromProvided && !fromValid) || (toProvided && !toValid)) {
+    return dateLessExportFileName()
+  }
+
+  if (fromValid && toValid) return `donations-${fromRaw}-to-${toRaw}.xlsx`
+  if (fromValid) return `donations-from-${fromRaw}.xlsx`
+  if (toValid) return `donations-through-${toRaw}.xlsx`
+  return dateLessExportFileName()
 }
