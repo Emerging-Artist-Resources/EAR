@@ -1,8 +1,9 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { apiGet } from "@/lib/client/fetch-utils"
 import type { FiscalSponsorshipDashboard } from "@/features/profile/server/types"
+import { createRequestGenerationGate } from "@/lib/async/request-generation-gate"
 import { fiscalSponsorshipDashboardPath } from "@/lib/profile/fiscal-sponsorship-query"
 import type { DonationDateRange } from "./DonationDateFilter"
 
@@ -13,10 +14,13 @@ export function useFiscalSponsorshipDashboard() {
   const [dateTo, setDateTo] = useState<string | undefined>()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const requestGateRef = useRef(createRequestGenerationGate())
 
   const load = useCallback(async (requestPage: number, from?: string, to?: string) => {
+    const generation = requestGateRef.current.begin()
     setLoading(true)
     setError(null)
+
     try {
       const result = await apiGet<FiscalSponsorshipDashboard>(
         fiscalSponsorshipDashboardPath({
@@ -25,13 +29,20 @@ export function useFiscalSponsorshipDashboard() {
           dateTo: to,
         }),
       )
+
+      if (!requestGateRef.current.isCurrent(generation)) return
+
       setData(result)
       setPage(result.page)
     } catch (err) {
-      setData(null)
+      if (!requestGateRef.current.isCurrent(generation)) return
+
+      // Keep the last successful dashboard instead of blanking on refresh failure.
       setError(err instanceof Error ? err.message : "Failed to load fiscal sponsorship data")
     } finally {
-      setLoading(false)
+      if (requestGateRef.current.isCurrent(generation)) {
+        setLoading(false)
+      }
     }
   }, [])
 

@@ -74,7 +74,9 @@ describe("linkifyText", () => {
     for (const text of ["Version 3.3.3 is live", "Server at 10.0.0.1 on the LAN"]) {
       const segments = linkifyText(text)
       expect(segments.some((s) => s.type === "link")).toBe(false)
-      expect(segments.map((s) => s.value).join("")).toBe(text)
+      expect(
+        segments.map((s) => (s.type === "text" ? s.value : s.label)).join(""),
+      ).toBe(text)
     }
   })
 

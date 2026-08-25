@@ -6,16 +6,18 @@ export {
 } from "./fiscal-sponsorship";
 
 export const fiscalSponsorshipDashboard = {
+  /** Shared header CTA labels so none/pending cannot drift. */
+  sharedCtas: {
+    learn: "Learn about fiscal sponsorship",
+    apply: "Apply now",
+  },
   none: {
     title: "Get fiscal sponsorship through EAR",
     body: "Partner with EAR to receive tax-deductible donations and access grants without forming your own nonprofit.",
-    primaryCta: "Learn about fiscal sponsorship",
-    secondaryCta: "Apply now",
   },
   pending: {
     title: "Application under review",
     body: "Your fiscal sponsorship application is being reviewed. We'll reach out when there's an update.",
-    secondaryCta: "View application",
   },
   approved: {
     donationsHeading: "Received donations",

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { H3, Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
@@ -12,12 +11,7 @@ import { CustomizeDonationPageModal } from "./CustomizeDonationPageModal"
 import { DonationSummaryCard } from "./DonationSummaryCard"
 import { ReceivedDonationsList } from "./ReceivedDonationsList"
 import type { DonationDateRange } from "./DonationDateFilter"
-import {
-  fiscalSponsorshipDashboard,
-  FISCAL_SPONSORSHIP_INQUIRY_HREF,
-  FISCAL_SPONSORSHIP_PAGE_HREF,
-  fiscalDashboardButtonClass,
-} from "@/lib/content/fiscal-sponsorship-dashboard"
+import { fiscalSponsorshipDashboard } from "@/lib/content/fiscal-sponsorship-dashboard"
 
 function DonationSkeleton() {
   return (
@@ -62,6 +56,7 @@ export function FiscalSponsorshipSection({
   onDonationPageUpdated,
 }: FiscalSponsorshipSectionProps) {
   const [customizeOpen, setCustomizeOpen] = useState(false)
+
   if (loading && !data) {
     return (
       <Card border="dashed" padding="md">
@@ -70,18 +65,12 @@ export function FiscalSponsorshipSection({
     )
   }
 
-  if (error) {
-    return (
-      <Card border="dashed" padding="md">
-        <Text className="text-sm text-red-600">{error}</Text>
-      </Card>
-    )
-  }
-
   if (!data) {
     return (
       <Card border="dashed" padding="md">
-        <Text className="text-sm text-gray-600">Unable to load fiscal sponsorship data.</Text>
+        <Text className="text-sm text-red-600">
+          {error ?? "Unable to load fiscal sponsorship data."}
+        </Text>
       </Card>
     )
   }
@@ -92,26 +81,18 @@ export function FiscalSponsorshipSection({
 
   return (
     <div className="space-y-6">
+      {error ? (
+        <Card border="dashed" padding="md">
+          <Text className="text-sm text-red-600">{error}</Text>
+        </Card>
+      ) : null}
+
       {status === "none" ? (
-        <Card border="dashed" padding="md" className="space-y-4">
-          <div className="space-y-2">
-            <H3 className="text-lg font-semibold text-gray-900">
-              {fiscalSponsorshipDashboard.none.title}
-            </H3>
-            <Text className="text-sm text-gray-600">{fiscalSponsorshipDashboard.none.body}</Text>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="primary">
-              <Link href={FISCAL_SPONSORSHIP_PAGE_HREF}>
-                {fiscalSponsorshipDashboard.none.primaryCta}
-              </Link>
-            </Button>
-            <Button asChild variant="secondary" className={fiscalDashboardButtonClass.secondary}>
-              <Link href={FISCAL_SPONSORSHIP_INQUIRY_HREF}>
-                {fiscalSponsorshipDashboard.none.secondaryCta}
-              </Link>
-            </Button>
-          </div>
+        <Card border="dashed" padding="md" className="space-y-2">
+          <H3 className="text-lg font-semibold text-gray-900">
+            {fiscalSponsorshipDashboard.none.title}
+          </H3>
+          <Text className="text-sm text-gray-600">{fiscalSponsorshipDashboard.none.body}</Text>
         </Card>
       ) : null}
 
@@ -126,11 +107,6 @@ export function FiscalSponsorshipSection({
             </H3>
             <Text className="text-sm text-gray-600">{fiscalSponsorshipDashboard.pending.body}</Text>
           </div>
-          <Button asChild variant="secondary" className={fiscalDashboardButtonClass.secondary}>
-            <Link href={FISCAL_SPONSORSHIP_INQUIRY_HREF}>
-              {fiscalSponsorshipDashboard.pending.secondaryCta}
-            </Link>
-          </Button>
         </Card>
       ) : null}
 
@@ -194,24 +170,20 @@ export function FiscalSponsorshipSection({
       ) : null}
 
       {showDonationsList ? (
-        loading && !data ? (
-          <LoadingSkeleton />
-        ) : data ? (
-          <>
-            <DonationSummaryCard summary={data.donations_summary} />
-            <ReceivedDonationsList
-              donations={data.donations}
-              totalCount={data.donations_total_count}
-              page={data.page}
-              limit={data.limit}
-              onPageChange={onPageChange}
-              dateFrom={dateFrom}
-              dateTo={dateTo}
-              onDateRangeChange={onDateRangeChange}
-              isDateFiltered={Boolean(dateFrom || dateTo)}
-            />
-          </>
-        ) : null
+        <>
+          <DonationSummaryCard summary={data.donations_summary} />
+          <ReceivedDonationsList
+            donations={data.donations}
+            totalCount={data.donations_total_count}
+            page={data.page}
+            limit={data.limit}
+            onPageChange={onPageChange}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            onDateRangeChange={onDateRangeChange}
+            isDateFiltered={Boolean(dateFrom || dateTo)}
+          />
+        </>
       ) : null}
     </div>
   )

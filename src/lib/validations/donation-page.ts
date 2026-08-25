@@ -60,15 +60,8 @@ export const updateDonationPageSchema = z
 export type UpdateDonationPageData = z.infer<typeof updateDonationPageSchema>
 
 const designationOptionFormRowSchema = z.object({
-  // Empty string from a hidden input on newly added rows → treat as missing.
-  id: z
-    .string()
-    .max(120)
-    .optional()
-    .transform((value) => {
-      const trimmed = value?.trim()
-      return trimmed ? trimmed : undefined
-    }),
+  // May be "" from a hidden input on new rows; builders treat blank as missing.
+  id: z.string().max(120).optional(),
   label: z.string(),
 })
 

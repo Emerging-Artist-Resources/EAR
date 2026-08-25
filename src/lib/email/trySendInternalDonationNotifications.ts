@@ -233,8 +233,8 @@ export async function trySendInternalDonationNotifications({
 
   const pdfBytes = await renderDonationReceiptPdf(
     toDonationReceiptPdfInput(row, {
-      donorName: session?.customer_details?.name,
-      donorEmail: donorEmailResolved,
+      donorName: session?.customer_details?.name ?? undefined,
+      donorEmail: donorEmailResolved ?? undefined,
       amountCents,
       donorMessage: msg,
       dateLabel: dateStr,

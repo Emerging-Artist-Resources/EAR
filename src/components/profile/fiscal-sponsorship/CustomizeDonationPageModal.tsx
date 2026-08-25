@@ -11,6 +11,7 @@ import { TextAreaField } from "@/components/forms/blocks/TextAreaField"
 import { TextField } from "@/components/forms/blocks/TextField"
 import { Section } from "@/components/forms/blocks/Section"
 import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
+import type { Resolver } from "react-hook-form"
 import { apiPatch } from "@/lib/client/fetch-utils"
 import { useToast } from "@/contexts/ToastContext"
 import { useAuth } from "@/hooks/use-auth"
@@ -70,7 +71,9 @@ export function CustomizeDonationPageModal({
   const [removeExistingImage, setRemoveExistingImage] = useState(false)
 
   const form = useForm<CustomizeDonationPageFormData>({
-    resolver: zodResolver(customizeDonationPageFormSchema),
+    resolver: zodResolver(
+      customizeDonationPageFormSchema,
+    ) as Resolver<CustomizeDonationPageFormData>,
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: mapSettingsToFormValues(initialSettings),
