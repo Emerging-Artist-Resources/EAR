@@ -21,6 +21,8 @@ export const fiscalSponsorshipDashboard = {
     donationsHeading: "Received donations",
     donationsAmountHelper:
       "Amount reflects what the donor was charged, including any fees they chose to cover.",
+    donationsFeeEstimateHelper:
+      "Stripe fee, 5.5%, and net are estimates and may differ from Stripe by about ±1¢.",
     emptyDonations: "No donations yet. Share your donation link to get started.",
     emptyFilteredDonations: "No donations in this date range.",
     missingSlug: "Your fiscal sponsorship is approved, but your public donation link is not set up yet. Contact EAR to configure your page.",
@@ -44,9 +46,9 @@ export const fiscalSponsorshipDashboard = {
       email: "Email",
       date: "Date",
       amount: "Amount",
-      stripeFee: "Stripe fee",
-      fiscalFee: "5.5%",
-      net: "Net",
+      stripeFee: "Est. Stripe fee",
+      fiscalFee: "Est. 5.5%",
+      net: "Est. net",
       receipt: "Receipt",
     },
   },

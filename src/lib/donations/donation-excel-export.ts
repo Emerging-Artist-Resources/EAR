@@ -22,9 +22,9 @@ export async function buildDonationsWorkbook(
     { header: columns.email, key: "email", width: 28 },
     { header: columns.date, key: "date", width: 20, style: { numFmt: DATE_FORMAT } },
     { header: columns.amount, key: "amount", width: 14, style: { numFmt: USD_FORMAT } },
-    { header: columns.stripeFee, key: "stripeFee", width: 14, style: { numFmt: USD_FORMAT } },
+    { header: columns.stripeFee, key: "stripeFee", width: 16, style: { numFmt: USD_FORMAT } },
     { header: columns.fiscalFee, key: "fiscalFee", width: 12, style: { numFmt: USD_FORMAT } },
-    { header: columns.net, key: "net", width: 14, style: { numFmt: USD_FORMAT } },
+    { header: columns.net, key: "net", width: 12, style: { numFmt: USD_FORMAT } },
     { header: exportCopy.designation, key: "designation", width: 24 },
     { header: exportCopy.message, key: "message", width: 40 },
   ]

@@ -81,7 +81,10 @@ export function ReceivedDonationsList({
             {copy.donationsHeading}
           </H3>
           {donations.length > 0 ? (
-            <Text className="text-sm text-gray-600">{copy.donationsAmountHelper}</Text>
+            <div className="space-y-1">
+              <Text className="text-sm text-gray-600">{copy.donationsAmountHelper}</Text>
+              <Text className="text-sm text-gray-600">{copy.donationsFeeEstimateHelper}</Text>
+            </div>
           ) : null}
         </div>
         <div className="flex flex-col items-start gap-2 sm:items-end">
