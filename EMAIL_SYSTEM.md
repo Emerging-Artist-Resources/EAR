@@ -12,7 +12,8 @@ The email system uses Postmark for transactional emails. It's designed to send a
 src/lib/email/
 ├── postmark.ts                         # Postmark client initialization
 ├── sendListingEmail.ts               # Listing-specific email functions
-├── sendProfileEmail.ts               # Profile-specific email functions
+├── sendProfileEmail.ts               # Profile-specific email functions (incl. donation-page-updated-admin)
+├── donation-page-updated-admin-template-model.ts  # TemplateModel builder for donation page admin notify
 ├── sendInternalDonationEmail.ts      # Donation artist/admin templates + PDF attachment
 ├── trySendInternalDonationNotifications.ts  # Stripe webhook: idempotent internal donation sends
 ├── sendFiscalSponsorshipInquiryEmail.ts   # Fiscal sponsorship inquiry templates + PDF attachment
@@ -190,6 +191,28 @@ For each email type, create a template in Postmark with the corresponding alias:
   - `{{dashboard_url}}` - Link to the user account dashboard (`/profile`)
   - `{{feedback_url}}` - Link to the signup account-creation feedback form (Jotform; see `SIGNUP_ACCOUNT_FEEDBACK_FORM_URL` in `src/lib/config/site-contact.ts`)
 
+#### Template: `donation-page-updated-admin`
+- **Alias**: `donation-page-updated-admin`
+- **Subject**: e.g. `Donation page updated: {{user_name}}`
+- **When sent**: After a successful `PATCH /api/profile/donation-page` when settings actually changed (approved fiscal sponsorship recipient). Admin only — the user who saved is not emailed. Identical no-op saves do not trigger email.
+- **Template Variables**:
+  - `{{user_name}}` - Recipient display name
+  - `{{user_email}}` - Auth email of the saver
+  - `{{profile_type}}` - Profile type
+  - `{{organization_name}}` - Organization name when applicable (may be empty)
+  - `{{slug}}` - Public donation slug
+  - `{{donation_page_url}}` - Absolute URL to `/donate/{slug}`
+  - `{{has_image}}` - `"yes"` or `"no"`
+  - `{{donation_page_message}}` - Saved message (may be empty)
+  - `{{preset_amounts}}` - Comma-separated preset amounts
+  - `{{designation_enabled}}` - `"yes"` or `"no"`
+  - `{{designation_field_label}}` - Label when designation enabled (else empty)
+  - `{{designation_options}}` - Comma-separated option labels when enabled (else empty)
+- **Admin inbox env:** `ADMIN_EMAIL` or `ADMIN_NOTIFICATION_EMAIL` (if both are set, `ADMIN_EMAIL` wins)
+- **Implementation:** `sendDonationPageUpdatedAdminEmail` in `src/features/profile/server/service.ts` → `sendProfileEmail`; model via `buildDonationPageUpdatedAdminTemplateModel`
+- **Full HTML copy/paste**: see [`docs/postmark-donation-page-updated-admin-template.md`](docs/postmark-donation-page-updated-admin-template.md)
+- **Note:** Create this Server template in Postmark with the exact alias before production sends succeed. Until then, Postmark errors are logged and the PATCH still returns success.
+
 #### Template: `donation-notification-artist`
 - **Alias**: `donation-notification-artist`
 - **Subject**: (configured in Postmark, e.g. new donation notice to the artist)
@@ -297,6 +320,29 @@ When a new user signs up, an admin notification email is automatically sent:
 
 **Environment Variable:**
 - `ADMIN_NOTIFICATION_EMAIL` - Email address to receive admin notifications (see also `ADMIN_EMAIL` in donation section below)
+
+### Donation page updated — admin notification
+
+When an approved fiscal sponsorship recipient saves donation page settings **and the content actually changed**, an admin-only notification is sent (the saver is not emailed). No-op saves (identical message, presets, designation, and image path) skip the email.
+
+**Flow:**
+1. User saves via `PATCH /api/profile/donation-page`
+2. Settings are persisted (`updateDonationPage`)
+3. `sendDonationPageUpdatedAdminEmail()` is awaited after a successful persist
+4. Email is sent using the `donation-page-updated-admin` template via `sendProfileEmail`
+
+**Location:** `src/app/api/profile/donation-page/route.ts`
+
+**Service Function:** `src/features/profile/server/service.ts` (`sendDonationPageUpdatedAdminEmail`)
+
+**Error Handling:**
+- Missing admin inbox or Postmark failures are logged inside the service wrapper
+- Donation page PATCH still succeeds
+
+**Environment Variable:**
+- `ADMIN_EMAIL` or `ADMIN_NOTIFICATION_EMAIL` (if both are set, `ADMIN_EMAIL` wins)
+
+**Postmark copy/paste:** [`docs/postmark-donation-page-updated-admin-template.md`](docs/postmark-donation-page-updated-admin-template.md)
 
 ### Paid donation — artist and admin internal notification
 

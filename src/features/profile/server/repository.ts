@@ -670,6 +670,35 @@ export async function updateDonationPageRepo(
   });
 }
 
+/** Load current donation page settings for change detection (no public image URL needed). */
+export async function fetchDonationPageSettingsRepo(
+  userId: string,
+): Promise<DonationPageSettings | null> {
+  const supabase = await getSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(
+      "donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts",
+    )
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+  if (!data) {
+    return null;
+  }
+
+  return mapDonationPageSettingsFromRow({
+    donation_page_message: data.donation_page_message as string | null,
+    donation_page_image_path: data.donation_page_image_path as string | null,
+    donation_designation_config: data.donation_designation_config,
+    donation_preset_amounts: data.donation_preset_amounts,
+  });
+}
+
 export async function getEligibilitySubmissionsRepo(userId: string): Promise<EligibilitySubmission[]> {
   try {
     const supabase = await getSupabaseServerClient();

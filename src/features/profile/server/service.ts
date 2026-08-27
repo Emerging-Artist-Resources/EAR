@@ -1,4 +1,5 @@
-import { 
+import {
+  fetchDonationPageSettingsRepo,
   fetchSavedEventsFromDb,
   saveListingRepo,
   unsaveListingRepo,
@@ -21,20 +22,26 @@ import {
   FiscalSponsorshipDashboard,
   FiscalSponsorshipDashboardQuery,
 } from "./types";
-import type { DonationPageSettings } from "@/lib/donations/donationPageSettings";
+import {
+  donationPageSettingsEqual,
+  type DonationPageSettings,
+} from "@/lib/donations/donationPageSettings";
 import type { UpdateDonationPageData } from "@/lib/validations/donation-page";
 import { toDonationPagePersistPayload } from "@/lib/validations/donation-page";
 import { assertDonationPageImageStoragePathOwnedByUser } from "@/lib/storage/donationPagePhotoPaths";
 import { buildDonationExportFileName } from "@/lib/donations/donation-export-rows";
 import { buildDonationsWorkbook } from "@/lib/donations/donation-excel-export";
 import { renderDonationReceiptPdf, toDonationReceiptPdfInput } from "@/lib/pdf/donation-receipt";
+import type { ArtistDonationRecipientProfile } from "@/features/profile/server/artistDonationRecipient";
+import { buildDonationPageUpdatedAdminTemplateModel } from "@/lib/email/donation-page-updated-admin-template-model";
 import { buildDonationPdfAttachmentName } from "@/lib/email/sendInternalDonationEmail";
-import { formatReceiptDate, unixSecondsFromIso } from "@/lib/stripe/donationHelpers";
 import { sendProfileEmail } from "@/lib/email/sendProfileEmail";
+import { formatReceiptDate, unixSecondsFromIso } from "@/lib/stripe/donationHelpers";
 import { greetingNameFromFullName } from "@/lib/names/person-name";
 import { getPublicAppUrl } from "@/lib/config/app-url";
 import { normalizeSupabaseVerifyActionLink } from "@/lib/supabase/normalizeVerifyActionLink";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
+import type { User } from "@supabase/supabase-js";
 
 export async function getSavedEvents(
   userId: string,
@@ -133,13 +140,18 @@ export async function getDonationReceiptPdf(
 export async function updateDonationPage(
   userId: string,
   data: UpdateDonationPageData,
-): Promise<DonationPageSettings> {
+): Promise<{ donationPage: DonationPageSettings; changed: boolean }> {
   if (data.donation_page_image_path) {
     assertDonationPageImageStoragePathOwnedByUser(data.donation_page_image_path, userId);
   }
 
+  const previous = await fetchDonationPageSettingsRepo(userId);
   const payload = toDonationPagePersistPayload(data);
-  return updateDonationPageRepo(userId, payload);
+  const donationPage = await updateDonationPageRepo(userId, payload);
+  const changed =
+    previous == null || !donationPageSettingsEqual(previous, donationPage);
+
+  return { donationPage, changed };
 }
 
 export async function sendNewProfileAdminEmail(
@@ -170,6 +182,52 @@ export async function sendNewProfileAdminEmail(
     organizationName,
     userId,
   })
+}
+
+/**
+ * Notify admin when an approved recipient saves donation page settings.
+ * Failures are logged and never thrown — PATCH must still succeed.
+ */
+export async function sendDonationPageUpdatedAdminEmail(params: {
+  user: User
+  recipient: ArtistDonationRecipientProfile
+  donationPage: DonationPageSettings
+}): Promise<void> {
+  const adminEmailRaw =
+    process.env.ADMIN_EMAIL ?? process.env.ADMIN_NOTIFICATION_EMAIL ?? ""
+  const adminEmail = adminEmailRaw.trim()
+  if (!adminEmail) {
+    console.warn(
+      "[EMAIL] ADMIN_EMAIL / ADMIN_NOTIFICATION_EMAIL not set; skipping donation page updated admin email",
+    )
+    return
+  }
+
+  const slug = params.recipient.slug?.trim()
+  if (!slug) {
+    console.warn(
+      "[EMAIL] Donation page updated admin email skipped: recipient slug missing",
+    )
+    return
+  }
+
+  try {
+    const templateModel = buildDonationPageUpdatedAdminTemplateModel({
+      userName: params.recipient.name,
+      userEmail: params.user.email,
+      profileType: params.recipient.profile_type,
+      organizationName: params.recipient.organization_name,
+      slug,
+      donationPage: params.donationPage,
+    })
+
+    await sendProfileEmail("donation-page-updated-admin", {
+      to: adminEmail,
+      templateModel,
+    })
+  } catch (error) {
+    console.error("[EMAIL] Failed to send donation page updated admin email:", error)
+  }
 }
 
 export async function sendProfileApprovalEmail(

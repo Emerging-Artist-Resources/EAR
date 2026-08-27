@@ -11,7 +11,10 @@ import {
   updateDonationPageSchema,
 } from "@/lib/validations/donation-page"
 import { getDonationRecipientByUserId, isApprovedRecipient } from "@/features/profile/server/artistDonationRecipient"
-import { updateDonationPage } from "@/features/profile/server/service"
+import {
+  sendDonationPageUpdatedAdminEmail,
+  updateDonationPage,
+} from "@/features/profile/server/service"
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -46,7 +49,15 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const donationPage = await updateDonationPage(auth.user.id, data)
+    const { donationPage, changed } = await updateDonationPage(auth.user.id, data)
+
+    if (changed) {
+      await sendDonationPageUpdatedAdminEmail({
+        user: auth.user,
+        recipient,
+        donationPage,
+      })
+    }
 
     return createSuccessResponse(donationPage)
   } catch (error) {

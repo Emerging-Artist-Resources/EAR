@@ -18,6 +18,7 @@ type ProfileEmailType =
   | "email-confirmation"
   | "password-reset"
   | "welcome-email"
+  | "donation-page-updated-admin"
 
 type SendAdminNewUserEmailArgs = {
   to: string
@@ -53,12 +54,19 @@ type SendWelcomeEmailArgs = {
   firstName: string
 }
 
+/** TemplateModel already built by `buildDonationPageUpdatedAdminTemplateModel`. */
+type SendDonationPageUpdatedAdminEmailArgs = {
+  to: string
+  templateModel: Record<string, string>
+}
+
 type SendProfileEmailArgs =
   | SendAdminNewUserEmailArgs
   | SendProfileApprovedEmailArgs
   | SendEmailConfirmationArgs
   | SendPasswordResetArgs
   | SendWelcomeEmailArgs
+  | SendDonationPageUpdatedAdminEmailArgs
 
 export async function sendProfileEmail(
   type: ProfileEmailType,
@@ -120,6 +128,9 @@ export async function sendProfileEmail(
       dashboard_url: `${baseUrl}/profile`,
       feedback_url: SIGNUP_ACCOUNT_FEEDBACK_FORM_URL,
     }
+  } else if (type === "donation-page-updated-admin") {
+    const donationPageArgs = args as SendDonationPageUpdatedAdminEmailArgs
+    templateModel = donationPageArgs.templateModel
   } else {
     const resetArgs = args as SendPasswordResetArgs
     templateModel = {

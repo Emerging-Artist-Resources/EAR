@@ -40,3 +40,44 @@ export function mapDonationPageSettingsFromRow(
     designation_enabled: donation_designation != null,
   }
 }
+
+function designationConfigsEqual(
+  a: DonationDesignationConfigParsed | null,
+  b: DonationDesignationConfigParsed | null,
+): boolean {
+  if (a == null && b == null) return true
+  if (a == null || b == null) return false
+  if (a.fieldLabel !== b.fieldLabel) return false
+  if (a.allowNoPreference !== b.allowNoPreference) return false
+  if (a.options.length !== b.options.length) return false
+  return a.options.every(
+    (option, index) =>
+      option.id === b.options[index].id && option.label === b.options[index].label,
+  )
+}
+
+/**
+ * Content equality for donation page settings (ignores derived `donation_page_image_url`).
+ * Used to skip admin notification when a save is a no-op.
+ */
+export function donationPageSettingsEqual(
+  a: DonationPageSettings,
+  b: DonationPageSettings,
+): boolean {
+  if ((a.donation_page_message ?? null) !== (b.donation_page_message ?? null)) {
+    return false
+  }
+  if ((a.donation_page_image_path ?? null) !== (b.donation_page_image_path ?? null)) {
+    return false
+  }
+  if (a.designation_enabled !== b.designation_enabled) {
+    return false
+  }
+  if (a.donation_preset_amounts.length !== b.donation_preset_amounts.length) {
+    return false
+  }
+  if (a.donation_preset_amounts.some((amount, index) => amount !== b.donation_preset_amounts[index])) {
+    return false
+  }
+  return designationConfigsEqual(a.donation_designation, b.donation_designation)
+}
