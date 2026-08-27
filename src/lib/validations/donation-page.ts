@@ -16,12 +16,19 @@ import {
   presetAmountsRangeErrorMessage,
 } from "@/lib/donations/donationPresetAmounts"
 
+/** Max length for customize donation page copy (`profiles.donation_page_message`). */
+export const DONATION_PAGE_MESSAGE_MAX_CHARS = 10_000
+
+function donationPageMessageMaxError(): string {
+  return `Message must be at most ${DONATION_PAGE_MESSAGE_MAX_CHARS} characters`
+}
+
 /** Shared rule: customize form and PATCH must validate identically. */
 export const updateDonationPageSchema = z
   .object({
     donation_page_message: z
       .string()
-      .max(2000, `Message must be at most 2000 characters`)
+      .max(DONATION_PAGE_MESSAGE_MAX_CHARS, donationPageMessageMaxError())
       .nullable()
       .optional()
       .transform((value) => {
@@ -68,7 +75,9 @@ const designationOptionFormRowSchema = z.object({
 /** Client form schema — validates UI fields then maps to `updateDonationPageSchema` on submit. */
 export const customizeDonationPageFormSchema = z
   .object({
-    donation_page_message: z.string().max(2000, "Message must be at most 2000 characters"),
+    donation_page_message: z
+      .string()
+      .max(DONATION_PAGE_MESSAGE_MAX_CHARS, donationPageMessageMaxError()),
     donation_preset_amounts: z
       .array(z.string())
       .max(DONATION_PRESET_MAX_COUNT, `Add at most ${DONATION_PRESET_MAX_COUNT} preset amounts`)
