@@ -9,7 +9,7 @@ import { fiscalSponsorshipReceiptPath } from "@/lib/profile/fiscal-sponsorship-q
 
 const EMPTY_VALUE = "—"
 const columns = fiscalSponsorshipDashboard.approved.donationColumns
-const COLUMN_COUNT = Object.keys(columns).length
+const donorContextCopy = fiscalSponsorshipDashboard.approved.donationDonorContext
 
 function formatDonationDate(iso: string): string {
   try {
@@ -30,23 +30,23 @@ function donorEmail(donation: ReceivedDonationSummary): string {
   return donation.donor_email?.trim() || EMPTY_VALUE
 }
 
-function DonationSecondaryDetails({ donation }: { donation: ReceivedDonationSummary }) {
-  const hasDesignation = Boolean(donation.designation_label_snapshot)
-  const hasMessage = Boolean(donation.message)
-
-  if (!hasDesignation && !hasMessage) {
-    return null
-  }
+/** Name + optional designation / message — compact identity cell for table and mobile. */
+function DonorIdentityCell({ donation }: { donation: ReceivedDonationSummary }) {
+  const designation = donation.designation_label_snapshot?.trim()
+  const message = donation.message?.trim()
 
   return (
-    <div className="space-y-1 pt-1">
-      {hasDesignation ? (
-        <Text className="text-sm text-gray-600">
-          Designation: {donation.designation_label_snapshot}
-        </Text>
+    <div className="min-w-0 max-w-[11rem] sm:max-w-xs">
+      <Text className="text-sm font-medium text-gray-900">{donorLabel(donation)}</Text>
+      {designation ? (
+        <p className="mt-0.5 truncate text-xs text-gray-500">
+          {donorContextCopy.designationPrefix} · {designation}
+        </p>
       ) : null}
-      {hasMessage ? (
-        <Text className="text-sm text-gray-700">&ldquo;{donation.message}&rdquo;</Text>
+      {message ? (
+        <p className="mt-0.5 truncate text-xs italic text-gray-500" title={message}>
+          &ldquo;{message}&rdquo;
+        </p>
       ) : null}
     </div>
   )
@@ -81,37 +81,25 @@ function MoneyCell({
 }
 
 export function ReceivedDonationTableRow({ donation }: { donation: ReceivedDonationSummary }) {
-  const hasSecondaryDetails =
-    Boolean(donation.designation_label_snapshot) || Boolean(donation.message)
-
   return (
-    <>
-      <tr className="border-t border-gray-200">
-        <td className="px-3 py-3 align-top">
-          <Text className="text-sm font-medium text-gray-900">{donorLabel(donation)}</Text>
-        </td>
-        <td className="px-3 py-3 align-top">
-          <Text className="text-sm text-gray-600">{donorEmail(donation)}</Text>
-        </td>
-        <td className="px-3 py-3 align-top">
-          <Text className="text-sm text-gray-600">{formatDonationDate(donation.created_at)}</Text>
-        </td>
-        <MoneyCell cents={donation.amount} emphasized />
-        <MoneyCell cents={donation.stripe_fee_cents} />
-        <MoneyCell cents={donation.fiscal_fee_cents} />
-        <MoneyCell cents={donation.net_cents} emphasized />
-        <td className="px-3 py-3 align-top">
-          <ReceiptLink donationId={donation.id} />
-        </td>
-      </tr>
-      {hasSecondaryDetails ? (
-        <tr className="border-t border-gray-100">
-          <td colSpan={COLUMN_COUNT} className="px-3 pb-3 pt-0">
-            <DonationSecondaryDetails donation={donation} />
-          </td>
-        </tr>
-      ) : null}
-    </>
+    <tr className="border-t border-gray-200">
+      <td className="px-3 py-3 align-top">
+        <DonorIdentityCell donation={donation} />
+      </td>
+      <td className="px-3 py-3 align-top">
+        <Text className="text-sm text-gray-600">{donorEmail(donation)}</Text>
+      </td>
+      <td className="px-3 py-3 align-top">
+        <Text className="text-sm text-gray-600">{formatDonationDate(donation.created_at)}</Text>
+      </td>
+      <MoneyCell cents={donation.amount} emphasized />
+      <MoneyCell cents={donation.stripe_fee_cents} />
+      <MoneyCell cents={donation.fiscal_fee_cents} />
+      <MoneyCell cents={donation.net_cents} emphasized />
+      <td className="px-3 py-3 align-top">
+        <ReceiptLink donationId={donation.id} />
+      </td>
+    </tr>
   )
 }
 
@@ -128,7 +116,10 @@ export function ReceivedDonationMobileCard({ donation }: { donation: ReceivedDon
   return (
     <Card className="p-4">
       <div className="space-y-2">
-        <MobileField label={columns.donor} value={donorLabel(donation)} />
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+          <Text className="text-sm text-gray-600">{columns.donor}</Text>
+          <DonorIdentityCell donation={donation} />
+        </div>
         <MobileField label={columns.email} value={donorEmail(donation)} />
         <MobileField label={columns.date} value={formatDonationDate(donation.created_at)} />
         <MobileField label={columns.amount} value={formatUsdFromCents(donation.amount)} />
@@ -136,7 +127,6 @@ export function ReceivedDonationMobileCard({ donation }: { donation: ReceivedDon
         <MobileField label={columns.fiscalFee} value={formatUsdFromCents(donation.fiscal_fee_cents)} />
         <MobileField label={columns.net} value={formatUsdFromCents(donation.net_cents)} />
         <ReceiptLink donationId={donation.id} />
-        <DonationSecondaryDetails donation={donation} />
       </div>
     </Card>
   )

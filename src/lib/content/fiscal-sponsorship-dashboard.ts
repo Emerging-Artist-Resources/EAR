@@ -43,6 +43,10 @@ export const fiscalSponsorshipDashboard = {
       truncatedToast: "Exported the first {rowCount} of {totalCount} donations",
       errorToast: "Couldn't export donations. Please try again.",
     },
+    /** Compact donor-cell lines (designation / message under the name). */
+    donationDonorContext: {
+      designationPrefix: "For",
+    },
     donationColumns: {
       donor: "Donor",
       email: "Email",
