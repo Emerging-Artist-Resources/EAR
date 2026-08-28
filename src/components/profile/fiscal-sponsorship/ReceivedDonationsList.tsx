@@ -8,6 +8,7 @@ import { AdminPagination } from "@/components/admin/AdminPagination"
 import {
   ReceivedDonationMobileCard,
   ReceivedDonationTableRow,
+  receivedDonationDonorColumnClass,
 } from "./ReceivedDonationRow"
 import { DonationDateFilter, type DonationDateRange } from "./DonationDateFilter"
 import type { ReceivedDonationSummary } from "@/features/profile/server/types"
@@ -114,16 +115,18 @@ export function ReceivedDonationsList({
         <>
           <Card className="hidden overflow-hidden md:block">
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
+              <table className="min-w-full table-fixed text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     {Object.entries(columnLabels).map(([key, label]) => (
                       <th
                         key={key}
                         className={
-                          MONEY_COLUMN_KEYS.has(key)
-                            ? "px-3 py-2 text-right"
-                            : "px-3 py-2 text-left"
+                          key === "donor"
+                            ? `px-3 py-2 text-left ${receivedDonationDonorColumnClass}`
+                            : MONEY_COLUMN_KEYS.has(key)
+                              ? "px-3 py-2 text-right"
+                              : "px-3 py-2 text-left"
                         }
                       >
                         <Text className="text-sm font-medium text-gray-700">{label}</Text>

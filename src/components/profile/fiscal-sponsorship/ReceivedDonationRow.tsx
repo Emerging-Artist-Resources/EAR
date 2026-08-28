@@ -3,6 +3,11 @@ import { Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import { formatUsdFromCents } from "@/lib/payments/formatUsdFromCents"
 import { donorDisplayName } from "@/lib/donations/donor-display"
+import {
+  formatDonorCellDesignationLine,
+  formatDonorCellMessageLine,
+  RECEIVED_DONATION_DONOR_COLUMN_CLASS,
+} from "@/lib/donations/received-donation-donor-display"
 import type { ReceivedDonationSummary } from "@/features/profile/server/types"
 import { fiscalSponsorshipDashboard } from "@/lib/content/fiscal-sponsorship-dashboard"
 import { fiscalSponsorshipReceiptPath } from "@/lib/profile/fiscal-sponsorship-query"
@@ -31,21 +36,42 @@ function donorEmail(donation: ReceivedDonationSummary): string {
 }
 
 /** Name + optional designation / message — compact identity cell for table and mobile. */
-function DonorIdentityCell({ donation }: { donation: ReceivedDonationSummary }) {
-  const designation = donation.designation_label_snapshot?.trim()
-  const message = donation.message?.trim()
+function DonorIdentityCell({
+  donation,
+  layout,
+}: {
+  donation: ReceivedDonationSummary
+  layout: "table" | "mobile"
+}) {
+  const designationRaw = donation.designation_label_snapshot?.trim()
+  const messageRaw = donation.message?.trim()
+  const designation = designationRaw
+    ? formatDonorCellDesignationLine(designationRaw, donorContextCopy.designationPrefix)
+    : null
+  const message = messageRaw ? formatDonorCellMessageLine(messageRaw) : null
+
+  const containerClass =
+    layout === "table"
+      ? "min-w-0 w-full"
+      : "min-w-0 w-full max-w-full sm:max-w-[70%] sm:text-right"
 
   return (
-    <div className="min-w-0 max-w-[11rem] sm:max-w-xs">
+    <div className={containerClass}>
       <Text className="text-sm font-medium text-gray-900">{donorLabel(donation)}</Text>
       {designation ? (
-        <p className="mt-0.5 truncate text-xs text-gray-500">
-          {donorContextCopy.designationPrefix} · {designation}
+        <p
+          className="mt-0.5 truncate text-xs text-gray-500"
+          title={designation.title}
+        >
+          {designation.display}
         </p>
       ) : null}
       {message ? (
-        <p className="mt-0.5 truncate text-xs italic text-gray-500" title={message}>
-          &ldquo;{message}&rdquo;
+        <p
+          className="mt-0.5 truncate text-xs italic text-gray-500"
+          title={message.title ?? message.full}
+        >
+          {message.display}
         </p>
       ) : null}
     </div>
@@ -80,11 +106,13 @@ function MoneyCell({
   )
 }
 
+export const receivedDonationDonorColumnClass = RECEIVED_DONATION_DONOR_COLUMN_CLASS
+
 export function ReceivedDonationTableRow({ donation }: { donation: ReceivedDonationSummary }) {
   return (
     <tr className="border-t border-gray-200">
-      <td className="px-3 py-3 align-top">
-        <DonorIdentityCell donation={donation} />
+      <td className={`px-3 py-3 align-top ${RECEIVED_DONATION_DONOR_COLUMN_CLASS}`}>
+        <DonorIdentityCell donation={donation} layout="table" />
       </td>
       <td className="px-3 py-3 align-top">
         <Text className="text-sm text-gray-600">{donorEmail(donation)}</Text>
@@ -118,7 +146,7 @@ export function ReceivedDonationMobileCard({ donation }: { donation: ReceivedDon
       <div className="space-y-2">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
           <Text className="text-sm text-gray-600">{columns.donor}</Text>
-          <DonorIdentityCell donation={donation} />
+          <DonorIdentityCell donation={donation} layout="mobile" />
         </div>
         <MobileField label={columns.email} value={donorEmail(donation)} />
         <MobileField label={columns.date} value={formatDonationDate(donation.created_at)} />
