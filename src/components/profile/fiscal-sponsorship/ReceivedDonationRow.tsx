@@ -50,14 +50,17 @@ function DonorIdentityCell({
     : null
   const message = messageRaw ? formatDonorCellMessageLine(messageRaw) : null
 
-  const containerClass =
-    layout === "table"
-      ? "min-w-0 w-full"
-      : "min-w-0 w-full max-w-full sm:max-w-[70%] sm:text-right"
-
   return (
-    <div className={containerClass}>
-      <Text className="text-sm font-medium text-gray-900">{donorLabel(donation)}</Text>
+    <div className="min-w-0 w-full">
+      <Text
+        className={
+          layout === "mobile"
+            ? "text-base font-semibold text-gray-900"
+            : "text-sm font-medium text-gray-900"
+        }
+      >
+        {donorLabel(donation)}
+      </Text>
       {designation ? (
         <p
           className="mt-0.5 truncate text-xs text-gray-500"
@@ -131,11 +134,25 @@ export function ReceivedDonationTableRow({ donation }: { donation: ReceivedDonat
   )
 }
 
-function MobileField({ label, value }: { label: string; value: string }) {
+function MobileMoneyField({
+  label,
+  value,
+  emphasized = false,
+}: {
+  label: string
+  value: string
+  emphasized?: boolean
+}) {
   return (
-    <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between">
-      <Text className="text-sm text-gray-600">{label}</Text>
-      <Text className="text-sm font-medium text-gray-900 sm:text-right">{value}</Text>
+    <div className="min-w-0 space-y-0.5">
+      <Text className="text-xs text-gray-500">{label}</Text>
+      <Text
+        className={
+          emphasized ? "text-sm font-semibold text-gray-900" : "text-sm text-gray-600"
+        }
+      >
+        {value}
+      </Text>
     </div>
   )
 }
@@ -143,18 +160,37 @@ function MobileField({ label, value }: { label: string; value: string }) {
 export function ReceivedDonationMobileCard({ donation }: { donation: ReceivedDonationSummary }) {
   return (
     <Card className="p-4">
-      <div className="space-y-2">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-          <Text className="text-sm text-gray-600">{columns.donor}</Text>
+      <div className="space-y-3">
+        <div className="space-y-1">
           <DonorIdentityCell donation={donation} layout="mobile" />
+          <Text className="break-all text-sm text-gray-600">{donorEmail(donation)}</Text>
+          <Text className="text-xs text-gray-500">{formatDonationDate(donation.created_at)}</Text>
         </div>
-        <MobileField label={columns.email} value={donorEmail(donation)} />
-        <MobileField label={columns.date} value={formatDonationDate(donation.created_at)} />
-        <MobileField label={columns.amount} value={formatUsdFromCents(donation.amount)} />
-        <MobileField label={columns.stripeFee} value={formatUsdFromCents(donation.stripe_fee_cents)} />
-        <MobileField label={columns.fiscalFee} value={formatUsdFromCents(donation.fiscal_fee_cents)} />
-        <MobileField label={columns.net} value={formatUsdFromCents(donation.net_cents)} />
-        <ReceiptLink donationId={donation.id} />
+
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-gray-100 pt-3">
+          <MobileMoneyField
+            label={columns.amount}
+            value={formatUsdFromCents(donation.amount)}
+            emphasized
+          />
+          <MobileMoneyField
+            label={columns.net}
+            value={formatUsdFromCents(donation.net_cents)}
+            emphasized
+          />
+          <MobileMoneyField
+            label={columns.stripeFee}
+            value={formatUsdFromCents(donation.stripe_fee_cents)}
+          />
+          <MobileMoneyField
+            label={columns.fiscalFee}
+            value={formatUsdFromCents(donation.fiscal_fee_cents)}
+          />
+        </div>
+
+        <div className="border-t border-gray-100 pt-2">
+          <ReceiptLink donationId={donation.id} />
+        </div>
       </div>
     </Card>
   )
