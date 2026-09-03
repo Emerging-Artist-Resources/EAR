@@ -75,8 +75,8 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
       </Button>
 
       {isOpen && (
-        <div className="absolute top-16 left-0 right-0 bg-surface-panel shadow-lg z-50">
-          <div className="px-2 pt-2 pb-3 space-y-1">
+        <div className="absolute top-16 left-0 right-0 z-50 max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain bg-surface-panel shadow-lg">
+          <div className="space-y-1 px-2 pt-2 pb-3">
             {/* Public Navigation */}
             {publicNavigation.map((item) => (
               <Link
