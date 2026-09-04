@@ -22,7 +22,8 @@ export const PUBLIC_SITEMAP_ENTRIES: readonly PublicSitemapEntry[] = [
   { path: "/services", priority: 0.7, changeFrequency: "monthly" },
   { path: "/services/fiscal-sponsorship", priority: 0.7, changeFrequency: "monthly" },
   { path: "/services/fiscal-sponsorship/faq", priority: 0.7, changeFrequency: "monthly" },
-  { path: "/services/fiscal-services", priority: 0.7, changeFrequency: "monthly" },
+  // Fiscal Services temporarily hidden from public sitemap.
+  // { path: "/services/fiscal-services", priority: 0.7, changeFrequency: "monthly" },
   { path: "/services/photography-videography", priority: 0.7, changeFrequency: "monthly" },
   { path: "/donate", priority: 0.5, changeFrequency: "monthly" },
 ] as const

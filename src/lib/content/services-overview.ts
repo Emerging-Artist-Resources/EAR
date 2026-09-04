@@ -13,14 +13,15 @@ export type ServiceOverviewItem = {
 }
 
 export const serviceOverviewItems: ServiceOverviewItem[] = [
-  {
-    title: "Fiscal\nServices",
-    description:
-      "Bookkeeping, fiscal mentorship, and hourly support to help artists and small collectives build clear, sustainable financial systems.",
-    href: "/services/fiscal-services",
-    iconSrc: "/icons/admin-icon.png",
-    iconAlt: "Fiscal services",
-  },
+  // Fiscal Services temporarily hidden from the Services overview.
+  // {
+  //   title: "Fiscal\nServices",
+  //   description:
+  //     "Bookkeeping, fiscal mentorship, and hourly support to help artists and small collectives build clear, sustainable financial systems.",
+  //   href: "/services/fiscal-services",
+  //   iconSrc: "/icons/admin-icon.png",
+  //   iconAlt: "Fiscal services",
+  // },
   {
     title: "Fiscal\nSponsorship",
     description:

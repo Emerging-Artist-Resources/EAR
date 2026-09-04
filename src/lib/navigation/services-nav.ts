@@ -12,7 +12,8 @@ export type ServicesNavItem = {
 }
 
 export const servicesNavItems: ServicesNavItem[] = [
-  { label: "Fiscal Services", href: "/services/fiscal-services" },
+  // Fiscal Services temporarily hidden from public nav.
+  // { label: "Fiscal Services", href: "/services/fiscal-services" },
   {
     label: "Fiscal Sponsorship",
     href: "/services/fiscal-sponsorship",

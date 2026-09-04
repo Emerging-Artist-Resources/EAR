@@ -30,7 +30,7 @@ export default function ServicesPage() {
           We encourage you to explore our services to discover how we can best support you and your collective. Don&apos;t 
           know where to start? Reach out! We are here to help. 
           </Text>
-          <div className="grid grid-cols-1 items-stretch gap-8 md:grid-cols-3 md:gap-6 lg:gap-8">
+          <div className="mx-auto grid max-w-4xl grid-cols-1 items-stretch justify-center gap-8 md:grid-cols-2 md:gap-6 lg:gap-8">
             {serviceOverviewItems.map((item) => (
               <ServiceOverviewCard key={item.href} {...item} />
             ))}
