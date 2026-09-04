@@ -1,6 +1,10 @@
+"use client"
+
+import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
+import { FormFieldTooltip } from "@/components/forms/blocks/FormFieldTooltip"
 import { formatUsdFromCents } from "@/lib/payments/formatUsdFromCents"
 import { donorDisplayName } from "@/lib/donations/donor-display"
 import {
@@ -11,6 +15,7 @@ import {
 import type { ReceivedDonationSummary } from "@/features/profile/server/types"
 import { fiscalSponsorshipDashboard } from "@/lib/content/fiscal-sponsorship-dashboard"
 import { fiscalSponsorshipReceiptPath } from "@/lib/profile/fiscal-sponsorship-query"
+import { cn } from "@/lib/utils"
 
 const EMPTY_VALUE = "—"
 const columns = fiscalSponsorshipDashboard.approved.donationColumns
@@ -33,6 +38,57 @@ function donorLabel(donation: ReceivedDonationSummary): string {
 
 function donorEmail(donation: ReceivedDonationSummary): string {
   return donation.donor_email?.trim() || EMPTY_VALUE
+}
+
+/**
+ * Truncated designation/message:
+ * - Desktop table: FormFieldTooltip with the full text
+ * - Mobile cards: inline Show more / Show less
+ */
+function DonorContextLine({
+  display,
+  expandedText,
+  tooltipText,
+  layout,
+  className,
+}: {
+  display: string
+  expandedText: string
+  tooltipText?: string
+  layout: "table" | "mobile"
+  className?: string
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const isTruncated = Boolean(tooltipText)
+
+  if (!isTruncated) {
+    return <p className={cn("mt-0.5 text-xs text-gray-500", className)}>{display}</p>
+  }
+
+  if (layout === "mobile") {
+    return (
+      <div className="mt-0.5 min-w-0">
+        <p className={cn("text-xs text-gray-500", !expanded && "truncate", className)}>
+          {expanded ? expandedText : display}
+        </p>
+        <button
+          type="button"
+          className="mt-0.5 text-xs font-medium text-primary underline-offset-2 hover:underline"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((value) => !value)}
+        >
+          {expanded ? donorContextCopy.showLessLabel : donorContextCopy.showMoreLabel}
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-0.5 flex min-w-0 items-start gap-1">
+      <p className={cn("min-w-0 flex-1 truncate text-xs text-gray-500", className)}>{display}</p>
+      <FormFieldTooltip text={tooltipText!} className="mt-px" />
+    </div>
+  )
 }
 
 /** Name + optional designation / message — compact identity cell for table and mobile. */
@@ -62,20 +118,21 @@ function DonorIdentityCell({
         {donorLabel(donation)}
       </Text>
       {designation ? (
-        <p
-          className="mt-0.5 truncate text-xs text-gray-500"
-          title={designation.title}
-        >
-          {designation.display}
-        </p>
+        <DonorContextLine
+          display={designation.display}
+          expandedText={designation.full}
+          tooltipText={designation.title}
+          layout={layout}
+        />
       ) : null}
       {message ? (
-        <p
-          className="mt-0.5 truncate text-xs italic text-gray-500"
-          title={message.title ?? message.full}
-        >
-          {message.display}
-        </p>
+        <DonorContextLine
+          display={message.display}
+          expandedText={`“${message.full}”`}
+          tooltipText={message.title}
+          layout={layout}
+          className="italic"
+        />
       ) : null}
     </div>
   )

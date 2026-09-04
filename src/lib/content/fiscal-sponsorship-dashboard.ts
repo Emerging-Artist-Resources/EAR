@@ -46,6 +46,8 @@ export const fiscalSponsorshipDashboard = {
     /** Compact donor-cell lines (designation / message under the name). */
     donationDonorContext: {
       designationPrefix: "For",
+      showMoreLabel: "Show more",
+      showLessLabel: "Show less",
     },
     donationColumns: {
       donor: "Donor",
