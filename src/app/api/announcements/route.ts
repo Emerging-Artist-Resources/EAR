@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import { notificationSchema } from "@/lib/validations/legacy-schemas"
+import { announcementSchema } from "@/lib/validations/announcements"
 import {
   listAnnouncements,
   listAnnouncementsAdmin,
@@ -33,12 +33,18 @@ export async function POST(request: NextRequest) {
     const auth = await requireRole("ADMIN")
 
     const body = await request.json()
-    const validated = notificationSchema.parse(body)
+    const validated = announcementSchema.parse(body)
     const data = await createAnnouncement({
       title: validated.title,
       content: validated.content,
-      type: validated.type,
       authorUserId: auth.user.id,
+      heroImageUrl: validated.heroImageUrl,
+      ctaKind: validated.ctaKind,
+      ctaLabel: validated.ctaLabel,
+      ctaHref: validated.ctaHref,
+      dashboardWidget: validated.dashboardWidget,
+      dashboardWidgetLabel: validated.dashboardWidgetLabel,
+      dashboardWidgetValue: validated.dashboardWidgetValue,
     })
     return createSuccessResponse(data, 201)
   } catch (error) {

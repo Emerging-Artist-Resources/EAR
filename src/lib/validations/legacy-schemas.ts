@@ -34,12 +34,7 @@ export const performanceSchema = z.object({
   promoImagePaths: z.array(z.string()).min(1, "At least 1 photo path").max(5, "Max 5 photos"),
 })
 
-export const notificationSchema = z.object({
-  title: z.string().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
-  content: z.string().min(1, "Content is required"),
-  type: z.enum(["INFO", "WARNING", "SUCCESS", "ERROR"]).default("INFO"),
-  isActive: z.boolean().default(true),
-})
+export { announcementSchema as notificationSchema } from "./announcements"
+export type { AnnouncementFormData as NotificationFormData } from "./announcements"
 
 export type PerformanceFormData = z.infer<typeof performanceSchema>
-export type NotificationFormData = z.infer<typeof notificationSchema>

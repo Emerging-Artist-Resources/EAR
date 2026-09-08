@@ -10,35 +10,66 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { H2, H3, Text } from "@/components/ui/typography"
-import { getNotificationTypeColor, formatDateTime } from "@/lib/config/constants"
+import { formatDateTime } from "@/lib/config/constants"
 import { AdminLayout } from "@/components/admin/shared/AdminLayout"
 import { AdminLoadingState } from "@/components/admin/shared/AdminLoadingState"
+import type {
+  AdminAnnouncement,
+  AnnouncementCtaKind,
+  AnnouncementDashboardWidgetKind,
+} from "@/features/announcements/types"
 
-interface Notification {
-  id: string
+type FormState = {
   title: string
   content: string
-  type: string
+  heroImageUrl: string
+  ctaKind: "" | AnnouncementCtaKind
+  ctaLabel: string
+  ctaHref: string
+  dashboardWidget: AnnouncementDashboardWidgetKind
+  dashboardWidgetLabel: string
+  dashboardWidgetValue: string
   isActive: boolean
-  createdAt: string
-  updatedAt: string
-  author: {
-    name: string | null
-    email: string
+}
+
+const emptyForm: FormState = {
+  title: "",
+  content: "",
+  heroImageUrl: "",
+  ctaKind: "",
+  ctaLabel: "",
+  ctaHref: "",
+  dashboardWidget: "none",
+  dashboardWidgetLabel: "",
+  dashboardWidgetValue: "",
+  isActive: true,
+}
+
+function formFromAnnouncement(a: AdminAnnouncement): FormState {
+  return {
+    title: a.title,
+    content: a.content,
+    heroImageUrl: a.heroImageUrl ?? "",
+    ctaKind: a.cta?.kind ?? "",
+    ctaLabel: a.cta?.label ?? "",
+    ctaHref: a.cta?.href ?? "",
+    dashboardWidget: a.dashboardWidget ?? "none",
+    dashboardWidgetLabel: a.dashboardWidgetLabel ?? "",
+    dashboardWidgetValue: a.dashboardWidgetValue ?? "",
+    isActive: !a.archivedAt,
   }
 }
 
+function isDashboardWidgetOn(kind?: AnnouncementDashboardWidgetKind | null) {
+  return kind === "member_code" || kind === "copyable_value"
+}
+
 export default function AdminNotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notifications, setNotifications] = useState<AdminAnnouncement[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingNotification, setEditingNotification] = useState<Notification | null>(null)
-  const [formData, setFormData] = useState({
-    title: "",
-    content: "",
-    type: "INFO",
-    isActive: true
-  })
+  const [editingNotification, setEditingNotification] = useState<AdminAnnouncement | null>(null)
+  const [formData, setFormData] = useState<FormState>(emptyForm)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -48,32 +79,11 @@ export default function AdminNotificationsPage() {
   const fetchNotifications = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/announcements?admin=true')
+      const response = await fetch("/api/announcements?admin=true")
       if (response.ok) {
         const data = await response.json()
         const raw = Array.isArray(data) ? data : data?.data ?? []
-        type DbAnnouncement = {
-          id: string
-          title: string
-          content: string
-          type?: string | null
-          archived_at?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-          createdAt?: string | null
-          updatedAt?: string | null
-        }
-        const items: Notification[] = (raw as DbAnnouncement[]).map((a) => ({
-          id: a.id,
-          title: a.title,
-          content: a.content,
-          type: a.type ?? 'INFO',
-          isActive: a.archived_at ? false : true,
-          createdAt: a.created_at ?? a.createdAt ?? '',
-          updatedAt: a.updated_at ?? a.updatedAt ?? a.created_at ?? '',
-          author: { name: null, email: '' },
-        }))
-        setNotifications(items)
+        setNotifications(raw as AdminAnnouncement[])
       } else {
         console.error("Failed to fetch notifications")
       }
@@ -89,18 +99,35 @@ export default function AdminNotificationsPage() {
     setSubmitting(true)
 
     try {
-      const url = editingNotification 
+      const url = editingNotification
         ? `/api/announcements/${editingNotification.id}`
-        : '/api/announcements'
-      
-      const method = editingNotification ? 'PATCH' : 'POST'
-      
+        : "/api/announcements"
+
+      const method = editingNotification ? "PATCH" : "POST"
+      const payload: Record<string, unknown> = {
+        title: formData.title,
+        content: formData.content,
+        isActive: formData.isActive,
+        heroImageUrl: formData.heroImageUrl.trim() || undefined,
+        ctaKind: formData.ctaKind || undefined,
+        ctaLabel: formData.ctaKind ? formData.ctaLabel : undefined,
+        ctaHref: formData.ctaKind ? formData.ctaHref : undefined,
+      }
+      if (isDashboardWidgetOn(formData.dashboardWidget) || isDashboardWidgetOn(editingNotification?.dashboardWidget)) {
+        payload.dashboardWidget = formData.dashboardWidget
+        payload.dashboardWidgetLabel = isDashboardWidgetOn(formData.dashboardWidget)
+          ? formData.dashboardWidgetLabel
+          : null
+        payload.dashboardWidgetValue =
+          formData.dashboardWidget === "copyable_value" ? formData.dashboardWidgetValue : null
+      }
+
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       if (response.ok) {
@@ -124,7 +151,7 @@ export default function AdminNotificationsPage() {
 
     try {
       const response = await fetch(`/api/announcements/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       })
 
       if (response.ok) {
@@ -138,36 +165,21 @@ export default function AdminNotificationsPage() {
     }
   }
 
-  const handleEdit = (notification: Notification) => {
+  const handleEdit = (notification: AdminAnnouncement) => {
     setEditingNotification(notification)
-    setFormData({
-      title: notification.title,
-      content: notification.content,
-      type: notification.type,
-      isActive: notification.isActive
-    })
+    setFormData(formFromAnnouncement(notification))
     setIsModalOpen(true)
   }
 
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setEditingNotification(null)
-    setFormData({
-      title: "",
-      content: "",
-      type: "INFO",
-      isActive: true
-    })
+    setFormData(emptyForm)
   }
 
   const handleCreateNew = () => {
     setEditingNotification(null)
-    setFormData({
-      title: "",
-      content: "",
-      type: "INFO",
-      isActive: true
-    })
+    setFormData(emptyForm)
     setIsModalOpen(true)
   }
 
@@ -183,119 +195,186 @@ export default function AdminNotificationsPage() {
     <AdminLayout>
       <div className="flex justify-between items-center mb-6">
         <H2>Manage Announcements</H2>
-        <Button onClick={handleCreateNew}>
-          Create New Announcement
-        </Button>
+        <Button onClick={handleCreateNew}>Create New Announcement</Button>
       </div>
 
-          <Card className="p-6">
-            {notifications.length === 0 ? (
-              <div className="text-center text-gray-500 py-8">
-                No notifications created yet.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className="border rounded-lg p-4 hover:bg-gray-50"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <H3 className="text-gray-900">{notification.title}</H3>
-                          <Badge variant={getNotificationTypeColor(notification.type)}>
-                            {notification.type}
-                          </Badge>
-                          {!notification.isActive && (
-                            <Badge variant="default">Inactive</Badge>
-                          )}
-                        </div>
-                        <Text className="text-sm text-gray-600 mb-2">{notification.content}</Text>
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <Text>Created by {notification.author?.name ?? 'Admin'} on {formatDateTime(notification.createdAt || notification.updatedAt)}</Text>
-                          {notification.updatedAt !== notification.createdAt && (
-                            <Text>Updated {formatDateTime(notification.updatedAt)}</Text>
-                          )}
-      </div>
-    </div>
-                      <div className="flex gap-2 ml-4">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(notification)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(notification.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          Delete
-                        </Button>
-                      </div>
+      <Card className="p-6">
+        {notifications.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">No announcements created yet.</div>
+        ) : (
+          <div className="space-y-4">
+            {notifications.map((notification) => (
+              <div key={notification.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <H3 className="text-gray-900">{notification.title}</H3>
+                      {notification.archivedAt && <Badge variant="default">Inactive</Badge>}
+                      {notification.dashboardWidget === "member_code" ? (
+                        <Badge variant="primary">Member code</Badge>
+                      ) : null}
+                      {notification.dashboardWidget === "copyable_value" ? (
+                        <Badge variant="primary">Dashboard value</Badge>
+                      ) : null}
+                    </div>
+                    <Text className="text-sm text-gray-600 mb-2">{notification.content}</Text>
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <Text>
+                        Created {formatDateTime(notification.createdAt || notification.publishedAt || "")}
+                      </Text>
                     </div>
                   </div>
-                ))}
+                  <div className="flex gap-2 ml-4">
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(notification)}>
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(notification.id)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
               </div>
-            )}
-          </Card>
+            ))}
+          </div>
+        )}
+      </Card>
 
-      <Modal 
-        isOpen={isModalOpen} 
+      <Modal
+        isOpen={isModalOpen}
         onClose={handleCloseModal}
-        title={editingNotification ? "Edit Notification" : "Create New Notification"}
+        title={editingNotification ? "Edit Announcement" : "Create New Announcement"}
       >
         <div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Title
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
               <Input
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Notification title"
+                placeholder="Announcement title"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Content
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
               <Textarea
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                placeholder="Notification content"
+                placeholder="URLs in the text become links automatically."
                 rows={4}
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Type
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Hero image URL</label>
+              <Input
+                value={formData.heroImageUrl}
+                onChange={(e) => setFormData({ ...formData, heroImageUrl: e.target.value })}
+                placeholder="/images/workshop.jpg or https://…"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Button</label>
               <Select
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: (e.target as HTMLSelectElement).value })}
+                value={formData.ctaKind}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    ctaKind: (e.target as HTMLSelectElement).value as FormState["ctaKind"],
+                  })
+                }
                 className="w-full"
               >
-                <option value="INFO">Info</option>
-                <option value="WARNING">Warning</option>
-                <option value="SUCCESS">Success</option>
-                <option value="ERROR">Error</option>
+                <option value="">None</option>
+                <option value="link">Link</option>
+                <option value="authenticated_link">Sign-in required link</option>
               </Select>
             </div>
+
+            {formData.ctaKind ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Button label</label>
+                  <Input
+                    value={formData.ctaLabel}
+                    onChange={(e) => setFormData({ ...formData, ctaLabel: e.target.value })}
+                    placeholder="Learn more"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Button link</label>
+                  <Input
+                    value={formData.ctaHref}
+                    onChange={(e) => setFormData({ ...formData, ctaHref: e.target.value })}
+                    placeholder="/profile?announcement=… or https://…"
+                    required
+                  />
+                </div>
+              </>
+            ) : null}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Dashboard widget</label>
+              <Select
+                value={formData.dashboardWidget}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    dashboardWidget: (e.target as HTMLSelectElement)
+                      .value as AnnouncementDashboardWidgetKind,
+                  })
+                }
+                className="w-full"
+              >
+                <option value="none">None</option>
+                <option value="copyable_value">Copyable value (same for everyone)</option>
+                <option value="member_code">Member code (standard vs fiscal)</option>
+              </Select>
+            </div>
+
+            {isDashboardWidgetOn(formData.dashboardWidget) ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Value label</label>
+                <Input
+                  value={formData.dashboardWidgetLabel}
+                  onChange={(e) =>
+                    setFormData({ ...formData, dashboardWidgetLabel: e.target.value })
+                  }
+                  placeholder="Your code"
+                />
+              </div>
+            ) : null}
+
+            {formData.dashboardWidget === "copyable_value" ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Value</label>
+                <Input
+                  value={formData.dashboardWidgetValue}
+                  onChange={(e) =>
+                    setFormData({ ...formData, dashboardWidgetValue: e.target.value })
+                  }
+                  placeholder="EAR-WORKSHOP"
+                  required
+                />
+              </div>
+            ) : null}
 
             <div className="flex items-center">
               <Checkbox
                 id="isActive"
                 checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: (e.target as HTMLInputElement).checked })}
+                onChange={(e) =>
+                  setFormData({ ...formData, isActive: (e.target as HTMLInputElement).checked })
+                }
               />
               <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
                 Active (visible to users)
@@ -303,19 +382,10 @@ export default function AdminNotificationsPage() {
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="flex-1"
-              >
+              <Button type="submit" disabled={submitting} className="flex-1">
                 {submitting ? "Saving..." : editingNotification ? "Update" : "Create"}
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleCloseModal}
-                className="flex-1"
-              >
+              <Button type="button" variant="ghost" onClick={handleCloseModal} className="flex-1">
                 Cancel
               </Button>
             </div>

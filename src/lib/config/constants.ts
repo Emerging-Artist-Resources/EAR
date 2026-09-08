@@ -14,13 +14,6 @@ export const REVIEW_STATUS = {
   REJECTED: "REJECTED",
 } as const
 
-export const NOTIFICATION_TYPE = {
-  INFO: "INFO",
-  WARNING: "WARNING",
-  SUCCESS: "SUCCESS",
-  ERROR: "ERROR",
-} as const
-
 export const ROUTES = {
   HOME: "/",
   CALENDAR: "/calendar",
@@ -31,6 +24,7 @@ export const ROUTES = {
   PROFILE_ACCOUNT: "/profile/account",
   PROFILE_SETTINGS: "/profile/settings",
   ADMIN: "/admin",
+  ANNOUNCEMENTS: "/announcement",
   NOTIFICATIONS: "/notifications",
   ADMIN_NOTIFICATIONS: "/admin/notifications",
   SIGN_IN: "/auth/signin",
@@ -39,6 +33,14 @@ export const ROUTES = {
 
 export function getCalendarListingUrl(listingId: string) {
   return `${ROUTES.CALENDAR}?listingId=${encodeURIComponent(listingId)}`
+}
+
+export function getAnnouncementUrl(id: string) {
+  return `${ROUTES.ANNOUNCEMENTS}?id=${encodeURIComponent(id)}`
+}
+
+export function getProfileAnnouncementUrl(id: string) {
+  return `${ROUTES.PROFILE}?announcement=${encodeURIComponent(id)}`
 }
 
 export const API_ENDPOINTS = {
@@ -57,21 +59,6 @@ export function getStatusColor(status: string) {
     case PERFORMANCE_STATUS.APPROVED:
       return "success"
     case PERFORMANCE_STATUS.REJECTED:
-      return "error"
-    default:
-      return "default"
-  }
-}
-
-export function getNotificationTypeColor(type: string) {
-  switch (type) {
-    case NOTIFICATION_TYPE.INFO:
-      return "info"
-    case NOTIFICATION_TYPE.WARNING:
-      return "warning"
-    case NOTIFICATION_TYPE.SUCCESS:
-      return "success"
-    case NOTIFICATION_TYPE.ERROR:
       return "error"
     default:
       return "default"

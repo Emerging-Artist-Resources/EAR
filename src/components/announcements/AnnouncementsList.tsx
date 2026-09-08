@@ -1,48 +1,39 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Badge } from "@/components/ui/badge"
 import { H3, Text } from "@/components/ui/typography"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { getNotificationTypeColor } from "@/lib/config/constants"
+import type { Announcement } from "@/features/announcements/types"
+import { AnnouncementCard } from "./AnnouncementCard"
 
-export type Announcement = {
-  id: string
-  title: string
-  content: string
-  type?: "INFO" | "WARNING" | "SUCCESS" | "ERROR"
-  published_at?: string | null
-  created_at?: string | null
-}
-
-function formatAnnouncementDate(date: string | null | undefined): string {
-  if (!date) return ""
-  const now = new Date()
-  const pubDate = new Date(date)
-  const diffTime = Math.abs(now.getTime() - pubDate.getTime())
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
-  if (diffDays === 0) return "Posted today"
-  if (diffDays === 1) return "Posted 1 day ago"
-  return `Posted ${diffDays} days ago`
-}
-
-interface AnnouncementsListProps {
+type AnnouncementsListProps = {
   limit?: number
   showHeader?: boolean
   className?: string
+  variant?: "feed" | "compact"
+  announcements?: Announcement[]
+  highlightId?: string
 }
 
 export function AnnouncementsList({
   limit,
   showHeader = true,
   className,
+  variant = "compact",
+  announcements: initialAnnouncements,
+  highlightId,
 }: AnnouncementsListProps) {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([])
-  const [loading, setLoading] = useState(true)
+  const [announcements, setAnnouncements] = useState<Announcement[]>(initialAnnouncements ?? [])
+  const [loading, setLoading] = useState(initialAnnouncements == null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (initialAnnouncements != null) {
+      setAnnouncements(initialAnnouncements)
+      setLoading(false)
+      return
+    }
+
     const controller = new AbortController()
 
     fetch("/api/announcements", { signal: controller.signal })
@@ -59,7 +50,13 @@ export function AnnouncementsList({
       })
 
     return () => controller.abort()
-  }, [])
+  }, [initialAnnouncements])
+
+  useEffect(() => {
+    if (!highlightId || loading) return
+    const el = document.getElementById(`announcement-${highlightId}`)
+    el?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [highlightId, loading, announcements])
 
   const items = limit != null ? announcements.slice(0, limit) : announcements
 
@@ -70,23 +67,14 @@ export function AnnouncementsList({
   ) : items.length === 0 ? (
     <Text className="text-gray-500">No announcements at this time.</Text>
   ) : (
-    <div className="space-y-4">
+    <div className={variant === "feed" ? "space-y-6" : "space-y-4"}>
       {items.map((a) => (
-        <div
+        <AnnouncementCard
           key={a.id}
-          className="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0"
-        >
-          <H3 className="mb-2 text-base">{a.title}</H3>
-          <Text className="mb-2 line-clamp-2">{a.content}</Text>
-          <div className="flex items-center justify-between">
-            <Text className="text-sm text-error-600">
-              {formatAnnouncementDate(a.published_at || a.created_at)}
-            </Text>
-            {a.type && (
-              <Badge variant={getNotificationTypeColor(a.type)}>{a.type}</Badge>
-            )}
-          </div>
-        </div>
+          announcement={a}
+          variant={variant}
+          highlighted={highlightId === a.id}
+        />
       ))}
     </div>
   )
@@ -110,7 +98,7 @@ export function AnnouncementsList({
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+              d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 3.988 0 01-1.564-.317z"
             />
           </svg>
           <H3>EAR Announcements</H3>

@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
@@ -9,13 +9,12 @@ import { apiGet } from "@/lib/client/fetch-utils"
 import type { ActivityOverview } from "@/features/profile/server/types"
 import { DashboardSummaryCard } from "./DashboardSummaryCard"
 import { ProfileShortcutCard } from "./ProfileShortcutCard"
-import { AnnouncementsList } from "@/components/announcements/AnnouncementsList"
+import { AnnouncementDashboardCard } from "@/components/announcements/AnnouncementDashboardCard"
 import PerformanceModal from "@/components/performance-modal"
-import { useEffect } from "react"
-import { DashboardPageSkeleton } from "./DashboardPageSkeleton"
 import { DashboardPageLayout } from "./DashboardPageLayout"
 import { PlusIcon } from "lucide-react"
 import { greetingNameFromFullName } from "@/lib/names/person-name"
+import type { ResolvedDashboardAnnouncement } from "@/features/announcements/types"
 
 function DashboardStatsRow() {
   const [overview, setOverview] = useState<ActivityOverview | null>(null)
@@ -74,10 +73,22 @@ function DashboardStatsRow() {
   )
 }
 
-export function DashboardHomePage() {
+export function DashboardHomePage({
+  dashboardAnnouncements = [],
+  highlightId,
+}: {
+  dashboardAnnouncements?: ResolvedDashboardAnnouncement[]
+  highlightId?: string
+}) {
   const { userName } = useAuth()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const firstName = greetingNameFromFullName(userName)
+
+  useEffect(() => {
+    if (!highlightId) return
+    const el = document.getElementById(`announcement-${highlightId}`)
+    el?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [highlightId, dashboardAnnouncements])
 
   return (
     <DashboardPageLayout
@@ -111,9 +122,17 @@ export function DashboardHomePage() {
         <DashboardStatsRow />
       </Suspense>
 
-      <Suspense fallback={<DashboardPageSkeleton />}>
-        <AnnouncementsList limit={3} />
-      </Suspense>
+      {dashboardAnnouncements.length > 0 ? (
+        <div className="space-y-4">
+          {dashboardAnnouncements.map((announcement) => (
+            <AnnouncementDashboardCard
+              key={announcement.id}
+              announcement={announcement}
+              highlighted={highlightId === announcement.id}
+            />
+          ))}
+        </div>
+      ) : null}
 
       <PerformanceModal
         isOpen={isModalOpen}
