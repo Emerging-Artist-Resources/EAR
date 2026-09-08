@@ -29,6 +29,11 @@ type FormState = {
   dashboardWidget: AnnouncementDashboardWidgetKind
   dashboardWidgetLabel: string
   dashboardWidgetValue: string
+  popupEnabled: boolean
+  popupHeadline: string
+  popupBody: string
+  popupCtaLabel: string
+  popupShowAgain: boolean
   isActive: boolean
 }
 
@@ -42,6 +47,11 @@ const emptyForm: FormState = {
   dashboardWidget: "none",
   dashboardWidgetLabel: "",
   dashboardWidgetValue: "",
+  popupEnabled: false,
+  popupHeadline: "",
+  popupBody: "",
+  popupCtaLabel: "",
+  popupShowAgain: false,
   isActive: true,
 }
 
@@ -56,6 +66,11 @@ function formFromAnnouncement(a: AdminAnnouncement): FormState {
     dashboardWidget: a.dashboardWidget ?? "none",
     dashboardWidgetLabel: a.dashboardWidgetLabel ?? "",
     dashboardWidgetValue: a.dashboardWidgetValue ?? "",
+    popupEnabled: a.popupEnabled ?? false,
+    popupHeadline: a.popupHeadline ?? "",
+    popupBody: a.popupBody ?? "",
+    popupCtaLabel: a.popupCtaLabel ?? "",
+    popupShowAgain: false,
     isActive: !a.archivedAt,
   }
 }
@@ -120,6 +135,13 @@ export default function AdminNotificationsPage() {
           : null
         payload.dashboardWidgetValue =
           formData.dashboardWidget === "copyable_value" ? formData.dashboardWidgetValue : null
+      }
+      payload.popupEnabled = formData.popupEnabled
+      payload.popupHeadline = formData.popupHeadline.trim() || null
+      payload.popupBody = formData.popupBody.trim() || null
+      payload.popupCtaLabel = formData.popupCtaLabel.trim() || null
+      if (formData.popupEnabled && formData.popupShowAgain) {
+        payload.popupRevision = (editingNotification?.popupRevision ?? 1) + 1
       }
 
       const response = await fetch(url, {
@@ -216,6 +238,7 @@ export default function AdminNotificationsPage() {
                       {notification.dashboardWidget === "copyable_value" ? (
                         <Badge variant="primary">Dashboard value</Badge>
                       ) : null}
+                      {notification.popupEnabled ? <Badge variant="primary">Popup</Badge> : null}
                     </div>
                     <Text className="text-sm text-gray-600 mb-2">{notification.content}</Text>
                     <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -366,6 +389,82 @@ export default function AdminNotificationsPage() {
                   required
                 />
               </div>
+            ) : null}
+
+            <div className="flex items-center">
+              <Checkbox
+                id="popupEnabled"
+                checked={formData.popupEnabled}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    popupEnabled: (e.target as HTMLInputElement).checked,
+                  })
+                }
+              />
+              <label htmlFor="popupEnabled" className="ml-2 block text-sm text-gray-900">
+                Show as app popup
+              </label>
+            </div>
+            <Text className="text-xs text-gray-500">
+              First-visit popup on any app page. If more than one is enabled, the newest published
+              announcement wins. If this announcement has a button (for example “Get your code”),
+              that button also appears on the popup.
+            </Text>
+
+            {formData.popupEnabled ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Popup headline
+                  </label>
+                  <Input
+                    value={formData.popupHeadline}
+                    onChange={(e) => setFormData({ ...formData, popupHeadline: e.target.value })}
+                    placeholder="Short headline"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Popup body</label>
+                  <Textarea
+                    value={formData.popupBody}
+                    onChange={(e) => setFormData({ ...formData, popupBody: e.target.value })}
+                    placeholder="One or two sentences. URLs become links automatically."
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Popup button label
+                  </label>
+                  <Input
+                    value={formData.popupCtaLabel}
+                    onChange={(e) => setFormData({ ...formData, popupCtaLabel: e.target.value })}
+                    placeholder="Learn more"
+                  />
+                  <Text className="mt-1 text-xs text-gray-500">
+                    Secondary button on the popup. Goes to the announcement page.
+                  </Text>
+                </div>
+                {editingNotification?.popupEnabled ? (
+                  <div className="flex items-center">
+                    <Checkbox
+                      id="popupShowAgain"
+                      checked={formData.popupShowAgain}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          popupShowAgain: (e.target as HTMLInputElement).checked,
+                        })
+                      }
+                    />
+                    <label htmlFor="popupShowAgain" className="ml-2 block text-sm text-gray-900">
+                      Show again to people who dismissed this
+                    </label>
+                  </div>
+                ) : null}
+              </>
             ) : null}
 
             <div className="flex items-center">

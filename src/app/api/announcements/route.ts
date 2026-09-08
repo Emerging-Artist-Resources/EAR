@@ -45,6 +45,11 @@ export async function POST(request: NextRequest) {
       dashboardWidget: validated.dashboardWidget,
       dashboardWidgetLabel: validated.dashboardWidgetLabel,
       dashboardWidgetValue: validated.dashboardWidgetValue,
+      popupEnabled: validated.popupEnabled,
+      popupHeadline: validated.popupHeadline,
+      popupBody: validated.popupBody,
+      popupCtaLabel: validated.popupCtaLabel,
+      popupRevision: validated.popupRevision,
     })
     return createSuccessResponse(data, 201)
   } catch (error) {

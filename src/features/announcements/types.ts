@@ -17,12 +17,27 @@ export type Announcement = {
   cta: AnnouncementCta | null
 }
 
+/** Public first-visit popup. Never includes member codes or dashboard values. */
+export type AnnouncementPopup = {
+  id: string
+  headline: string
+  body: string
+  ctaLabel: string
+  revision: number
+  cta: AnnouncementCta | null
+}
+
 export type AdminAnnouncement = Announcement & {
   archivedAt: string | null
   authorUserId: string | null
   dashboardWidget: AnnouncementDashboardWidgetKind
   dashboardWidgetLabel: string | null
   dashboardWidgetValue: string | null
+  popupEnabled: boolean
+  popupHeadline: string | null
+  popupBody: string | null
+  popupCtaLabel: string | null
+  popupRevision: number
 }
 
 /** Signed-in dashboard payload. Values are already resolved; never returned by public APIs. */

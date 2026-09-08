@@ -1,4 +1,4 @@
-import { mapAdminAnnouncementRow, mapAnnouncementRow, toAnnouncementCta } from "./map-announcement"
+import { mapAdminAnnouncementRow, mapAnnouncementPopupRow, mapAnnouncementRow, toAnnouncementCta } from "./map-announcement"
 
 describe("toAnnouncementCta", () => {
   it("returns a link CTA when kind, label, and href are present", () => {
@@ -66,10 +66,14 @@ describe("mapAnnouncementRow", () => {
       dashboard_widget: "member_code",
       dashboard_widget_label: "Your EAR member code",
       dashboard_widget_value: "SECRET-CODE",
+      popup_enabled: true,
+      popup_headline: "Your EAR code is here",
     })
     expect(mapped).not.toHaveProperty("dashboardWidget")
     expect(mapped).not.toHaveProperty("code")
     expect(mapped).not.toHaveProperty("dashboardWidgetValue")
+    expect(mapped).not.toHaveProperty("popupEnabled")
+    expect(mapped).not.toHaveProperty("popupHeadline")
     expect(JSON.stringify(mapped)).not.toContain("member_code")
     expect(JSON.stringify(mapped)).not.toContain("SECRET-CODE")
   })
@@ -112,5 +116,102 @@ describe("mapAdminAnnouncementRow", () => {
     expect(mapped.dashboardWidget).toBe("none")
     expect(mapped.dashboardWidgetLabel).toBeNull()
     expect(mapped.dashboardWidgetValue).toBeNull()
+    expect(mapped.popupEnabled).toBe(false)
+    expect(mapped.popupRevision).toBe(1)
+  })
+})
+
+describe("mapAnnouncementPopupRow", () => {
+  it("maps short popup copy and defaults the CTA label", () => {
+    expect(
+      mapAnnouncementPopupRow({
+        id: "a1",
+        title: "Full title",
+        content: "Long card copy",
+        published_at: "2026-09-01T00:00:00Z",
+        popup_enabled: true,
+        popup_headline: "EAR member code",
+        popup_body: "Sign in to copy your code.",
+        popup_revision: 2,
+      })
+    ).toEqual({
+      id: "a1",
+      headline: "EAR member code",
+      body: "Sign in to copy your code.",
+      ctaLabel: "Learn more",
+      revision: 2,
+      cta: null,
+    })
+  })
+
+  it("includes the public announcement CTA for a dashboard action", () => {
+    expect(
+      mapAnnouncementPopupRow({
+        id: "a1",
+        title: "EAR Code",
+        content: "Get your code",
+        published_at: "2026-09-01T00:00:00Z",
+        popup_enabled: true,
+        popup_headline: "Your EAR code is here",
+        cta_kind: "authenticated_link",
+        cta_label: "Get your code",
+        cta_href: "/profile?announcement=a1",
+      })?.cta
+    ).toEqual({
+      kind: "authenticated_link",
+      label: "Get your code",
+      href: "/profile?announcement=a1",
+    })
+  })
+
+  it("falls back to the announcement title and omits unpublished or archived rows", () => {
+    expect(
+      mapAnnouncementPopupRow({
+        id: "a1",
+        title: "Workshop",
+        content: "Details",
+        published_at: "2026-09-01T00:00:00Z",
+        popup_enabled: true,
+      })?.headline
+    ).toBe("Workshop")
+    expect(
+      mapAnnouncementPopupRow({
+        id: "a1",
+        title: "Workshop",
+        content: "Details",
+        published_at: null,
+        popup_enabled: true,
+        popup_headline: "Hi",
+      })
+    ).toBeNull()
+    expect(
+      mapAnnouncementPopupRow({
+        id: "a1",
+        title: "Workshop",
+        content: "Details",
+        published_at: "2026-09-01T00:00:00Z",
+        archived_at: "2026-09-02T00:00:00Z",
+        popup_enabled: true,
+        popup_headline: "Hi",
+      })
+    ).toBeNull()
+  })
+
+  it("does not leak dashboard codes on the public popup payload", () => {
+    const mapped = mapAnnouncementPopupRow({
+      id: "a1",
+      title: "EAR Code",
+      content: "Get your code",
+      published_at: "2026-09-01T00:00:00Z",
+      popup_enabled: true,
+      popup_headline: "Your EAR code is here",
+      popup_body: "Sign in on the dashboard.",
+      dashboard_widget: "member_code",
+      dashboard_widget_value: "SECRET-CODE",
+    })
+    expect(JSON.stringify(mapped)).not.toContain("SECRET-CODE")
+    expect(JSON.stringify(mapped)).not.toContain("member_code")
+    expect(mapped).not.toHaveProperty("dashboardWidgetValue")
+    expect(mapped?.cta).toBeNull()
   })
 })

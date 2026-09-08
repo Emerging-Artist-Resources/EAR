@@ -65,4 +65,28 @@ describe("announcementSchema", () => {
     })
     expect(result.success).toBe(false)
   })
+
+  it("accepts an enabled popup with a headline", () => {
+    const parsed = announcementSchema.parse({
+      title: "EAR Code",
+      content: "Get your member code",
+      popupEnabled: true,
+      popupHeadline: "Your EAR code is here",
+      popupBody: "Sign in to copy it from your dashboard.",
+      popupCtaLabel: "See announcement",
+      popupRevision: 3,
+    })
+    expect(parsed.popupEnabled).toBe(true)
+    expect(parsed.popupHeadline).toBe("Your EAR code is here")
+    expect(parsed.popupRevision).toBe(3)
+  })
+
+  it("rejects an enabled popup without a headline", () => {
+    const result = announcementSchema.safeParse({
+      title: "EAR Code",
+      content: "Get your member code",
+      popupEnabled: true,
+    })
+    expect(result.success).toBe(false)
+  })
 })

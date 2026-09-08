@@ -8,6 +8,8 @@ const PUBLIC_COLUMNS =
 const PUBLIC_COLUMNS_LEGACY = "id,title,content,published_at,created_at"
 
 const ADMIN_COLUMNS =
+  "id,title,content,published_at,archived_at,author_user_id,created_at,hero_image_url,cta_kind,cta_label,cta_href,dashboard_widget,dashboard_widget_label,dashboard_widget_value,popup_enabled,popup_headline,popup_body,popup_cta_label,popup_revision"
+const ADMIN_COLUMNS_DASHBOARD =
   "id,title,content,published_at,archived_at,author_user_id,created_at,hero_image_url,cta_kind,cta_label,cta_href,dashboard_widget,dashboard_widget_label,dashboard_widget_value"
 const ADMIN_COLUMNS_WIDGET =
   "id,title,content,published_at,archived_at,author_user_id,created_at,hero_image_url,cta_kind,cta_label,cta_href,dashboard_widget,dashboard_widget_label"
@@ -55,6 +57,13 @@ export async function listAnnouncementsRepoAdmin(): Promise<AnnouncementRow[]> {
     .order("created_at", { ascending: false })
   if (!first.error) return (first.data ?? []) as AnnouncementRow[]
   if (!isMissingColumnError(first.error)) throw first.error
+
+  const withDashboard = await supabase
+    .from("announcements")
+    .select(ADMIN_COLUMNS_DASHBOARD)
+    .order("created_at", { ascending: false })
+  if (!withDashboard.error) return (withDashboard.data ?? []) as AnnouncementRow[]
+  if (!isMissingColumnError(withDashboard.error)) throw withDashboard.error
 
   const withWidget = await supabase
     .from("announcements")
@@ -107,6 +116,37 @@ export async function listDashboardWidgetAnnouncementsRepo(): Promise<Announceme
   throw second.error
 }
 
+const POPUP_COLUMNS =
+  "id,title,published_at,archived_at,popup_enabled,popup_headline,popup_body,popup_cta_label,popup_revision,cta_kind,cta_label,cta_href"
+const POPUP_COLUMNS_NO_CTA =
+  "id,title,published_at,archived_at,popup_enabled,popup_headline,popup_body,popup_cta_label,popup_revision"
+
+export async function getActivePopupAnnouncementRepo(): Promise<AnnouncementRow | null> {
+  const anonClient = getSupabaseServerClientAnon()
+  const query = (columns: string) =>
+    anonClient
+      .from("announcements")
+      .select(columns)
+      .eq("popup_enabled", true)
+      .is("archived_at", null)
+      .not("published_at", "is", null)
+      .order("published_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+  const first = await query(POPUP_COLUMNS)
+  if (!first.error) return (first.data as AnnouncementRow | null) ?? null
+  if (!isMissingColumnError(first.error)) throw first.error
+
+  const second = await query(POPUP_COLUMNS_NO_CTA)
+  if (second.error) {
+    if (isMissingColumnError(second.error)) return null
+    throw second.error
+  }
+  return (second.data as AnnouncementRow | null) ?? null
+}
+
 export async function getAnnouncementRepo(id: string): Promise<AnnouncementRow | null> {
   const supabase = await getSupabaseServerClient()
   const { data, error } = await supabase.from("announcements").select("*").eq("id", id).single()
@@ -127,6 +167,11 @@ export async function createAnnouncementRepo(payload: {
   dashboard_widget?: string | null
   dashboard_widget_label?: string | null
   dashboard_widget_value?: string | null
+  popup_enabled?: boolean | null
+  popup_headline?: string | null
+  popup_body?: string | null
+  popup_cta_label?: string | null
+  popup_revision?: number | null
 }) {
   const supabase = getSupabaseServiceClient()
   const { data, error } = await supabase.from("announcements").insert(payload).select().single()

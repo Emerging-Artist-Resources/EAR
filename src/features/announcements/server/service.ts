@@ -6,10 +6,11 @@ import {
   deleteAnnouncementRepo,
   listAnnouncementsRepoAdmin,
   listDashboardWidgetAnnouncementsRepo,
+  getActivePopupAnnouncementRepo,
 } from "./repository"
 import { announcementPatchSchema, announcementSchema } from "@/lib/validations/announcements"
 import { normalizeAnnouncementUrl } from "@/features/announcements/announcement-urls"
-import { mapAdminAnnouncementRow, mapAnnouncementRow } from "./map-announcement"
+import { mapAdminAnnouncementRow, mapAnnouncementPopupRow, mapAnnouncementRow } from "./map-announcement"
 import { getProfileRepo } from "@/features/profile/server/repository"
 import { getMemberCodeConfig } from "./member-code-config"
 import { toResolvedDashboardAnnouncements } from "./member-code"
@@ -46,6 +47,38 @@ function dashboardColumns(parsed: {
   }
 }
 
+function popupColumns(parsed: {
+  popupEnabled?: boolean
+  popupHeadline?: string | null
+  popupBody?: string | null
+  popupCtaLabel?: string | null
+  popupRevision?: number
+}) {
+  const columns: Record<string, unknown> = {}
+  if (parsed.popupEnabled !== undefined) columns.popup_enabled = parsed.popupEnabled === true
+  if (parsed.popupHeadline !== undefined) columns.popup_headline = parsed.popupHeadline?.trim() || null
+  if (parsed.popupBody !== undefined) columns.popup_body = parsed.popupBody?.trim() || null
+  if (parsed.popupCtaLabel !== undefined) columns.popup_cta_label = parsed.popupCtaLabel?.trim() || null
+  if (parsed.popupRevision !== undefined) columns.popup_revision = parsed.popupRevision
+  return columns
+}
+
+function hasPopupFields(parsed: {
+  popupEnabled?: boolean
+  popupHeadline?: string | null
+  popupBody?: string | null
+  popupCtaLabel?: string | null
+  popupRevision?: number
+}) {
+  return (
+    parsed.popupEnabled !== undefined ||
+    parsed.popupHeadline !== undefined ||
+    parsed.popupBody !== undefined ||
+    parsed.popupCtaLabel !== undefined ||
+    parsed.popupRevision !== undefined
+  )
+}
+
 function heroColumn(heroImageUrl: string | null | undefined) {
   if (heroImageUrl == null) return null
   return normalizeAnnouncementUrl(heroImageUrl)
@@ -77,6 +110,11 @@ export async function getAnnouncement(id: string) {
   return row ? mapAnnouncementRow(row) : null
 }
 
+export async function getActivePopupAnnouncement() {
+  const row = await getActivePopupAnnouncementRepo()
+  return row ? mapAnnouncementPopupRow(row) : null
+}
+
 export async function createAnnouncement(input: {
   title: string
   content: string
@@ -88,6 +126,11 @@ export async function createAnnouncement(input: {
   dashboardWidget?: "none" | "copyable_value" | "member_code" | null
   dashboardWidgetLabel?: string | null
   dashboardWidgetValue?: string | null
+  popupEnabled?: boolean
+  popupHeadline?: string | null
+  popupBody?: string | null
+  popupCtaLabel?: string | null
+  popupRevision?: number
 }) {
   const parsed = announcementSchema.parse({
     title: input.title,
@@ -99,6 +142,11 @@ export async function createAnnouncement(input: {
     dashboardWidget: input.dashboardWidget,
     dashboardWidgetLabel: input.dashboardWidgetLabel,
     dashboardWidgetValue: input.dashboardWidgetValue,
+    popupEnabled: input.popupEnabled,
+    popupHeadline: input.popupHeadline,
+    popupBody: input.popupBody,
+    popupCtaLabel: input.popupCtaLabel,
+    popupRevision: input.popupRevision,
   })
   const row = await createAnnouncementRepo({
     title: parsed.title,
@@ -111,6 +159,7 @@ export async function createAnnouncement(input: {
     ...(parsed.dashboardWidget === "member_code" || parsed.dashboardWidget === "copyable_value"
       ? dashboardColumns(parsed)
       : {}),
+    ...(hasPopupFields(parsed) ? popupColumns(parsed) : {}),
   })
   return mapAdminAnnouncementRow(row)
 }
@@ -136,6 +185,9 @@ export async function updateAnnouncement(id: string, body: unknown) {
     partial.dashboardWidgetValue !== undefined
   ) {
     Object.assign(updatePayload, dashboardColumns(partial))
+  }
+  if (hasPopupFields(partial)) {
+    Object.assign(updatePayload, popupColumns(partial))
   }
   if (Object.prototype.hasOwnProperty.call(body as Record<string, unknown>, "isActive")) {
     const isActive = Boolean((body as Record<string, unknown>).isActive)

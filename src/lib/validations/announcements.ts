@@ -27,6 +27,11 @@ export const announcementFieldsSchema = z.object({
   dashboardWidget: z.preprocess(emptyToNull, announcementDashboardWidgetSchema.nullable().optional()),
   dashboardWidgetLabel: z.preprocess(emptyToNull, z.string().max(80).nullable().optional()),
   dashboardWidgetValue: z.preprocess(emptyToNull, z.string().max(80).nullable().optional()),
+  popupEnabled: z.boolean().optional(),
+  popupHeadline: z.preprocess(emptyToNull, z.string().max(120).nullable().optional()),
+  popupBody: z.preprocess(emptyToNull, z.string().max(500).nullable().optional()),
+  popupCtaLabel: z.preprocess(emptyToNull, z.string().max(80).nullable().optional()),
+  popupRevision: z.number().int().min(1).optional(),
 })
 
 function refineAnnouncementFields(
@@ -37,6 +42,8 @@ function refineAnnouncementFields(
     ctaHref?: string | null
     dashboardWidget?: "none" | "copyable_value" | "member_code" | null
     dashboardWidgetValue?: string | null
+    popupEnabled?: boolean
+    popupHeadline?: string | null
   },
   ctx: z.RefinementCtx
 ) {
@@ -53,6 +60,14 @@ function refineAnnouncementFields(
       code: z.ZodIssueCode.custom,
       message: "Enter the value to show on the dashboard",
       path: ["dashboardWidgetValue"],
+    })
+  }
+
+  if (data.popupEnabled === true && data.popupHeadline == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Enter a popup headline",
+      path: ["popupHeadline"],
     })
   }
 

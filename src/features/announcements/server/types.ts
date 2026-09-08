@@ -3,5 +3,6 @@ export type {
   Announcement,
   AnnouncementCta,
   AnnouncementDashboardWidgetKind,
+  AnnouncementPopup,
   ResolvedDashboardAnnouncement,
 } from "../types"
