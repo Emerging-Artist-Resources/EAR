@@ -31,6 +31,7 @@ export const NEWSLETTER_SOURCES = [
   "home",
   "our-story",
   "about-us",
+  "announcements",
   "backfill",
 ] as const
 

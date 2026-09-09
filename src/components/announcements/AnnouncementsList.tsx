@@ -1,8 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { H3, Text } from "@/components/ui/typography"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { H2, H3, Text } from "@/components/ui/typography"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { NewsletterSignupTrigger } from "@/components/newsletter/NewsletterSignupTrigger"
+import { ROUTES } from "@/lib/config/constants"
+import { announcementsEmpty } from "@/lib/content/announcements"
 import type { Announcement } from "@/features/announcements/types"
 import { AnnouncementCard } from "./AnnouncementCard"
 
@@ -13,6 +18,64 @@ type AnnouncementsListProps = {
   variant?: "feed" | "compact"
   announcements?: Announcement[]
   highlightId?: string
+}
+
+function AnnouncementsFeedSkeleton() {
+  return (
+    <div className="space-y-10" aria-hidden>
+      <div className="overflow-hidden border border-ear-black/15">
+        <div className="h-64 w-full animate-pulse bg-ear-black/10 sm:h-80" />
+        <div className="space-y-3 p-6">
+          <div className="h-7 w-2/3 animate-pulse bg-ear-black/10" />
+          <div className="h-4 w-full animate-pulse bg-ear-black/10" />
+          <div className="h-4 w-5/6 animate-pulse bg-ear-black/10" />
+        </div>
+      </div>
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="h-28 animate-pulse border border-ear-black/15 bg-ear-black/5" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function AnnouncementsCompactSkeleton() {
+  return (
+    <div className="space-y-4" aria-hidden>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="h-24 animate-pulse border border-ear-black/15 bg-ear-black/5" />
+      ))}
+    </div>
+  )
+}
+
+function EmptyAnnouncements() {
+  return (
+    <Card
+      padding="none"
+      className="overflow-hidden border-ear-black/15 border-l-4 border-l-ear-dark-red bg-ear-off-white shadow-none"
+    >
+      <CardContent className="p-6 sm:p-8">
+        <H3 className="mb-3 font-header text-2xl font-bold text-ear-black sm:text-3xl">
+          {announcementsEmpty.title}
+        </H3>
+        <Text className="mb-6 text-ear-black/80">{announcementsEmpty.body}</Text>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <Button variant="outline" className="border-ear-black text-ear-black" asChild>
+            <Link href={ROUTES.CALENDAR}>{announcementsEmpty.calendarLabel}</Link>
+          </Button>
+          <NewsletterSignupTrigger source="announcements" sourceContext="empty-state">
+            {({ onClick }) => (
+              <Button variant="primary" type="button" onClick={onClick}>
+                {announcementsEmpty.emailLabel}
+              </Button>
+            )}
+          </NewsletterSignupTrigger>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
 export function AnnouncementsList({
@@ -60,24 +123,55 @@ export function AnnouncementsList({
 
   const items = limit != null ? announcements.slice(0, limit) : announcements
 
-  const body = loading ? (
-    <Text className="text-gray-500">Loading announcements...</Text>
-  ) : error ? (
-    <Text className="text-sm text-red-600">{error}</Text>
-  ) : items.length === 0 ? (
-    <Text className="text-gray-500">No announcements at this time.</Text>
-  ) : (
-    <div className={variant === "feed" ? "space-y-6" : "space-y-4"}>
-      {items.map((a) => (
+  let body
+  if (loading) {
+    body = variant === "feed" ? <AnnouncementsFeedSkeleton /> : <AnnouncementsCompactSkeleton />
+  } else if (error) {
+    body = <Text className="text-sm text-red-600">{error}</Text>
+  } else if (items.length === 0) {
+    body = <EmptyAnnouncements />
+  } else if (variant === "feed") {
+    const [lead, ...rest] = items
+    body = (
+      <div className="space-y-10">
         <AnnouncementCard
-          key={a.id}
-          announcement={a}
-          variant={variant}
-          highlighted={highlightId === a.id}
+          announcement={lead}
+          variant="lead"
+          highlighted={highlightId === lead.id}
         />
-      ))}
-    </div>
-  )
+        {rest.length > 0 ? (
+          <div>
+            <H2 className="mb-6 text-xl font-bold uppercase tracking-wide text-ear-black">
+              Earlier updates
+            </H2>
+            <div className="space-y-4">
+              {rest.map((a) => (
+                <AnnouncementCard
+                  key={a.id}
+                  announcement={a}
+                  variant="compact"
+                  highlighted={highlightId === a.id}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    )
+  } else {
+    body = (
+      <div className="space-y-4">
+        {items.map((a) => (
+          <AnnouncementCard
+            key={a.id}
+            announcement={a}
+            variant="compact"
+            highlighted={highlightId === a.id}
+          />
+        ))}
+      </div>
+    )
+  }
 
   if (!showHeader) {
     return <div className={className}>{body}</div>
@@ -88,7 +182,7 @@ export function AnnouncementsList({
       <CardHeader>
         <div className="flex items-center gap-2">
           <svg
-            className="w-5 h-5 text-gray-500"
+            className="h-5 w-5 text-gray-500"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

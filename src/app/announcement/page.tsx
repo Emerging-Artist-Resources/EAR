@@ -1,6 +1,6 @@
 import { listAnnouncements } from "@/features/announcements/server/service"
+import { AnnouncementsHero } from "@/components/announcements/AnnouncementsHero"
 import { AnnouncementsList } from "@/components/announcements/AnnouncementsList"
-import { H1, Text } from "@/components/ui/typography"
 import { buildPageMetadata } from "@/lib/config/site-metadata"
 import { ROUTES } from "@/lib/config/constants"
 
@@ -27,12 +27,9 @@ export default async function AnnouncementsPage({ searchParams }: PageProps) {
 
   return (
     <main>
+      <AnnouncementsHero />
       <section className="bg-ear-off-white px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-        <div className="mx-auto max-w-3xl">
-          <H1 className="mb-3 text-ear-black">Announcements</H1>
-          <Text className="mb-10 text-ear-black/80">
-            Upcoming events, workshops, programs, and resources from EAR.
-          </Text>
+        <div className="mx-auto max-w-5xl">
           <AnnouncementsList
             variant="feed"
             showHeader={false}

@@ -38,6 +38,7 @@ type SplitPageHeroProps = {
   compact?: boolean
   className?: string
   titleClassName?: string
+  contentClassName?: string
   children?: React.ReactNode
 }
 
@@ -53,6 +54,7 @@ export function SplitPageHero({
   compact = false,
   className,
   titleClassName,
+  contentClassName,
   children,
 }: SplitPageHeroProps) {
   const imageColumn = (
@@ -75,7 +77,13 @@ export function SplitPageHero({
   )
 
   const contentColumn = (
-    <div className={cn(PAGE_HERO_SPLIT_CONTENT_CLASS, PAGE_HERO_CONTENT_PADDING_CLASS)}>
+    <div
+      className={cn(
+        PAGE_HERO_SPLIT_CONTENT_CLASS,
+        PAGE_HERO_CONTENT_PADDING_CLASS,
+        contentClassName
+      )}
+    >
       <H1
         id={headingId}
         className={cn(
