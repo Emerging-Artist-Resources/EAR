@@ -5,86 +5,26 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Modal } from "@/components/ui/modal"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
 import { H2, H3, Text } from "@/components/ui/typography"
 import { formatDateTime } from "@/lib/config/constants"
 import { AdminLayout } from "@/components/admin/shared/AdminLayout"
 import { AdminLoadingState } from "@/components/admin/shared/AdminLoadingState"
-import type {
-  AdminAnnouncement,
-  AnnouncementCtaKind,
-  AnnouncementDashboardWidgetKind,
-} from "@/features/announcements/types"
-
-type FormState = {
-  title: string
-  content: string
-  heroImageUrl: string
-  ctaKind: "" | AnnouncementCtaKind
-  ctaLabel: string
-  ctaHref: string
-  dashboardWidget: AnnouncementDashboardWidgetKind
-  dashboardWidgetLabel: string
-  dashboardWidgetValue: string
-  popupEnabled: boolean
-  popupHeadline: string
-  popupBody: string
-  popupCtaLabel: string
-  popupShowAgain: boolean
-  isActive: boolean
-}
-
-const emptyForm: FormState = {
-  title: "",
-  content: "",
-  heroImageUrl: "",
-  ctaKind: "",
-  ctaLabel: "",
-  ctaHref: "",
-  dashboardWidget: "none",
-  dashboardWidgetLabel: "",
-  dashboardWidgetValue: "",
-  popupEnabled: false,
-  popupHeadline: "",
-  popupBody: "",
-  popupCtaLabel: "",
-  popupShowAgain: false,
-  isActive: true,
-}
-
-function formFromAnnouncement(a: AdminAnnouncement): FormState {
-  return {
-    title: a.title,
-    content: a.content,
-    heroImageUrl: a.heroImageUrl ?? "",
-    ctaKind: a.cta?.kind ?? "",
-    ctaLabel: a.cta?.label ?? "",
-    ctaHref: a.cta?.href ?? "",
-    dashboardWidget: a.dashboardWidget ?? "none",
-    dashboardWidgetLabel: a.dashboardWidgetLabel ?? "",
-    dashboardWidgetValue: a.dashboardWidgetValue ?? "",
-    popupEnabled: a.popupEnabled ?? false,
-    popupHeadline: a.popupHeadline ?? "",
-    popupBody: a.popupBody ?? "",
-    popupCtaLabel: a.popupCtaLabel ?? "",
-    popupShowAgain: false,
-    isActive: !a.archivedAt,
-  }
-}
-
-function isDashboardWidgetOn(kind?: AnnouncementDashboardWidgetKind | null) {
-  return kind === "member_code" || kind === "copyable_value"
-}
+import { AnnouncementMarkdown } from "@/components/announcements/AnnouncementMarkdown"
+import {
+  AnnouncementAdminForm,
+  emptyAnnouncementForm,
+  formFromAnnouncement,
+  toAnnouncementSavePayload,
+  type AnnouncementAdminFormState,
+} from "@/components/admin/announcements/AnnouncementAdminForm"
+import type { AdminAnnouncement } from "@/features/announcements/types"
 
 export default function AdminNotificationsPage() {
   const [notifications, setNotifications] = useState<AdminAnnouncement[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingNotification, setEditingNotification] = useState<AdminAnnouncement | null>(null)
-  const [formData, setFormData] = useState<FormState>(emptyForm)
+  const [formData, setFormData] = useState<AnnouncementAdminFormState>(emptyAnnouncementForm)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -119,37 +59,12 @@ export default function AdminNotificationsPage() {
         : "/api/announcements"
 
       const method = editingNotification ? "PATCH" : "POST"
-      const payload: Record<string, unknown> = {
-        title: formData.title,
-        content: formData.content,
-        isActive: formData.isActive,
-        heroImageUrl: formData.heroImageUrl.trim() || undefined,
-        ctaKind: formData.ctaKind || undefined,
-        ctaLabel: formData.ctaKind ? formData.ctaLabel : undefined,
-        ctaHref: formData.ctaKind ? formData.ctaHref : undefined,
-      }
-      if (isDashboardWidgetOn(formData.dashboardWidget) || isDashboardWidgetOn(editingNotification?.dashboardWidget)) {
-        payload.dashboardWidget = formData.dashboardWidget
-        payload.dashboardWidgetLabel = isDashboardWidgetOn(formData.dashboardWidget)
-          ? formData.dashboardWidgetLabel
-          : null
-        payload.dashboardWidgetValue =
-          formData.dashboardWidget === "copyable_value" ? formData.dashboardWidgetValue : null
-      }
-      payload.popupEnabled = formData.popupEnabled
-      payload.popupHeadline = formData.popupHeadline.trim() || null
-      payload.popupBody = formData.popupBody.trim() || null
-      payload.popupCtaLabel = formData.popupCtaLabel.trim() || null
-      if (formData.popupEnabled && formData.popupShowAgain) {
-        payload.popupRevision = (editingNotification?.popupRevision ?? 1) + 1
-      }
-
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(toAnnouncementSavePayload(formData, editingNotification)),
       })
 
       if (response.ok) {
@@ -196,12 +111,12 @@ export default function AdminNotificationsPage() {
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setEditingNotification(null)
-    setFormData(emptyForm)
+    setFormData(emptyAnnouncementForm)
   }
 
   const handleCreateNew = () => {
     setEditingNotification(null)
-    setFormData(emptyForm)
+    setFormData(emptyAnnouncementForm)
     setIsModalOpen(true)
   }
 
@@ -238,9 +153,17 @@ export default function AdminNotificationsPage() {
                       {notification.dashboardWidget === "copyable_value" ? (
                         <Badge variant="primary">Dashboard value</Badge>
                       ) : null}
+                      {notification.dashboardWidget === "message" ? (
+                        <Badge variant="primary">Dashboard</Badge>
+                      ) : null}
                       {notification.popupEnabled ? <Badge variant="primary">Popup</Badge> : null}
                     </div>
-                    <Text className="text-sm text-gray-600 mb-2">{notification.content}</Text>
+                    <div className="mb-2 text-sm text-gray-600">
+                      <AnnouncementMarkdown
+                        markdown={notification.content}
+                        clampClassName="line-clamp-3"
+                      />
+                    </div>
                     <div className="flex items-center gap-4 text-xs text-gray-500">
                       <Text>
                         Created {formatDateTime(notification.createdAt || notification.publishedAt || "")}
@@ -271,225 +194,17 @@ export default function AdminNotificationsPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         title={editingNotification ? "Edit Announcement" : "Create New Announcement"}
+        size="lg"
+        closeOnOverlay={false}
       >
-        <div>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-              <Input
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Announcement title"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-              <Textarea
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                placeholder="URLs in the text become links automatically."
-                rows={4}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Hero image URL</label>
-              <Input
-                value={formData.heroImageUrl}
-                onChange={(e) => setFormData({ ...formData, heroImageUrl: e.target.value })}
-                placeholder="/images/workshop.jpg or https://…"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Button</label>
-              <Select
-                value={formData.ctaKind}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    ctaKind: (e.target as HTMLSelectElement).value as FormState["ctaKind"],
-                  })
-                }
-                className="w-full"
-              >
-                <option value="">None</option>
-                <option value="link">Link</option>
-                <option value="authenticated_link">Sign-in required link</option>
-              </Select>
-            </div>
-
-            {formData.ctaKind ? (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Button label</label>
-                  <Input
-                    value={formData.ctaLabel}
-                    onChange={(e) => setFormData({ ...formData, ctaLabel: e.target.value })}
-                    placeholder="Learn more"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Button link</label>
-                  <Input
-                    value={formData.ctaHref}
-                    onChange={(e) => setFormData({ ...formData, ctaHref: e.target.value })}
-                    placeholder="/profile?announcement=… or https://…"
-                    required
-                  />
-                </div>
-              </>
-            ) : null}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Dashboard widget</label>
-              <Select
-                value={formData.dashboardWidget}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    dashboardWidget: (e.target as HTMLSelectElement)
-                      .value as AnnouncementDashboardWidgetKind,
-                  })
-                }
-                className="w-full"
-              >
-                <option value="none">None</option>
-                <option value="copyable_value">Copyable value (same for everyone)</option>
-                <option value="member_code">Member code (standard vs fiscal)</option>
-              </Select>
-            </div>
-
-            {isDashboardWidgetOn(formData.dashboardWidget) ? (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Value label</label>
-                <Input
-                  value={formData.dashboardWidgetLabel}
-                  onChange={(e) =>
-                    setFormData({ ...formData, dashboardWidgetLabel: e.target.value })
-                  }
-                  placeholder="Your code"
-                />
-              </div>
-            ) : null}
-
-            {formData.dashboardWidget === "copyable_value" ? (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Value</label>
-                <Input
-                  value={formData.dashboardWidgetValue}
-                  onChange={(e) =>
-                    setFormData({ ...formData, dashboardWidgetValue: e.target.value })
-                  }
-                  placeholder="EAR-WORKSHOP"
-                  required
-                />
-              </div>
-            ) : null}
-
-            <div className="flex items-center">
-              <Checkbox
-                id="popupEnabled"
-                checked={formData.popupEnabled}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    popupEnabled: (e.target as HTMLInputElement).checked,
-                  })
-                }
-              />
-              <label htmlFor="popupEnabled" className="ml-2 block text-sm text-gray-900">
-                Show as app popup
-              </label>
-            </div>
-            <Text className="text-xs text-gray-500">
-              First-visit popup on any app page. If more than one is enabled, the newest published
-              announcement wins. If this announcement has a button (for example “Get your code”),
-              that button also appears on the popup.
-            </Text>
-
-            {formData.popupEnabled ? (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Popup headline
-                  </label>
-                  <Input
-                    value={formData.popupHeadline}
-                    onChange={(e) => setFormData({ ...formData, popupHeadline: e.target.value })}
-                    placeholder="Short headline"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Popup body</label>
-                  <Textarea
-                    value={formData.popupBody}
-                    onChange={(e) => setFormData({ ...formData, popupBody: e.target.value })}
-                    placeholder="One or two sentences. URLs become links automatically."
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Popup button label
-                  </label>
-                  <Input
-                    value={formData.popupCtaLabel}
-                    onChange={(e) => setFormData({ ...formData, popupCtaLabel: e.target.value })}
-                    placeholder="Learn more"
-                  />
-                  <Text className="mt-1 text-xs text-gray-500">
-                    Secondary button on the popup. Goes to the announcement page.
-                  </Text>
-                </div>
-                {editingNotification?.popupEnabled ? (
-                  <div className="flex items-center">
-                    <Checkbox
-                      id="popupShowAgain"
-                      checked={formData.popupShowAgain}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          popupShowAgain: (e.target as HTMLInputElement).checked,
-                        })
-                      }
-                    />
-                    <label htmlFor="popupShowAgain" className="ml-2 block text-sm text-gray-900">
-                      Show again to people who dismissed this
-                    </label>
-                  </div>
-                ) : null}
-              </>
-            ) : null}
-
-            <div className="flex items-center">
-              <Checkbox
-                id="isActive"
-                checked={formData.isActive}
-                onChange={(e) =>
-                  setFormData({ ...formData, isActive: (e.target as HTMLInputElement).checked })
-                }
-              />
-              <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
-                Active (visible to users)
-              </label>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button type="submit" disabled={submitting} className="flex-1">
-                {submitting ? "Saving..." : editingNotification ? "Update" : "Create"}
-              </Button>
-              <Button type="button" variant="ghost" onClick={handleCloseModal} className="flex-1">
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </div>
+        <AnnouncementAdminForm
+          formData={formData}
+          onChange={setFormData}
+          editing={editingNotification}
+          submitting={submitting}
+          onSubmit={handleSubmit}
+          onCancel={handleCloseModal}
+        />
       </Modal>
     </AdminLayout>
   )

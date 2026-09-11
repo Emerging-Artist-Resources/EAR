@@ -10,6 +10,7 @@ import { ROUTES } from "@/lib/config/constants"
 import { announcementsEmpty } from "@/lib/content/announcements"
 import type { Announcement } from "@/features/announcements/types"
 import { AnnouncementCard } from "./AnnouncementCard"
+import { useTimedHighlight } from "@/hooks/use-timed-highlight"
 
 type AnnouncementsListProps = {
   limit?: number
@@ -115,11 +116,11 @@ export function AnnouncementsList({
     return () => controller.abort()
   }, [initialAnnouncements])
 
-  useEffect(() => {
-    if (!highlightId || loading) return
-    const el = document.getElementById(`announcement-${highlightId}`)
-    el?.scrollIntoView({ behavior: "smooth", block: "start" })
-  }, [highlightId, loading, announcements])
+  const activeHighlightId = useTimedHighlight(highlightId, {
+    ready: !loading,
+    isPresent: Boolean(highlightId && announcements.some((a) => a.id === highlightId)),
+    elementId: highlightId ? `announcement-${highlightId}` : "",
+  })
 
   const items = limit != null ? announcements.slice(0, limit) : announcements
 
@@ -137,7 +138,8 @@ export function AnnouncementsList({
         <AnnouncementCard
           announcement={lead}
           variant="lead"
-          highlighted={highlightId === lead.id}
+          highlighted={activeHighlightId === lead.id}
+          expanded={highlightId === lead.id}
         />
         {rest.length > 0 ? (
           <div>
@@ -150,7 +152,8 @@ export function AnnouncementsList({
                   key={a.id}
                   announcement={a}
                   variant="compact"
-                  highlighted={highlightId === a.id}
+                  highlighted={activeHighlightId === a.id}
+                  expanded={highlightId === a.id}
                 />
               ))}
             </div>
@@ -166,7 +169,8 @@ export function AnnouncementsList({
             key={a.id}
             announcement={a}
             variant="compact"
-            highlighted={highlightId === a.id}
+            highlighted={activeHighlightId === a.id}
+            expanded={highlightId === a.id}
           />
         ))}
       </div>

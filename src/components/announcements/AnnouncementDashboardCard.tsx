@@ -1,11 +1,16 @@
 "use client"
 
+import Link from "next/link"
 import { Card } from "@/components/ui/card"
-import { H3, Text } from "@/components/ui/typography"
-import { LinkifiedText } from "@/components/shared/LinkifiedText"
+import { Button } from "@/components/ui/button"
+import { H3 } from "@/components/ui/typography"
 import { CopyableValue } from "@/components/shared/CopyableValue"
 import { cn } from "@/lib/utils"
+import { getAnnouncementUrl } from "@/lib/config/constants"
+import { ANNOUNCEMENT_POPUP_DEFAULT_CTA } from "@/features/announcements/popup"
+import { timedHighlightClassName } from "@/hooks/use-timed-highlight"
 import type { ResolvedDashboardAnnouncement } from "@/features/announcements/types"
+import { AnnouncementMarkdown } from "./AnnouncementMarkdown"
 
 type AnnouncementDashboardCardProps = {
   announcement: ResolvedDashboardAnnouncement
@@ -20,15 +25,25 @@ export function AnnouncementDashboardCard({
     <Card
       id={`announcement-${announcement.id}`}
       className={cn(
-        "scroll-mt-24 p-6 text-left",
-        highlighted && "ring-2 ring-primary ring-offset-2"
+        "scroll-mt-24 p-6 text-left transition-[box-shadow,background-color] duration-500",
+        highlighted && timedHighlightClassName
       )}
     >
       <H3 className="text-lg">{announcement.title}</H3>
-      <Text className="mt-1 whitespace-pre-wrap text-sm text-gray-600 [overflow-wrap:anywhere]">
-        <LinkifiedText text={announcement.body} />
-      </Text>
-      <CopyableValue value={announcement.widget.value} label={announcement.widget.label} />
+      {announcement.body ? (
+        <AnnouncementMarkdown
+          markdown={announcement.body}
+          className="mt-1 text-sm text-gray-600"
+        />
+      ) : null}
+      {announcement.widget ? (
+        <CopyableValue value={announcement.widget.value} label={announcement.widget.label} />
+      ) : null}
+      {announcement.showLearnMore ? (
+        <Button variant="outline" size="sm" className="mt-4" asChild>
+          <Link href={getAnnouncementUrl(announcement.id)}>{ANNOUNCEMENT_POPUP_DEFAULT_CTA}</Link>
+        </Button>
+      ) : null}
     </Card>
   )
 }

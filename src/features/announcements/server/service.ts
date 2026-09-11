@@ -14,6 +14,7 @@ import { mapAdminAnnouncementRow, mapAnnouncementPopupRow, mapAnnouncementRow } 
 import { getProfileRepo } from "@/features/profile/server/repository"
 import { getMemberCodeConfig } from "./member-code-config"
 import { toResolvedDashboardAnnouncements } from "./member-code"
+import { isCopyableDashboardWidget, isDashboardWidgetOn } from "@/features/announcements/types"
 
 function ctaColumns(parsed: {
   ctaKind?: "link" | "authenticated_link" | null
@@ -30,21 +31,33 @@ function ctaColumns(parsed: {
 }
 
 function dashboardColumns(parsed: {
-  dashboardWidget?: "none" | "copyable_value" | "member_code" | null
+  dashboardWidget?: "none" | "message" | "copyable_value" | "member_code" | null
   dashboardWidgetLabel?: string | null
   dashboardWidgetValue?: string | null
+  dashboardWidgetBody?: string | null
+  dashboardLearnMoreEnabled?: boolean
 }) {
-  const widget =
-    parsed.dashboardWidget === "member_code" || parsed.dashboardWidget === "copyable_value"
-      ? parsed.dashboardWidget
-      : "none"
-  const label = widget === "none" ? null : parsed.dashboardWidgetLabel?.trim() || null
-  const value = widget === "copyable_value" ? parsed.dashboardWidgetValue?.trim() || null : null
-  return {
-    dashboard_widget: widget,
-    dashboard_widget_label: label,
-    dashboard_widget_value: value,
+  const columns: Record<string, unknown> = {}
+  const touchingWidget =
+    parsed.dashboardWidget !== undefined ||
+    parsed.dashboardWidgetLabel !== undefined ||
+    parsed.dashboardWidgetValue !== undefined ||
+    parsed.dashboardWidgetBody !== undefined
+
+  if (touchingWidget) {
+    const widget = isDashboardWidgetOn(parsed.dashboardWidget) ? parsed.dashboardWidget : "none"
+    columns.dashboard_widget = widget
+    columns.dashboard_widget_label = isCopyableDashboardWidget(widget)
+      ? parsed.dashboardWidgetLabel?.trim() || null
+      : null
+    columns.dashboard_widget_value =
+      widget === "copyable_value" ? parsed.dashboardWidgetValue?.trim() || null : null
+    columns.dashboard_widget_body = widget === "none" ? null : parsed.dashboardWidgetBody?.trim() || null
   }
+  if (parsed.dashboardLearnMoreEnabled !== undefined) {
+    columns.dashboard_learn_more_enabled = parsed.dashboardLearnMoreEnabled === true
+  }
+  return columns
 }
 
 function popupColumns(parsed: {
@@ -52,6 +65,8 @@ function popupColumns(parsed: {
   popupHeadline?: string | null
   popupBody?: string | null
   popupCtaLabel?: string | null
+  popupLearnMoreEnabled?: boolean
+  popupShowAnnouncementCta?: boolean
   popupRevision?: number
 }) {
   const columns: Record<string, unknown> = {}
@@ -59,6 +74,12 @@ function popupColumns(parsed: {
   if (parsed.popupHeadline !== undefined) columns.popup_headline = parsed.popupHeadline?.trim() || null
   if (parsed.popupBody !== undefined) columns.popup_body = parsed.popupBody?.trim() || null
   if (parsed.popupCtaLabel !== undefined) columns.popup_cta_label = parsed.popupCtaLabel?.trim() || null
+  if (parsed.popupLearnMoreEnabled !== undefined) {
+    columns.popup_learn_more_enabled = parsed.popupLearnMoreEnabled === true
+  }
+  if (parsed.popupShowAnnouncementCta !== undefined) {
+    columns.popup_show_announcement_cta = parsed.popupShowAnnouncementCta === true
+  }
   if (parsed.popupRevision !== undefined) columns.popup_revision = parsed.popupRevision
   return columns
 }
@@ -68,6 +89,8 @@ function hasPopupFields(parsed: {
   popupHeadline?: string | null
   popupBody?: string | null
   popupCtaLabel?: string | null
+  popupLearnMoreEnabled?: boolean
+  popupShowAnnouncementCta?: boolean
   popupRevision?: number
 }) {
   return (
@@ -75,6 +98,8 @@ function hasPopupFields(parsed: {
     parsed.popupHeadline !== undefined ||
     parsed.popupBody !== undefined ||
     parsed.popupCtaLabel !== undefined ||
+    parsed.popupLearnMoreEnabled !== undefined ||
+    parsed.popupShowAnnouncementCta !== undefined ||
     parsed.popupRevision !== undefined
   )
 }
@@ -123,13 +148,17 @@ export async function createAnnouncement(input: {
   ctaKind?: "link" | "authenticated_link" | null
   ctaLabel?: string | null
   ctaHref?: string | null
-  dashboardWidget?: "none" | "copyable_value" | "member_code" | null
+  dashboardWidget?: "none" | "message" | "copyable_value" | "member_code" | null
   dashboardWidgetLabel?: string | null
   dashboardWidgetValue?: string | null
+  dashboardWidgetBody?: string | null
+  dashboardLearnMoreEnabled?: boolean
   popupEnabled?: boolean
   popupHeadline?: string | null
   popupBody?: string | null
   popupCtaLabel?: string | null
+  popupLearnMoreEnabled?: boolean
+  popupShowAnnouncementCta?: boolean
   popupRevision?: number
 }) {
   const parsed = announcementSchema.parse({
@@ -142,10 +171,14 @@ export async function createAnnouncement(input: {
     dashboardWidget: input.dashboardWidget,
     dashboardWidgetLabel: input.dashboardWidgetLabel,
     dashboardWidgetValue: input.dashboardWidgetValue,
+    dashboardWidgetBody: input.dashboardWidgetBody,
+    dashboardLearnMoreEnabled: input.dashboardLearnMoreEnabled,
     popupEnabled: input.popupEnabled,
     popupHeadline: input.popupHeadline,
     popupBody: input.popupBody,
     popupCtaLabel: input.popupCtaLabel,
+    popupLearnMoreEnabled: input.popupLearnMoreEnabled,
+    popupShowAnnouncementCta: input.popupShowAnnouncementCta,
     popupRevision: input.popupRevision,
   })
   const row = await createAnnouncementRepo({
@@ -156,7 +189,7 @@ export async function createAnnouncement(input: {
     archived_at: null,
     ...(parsed.heroImageUrl != null ? { hero_image_url: heroColumn(parsed.heroImageUrl) } : {}),
     ...(parsed.ctaKind ? ctaColumns(parsed) : {}),
-    ...(parsed.dashboardWidget === "member_code" || parsed.dashboardWidget === "copyable_value"
+    ...(isDashboardWidgetOn(parsed.dashboardWidget) || parsed.dashboardLearnMoreEnabled !== undefined
       ? dashboardColumns(parsed)
       : {}),
     ...(hasPopupFields(parsed) ? popupColumns(parsed) : {}),
@@ -182,7 +215,9 @@ export async function updateAnnouncement(id: string, body: unknown) {
   if (
     partial.dashboardWidget !== undefined ||
     partial.dashboardWidgetLabel !== undefined ||
-    partial.dashboardWidgetValue !== undefined
+    partial.dashboardWidgetValue !== undefined ||
+    partial.dashboardWidgetBody !== undefined ||
+    partial.dashboardLearnMoreEnabled !== undefined
   ) {
     Object.assign(updatePayload, dashboardColumns(partial))
   }

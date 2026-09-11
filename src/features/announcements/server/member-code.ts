@@ -1,14 +1,20 @@
 import type { FiscalSponsorshipStatus } from "@/lib/types/fiscal-sponsorship"
-import type { ResolvedDashboardAnnouncement } from "@/features/announcements/types"
+import {
+  isEnabledByDefault,
+  type DashboardCopyableWidget,
+  type ResolvedDashboardAnnouncement,
+} from "@/features/announcements/types"
 import type { MemberCodeConfig } from "./member-code-config"
 
 export type DashboardWidgetRow = {
   id: string
   title: string
-  content: string
+  content?: string
   dashboard_widget?: string | null
   dashboard_widget_label?: string | null
   dashboard_widget_value?: string | null
+  dashboard_widget_body?: string | null
+  dashboard_learn_more_enabled?: boolean | null
 }
 
 export function getMemberCodeForFiscalSponsorshipStatus(
@@ -21,7 +27,7 @@ export function getMemberCodeForFiscalSponsorshipStatus(
 function copyableWidget(
   value: string,
   label?: string
-): ResolvedDashboardAnnouncement["widget"] {
+): DashboardCopyableWidget {
   return {
     kind: "copyable_value",
     value,
@@ -39,11 +45,24 @@ export function toResolvedDashboardAnnouncements(
 
   for (const row of rows) {
     const label = row.dashboard_widget_label?.trim() || undefined
+    const body = row.dashboard_widget_body?.trim() || ""
+    const showLearnMore = isEnabledByDefault(row.dashboard_learn_more_enabled)
+    if (row.dashboard_widget === "message") {
+      resolved.push({
+        id: row.id,
+        title: row.title,
+        body,
+        showLearnMore,
+        widget: null,
+      })
+      continue
+    }
     if (row.dashboard_widget === "member_code") {
       resolved.push({
         id: row.id,
         title: row.title,
-        body: row.content,
+        body,
+        showLearnMore,
         widget: copyableWidget(memberCode, label),
       })
       continue
@@ -54,7 +73,8 @@ export function toResolvedDashboardAnnouncements(
       resolved.push({
         id: row.id,
         title: row.title,
-        body: row.content,
+        body,
+        showLearnMore,
         widget: copyableWidget(value, label),
       })
     }

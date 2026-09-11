@@ -2,13 +2,15 @@ import {
   isSafeAnnouncementUrl,
   normalizeAnnouncementUrl,
 } from "@/features/announcements/announcement-urls"
-import { ANNOUNCEMENT_POPUP_DEFAULT_CTA } from "@/features/announcements/popup"
-import type {
-  AdminAnnouncement,
-  Announcement,
-  AnnouncementCta,
-  AnnouncementDashboardWidgetKind,
-  AnnouncementPopup,
+import { announcementLearnMoreLabel } from "@/features/announcements/popup"
+import {
+  isDashboardWidgetOn,
+  isEnabledByDefault,
+  type AdminAnnouncement,
+  type Announcement,
+  type AnnouncementCta,
+  type AnnouncementDashboardWidgetKind,
+  type AnnouncementPopup,
 } from "@/features/announcements/types"
 
 export type AnnouncementRow = {
@@ -26,10 +28,14 @@ export type AnnouncementRow = {
   dashboard_widget?: string | null
   dashboard_widget_label?: string | null
   dashboard_widget_value?: string | null
+  dashboard_widget_body?: string | null
+  dashboard_learn_more_enabled?: boolean | null
   popup_enabled?: boolean | null
   popup_headline?: string | null
   popup_body?: string | null
   popup_cta_label?: string | null
+  popup_learn_more_enabled?: boolean | null
+  popup_show_announcement_cta?: boolean | null
   popup_revision?: number | null
 }
 
@@ -61,7 +67,7 @@ export function mapAnnouncementRow(row: AnnouncementRow): Announcement {
 export function toDashboardWidget(
   value: string | null | undefined
 ): AnnouncementDashboardWidgetKind {
-  if (value === "member_code" || value === "copyable_value") return value
+  if (isDashboardWidgetOn(value)) return value
   return "none"
 }
 
@@ -79,15 +85,19 @@ export function mapAnnouncementPopupRow(row: AnnouncementRow): AnnouncementPopup
     id: row.id,
     headline,
     body: row.popup_body?.trim() || "",
-    ctaLabel: row.popup_cta_label?.trim() || ANNOUNCEMENT_POPUP_DEFAULT_CTA,
+    showLearnMore: isEnabledByDefault(row.popup_learn_more_enabled),
+    ctaLabel: announcementLearnMoreLabel(row.popup_cta_label),
     revision: toPopupRevision(row.popup_revision),
-    cta: toAnnouncementCta(row.cta_kind, row.cta_label, row.cta_href),
+    cta: isEnabledByDefault(row.popup_show_announcement_cta)
+      ? toAnnouncementCta(row.cta_kind, row.cta_label, row.cta_href)
+      : null,
   }
 }
 
 export function mapAdminAnnouncementRow(row: AnnouncementRow): AdminAnnouncement {
   const label = row.dashboard_widget_label?.trim()
   const widgetValue = row.dashboard_widget_value?.trim()
+  const widgetBody = row.dashboard_widget_body?.trim()
   const headline = row.popup_headline?.trim()
   const body = row.popup_body?.trim()
   const ctaLabel = row.popup_cta_label?.trim()
@@ -98,10 +108,14 @@ export function mapAdminAnnouncementRow(row: AnnouncementRow): AdminAnnouncement
     dashboardWidget: toDashboardWidget(row.dashboard_widget),
     dashboardWidgetLabel: label || null,
     dashboardWidgetValue: widgetValue || null,
+    dashboardWidgetBody: widgetBody || null,
+    dashboardLearnMoreEnabled: isEnabledByDefault(row.dashboard_learn_more_enabled),
     popupEnabled: row.popup_enabled === true,
     popupHeadline: headline || null,
     popupBody: body || null,
     popupCtaLabel: ctaLabel || null,
+    popupLearnMoreEnabled: isEnabledByDefault(row.popup_learn_more_enabled),
+    popupShowAnnouncementCta: isEnabledByDefault(row.popup_show_announcement_cta),
     popupRevision: toPopupRevision(row.popup_revision),
   }
 }

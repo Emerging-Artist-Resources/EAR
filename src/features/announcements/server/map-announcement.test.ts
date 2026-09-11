@@ -66,16 +66,19 @@ describe("mapAnnouncementRow", () => {
       dashboard_widget: "member_code",
       dashboard_widget_label: "Your EAR member code",
       dashboard_widget_value: "SECRET-CODE",
+      dashboard_widget_body: "Copy from your dashboard.",
       popup_enabled: true,
       popup_headline: "Your EAR code is here",
     })
     expect(mapped).not.toHaveProperty("dashboardWidget")
     expect(mapped).not.toHaveProperty("code")
     expect(mapped).not.toHaveProperty("dashboardWidgetValue")
+    expect(mapped).not.toHaveProperty("dashboardWidgetBody")
     expect(mapped).not.toHaveProperty("popupEnabled")
     expect(mapped).not.toHaveProperty("popupHeadline")
     expect(JSON.stringify(mapped)).not.toContain("member_code")
     expect(JSON.stringify(mapped)).not.toContain("SECRET-CODE")
+    expect(JSON.stringify(mapped)).not.toContain("Copy from your dashboard.")
   })
 })
 
@@ -91,6 +94,7 @@ describe("mapAdminAnnouncementRow", () => {
     expect(mapped.dashboardWidget).toBe("member_code")
     expect(mapped.dashboardWidgetLabel).toBe("Your EAR member code")
     expect(mapped.dashboardWidgetValue).toBeNull()
+    expect(mapped.dashboardWidgetBody).toBeNull()
   })
 
   it("maps a copyable_value widget and its admin-only value", () => {
@@ -101,10 +105,26 @@ describe("mapAdminAnnouncementRow", () => {
       dashboard_widget: "copyable_value",
       dashboard_widget_label: "Discount code",
       dashboard_widget_value: "EAR-WORKSHOP",
+      dashboard_widget_body: "Show this at checkout.",
     })
     expect(mapped.dashboardWidget).toBe("copyable_value")
     expect(mapped.dashboardWidgetLabel).toBe("Discount code")
     expect(mapped.dashboardWidgetValue).toBe("EAR-WORKSHOP")
+    expect(mapped.dashboardWidgetBody).toBe("Show this at checkout.")
+  })
+
+  it("maps a text-only dashboard widget", () => {
+    const mapped = mapAdminAnnouncementRow({
+      id: "a1",
+      title: "Workshop",
+      content: "Details",
+      dashboard_widget: "message",
+      dashboard_widget_body: "Come this weekend.",
+    })
+    expect(mapped.dashboardWidget).toBe("message")
+    expect(mapped.dashboardWidgetLabel).toBeNull()
+    expect(mapped.dashboardWidgetValue).toBeNull()
+    expect(mapped.dashboardWidgetBody).toBe("Come this weekend.")
   })
 
   it("defaults an unknown widget to none", () => {
@@ -116,8 +136,12 @@ describe("mapAdminAnnouncementRow", () => {
     expect(mapped.dashboardWidget).toBe("none")
     expect(mapped.dashboardWidgetLabel).toBeNull()
     expect(mapped.dashboardWidgetValue).toBeNull()
+    expect(mapped.dashboardWidgetBody).toBeNull()
     expect(mapped.popupEnabled).toBe(false)
     expect(mapped.popupRevision).toBe(1)
+    expect(mapped.dashboardLearnMoreEnabled).toBe(true)
+    expect(mapped.popupLearnMoreEnabled).toBe(true)
+    expect(mapped.popupShowAnnouncementCta).toBe(true)
   })
 })
 
@@ -138,6 +162,7 @@ describe("mapAnnouncementPopupRow", () => {
       id: "a1",
       headline: "EAR member code",
       body: "Sign in to copy your code.",
+      showLearnMore: true,
       ctaLabel: "Learn more",
       revision: 2,
       cta: null,
@@ -212,6 +237,24 @@ describe("mapAnnouncementPopupRow", () => {
     expect(JSON.stringify(mapped)).not.toContain("SECRET-CODE")
     expect(JSON.stringify(mapped)).not.toContain("member_code")
     expect(mapped).not.toHaveProperty("dashboardWidgetValue")
+    expect(mapped?.cta).toBeNull()
+  })
+
+  it("hides Learn more and the announcement action when those flags are off", () => {
+    const mapped = mapAnnouncementPopupRow({
+      id: "a1",
+      title: "EAR Code",
+      content: "Get your code",
+      published_at: "2026-09-01T00:00:00Z",
+      popup_enabled: true,
+      popup_headline: "Your EAR code is here",
+      popup_learn_more_enabled: false,
+      popup_show_announcement_cta: false,
+      cta_kind: "authenticated_link",
+      cta_label: "Get your code",
+      cta_href: "/profile?announcement=a1",
+    })
+    expect(mapped?.showLearnMore).toBe(false)
     expect(mapped?.cta).toBeNull()
   })
 })

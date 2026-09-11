@@ -2,6 +2,28 @@ import { isDonationFunnelPath } from "@/lib/donations/funnel-path"
 
 export const ANNOUNCEMENT_POPUP_DEFAULT_CTA = "Learn more"
 
+export function announcementLearnMoreLabel(label?: string | null): string {
+  return label?.trim() || ANNOUNCEMENT_POPUP_DEFAULT_CTA
+}
+
+/** Labels shown on the popup, in display order. */
+export function announcementPopupButtonPreview(input: {
+  learnMoreEnabled: boolean
+  learnMoreLabel: string
+  showAnnouncementCta: boolean
+  actionLabel: string
+}): string[] {
+  const buttons: string[] = []
+  if (input.learnMoreEnabled) {
+    buttons.push(announcementLearnMoreLabel(input.learnMoreLabel))
+  }
+  const action = input.actionLabel.trim()
+  if (input.showAnnouncementCta && action) {
+    buttons.push(action)
+  }
+  return buttons
+}
+
 export type AnnouncementPopupCandidate = {
   id: string
   published_at?: string | null

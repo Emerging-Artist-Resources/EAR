@@ -1,4 +1,8 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, act } from "@testing-library/react"
+import type { ReactNode } from "react"
+import type { Announcement } from "@/features/announcements/types"
+import { AnnouncementsList } from "./AnnouncementsList"
+import { TIMED_HIGHLIGHT_MS } from "@/hooks/use-timed-highlight"
 import type { ReactNode } from "react"
 import type { Announcement } from "@/features/announcements/types"
 import { AnnouncementsList } from "./AnnouncementsList"
@@ -95,7 +99,37 @@ describe("AnnouncementsList feed layout", () => {
 
     const highlighted = document.getElementById("announcement-b")
     expect(highlighted).toBeTruthy()
-    expect(highlighted?.className).toContain("border-ear-baby-blue")
-    expect(document.getElementById("announcement-a")?.className).not.toContain("border-ear-baby-blue")
+    expect(highlighted?.className).toContain("ring-ear-baby-blue")
+    expect(document.getElementById("announcement-a")?.className).not.toContain("ring-ear-baby-blue")
+  })
+
+  it("clears the deep-link ring after a few seconds", () => {
+    jest.useFakeTimers()
+    jest.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+      cb(0)
+      return 0
+    })
+
+    render(
+      <AnnouncementsList
+        variant="feed"
+        showHeader={false}
+        highlightId="b"
+        announcements={[
+          announcement({ id: "a", title: "Newest" }),
+          announcement({ id: "b", title: "Older one" }),
+        ]}
+      />
+    )
+
+    expect(document.getElementById("announcement-b")?.className).toContain("ring-ear-baby-blue")
+
+    act(() => {
+      jest.advanceTimersByTime(TIMED_HIGHLIGHT_MS)
+    })
+
+    expect(document.getElementById("announcement-b")?.className).not.toContain("ring-ear-baby-blue")
+    jest.useRealTimers()
+    jest.restoreAllMocks()
   })
 })

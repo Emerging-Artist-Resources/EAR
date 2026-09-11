@@ -1,9 +1,8 @@
 "use client"
 
-import { ClampableText } from "@/components/calendar/ClampableText"
+import type { ReactNode } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { H3 } from "@/components/ui/typography"
-import { LinkifiedText } from "@/components/shared/LinkifiedText"
 import {
   announcementTimestamp,
   formatAnnouncementPostedDate,
@@ -11,7 +10,9 @@ import {
 } from "@/features/announcements/announcement-date"
 import type { Announcement } from "@/features/announcements/types"
 import { cn } from "@/lib/utils"
+import { timedHighlightClassName } from "@/hooks/use-timed-highlight"
 import { AnnouncementCtaButton } from "./AnnouncementCtaButton"
+import { AnnouncementMarkdown } from "./AnnouncementMarkdown"
 
 type AnnouncementCardVariant = "lead" | "feed" | "compact"
 
@@ -19,6 +20,8 @@ type AnnouncementCardProps = {
   announcement: Announcement
   variant?: AnnouncementCardVariant
   highlighted?: boolean
+  /** When omitted, follows `highlighted`. Deep links keep this true after the ring fades. */
+  expanded?: boolean
 }
 
 function NewPill() {
@@ -63,24 +66,11 @@ function AnnouncementBody({
   expanded: boolean
   className?: string
 }) {
-  if (expanded) {
-    return (
-      <p
-        className={cn(
-          "whitespace-pre-wrap font-sans text-base leading-6 text-ear-black [overflow-wrap:anywhere]",
-          className
-        )}
-      >
-        <LinkifiedText text={content} />
-      </p>
-    )
-  }
-
   return (
-    <ClampableText
-      text={content}
-      clampClassName={clampClassName}
-      className={cn("text-ear-black/80", className)}
+    <AnnouncementMarkdown
+      markdown={content}
+      clampClassName={expanded ? undefined : clampClassName}
+      className={className}
     />
   )
 }
@@ -89,6 +79,7 @@ export function AnnouncementCard({
   announcement,
   variant = "feed",
   highlighted = false,
+  expanded,
 }: AnnouncementCardProps) {
   const isoDate = announcementTimestamp(announcement)
   const posted = formatAnnouncementPostedDate(isoDate)
@@ -96,12 +87,24 @@ export function AnnouncementCard({
   const hasImage = Boolean(announcement.heroImageUrl)
   const lead = variant === "lead"
   const compact = variant === "compact"
+  const showFullBody = expanded ?? highlighted
 
   const cardChrome = cn(
-    "scroll-mt-24 overflow-hidden border-ear-black/15 shadow-none",
+    "overflow-hidden border-ear-black/15 shadow-none",
     lead ? "bg-surface-panel-alt" : "bg-ear-off-white",
-    !hasImage && !highlighted && "border-l-4 border-ear-dark-red",
-    highlighted && "border-l-4 border-ear-baby-blue bg-ear-cream-brown/25"
+    !hasImage && "border-l-4 border-ear-dark-red"
+  )
+
+  const frame = (children: ReactNode) => (
+    <div
+      id={`announcement-${announcement.id}`}
+      className={cn(
+        "scroll-mt-24 rounded-lg transition-[box-shadow,background-color] duration-500",
+        highlighted && timedHighlightClassName
+      )}
+    >
+      {children}
+    </div>
   )
 
   const footer = (
@@ -123,8 +126,8 @@ export function AnnouncementCard({
   )
 
   if (compact) {
-    return (
-      <Card id={`announcement-${announcement.id}`} padding="none" className={cardChrome}>
+    return frame(
+      <Card padding="none" className={cardChrome}>
         <div className="flex gap-4 p-4 sm:p-5">
           {hasImage ? (
             <div className="h-20 w-20 shrink-0 overflow-hidden bg-ear-black/5 sm:h-24 sm:w-24">
@@ -141,7 +144,7 @@ export function AnnouncementCard({
             <AnnouncementBody
               content={announcement.content}
               clampClassName="line-clamp-2"
-              expanded={highlighted}
+              expanded={showFullBody}
               className="mb-3"
             />
             {footer}
@@ -152,8 +155,8 @@ export function AnnouncementCard({
   }
 
   if (lead) {
-    return (
-      <Card id={`announcement-${announcement.id}`} padding="none" className={cardChrome}>
+    return frame(
+      <Card padding="none" className={cardChrome}>
         {hasImage ? (
           <div className="h-64 w-full overflow-hidden bg-ear-black/5 sm:h-80 lg:h-[28rem]">
             {/* eslint-disable-next-line @next/next/no-img-element -- hero URL may be /public or an arbitrary https host */}
@@ -171,7 +174,7 @@ export function AnnouncementCard({
           <AnnouncementBody
             content={announcement.content}
             clampClassName="line-clamp-4"
-            expanded={highlighted}
+            expanded={showFullBody}
             className="mb-5 text-base"
           />
           {footer}
@@ -180,8 +183,8 @@ export function AnnouncementCard({
     )
   }
 
-  return (
-    <Card id={`announcement-${announcement.id}`} padding="none" className={cardChrome}>
+  return frame(
+    <Card padding="none" className={cardChrome}>
       {hasImage ? (
         <div className="aspect-[3/2] w-full overflow-hidden bg-ear-black/5">
           {/* eslint-disable-next-line @next/next/no-img-element -- hero URL may be /public or an arbitrary https host */}
@@ -197,7 +200,7 @@ export function AnnouncementCard({
         <AnnouncementBody
           content={announcement.content}
           clampClassName="line-clamp-4"
-          expanded={highlighted}
+          expanded={showFullBody}
           className="mb-4"
         />
         {footer}

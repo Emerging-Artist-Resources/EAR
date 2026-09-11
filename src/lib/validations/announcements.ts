@@ -12,6 +12,7 @@ const emptyToNull = (raw: unknown) => {
 export const announcementCtaKindSchema = z.enum(["link", "authenticated_link"])
 export const announcementDashboardWidgetSchema = z.enum([
   "none",
+  "message",
   "copyable_value",
   "member_code",
 ])
@@ -27,10 +28,14 @@ export const announcementFieldsSchema = z.object({
   dashboardWidget: z.preprocess(emptyToNull, announcementDashboardWidgetSchema.nullable().optional()),
   dashboardWidgetLabel: z.preprocess(emptyToNull, z.string().max(80).nullable().optional()),
   dashboardWidgetValue: z.preprocess(emptyToNull, z.string().max(80).nullable().optional()),
+  dashboardWidgetBody: z.preprocess(emptyToNull, z.string().max(500).nullable().optional()),
+  dashboardLearnMoreEnabled: z.boolean().optional(),
   popupEnabled: z.boolean().optional(),
   popupHeadline: z.preprocess(emptyToNull, z.string().max(120).nullable().optional()),
   popupBody: z.preprocess(emptyToNull, z.string().max(500).nullable().optional()),
   popupCtaLabel: z.preprocess(emptyToNull, z.string().max(80).nullable().optional()),
+  popupLearnMoreEnabled: z.boolean().optional(),
+  popupShowAnnouncementCta: z.boolean().optional(),
   popupRevision: z.number().int().min(1).optional(),
 })
 
@@ -40,7 +45,7 @@ function refineAnnouncementFields(
     ctaKind?: "link" | "authenticated_link" | null
     ctaLabel?: string | null
     ctaHref?: string | null
-    dashboardWidget?: "none" | "copyable_value" | "member_code" | null
+    dashboardWidget?: "none" | "message" | "copyable_value" | "member_code" | null
     dashboardWidgetValue?: string | null
     popupEnabled?: boolean
     popupHeadline?: string | null

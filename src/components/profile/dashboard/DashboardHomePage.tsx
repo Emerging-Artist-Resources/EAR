@@ -15,6 +15,7 @@ import { DashboardPageLayout } from "./DashboardPageLayout"
 import { PlusIcon } from "lucide-react"
 import { greetingNameFromFullName } from "@/lib/names/person-name"
 import type { ResolvedDashboardAnnouncement } from "@/features/announcements/types"
+import { useTimedHighlight } from "@/hooks/use-timed-highlight"
 
 function DashboardStatsRow() {
   const [overview, setOverview] = useState<ActivityOverview | null>(null)
@@ -83,12 +84,12 @@ export function DashboardHomePage({
   const { userName } = useAuth()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const firstName = greetingNameFromFullName(userName)
-
-  useEffect(() => {
-    if (!highlightId) return
-    const el = document.getElementById(`announcement-${highlightId}`)
-    el?.scrollIntoView({ behavior: "smooth", block: "start" })
-  }, [highlightId, dashboardAnnouncements])
+  const activeHighlightId = useTimedHighlight(highlightId, {
+    isPresent: Boolean(
+      highlightId && dashboardAnnouncements.some((announcement) => announcement.id === highlightId)
+    ),
+    elementId: highlightId ? `announcement-${highlightId}` : "",
+  })
 
   return (
     <DashboardPageLayout
@@ -128,7 +129,7 @@ export function DashboardHomePage({
             <AnnouncementDashboardCard
               key={announcement.id}
               announcement={announcement}
-              highlighted={highlightId === announcement.id}
+              highlighted={activeHighlightId === announcement.id}
             />
           ))}
         </div>

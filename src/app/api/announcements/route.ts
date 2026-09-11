@@ -45,10 +45,14 @@ export async function POST(request: NextRequest) {
       dashboardWidget: validated.dashboardWidget,
       dashboardWidgetLabel: validated.dashboardWidgetLabel,
       dashboardWidgetValue: validated.dashboardWidgetValue,
+      dashboardWidgetBody: validated.dashboardWidgetBody,
+      dashboardLearnMoreEnabled: validated.dashboardLearnMoreEnabled,
       popupEnabled: validated.popupEnabled,
       popupHeadline: validated.popupHeadline,
       popupBody: validated.popupBody,
       popupCtaLabel: validated.popupCtaLabel,
+      popupLearnMoreEnabled: validated.popupLearnMoreEnabled,
+      popupShowAnnouncementCta: validated.popupShowAnnouncementCta,
       popupRevision: validated.popupRevision,
     })
     return createSuccessResponse(data, 201)

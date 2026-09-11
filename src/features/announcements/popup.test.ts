@@ -1,10 +1,43 @@
 import {
+  announcementLearnMoreLabel,
+  announcementPopupButtonPreview,
   announcementPopupDismissKey,
   dismissAnnouncementPopup,
   isAnnouncementPopupDismissed,
   pickActivePopupAnnouncement,
   shouldSkipAnnouncementPopup,
 } from "./popup"
+
+describe("announcementPopupButtonPreview", () => {
+  it("defaults Learn more and includes the action when both are on", () => {
+    expect(
+      announcementPopupButtonPreview({
+        learnMoreEnabled: true,
+        learnMoreLabel: "  ",
+        showAnnouncementCta: true,
+        actionLabel: "Get your code",
+      })
+    ).toEqual(["Learn more", "Get your code"])
+  })
+
+  it("omits disabled buttons", () => {
+    expect(
+      announcementPopupButtonPreview({
+        learnMoreEnabled: false,
+        learnMoreLabel: "See announcement",
+        showAnnouncementCta: false,
+        actionLabel: "Get your code",
+      })
+    ).toEqual([])
+  })
+})
+
+describe("announcementLearnMoreLabel", () => {
+  it("falls back to Learn more", () => {
+    expect(announcementLearnMoreLabel("")).toBe("Learn more")
+    expect(announcementLearnMoreLabel("See announcement")).toBe("See announcement")
+  })
+})
 
 describe("announcementPopupDismissKey", () => {
   it("includes id and revision so a bump re-shows the popup", () => {

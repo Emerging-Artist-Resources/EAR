@@ -40,9 +40,11 @@ describe("announcementSchema", () => {
       content: "Get your member code",
       dashboardWidget: "member_code",
       dashboardWidgetLabel: "Your EAR member code",
+      dashboardWidgetBody: "Copy your code for partner venues.",
     })
     expect(parsed.dashboardWidget).toBe("member_code")
     expect(parsed.dashboardWidgetLabel).toBe("Your EAR member code")
+    expect(parsed.dashboardWidgetBody).toBe("Copy your code for partner venues.")
   })
 
   it("accepts a copyable dashboard value", () => {
@@ -55,6 +57,27 @@ describe("announcementSchema", () => {
     })
     expect(parsed.dashboardWidget).toBe("copyable_value")
     expect(parsed.dashboardWidgetValue).toBe("EAR-WORKSHOP")
+  })
+
+  it("accepts a text-only dashboard widget without a value", () => {
+    const parsed = announcementSchema.parse({
+      title: "Workshop",
+      content: "Details",
+      dashboardWidget: "message",
+      dashboardWidgetBody: "See the announcement.",
+    })
+    expect(parsed.dashboardWidget).toBe("message")
+  })
+
+  it("rejects a dashboard body over 500 characters", () => {
+    const result = announcementSchema.safeParse({
+      title: "Workshop",
+      content: "10% off",
+      dashboardWidget: "copyable_value",
+      dashboardWidgetValue: "EAR-WORKSHOP",
+      dashboardWidgetBody: "x".repeat(501),
+    })
+    expect(result.success).toBe(false)
   })
 
   it("rejects copyable_value without a value", () => {
@@ -79,6 +102,21 @@ describe("announcementSchema", () => {
     expect(parsed.popupEnabled).toBe(true)
     expect(parsed.popupHeadline).toBe("Your EAR code is here")
     expect(parsed.popupRevision).toBe(3)
+  })
+
+  it("accepts independent Learn more flags", () => {
+    const parsed = announcementSchema.parse({
+      title: "EAR Code",
+      content: "Get your member code",
+      dashboardLearnMoreEnabled: false,
+      popupEnabled: true,
+      popupHeadline: "Your EAR code is here",
+      popupLearnMoreEnabled: false,
+      popupShowAnnouncementCta: false,
+    })
+    expect(parsed.dashboardLearnMoreEnabled).toBe(false)
+    expect(parsed.popupLearnMoreEnabled).toBe(false)
+    expect(parsed.popupShowAnnouncementCta).toBe(false)
   })
 
   it("rejects an enabled popup without a headline", () => {

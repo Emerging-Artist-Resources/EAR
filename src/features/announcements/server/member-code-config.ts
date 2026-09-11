@@ -9,7 +9,7 @@ export type MemberCodeConfig = {
 
 export function getMemberCodeConfig(): MemberCodeConfig {
   return {
-    standardCode: process.env.EAR_MEMBER_CODE_STANDARD?.trim() || "EAR-MEMBER",
-    fiscalSponsorCode: process.env.EAR_MEMBER_CODE_FISCAL_SPONSOR?.trim() || "EAR-FISCAL",
+    standardCode: process.env.EAR_MEMBER_CODE_STANDARD?.trim() || "EAR",
+    fiscalSponsorCode: process.env.EAR_MEMBER_CODE_FISCAL_SPONSOR?.trim() || "EARSPONSORSHIP",
   }
 }

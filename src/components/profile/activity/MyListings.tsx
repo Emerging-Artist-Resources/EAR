@@ -11,6 +11,7 @@ import { AdminPagination } from "@/components/admin/AdminPagination";
 import PerformanceModal from "@/components/performance-modal";
 import { Alert } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { TIMED_HIGHLIGHT_MS, timedHighlightClassName } from "@/hooks/use-timed-highlight";
 
 function listingBadgeVariant(listing: MyListing): "success" | "warning" | "error" | "default" {
   if (listing.status === "approved") return "success";
@@ -31,7 +32,6 @@ function listingBadgeLabel(listing: MyListing): string {
 }
 
 const LISTINGS_PER_PAGE = 5;
-const LISTING_HIGHLIGHT_MS = 3500;
 
 function ListingSkeleton() {
   return (
@@ -168,7 +168,7 @@ export const MyListings = ({
     const timer = window.setTimeout(() => {
       setActiveHighlightId(null);
       onHighlightComplete?.();
-    }, LISTING_HIGHLIGHT_MS);
+    }, TIMED_HIGHLIGHT_MS);
 
     return () => window.clearTimeout(timer);
   }, [highlightListingId, loading, listings, onHighlightComplete]);
@@ -284,8 +284,7 @@ export const MyListings = ({
                   id={`listing-${listing.id}`}
                   className={cn(
                     "p-4 transition-[box-shadow,background-color] duration-500",
-                    activeHighlightId === listing.id &&
-                      "bg-ear-baby-blue/10 ring-2 ring-ear-baby-blue ring-offset-2"
+                    activeHighlightId === listing.id && timedHighlightClassName
                   )}
                 >
                   <div className="flex items-start justify-between">
