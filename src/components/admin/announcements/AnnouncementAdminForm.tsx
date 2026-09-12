@@ -8,6 +8,11 @@ import { Select } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Text } from "@/components/ui/typography"
 import {
+  ANNOUNCEMENT_MARKDOWN_HINT,
+  ANNOUNCEMENT_MARKDOWN_PLACEHOLDER,
+  ANNOUNCEMENT_MARKDOWN_SHORT_PLACEHOLDER,
+} from "@/features/announcements/parse-announcement-markdown"
+import {
   ANNOUNCEMENT_POPUP_DEFAULT_CTA,
   announcementPopupButtonPreview,
 } from "@/features/announcements/popup"
@@ -71,6 +76,67 @@ function Field({
       {children}
       {hint ? <Text className="mt-1 text-xs text-gray-500">{hint}</Text> : null}
     </div>
+  )
+}
+
+function ActionButtonFields({
+  title,
+  hint,
+  kind,
+  label,
+  href,
+  labelPlaceholder,
+  onKind,
+  onLabel,
+  onHref,
+}: {
+  title: string
+  hint: string
+  kind: AnnouncementAdminFormState["ctaKind"]
+  label: string
+  href: string
+  labelPlaceholder: string
+  onKind: (kind: AnnouncementAdminFormState["ctaKind"]) => void
+  onLabel: (label: string) => void
+  onHref: (href: string) => void
+}) {
+  return (
+    <>
+      <Field label={title} hint={hint}>
+        <Select
+          value={kind}
+          onChange={(e) =>
+            onKind((e.target as HTMLSelectElement).value as AnnouncementAdminFormState["ctaKind"])
+          }
+          className="w-full"
+        >
+          <option value="">None</option>
+          <option value="link">Link</option>
+          <option value="authenticated_link">Sign-in required link</option>
+        </Select>
+      </Field>
+
+      {kind ? (
+        <>
+          <Field label={`${title} label`}>
+            <Input
+              value={label}
+              onChange={(e) => onLabel(e.target.value)}
+              placeholder={labelPlaceholder}
+              required
+            />
+          </Field>
+          <Field label={`${title} link`}>
+            <Input
+              value={href}
+              onChange={(e) => onHref(e.target.value)}
+              placeholder="/profile?announcement=… or https://…"
+              required
+            />
+          </Field>
+        </>
+      ) : null}
+    </>
   )
 }
 
@@ -150,14 +216,12 @@ export function AnnouncementAdminForm({
 
         <Field
           label="Content"
-          hint="Use **bold**, *italic*, and dash or numbered lists. Paste stays plain text — add the marks here."
+          hint={ANNOUNCEMENT_MARKDOWN_HINT}
         >
           <Textarea
             value={formData.content}
             onChange={(e) => patch("content", e.target.value)}
-            placeholder={
-              "**Bold**, *italic*, and lists:\n- Who can apply\n- How to submit\n\nURLs become links automatically."
-            }
+            placeholder={ANNOUNCEMENT_MARKDOWN_PLACEHOLDER}
             rows={10}
             required
           />
@@ -171,43 +235,28 @@ export function AnnouncementAdminForm({
           />
         </Field>
 
-        <Field
-          label="Action button"
+        <ActionButtonFields
+          title="Action button"
           hint="Shows on the announcement. The popup can reuse this too."
-        >
-          <Select
-            value={formData.ctaKind}
-            onChange={(e) =>
-              patch("ctaKind", (e.target as HTMLSelectElement).value as AnnouncementAdminFormState["ctaKind"])
-            }
-            className="w-full"
-          >
-            <option value="">None</option>
-            <option value="link">Link</option>
-            <option value="authenticated_link">Sign-in required link</option>
-          </Select>
-        </Field>
-
-        {hasActionButton ? (
-          <>
-            <Field label="Action button label">
-              <Input
-                value={formData.ctaLabel}
-                onChange={(e) => patch("ctaLabel", e.target.value)}
-                placeholder="Get your code"
-                required
-              />
-            </Field>
-            <Field label="Action button link">
-              <Input
-                value={formData.ctaHref}
-                onChange={(e) => patch("ctaHref", e.target.value)}
-                placeholder="/profile?announcement=… or https://…"
-                required
-              />
-            </Field>
-          </>
-        ) : null}
+          kind={formData.ctaKind}
+          label={formData.ctaLabel}
+          href={formData.ctaHref}
+          labelPlaceholder="Get your code"
+          onKind={(kind) => patch("ctaKind", kind)}
+          onLabel={(label) => patch("ctaLabel", label)}
+          onHref={(href) => patch("ctaHref", href)}
+        />
+        <ActionButtonFields
+          title="Second action button"
+          hint="Shows on the announcement page only."
+          kind={formData.ctaSecondaryKind}
+          label={formData.ctaSecondaryLabel}
+          href={formData.ctaSecondaryHref}
+          labelPlaceholder="Apply"
+          onKind={(kind) => patch("ctaSecondaryKind", kind)}
+          onLabel={(label) => patch("ctaSecondaryLabel", label)}
+          onHref={(href) => patch("ctaSecondaryHref", href)}
+        />
       </FormSection>
 
       <FormSection
@@ -264,7 +313,7 @@ export function AnnouncementAdminForm({
               <Textarea
                 value={formData.dashboardWidgetBody}
                 onChange={(e) => patch("dashboardWidgetBody", e.target.value)}
-                placeholder="One or two sentences. **Bold**, *italic*, and lists work here too."
+                placeholder={ANNOUNCEMENT_MARKDOWN_SHORT_PLACEHOLDER}
                 rows={3}
               />
             </Field>
@@ -314,7 +363,7 @@ export function AnnouncementAdminForm({
               <Textarea
                 value={formData.popupBody}
                 onChange={(e) => patch("popupBody", e.target.value)}
-                placeholder="One or two sentences. **Bold**, *italic*, and lists work here too."
+                placeholder={ANNOUNCEMENT_MARKDOWN_SHORT_PLACEHOLDER}
                 rows={3}
               />
             </Field>

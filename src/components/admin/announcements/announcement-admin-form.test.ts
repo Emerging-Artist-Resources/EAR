@@ -31,6 +31,7 @@ describe("toAnnouncementSavePayload", () => {
       publishedAt: null,
       heroImageUrl: null,
       cta: null,
+      secondaryCta: null,
       archivedAt: null,
       authorUserId: null,
       dashboardWidget: "member_code",
@@ -70,5 +71,32 @@ describe("toAnnouncementSavePayload", () => {
     expect(payload.dashboardWidgetLabel).toBeNull()
     expect(payload.dashboardWidgetValue).toBeNull()
     expect(payload.dashboardWidgetBody).toBe("Come this weekend.")
+  })
+
+  it("saves and can clear a secondary announcement-page CTA", () => {
+    const saved = toAnnouncementSavePayload(
+      {
+        ...emptyAnnouncementForm,
+        title: "Workshop",
+        content: "Details",
+        ctaKind: "authenticated_link",
+        ctaLabel: "Get your code",
+        ctaHref: "/profile?announcement=a1",
+        ctaSecondaryKind: "link",
+        ctaSecondaryLabel: "Apply",
+        ctaSecondaryHref: "https://example.com/apply",
+      },
+      null
+    )
+    expect(saved.ctaKind).toBe("authenticated_link")
+    expect(saved.ctaSecondaryKind).toBe("link")
+    expect(saved.ctaSecondaryLabel).toBe("Apply")
+    expect(saved.ctaSecondaryHref).toBe("https://example.com/apply")
+
+    const cleared = toAnnouncementSavePayload(emptyAnnouncementForm, null)
+    expect(cleared.ctaKind).toBeNull()
+    expect(cleared.ctaSecondaryKind).toBeNull()
+    expect(cleared.ctaSecondaryLabel).toBeNull()
+    expect(cleared.ctaSecondaryHref).toBeNull()
   })
 })

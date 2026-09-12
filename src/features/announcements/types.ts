@@ -37,6 +37,8 @@ export type Announcement = {
   createdAt?: string | null
   heroImageUrl: string | null
   cta: AnnouncementCta | null
+  /** Announcement page only; popup and dashboard ignore this. */
+  secondaryCta: AnnouncementCta | null
 }
 
 /** Public first-visit popup. Never includes member codes or dashboard values. */

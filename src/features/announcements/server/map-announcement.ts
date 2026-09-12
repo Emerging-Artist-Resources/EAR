@@ -25,6 +25,9 @@ export type AnnouncementRow = {
   cta_kind?: string | null
   cta_label?: string | null
   cta_href?: string | null
+  cta_secondary_kind?: string | null
+  cta_secondary_label?: string | null
+  cta_secondary_href?: string | null
   dashboard_widget?: string | null
   dashboard_widget_label?: string | null
   dashboard_widget_value?: string | null
@@ -61,6 +64,11 @@ export function mapAnnouncementRow(row: AnnouncementRow): Announcement {
     createdAt: row.created_at ?? null,
     heroImageUrl: hero && isSafeAnnouncementUrl(hero) ? normalizeAnnouncementUrl(hero) : null,
     cta: toAnnouncementCta(row.cta_kind, row.cta_label, row.cta_href),
+    secondaryCta: toAnnouncementCta(
+      row.cta_secondary_kind,
+      row.cta_secondary_label,
+      row.cta_secondary_href
+    ),
   }
 }
 

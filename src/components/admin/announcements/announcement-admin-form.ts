@@ -13,6 +13,9 @@ export type AnnouncementAdminFormState = {
   ctaKind: "" | AnnouncementCtaKind
   ctaLabel: string
   ctaHref: string
+  ctaSecondaryKind: "" | AnnouncementCtaKind
+  ctaSecondaryLabel: string
+  ctaSecondaryHref: string
   dashboardWidget: AnnouncementDashboardWidgetKind
   dashboardWidgetLabel: string
   dashboardWidgetValue: string
@@ -35,6 +38,9 @@ export const emptyAnnouncementForm: AnnouncementAdminFormState = {
   ctaKind: "",
   ctaLabel: "",
   ctaHref: "",
+  ctaSecondaryKind: "",
+  ctaSecondaryLabel: "",
+  ctaSecondaryHref: "",
   dashboardWidget: "none",
   dashboardWidgetLabel: "",
   dashboardWidgetValue: "",
@@ -58,6 +64,9 @@ export function formFromAnnouncement(a: AdminAnnouncement): AnnouncementAdminFor
     ctaKind: a.cta?.kind ?? "",
     ctaLabel: a.cta?.label ?? "",
     ctaHref: a.cta?.href ?? "",
+    ctaSecondaryKind: a.secondaryCta?.kind ?? "",
+    ctaSecondaryLabel: a.secondaryCta?.label ?? "",
+    ctaSecondaryHref: a.secondaryCta?.href ?? "",
     dashboardWidget: a.dashboardWidget ?? "none",
     dashboardWidgetLabel: a.dashboardWidgetLabel ?? "",
     dashboardWidgetValue: a.dashboardWidgetValue ?? "",
@@ -74,19 +83,33 @@ export function formFromAnnouncement(a: AdminAnnouncement): AnnouncementAdminFor
   }
 }
 
+function ctaSaveFields(kind: "" | AnnouncementCtaKind, label: string, href: string) {
+  if (!kind) return { kind: null, label: null, href: null }
+  return { kind, label, href }
+}
+
 export function toAnnouncementSavePayload(
   form: AnnouncementAdminFormState,
   editing: AdminAnnouncement | null
 ): Record<string, unknown> {
   const dashboardOn = isDashboardWidgetOn(form.dashboardWidget)
+  const primary = ctaSaveFields(form.ctaKind, form.ctaLabel, form.ctaHref)
+  const secondary = ctaSaveFields(
+    form.ctaSecondaryKind,
+    form.ctaSecondaryLabel,
+    form.ctaSecondaryHref
+  )
   const payload: Record<string, unknown> = {
     title: form.title,
     content: form.content,
     isActive: form.isActive,
     heroImageUrl: form.heroImageUrl.trim() || undefined,
-    ctaKind: form.ctaKind || undefined,
-    ctaLabel: form.ctaKind ? form.ctaLabel : undefined,
-    ctaHref: form.ctaKind ? form.ctaHref : undefined,
+    ctaKind: primary.kind,
+    ctaLabel: primary.label,
+    ctaHref: primary.href,
+    ctaSecondaryKind: secondary.kind,
+    ctaSecondaryLabel: secondary.label,
+    ctaSecondaryHref: secondary.href,
     popupEnabled: form.popupEnabled,
     popupHeadline: form.popupHeadline.trim() || null,
     popupBody: form.popupBody.trim() || null,

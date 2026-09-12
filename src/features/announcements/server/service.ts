@@ -16,18 +16,73 @@ import { getMemberCodeConfig } from "./member-code-config"
 import { toResolvedDashboardAnnouncements } from "./member-code"
 import { isCopyableDashboardWidget, isDashboardWidgetOn } from "@/features/announcements/types"
 
+function ctaColumnSet(
+  parsed: {
+    kind?: "link" | "authenticated_link" | null
+    label?: string | null
+    href?: string | null
+  },
+  keys: { kind: string; label: string; href: string }
+) {
+  const href = parsed.href != null ? normalizeAnnouncementUrl(parsed.href) : null
+  const kind = parsed.kind ?? null
+  const label = parsed.label ?? null
+  if (!kind || !label || !href) {
+    return { [keys.kind]: null, [keys.label]: null, [keys.href]: null }
+  }
+  return { [keys.kind]: kind, [keys.label]: label, [keys.href]: href }
+}
+
 function ctaColumns(parsed: {
   ctaKind?: "link" | "authenticated_link" | null
   ctaLabel?: string | null
   ctaHref?: string | null
 }) {
-  const href = parsed.ctaHref != null ? normalizeAnnouncementUrl(parsed.ctaHref) : null
-  const kind = parsed.ctaKind ?? null
-  const label = parsed.ctaLabel ?? null
-  if (!kind || !label || !href) {
-    return { cta_kind: null, cta_label: null, cta_href: null }
-  }
-  return { cta_kind: kind, cta_label: label, cta_href: href }
+  return ctaColumnSet(
+    { kind: parsed.ctaKind, label: parsed.ctaLabel, href: parsed.ctaHref },
+    { kind: "cta_kind", label: "cta_label", href: "cta_href" }
+  )
+}
+
+function secondaryCtaColumns(parsed: {
+  ctaSecondaryKind?: "link" | "authenticated_link" | null
+  ctaSecondaryLabel?: string | null
+  ctaSecondaryHref?: string | null
+}) {
+  return ctaColumnSet(
+    {
+      kind: parsed.ctaSecondaryKind,
+      label: parsed.ctaSecondaryLabel,
+      href: parsed.ctaSecondaryHref,
+    },
+    {
+      kind: "cta_secondary_kind",
+      label: "cta_secondary_label",
+      href: "cta_secondary_href",
+    }
+  )
+}
+
+function hasCtaFields(parsed: {
+  ctaKind?: "link" | "authenticated_link" | null
+  ctaLabel?: string | null
+  ctaHref?: string | null
+}) {
+  return (
+    parsed.ctaKind !== undefined || parsed.ctaLabel !== undefined || parsed.ctaHref !== undefined
+  )
+}
+
+function hasSecondaryCtaFields(parsed: {
+  ctaSecondaryKind?: "link" | "authenticated_link" | null
+  ctaSecondaryLabel?: string | null
+  ctaSecondaryHref?: string | null
+}) {
+  return (
+    parsed.ctaSecondaryKind !== undefined ||
+    parsed.ctaSecondaryLabel !== undefined ||
+    parsed.ctaSecondaryHref !== undefined
+  )
 }
 
 function dashboardColumns(parsed: {
@@ -148,6 +203,9 @@ export async function createAnnouncement(input: {
   ctaKind?: "link" | "authenticated_link" | null
   ctaLabel?: string | null
   ctaHref?: string | null
+  ctaSecondaryKind?: "link" | "authenticated_link" | null
+  ctaSecondaryLabel?: string | null
+  ctaSecondaryHref?: string | null
   dashboardWidget?: "none" | "message" | "copyable_value" | "member_code" | null
   dashboardWidgetLabel?: string | null
   dashboardWidgetValue?: string | null
@@ -168,6 +226,9 @@ export async function createAnnouncement(input: {
     ctaKind: input.ctaKind,
     ctaLabel: input.ctaLabel,
     ctaHref: input.ctaHref,
+    ctaSecondaryKind: input.ctaSecondaryKind,
+    ctaSecondaryLabel: input.ctaSecondaryLabel,
+    ctaSecondaryHref: input.ctaSecondaryHref,
     dashboardWidget: input.dashboardWidget,
     dashboardWidgetLabel: input.dashboardWidgetLabel,
     dashboardWidgetValue: input.dashboardWidgetValue,
@@ -189,6 +250,7 @@ export async function createAnnouncement(input: {
     archived_at: null,
     ...(parsed.heroImageUrl != null ? { hero_image_url: heroColumn(parsed.heroImageUrl) } : {}),
     ...(parsed.ctaKind ? ctaColumns(parsed) : {}),
+    ...(parsed.ctaSecondaryKind ? secondaryCtaColumns(parsed) : {}),
     ...(isDashboardWidgetOn(parsed.dashboardWidget) || parsed.dashboardLearnMoreEnabled !== undefined
       ? dashboardColumns(parsed)
       : {}),
@@ -205,12 +267,11 @@ export async function updateAnnouncement(id: string, body: unknown) {
   if (partial.heroImageUrl !== undefined) {
     updatePayload.hero_image_url = heroColumn(partial.heroImageUrl)
   }
-  if (
-    partial.ctaKind !== undefined ||
-    partial.ctaLabel !== undefined ||
-    partial.ctaHref !== undefined
-  ) {
+  if (hasCtaFields(partial)) {
     Object.assign(updatePayload, ctaColumns(partial))
+  }
+  if (hasSecondaryCtaFields(partial)) {
+    Object.assign(updatePayload, secondaryCtaColumns(partial))
   }
   if (
     partial.dashboardWidget !== undefined ||

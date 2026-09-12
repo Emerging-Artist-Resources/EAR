@@ -8,10 +8,12 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
 import { isAppPath } from "@/features/announcements/announcement-urls"
 import type { AnnouncementCta } from "@/features/announcements/types"
+import { cn } from "@/lib/utils"
 
 type AnnouncementCtaButtonProps = {
   cta: AnnouncementCta
   className?: string
+  variant?: "primary" | "outline"
   onClick?: () => void
   /** When false, the parent owns SignInRequiredModal (needed if this button sits inside another modal). */
   embedAuthModal?: boolean
@@ -21,6 +23,7 @@ type AnnouncementCtaButtonProps = {
 export function AnnouncementCtaButton({
   cta,
   className,
+  variant = "primary",
   onClick,
   embedAuthModal = true,
   onAuthRequired,
@@ -31,7 +34,7 @@ export function AnnouncementCtaButton({
 
   if (cta.kind === "authenticated_link" && isLoading) {
     return (
-      <Button variant="primary" className={className} disabled>
+      <Button variant={variant} className={className} disabled>
         {cta.label}
       </Button>
     )
@@ -42,7 +45,7 @@ export function AnnouncementCtaButton({
       <>
         <Button
           type="button"
-          variant="primary"
+          variant={variant}
           className={className}
           onClick={() => {
             onClick?.()
@@ -69,7 +72,7 @@ export function AnnouncementCtaButton({
 
   if (isAppPath(cta.href)) {
     return (
-      <Button variant="primary" className={className} asChild>
+      <Button variant={variant} className={className} asChild>
         <Link href={cta.href} onClick={onClick}>
           {cta.label}
         </Link>
@@ -78,10 +81,37 @@ export function AnnouncementCtaButton({
   }
 
   return (
-    <Button variant="primary" className={className} asChild>
+    <Button variant={variant} className={className} asChild>
       <a href={cta.href} target="_blank" rel="noopener noreferrer" onClick={onClick}>
         {cta.label}
       </a>
     </Button>
+  )
+}
+
+export function AnnouncementCtaGroup({
+  cta,
+  secondaryCta,
+  stretch = false,
+}: {
+  cta: AnnouncementCta | null
+  secondaryCta: AnnouncementCta | null
+  stretch?: boolean
+}) {
+  if (!cta && !secondaryCta) return null
+
+  const className = stretch ? "w-full sm:w-auto" : undefined
+
+  return (
+    <div className={cn("flex flex-wrap gap-2", stretch && "w-full sm:w-auto")}>
+      {cta ? <AnnouncementCtaButton cta={cta} className={className} /> : null}
+      {secondaryCta ? (
+        <AnnouncementCtaButton
+          cta={secondaryCta}
+          variant={cta ? "outline" : "primary"}
+          className={className}
+        />
+      ) : null}
+    </div>
   )
 }

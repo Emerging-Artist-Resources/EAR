@@ -5,6 +5,7 @@ describe("announcementSchema", () => {
     const parsed = announcementSchema.parse({ title: "Workshop", content: "See example.com" })
     expect(parsed.title).toBe("Workshop")
     expect(parsed.ctaKind).toBeUndefined()
+    expect(parsed.ctaSecondaryKind).toBeUndefined()
   })
 
   it("rejects an incomplete CTA", () => {
@@ -26,6 +27,31 @@ describe("announcementSchema", () => {
       ctaHref: "/profile?announcement=abc",
     })
     expect(parsed.ctaHref).toBe("/profile?announcement=abc")
+  })
+
+  it("rejects an incomplete secondary CTA", () => {
+    const result = announcementSchema.safeParse({
+      title: "Workshop",
+      content: "Hi",
+      ctaSecondaryKind: "link",
+      ctaSecondaryLabel: "Apply",
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it("accepts a secondary announcement-page CTA", () => {
+    const parsed = announcementSchema.parse({
+      title: "Workshop",
+      content: "Details",
+      ctaKind: "authenticated_link",
+      ctaLabel: "Get your code",
+      ctaHref: "/profile?announcement=abc",
+      ctaSecondaryKind: "link",
+      ctaSecondaryLabel: "Apply",
+      ctaSecondaryHref: "https://example.com/apply",
+    })
+    expect(parsed.ctaSecondaryKind).toBe("link")
+    expect(parsed.ctaSecondaryHref).toBe("https://example.com/apply")
   })
 
   it("allows PATCH of title without CTA fields", () => {

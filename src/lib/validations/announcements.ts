@@ -25,6 +25,9 @@ export const announcementFieldsSchema = z.object({
   ctaKind: z.preprocess(emptyToNull, announcementCtaKindSchema.nullable().optional()),
   ctaLabel: z.preprocess(emptyToNull, z.string().max(80).nullable().optional()),
   ctaHref: z.preprocess(emptyToNull, z.string().nullable().optional()),
+  ctaSecondaryKind: z.preprocess(emptyToNull, announcementCtaKindSchema.nullable().optional()),
+  ctaSecondaryLabel: z.preprocess(emptyToNull, z.string().max(80).nullable().optional()),
+  ctaSecondaryHref: z.preprocess(emptyToNull, z.string().nullable().optional()),
   dashboardWidget: z.preprocess(emptyToNull, announcementDashboardWidgetSchema.nullable().optional()),
   dashboardWidgetLabel: z.preprocess(emptyToNull, z.string().max(80).nullable().optional()),
   dashboardWidgetValue: z.preprocess(emptyToNull, z.string().max(80).nullable().optional()),
@@ -39,12 +42,47 @@ export const announcementFieldsSchema = z.object({
   popupRevision: z.number().int().min(1).optional(),
 })
 
+type CtaFields = {
+  kind?: "link" | "authenticated_link" | null
+  label?: string | null
+  href?: string | null
+}
+
+function refineCtaFields(
+  data: CtaFields,
+  ctx: z.RefinementCtx,
+  paths: { kind: string; href: string }
+) {
+  const hasAny = data.kind != null || data.label != null || data.href != null
+  if (!hasAny) return
+
+  if (data.kind == null || data.label == null || data.href == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "CTA needs a kind, label, and link",
+      path: [paths.kind],
+    })
+    return
+  }
+
+  if (!isSafeAnnouncementUrl(data.href)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Enter a valid link or site path",
+      path: [paths.href],
+    })
+  }
+}
+
 function refineAnnouncementFields(
   data: {
     heroImageUrl?: string | null
     ctaKind?: "link" | "authenticated_link" | null
     ctaLabel?: string | null
     ctaHref?: string | null
+    ctaSecondaryKind?: "link" | "authenticated_link" | null
+    ctaSecondaryLabel?: string | null
+    ctaSecondaryHref?: string | null
     dashboardWidget?: "none" | "message" | "copyable_value" | "member_code" | null
     dashboardWidgetValue?: string | null
     popupEnabled?: boolean
@@ -76,25 +114,20 @@ function refineAnnouncementFields(
     })
   }
 
-  const hasAnyCta = data.ctaKind != null || data.ctaLabel != null || data.ctaHref != null
-  if (!hasAnyCta) return
-
-  if (data.ctaKind == null || data.ctaLabel == null || data.ctaHref == null) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "CTA needs a kind, label, and link",
-      path: ["ctaKind"],
-    })
-    return
-  }
-
-  if (!isSafeAnnouncementUrl(data.ctaHref)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Enter a valid link or site path",
-      path: ["ctaHref"],
-    })
-  }
+  refineCtaFields(
+    { kind: data.ctaKind, label: data.ctaLabel, href: data.ctaHref },
+    ctx,
+    { kind: "ctaKind", href: "ctaHref" }
+  )
+  refineCtaFields(
+    {
+      kind: data.ctaSecondaryKind,
+      label: data.ctaSecondaryLabel,
+      href: data.ctaSecondaryHref,
+    },
+    ctx,
+    { kind: "ctaSecondaryKind", href: "ctaSecondaryHref" }
+  )
 }
 
 export const announcementSchema = announcementFieldsSchema.superRefine(refineAnnouncementFields)

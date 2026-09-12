@@ -5,10 +5,14 @@ import { DASHBOARD_WIDGET_ON_KINDS } from "@/features/announcements/types"
 import type { AnnouncementRow } from "./map-announcement"
 
 const PUBLIC_COLUMNS =
+  "id,title,content,published_at,created_at,hero_image_url,cta_kind,cta_label,cta_href,cta_secondary_kind,cta_secondary_label,cta_secondary_href"
+const PUBLIC_COLUMNS_CTA =
   "id,title,content,published_at,created_at,hero_image_url,cta_kind,cta_label,cta_href"
 const PUBLIC_COLUMNS_LEGACY = "id,title,content,published_at,created_at"
 
 const ADMIN_COLUMNS =
+  "id,title,content,published_at,archived_at,author_user_id,created_at,hero_image_url,cta_kind,cta_label,cta_href,cta_secondary_kind,cta_secondary_label,cta_secondary_href,dashboard_widget,dashboard_widget_label,dashboard_widget_value,dashboard_widget_body,dashboard_learn_more_enabled,popup_enabled,popup_headline,popup_body,popup_cta_label,popup_learn_more_enabled,popup_show_announcement_cta,popup_revision"
+const ADMIN_COLUMNS_FLAGS =
   "id,title,content,published_at,archived_at,author_user_id,created_at,hero_image_url,cta_kind,cta_label,cta_href,dashboard_widget,dashboard_widget_label,dashboard_widget_value,dashboard_widget_body,dashboard_learn_more_enabled,popup_enabled,popup_headline,popup_body,popup_cta_label,popup_learn_more_enabled,popup_show_announcement_cta,popup_revision"
 const ADMIN_COLUMNS_BODY =
   "id,title,content,published_at,archived_at,author_user_id,created_at,hero_image_url,cta_kind,cta_label,cta_href,dashboard_widget,dashboard_widget_label,dashboard_widget_value,dashboard_widget_body,popup_enabled,popup_headline,popup_body,popup_cta_label,popup_revision"
@@ -43,6 +47,16 @@ export async function listAnnouncementsRepo(limit = 50): Promise<AnnouncementRow
 
   if (!isMissingColumnError(first.error)) throw first.error
 
+  const withCta = await anonClient
+    .from("announcements")
+    .select(PUBLIC_COLUMNS_CTA)
+    .is("archived_at", null)
+    .not("published_at", "is", null)
+    .limit(limit)
+    .order("created_at", { ascending: false })
+  if (!withCta.error) return (withCta.data ?? []) as AnnouncementRow[]
+  if (!isMissingColumnError(withCta.error)) throw withCta.error
+
   const { data, error } = await anonClient
     .from("announcements")
     .select(PUBLIC_COLUMNS_LEGACY)
@@ -62,6 +76,13 @@ export async function listAnnouncementsRepoAdmin(): Promise<AnnouncementRow[]> {
     .order("created_at", { ascending: false })
   if (!first.error) return (first.data ?? []) as AnnouncementRow[]
   if (!isMissingColumnError(first.error)) throw first.error
+
+  const withFlags = await supabase
+    .from("announcements")
+    .select(ADMIN_COLUMNS_FLAGS)
+    .order("created_at", { ascending: false })
+  if (!withFlags.error) return (withFlags.data ?? []) as AnnouncementRow[]
+  if (!isMissingColumnError(withFlags.error)) throw withFlags.error
 
   const withBody = await supabase
     .from("announcements")
@@ -213,6 +234,9 @@ export async function createAnnouncementRepo(payload: {
   cta_kind?: string | null
   cta_label?: string | null
   cta_href?: string | null
+  cta_secondary_kind?: string | null
+  cta_secondary_label?: string | null
+  cta_secondary_href?: string | null
   dashboard_widget?: string | null
   dashboard_widget_label?: string | null
   dashboard_widget_value?: string | null

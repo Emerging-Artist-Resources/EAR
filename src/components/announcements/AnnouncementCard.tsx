@@ -11,7 +11,7 @@ import {
 import type { Announcement } from "@/features/announcements/types"
 import { cn } from "@/lib/utils"
 import { timedHighlightClassName } from "@/hooks/use-timed-highlight"
-import { AnnouncementCtaButton } from "./AnnouncementCtaButton"
+import { AnnouncementCtaGroup } from "./AnnouncementCtaButton"
 import { AnnouncementMarkdown } from "./AnnouncementMarkdown"
 
 type AnnouncementCardVariant = "lead" | "feed" | "compact"
@@ -107,21 +107,21 @@ export function AnnouncementCard({
     </div>
   )
 
+  const hasCta = Boolean(announcement.cta || announcement.secondaryCta)
   const footer = (
     <div
       className={cn(
         "flex flex-wrap items-center gap-3",
         lead && "flex-col items-stretch sm:flex-row sm:items-center",
-        announcement.cta && (lead ? "sm:justify-between" : "justify-between")
+        hasCta && (lead ? "sm:justify-between" : "justify-between")
       )}
     >
       <AnnouncementMeta isoDate={isoDate} label={posted} isNew={isNew} />
-      {announcement.cta ? (
-        <AnnouncementCtaButton
-          cta={announcement.cta}
-          className={lead ? "w-full sm:w-auto" : undefined}
-        />
-      ) : null}
+      <AnnouncementCtaGroup
+        cta={announcement.cta}
+        secondaryCta={announcement.secondaryCta}
+        stretch={lead}
+      />
     </div>
   )
 

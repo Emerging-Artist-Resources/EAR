@@ -1,4 +1,5 @@
 import {
+  parseAnnouncementHeading,
   parseAnnouncementInline,
   parseAnnouncementMarkdown,
   sanitizeAnnouncementHref,
@@ -84,6 +85,42 @@ describe("parseAnnouncementMarkdown", () => {
         type: "paragraph",
         lines: [[{ type: "em", children: [{ type: "text", value: "first film" }] }]],
       },
+    ])
+  })
+
+  it("parses ATX headings and inline marks inside them", () => {
+    expect(parseAnnouncementHeading("# Workshop details")).toEqual({
+      level: 1,
+      text: "Workshop details",
+    })
+    expect(parseAnnouncementMarkdown("# Who can apply?\n## Dates\n### **Week one**\n#### Notes ##")).toEqual([
+      { type: "heading", level: 1, children: [{ type: "text", value: "Who can apply?" }] },
+      { type: "heading", level: 2, children: [{ type: "text", value: "Dates" }] },
+      {
+        type: "heading",
+        level: 3,
+        children: [{ type: "strong", children: [{ type: "text", value: "Week one" }] }],
+      },
+      { type: "heading", level: 4, children: [{ type: "text", value: "Notes" }] },
+    ])
+  })
+
+  it("does not treat hashtags or deeper hashes as headings", () => {
+    expect(parseAnnouncementMarkdown("#not-a-heading\n##### Too deep")).toEqual([
+      {
+        type: "paragraph",
+        lines: [
+          [{ type: "text", value: "#not-a-heading" }],
+          [{ type: "text", value: "##### Too deep" }],
+        ],
+      },
+    ])
+  })
+
+  it("stops a paragraph when a heading starts", () => {
+    expect(parseAnnouncementMarkdown("Intro line\n## Next")).toEqual([
+      { type: "paragraph", lines: [[{ type: "text", value: "Intro line" }]] },
+      { type: "heading", level: 2, children: [{ type: "text", value: "Next" }] },
     ])
   })
 

@@ -7,14 +7,28 @@ export type InlineNode =
   | { type: "em"; children: InlineNode[] }
   | { type: "link"; href: string; children: InlineNode[] }
 
+export type HeadingLevel = 1 | 2 | 3 | 4
+
 export type BlockNode =
   | { type: "paragraph"; lines: InlineNode[][] }
+  | { type: "heading"; level: HeadingLevel; children: InlineNode[] }
   | { type: "ul"; items: InlineNode[][] }
   | { type: "ol"; items: InlineNode[][] }
   | { type: "spacer"; count: number }
 
+/** Copy for admin fields that accept announcement markdown. */
+export const ANNOUNCEMENT_MARKDOWN_HINT =
+  "Use **bold**, *italic*, headings (# to ####), and dash or numbered lists. Paste stays plain text — add the marks here."
+
+export const ANNOUNCEMENT_MARKDOWN_PLACEHOLDER =
+  "# Workshop details\n**Bold**, *italic*, and lists:\n- Who can apply\n- How to submit\n\nURLs become links automatically."
+
+export const ANNOUNCEMENT_MARKDOWN_SHORT_PLACEHOLDER =
+  "One or two sentences. **Bold**, *italic*, headings, and lists work here too."
+
 const UL_LINE = /^\s*[-*+]\s+(.*)$/
 const OL_LINE = /^\s*\d+\.\s+(.*)$/
+const HEADING_LINE = /^\s{0,3}(#{1,4})(?:\s+(.*?))?\s*$/
 const MD_LINK = /^\[([^\]]+)\]\(([^)]+)\)/
 
 export function sanitizeAnnouncementHref(href: string): string | null {
@@ -117,6 +131,18 @@ export function parseAnnouncementInline(input: string): InlineNode[] {
   return nodes
 }
 
+export function parseAnnouncementHeading(line: string): { level: HeadingLevel; text: string } | null {
+  const match = line.match(HEADING_LINE)
+  if (!match) return null
+  const text = (match[2] ?? "").replace(/\s+#+\s*$/, "").trim()
+  if (!text) return null
+  return { level: match[1].length as HeadingLevel, text }
+}
+
+function isBlockStart(line: string): boolean {
+  return Boolean(parseAnnouncementHeading(line) || UL_LINE.test(line) || OL_LINE.test(line))
+}
+
 function takeList(
   lines: string[],
   start: number,
@@ -172,6 +198,17 @@ export function parseAnnouncementMarkdown(source: string): BlockNode[] {
       continue
     }
 
+    const heading = parseAnnouncementHeading(lines[index])
+    if (heading) {
+      blocks.push({
+        type: "heading",
+        level: heading.level,
+        children: parseAnnouncementInline(heading.text),
+      })
+      index += 1
+      continue
+    }
+
     const unordered = takeList(lines, index, UL_LINE)
     if (unordered) {
       blocks.push({
@@ -194,12 +231,7 @@ export function parseAnnouncementMarkdown(source: string): BlockNode[] {
 
     const paragraphLines = [lines[index]]
     index += 1
-    while (
-      index < lines.length &&
-      lines[index].trim() !== "" &&
-      !UL_LINE.test(lines[index]) &&
-      !OL_LINE.test(lines[index])
-    ) {
+    while (index < lines.length && lines[index].trim() !== "" && !isBlockStart(lines[index])) {
       paragraphLines.push(lines[index])
       index += 1
     }

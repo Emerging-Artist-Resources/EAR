@@ -26,6 +26,7 @@ function announcement(partial: Partial<Announcement> & Pick<Announcement, "id" |
     createdAt: "2026-09-01T00:00:00.000Z",
     heroImageUrl: null,
     cta: null,
+    secondaryCta: null,
     ...partial,
   }
 }
@@ -131,5 +132,39 @@ describe("AnnouncementsList feed layout", () => {
     expect(document.getElementById("announcement-b")?.className).not.toContain("ring-ear-baby-blue")
     jest.useRealTimers()
     jest.restoreAllMocks()
+  })
+
+  it("renders both announcement-page action buttons", () => {
+    render(
+      <AnnouncementsList
+        variant="feed"
+        showHeader={false}
+        announcements={[
+          announcement({
+            id: "lead",
+            title: "Workshop",
+            cta: {
+              kind: "authenticated_link",
+              label: "Get your code",
+              href: "/profile?announcement=lead",
+            },
+            secondaryCta: {
+              kind: "link",
+              label: "Apply",
+              href: "https://example.com/apply",
+            },
+          }),
+        ]}
+      />
+    )
+
+    expect(screen.getByRole("link", { name: "Get your code" })).toHaveAttribute(
+      "href",
+      "/profile?announcement=lead"
+    )
+    expect(screen.getByRole("link", { name: "Apply" })).toHaveAttribute(
+      "href",
+      "https://example.com/apply"
+    )
   })
 })

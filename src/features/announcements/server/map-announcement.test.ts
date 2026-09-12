@@ -44,6 +44,7 @@ describe("mapAnnouncementRow", () => {
       title: "Workshop",
       heroImageUrl: "/images/workshop.jpg",
       cta: null,
+      secondaryCta: null,
       publishedAt: "2026-09-01T00:00:00Z",
     })
   })
@@ -79,6 +80,30 @@ describe("mapAnnouncementRow", () => {
     expect(JSON.stringify(mapped)).not.toContain("member_code")
     expect(JSON.stringify(mapped)).not.toContain("SECRET-CODE")
     expect(JSON.stringify(mapped)).not.toContain("Copy from your dashboard.")
+  })
+
+  it("maps a secondary announcement-page CTA", () => {
+    const mapped = mapAnnouncementRow({
+      id: "a1",
+      title: "Workshop",
+      content: "Details",
+      cta_kind: "authenticated_link",
+      cta_label: "Get your code",
+      cta_href: "/profile?announcement=a1",
+      cta_secondary_kind: "link",
+      cta_secondary_label: "Apply",
+      cta_secondary_href: "https://example.com/apply",
+    })
+    expect(mapped.cta).toEqual({
+      kind: "authenticated_link",
+      label: "Get your code",
+      href: "/profile?announcement=a1",
+    })
+    expect(mapped.secondaryCta).toEqual({
+      kind: "link",
+      label: "Apply",
+      href: "https://example.com/apply",
+    })
   })
 })
 

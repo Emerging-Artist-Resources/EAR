@@ -6,6 +6,7 @@ import { isAppPath } from "@/features/announcements/announcement-urls"
 import {
   parseAnnouncementMarkdown,
   type BlockNode,
+  type HeadingLevel,
   type InlineNode,
 } from "@/features/announcements/parse-announcement-markdown"
 import { cn } from "@/lib/utils"
@@ -75,6 +76,20 @@ function InlineMarkdown({ nodes }: { nodes: InlineNode[] }) {
   )
 }
 
+const HEADING_TAG: Record<HeadingLevel, "h2" | "h3" | "h4" | "h5"> = {
+  1: "h2",
+  2: "h3",
+  3: "h4",
+  4: "h5",
+}
+
+const HEADING_CLASS: Record<HeadingLevel, string> = {
+  1: "mb-3 mt-5 font-header text-xl font-bold tracking-tight first:mt-0 last:mb-0",
+  2: "mb-2 mt-4 font-header text-lg font-semibold tracking-tight first:mt-0 last:mb-0",
+  3: "mb-2 mt-3 font-header text-base font-semibold tracking-tight first:mt-0 last:mb-0",
+  4: "mb-2 mt-3 font-header text-sm font-medium tracking-tight first:mt-0 last:mb-0",
+}
+
 function BlockMarkdown({ block }: { block: BlockNode }) {
   if (block.type === "spacer") {
     return <div aria-hidden="true" style={{ height: `${block.count * 1.5}rem` }} />
@@ -90,6 +105,15 @@ function BlockMarkdown({ block }: { block: BlockNode }) {
           </Fragment>
         ))}
       </p>
+    )
+  }
+
+  if (block.type === "heading") {
+    const Tag = HEADING_TAG[block.level]
+    return (
+      <Tag className={HEADING_CLASS[block.level]}>
+        <InlineMarkdown nodes={block.children} />
+      </Tag>
     )
   }
 
