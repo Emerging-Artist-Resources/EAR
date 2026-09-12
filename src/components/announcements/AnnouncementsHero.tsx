@@ -11,7 +11,8 @@ export function AnnouncementsHero() {
       imageAlt="Two performers in handstands on a wooden table"
       imagePosition="right"
       imageObjectPosition="object-[center_68%]"
-      contentClassName="items-left text-left"
+      contentClassName="min-w-0 items-left text-left"
+      titleClassName="text-[clamp(1.5rem,7vw,2.25rem)] sm:text-5xl lg:text-6xl"
       growWithContent
       compact
     >
