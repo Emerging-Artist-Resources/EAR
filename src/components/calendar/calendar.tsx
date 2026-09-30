@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useRef, useCallback } from "react"
+import { useMemo, useState, useCallback, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { H2, H3, Text } from "@/components/ui/typography"
@@ -24,30 +24,42 @@ import {
   addDays,
 } from "date-fns"
 import { convertUTCToEST, formatOccurrenceRangeEST } from "@/lib/datetime/utils"
-import { filterCalendarItems, getItemsForDate, handleMonthChange } from "./calendar-utils"
+import { filterCalendarItems, getItemsForDate } from "./calendar-utils"
+import type { CalendarVisibleRange } from "@/lib/calendar/feed-window"
 import { getEventTypeColor } from "./event-colors"
-
-const INITIAL_MONTH_KEY = (() => {
-  const now = new Date()
-  return `${now.getFullYear()}-${now.getMonth()}`
-})()
 
 interface CalendarProps { 
   items: CalendarItem[]
   deadlines?: CalendarItem[]
-  onMonthChange?: (monthStart: Date, monthEnd: Date) => void
+  onVisibleRangeChange?: (range: CalendarVisibleRange) => void
   onListingSelect: (listingId: string) => void
 }
 
-export function Calendar({ items, deadlines = [], onMonthChange, onListingSelect }: CalendarProps) {
+export function Calendar({ items, deadlines = [], onVisibleRangeChange, onListingSelect }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set(['PERFORMANCE', 'CLASS', 'AUDITION', 'CREATIVE']))
   const [dayEventsPanel, setDayEventsPanel] = useState<{ date: Date; events: CalendarItem[] } | null>(null)
-  const lastFetchedMonthRef = useRef<string | null>(INITIAL_MONTH_KEY)
 
   const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate])
   const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate])
+
+  const visibleRange = useMemo<CalendarVisibleRange>(() => {
+    if (view === "week") {
+      return {
+        start: startOfWeek(currentDate, { weekStartsOn: 0 }),
+        end: endOfWeek(currentDate, { weekStartsOn: 0 }),
+      }
+    }
+    if (view === "day") {
+      return { start: currentDate, end: currentDate }
+    }
+    return { start: monthStart, end: monthEnd }
+  }, [view, currentDate, monthStart, monthEnd])
+
+  useEffect(() => {
+    onVisibleRangeChange?.(visibleRange)
+  }, [visibleRange, onVisibleRangeChange])
   
   const filteredItems = useMemo(() => {
     return filterCalendarItems(items, selectedTypes)
@@ -138,21 +150,16 @@ export function Calendar({ items, deadlines = [], onMonthChange, onListingSelect
     if (view === 'month') {
       const newDate = delta === -1 ? subMonths(currentDate, 1) : addMonths(currentDate, 1)
       setCurrentDate(newDate)
-      handleMonthChange(newDate, onMonthChange, lastFetchedMonthRef)
     } else if (view === 'week') {
       setCurrentDate(delta === -1 ? subWeeks(currentDate, 1) : addWeeks(currentDate, 1))
     } else {
       setCurrentDate(delta === -1 ? addDays(currentDate, -1) : addDays(currentDate, 1))
     }
-  }, [view, currentDate, onMonthChange])
+  }, [view, currentDate])
 
   const handleTodayClick = useCallback(() => {
-    const today = new Date()
-    setCurrentDate(today)
-    if (view === 'month') {
-      handleMonthChange(today, onMonthChange, lastFetchedMonthRef)
-    }
-  }, [view, onMonthChange])
+    setCurrentDate(new Date())
+  }, [])
 
   const formattedDateTitle = useMemo(() => {
     if (view === 'month') {

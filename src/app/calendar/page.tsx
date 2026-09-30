@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef, Suspense } from "react"
-import { subMonths, addMonths, startOfMonth, endOfMonth } from "date-fns"
 import { CallToAction } from "@/components/layout/call-to-action"
 import PerformanceModal from "@/components/performance-modal"
 import { useCalendar, type RefreshOptions } from "@/hooks/use-calendar"
@@ -18,6 +17,7 @@ import type { ListingCardLinkDisplay, ListingCardVenue } from "@/lib/listings/ca
 import CommunityCalendarHero from "@/components/calendar/CommunityCalendarHero"
 import { PAGE_HERO_HEIGHT_CLASS } from "@/lib/marketing/page-hero"
 import { cn } from "@/lib/utils"
+import { monthRangeContaining, type CalendarVisibleRange } from "@/lib/calendar/feed-window"
 
 type RecentListing = {
   id: string
@@ -88,15 +88,6 @@ function RecentlyAddedSkeleton({ cardsPerView = 4 }: { cardsPerView?: number }) 
   )
 }
 
-function getDefaultCalendarRange() {
-  const now = new Date()
-  return {
-    from: startOfMonth(subMonths(now, 3)).toISOString(),
-    to: endOfMonth(addMonths(now, 3)).toISOString(),
-    limit: 500 as const,
-  }
-}
-
 function CalendarViewContent() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [authPromptOpen, setAuthPromptOpen] = useState(false)
@@ -113,7 +104,14 @@ function CalendarViewContent() {
   const hasLoadedRecentRef = useRef(false)
   const lastRefreshAtRef = useRef(0)
   const { isAuthed } = useAuth()
-  const { items, deadlines, isInitialLoading, fetchCalendar } = useCalendar()
+  const {
+    items,
+    deadlines,
+    isInitialLoading,
+    ensureVisibleRange,
+    refreshVisible,
+    loadDeadlines,
+  } = useCalendar()
 
   const fetchRecentListings = useCallback(
     async ({ bypassCache = false }: RefreshOptions = {}) => {
@@ -147,18 +145,29 @@ function CalendarViewContent() {
     []
   )
 
+  const handleVisibleRange = useCallback(
+    (range: CalendarVisibleRange) => {
+      void ensureVisibleRange(range)
+    },
+    [ensureVisibleRange]
+  )
+
   const refreshCalendarPage = useCallback(
     ({ bypassCache = false }: RefreshOptions = {}) => {
       lastRefreshAtRef.current = Date.now()
-      void fetchCalendar(getDefaultCalendarRange(), { bypassCache })
+      void refreshVisible({ bypassCache })
+      void loadDeadlines({ bypassCache })
       void fetchRecentListings({ bypassCache })
     },
-    [fetchCalendar, fetchRecentListings]
+    [refreshVisible, loadDeadlines, fetchRecentListings]
   )
 
   useEffect(() => {
-    refreshCalendarPage()
-  }, [refreshCalendarPage])
+    lastRefreshAtRef.current = Date.now()
+    void ensureVisibleRange(monthRangeContaining(new Date()))
+    void loadDeadlines()
+    void fetchRecentListings()
+  }, [ensureVisibleRange, loadDeadlines, fetchRecentListings])
 
   const refreshIfStale = useCallback(() => {
     const now = Date.now()
@@ -219,6 +228,7 @@ function CalendarViewContent() {
             <Calendar
               items={items}
               deadlines={deadlines}
+              onVisibleRangeChange={handleVisibleRange}
               onListingSelect={openListing}
             />
 

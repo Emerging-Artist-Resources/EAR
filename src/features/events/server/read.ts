@@ -11,6 +11,7 @@ import {
 import { extractLatestAdminNotes } from "@/lib/listings/admin-notes"
 import { getListingTitle } from "./listing-utils"
 import type { PublicListingDetail } from "@/components/calendar/PublicListingDetailSections"
+import { readCalendarWindow } from "./calendar-window-page"
 
 const MIN_SEARCH_QUERY_LENGTH = 2
 const MIN_SEARCH_SCORE = 30
@@ -200,10 +201,9 @@ export async function listCalendarItemsRepo(params: {
   fromISO: string
   toISO: string
   types?: ListingType[]
-  limit?: number
 }) {
   const supabase = getSupabaseServerClientAnon()
-  const { fromISO, toISO, types = [], limit = 500 } = params
+  const { fromISO, toISO, types = [] } = params
 
   const sel = `
     id, listing_id, occurrence_type, starts_at_utc, ends_at_utc, tz,
@@ -218,25 +218,33 @@ export async function listCalendarItemsRepo(params: {
     )
   `
 
-  let q = supabase
-    .from("listing_occurrences")
-    .select(sel)
-    .eq("listings.status", "approved")
-    .is("listings.deleted_at", null)
-    .gte("starts_at_utc", fromISO)
-    .lte("starts_at_utc", toISO)
-    .order("starts_at_utc", { ascending: true })
-    .limit(Math.min(limit, 1000))
+  const data = await readCalendarWindow({
+    fromISO,
+    toISO,
+    fetchPage: async (offset, pageSize) => {
+      let q = supabase
+        .from("listing_occurrences")
+        .select(sel)
+        .eq("listings.status", "approved")
+        .is("listings.deleted_at", null)
+        .gte("starts_at_utc", fromISO)
+        .lt("starts_at_utc", toISO)
+        // Include both events and deadlines (audition/creative use deadline dates on calendar)
+        .or("occurrence_type.eq.event,occurrence_type.eq.deadline")
 
-  // Include both events and deadlines (audition/creative use deadline dates on calendar)
-  q = q.or("occurrence_type.eq.event,occurrence_type.eq.deadline")
+      if (types.length) q = q.in("listings.type", types)
 
-  if (types.length) q = q.in("listings.type", types)
+      const { data: page, error } = await q
+        .order("starts_at_utc", { ascending: true })
+        .order("id", { ascending: true })
+        .range(offset, offset + pageSize - 1)
 
-  const { data, error } = await q
-  if (error) throw error
+      if (error) throw error
+      return page ?? []
+    },
+  })
 
-  return (data ?? [])
+  return data
     .filter((row: any) => {
       // Auditions and creative opportunities appear on their application deadline date
       if (row.occurrence_type === "deadline") {
@@ -306,10 +314,9 @@ export async function listDeadlinesRepo(params: {
   fromISO: string
   toISO: string
   types?: ListingType[] | undefined
-  limit?: number
 }) {
   const supabase = getSupabaseServerClientAnon()
-  const { fromISO, toISO, types, limit = 100 } = params
+  const { fromISO, toISO, types } = params
 
   const sel = `
     id, listing_id, occurrence_type, starts_at_utc, ends_at_utc, tz,
@@ -320,23 +327,32 @@ export async function listDeadlinesRepo(params: {
     )
   `
 
-  let q = supabase
-    .from("listing_occurrences")
-    .select(sel)
-    .eq("listings.status", "approved")
-    .is("listings.deleted_at", null)
-    .eq("occurrence_type", "deadline")
-    .gte("starts_at_utc", fromISO)
-    .lte("starts_at_utc", toISO)
-    .order("starts_at_utc", { ascending: true })
-    .limit(Math.min(limit, 1000))
+  const data = await readCalendarWindow({
+    fromISO,
+    toISO,
+    fetchPage: async (offset, pageSize) => {
+      let q = supabase
+        .from("listing_occurrences")
+        .select(sel)
+        .eq("listings.status", "approved")
+        .is("listings.deleted_at", null)
+        .eq("occurrence_type", "deadline")
+        .gte("starts_at_utc", fromISO)
+        .lt("starts_at_utc", toISO)
 
-  if (types && types.length > 0) q = q.in("listings.type", types)
+      if (types && types.length > 0) q = q.in("listings.type", types)
 
-  const { data, error } = await q
-  if (error) throw error
+      const { data: page, error } = await q
+        .order("starts_at_utc", { ascending: true })
+        .order("id", { ascending: true })
+        .range(offset, offset + pageSize - 1)
 
-  return (data ?? []).map((row: any) => {
+      if (error) throw error
+      return page ?? []
+    },
+  })
+
+  return data.map((row: any) => {
     const listing = row.listings
     const title =
       listing.type === "audition" ? listing.audition_details?.title :

@@ -84,7 +84,7 @@ export async function createPerformance(supabase: SupabaseClient, formData: Even
   return await createListingOwnedRepo(supabase, input)
 }
 
-export async function listCalendarItems(params: { fromISO: string; toISO: string; types?: Array<'performance'|'audition'|'creative'|'class'>; limit?: number }) {
+export async function listCalendarItems(params: { fromISO: string; toISO: string; types?: Array<'performance'|'audition'|'creative'|'class'> }) {
   return await listCalendarItemsRepo(params)
 }
 
