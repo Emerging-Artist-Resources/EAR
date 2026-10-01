@@ -1,4 +1,4 @@
-import { format, startOfMonth, endOfMonth } from "date-fns"
+import { format } from "date-fns"
 import type { CalendarItem } from "@/hooks/use-calendar"
 import { convertUTCToEST, getTodayESTDateString } from "@/lib/datetime/utils"
 import { filterByCalendarListingTypes } from "@/lib/listings/calendar-filter-types"
@@ -37,21 +37,4 @@ export function getItemsForDate(
   }
   
   return Array.from(seen.values())
-}
-
-export function handleMonthChange(
-  newDate: Date,
-  onMonthChange: ((monthStart: Date, monthEnd: Date) => void) | undefined,
-  lastFetchedMonthRef: React.MutableRefObject<string | null>
-): void {
-  if (!onMonthChange) return
-  
-  const newMonthStart = startOfMonth(newDate)
-  const newMonthEnd = endOfMonth(newDate)
-  const newMonthKey = `${newDate.getFullYear()}-${newDate.getMonth()}`
-  
-  if (lastFetchedMonthRef.current !== newMonthKey) {
-    lastFetchedMonthRef.current = newMonthKey
-    onMonthChange(newMonthStart, newMonthEnd)
-  }
 }

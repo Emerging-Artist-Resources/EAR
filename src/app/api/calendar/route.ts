@@ -36,7 +36,8 @@ export async function GET(req: Request) {
     //const borough = url.searchParams.get("borough") as string | null
     const q = url.searchParams.get("q")?.trim() ?? null
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 500), 1000)
-    const includeDeadlines = url.searchParams.get("includeDeadlines") === "true"
+    const deadlinesOnly = url.searchParams.get("feed") === "deadlines"
+    const includeDeadlines = deadlinesOnly || url.searchParams.get("includeDeadlines") === "true"
 
     if (q) {
       const searchLimit = await checkRateLimit({
@@ -69,14 +70,14 @@ export async function GET(req: Request) {
         types,
         limit,
       })
-    } else {
+    } else if (!deadlinesOnly) {
       items = await listCalendarItemsRepo({
         fromISO: from,
         toISO: to,
         types,
-        //borough: borough as string | null,
-        limit,
       })
+    } else {
+      items = []
     }
 
     let deadlines: typeof items = []
@@ -94,7 +95,6 @@ export async function GET(req: Request) {
           fromISO: from,
           toISO: to,
           types: deadlineTypes,
-          limit: 100,
         })
       }
     }
