@@ -99,3 +99,12 @@ jspm_packages/
 .vscode-test
 
 *.tsbuildinfo
+
+# design-sync (Claude Design) — scaffolding/build output, not source
+.ds-sync/
+.ds-sync-src/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+.design-sync/
