@@ -70,14 +70,22 @@ function findClosing(input: string, from: number, marker: string): number {
   return -1
 }
 
-export function parseAnnouncementInline(input: string): InlineNode[] {
+export function parseAnnouncementInline(
+  input: string,
+  options?: { linkify?: boolean }
+): InlineNode[] {
+  const linkify = options?.linkify !== false
   const nodes: InlineNode[] = []
   let buffer = ""
   let index = 0
 
   const flush = () => {
     if (!buffer) return
-    nodes.push(...linkifyToInline(buffer))
+    if (linkify) {
+      nodes.push(...linkifyToInline(buffer))
+    } else {
+      nodes.push({ type: "text", value: buffer })
+    }
     buffer = ""
   }
 
@@ -88,7 +96,7 @@ export function parseAnnouncementInline(input: string): InlineNode[] {
         flush()
         nodes.push({
           type: "strong",
-          children: parseAnnouncementInline(input.slice(index + 2, close)),
+          children: parseAnnouncementInline(input.slice(index + 2, close), options),
         })
         index = close + 2
         continue
@@ -101,14 +109,16 @@ export function parseAnnouncementInline(input: string): InlineNode[] {
         flush()
         nodes.push({
           type: "em",
-          children: parseAnnouncementInline(input.slice(index + 1, close)),
+          children: parseAnnouncementInline(input.slice(index + 1, close), options),
         })
         index = close + 1
         continue
       }
     }
 
-    if (input[index] === "[") {
+    // Labels of an existing link stay text so auto-linked emails and URLs
+    // do not render a second anchor inside the first.
+    if (linkify && input[index] === "[") {
       const match = input.slice(index).match(MD_LINK)
       const href = match ? sanitizeAnnouncementHref(match[2]) : null
       if (match && href) {
@@ -116,7 +126,7 @@ export function parseAnnouncementInline(input: string): InlineNode[] {
         nodes.push({
           type: "link",
           href,
-          children: parseAnnouncementInline(match[1]),
+          children: parseAnnouncementInline(match[1], { linkify: false }),
         })
         index += match[0].length
         continue
@@ -213,7 +223,7 @@ export function parseAnnouncementMarkdown(source: string): BlockNode[] {
     if (unordered) {
       blocks.push({
         type: "ul",
-        items: unordered.items.map(parseAnnouncementInline),
+        items: unordered.items.map((item) => parseAnnouncementInline(item)),
       })
       index = unordered.nextIndex
       continue
@@ -223,7 +233,7 @@ export function parseAnnouncementMarkdown(source: string): BlockNode[] {
     if (ordered) {
       blocks.push({
         type: "ol",
-        items: ordered.items.map(parseAnnouncementInline),
+        items: ordered.items.map((item) => parseAnnouncementInline(item)),
       })
       index = ordered.nextIndex
       continue
@@ -238,7 +248,7 @@ export function parseAnnouncementMarkdown(source: string): BlockNode[] {
 
     blocks.push({
       type: "paragraph",
-      lines: paragraphLines.map(parseAnnouncementInline),
+      lines: paragraphLines.map((line) => parseAnnouncementInline(line)),
     })
   }
 

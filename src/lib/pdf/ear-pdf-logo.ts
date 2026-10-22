@@ -30,7 +30,7 @@ export async function embedEarPdfLogo(doc: PDFDocument): Promise<PDFImage | null
 }
 
 /** Max logo height in PDF points (1/72 inch). */
-export const EAR_PDF_LOGO_MAX_HEIGHT = 62
+export const EAR_PDF_LOGO_MAX_HEIGHT = 50
 
 /** Vertical gap between logo bottom and title baseline (stacked header). */
 export const EAR_PDF_LOGO_TITLE_GAP = 38
