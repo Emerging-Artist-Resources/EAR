@@ -49,6 +49,34 @@ describe("parseAnnouncementInline", () => {
       { type: "text", value: "[x](javascript:alert(1))" },
     ])
   })
+
+  it("does not auto-link emails or URLs inside a markdown link label", () => {
+    expect(parseAnnouncementInline("[harry@eararts.org](mailto:harry@eararts.org)")).toEqual([
+      {
+        type: "link",
+        href: "mailto:harry@eararts.org",
+        children: [{ type: "text", value: "harry@eararts.org" }],
+      },
+    ])
+    expect(
+      parseAnnouncementInline("[see dance.org/apply](https://www.dancefilms.org/)")
+    ).toEqual([
+      {
+        type: "link",
+        href: "https://www.dancefilms.org/",
+        children: [{ type: "text", value: "see dance.org/apply" }],
+      },
+    ])
+    expect(parseAnnouncementInline("[**harry@eararts.org**](mailto:harry@eararts.org)")).toEqual([
+      {
+        type: "link",
+        href: "mailto:harry@eararts.org",
+        children: [
+          { type: "strong", children: [{ type: "text", value: "harry@eararts.org" }] },
+        ],
+      },
+    ])
+  })
 })
 
 describe("parseAnnouncementMarkdown", () => {
@@ -57,6 +85,34 @@ describe("parseAnnouncementMarkdown", () => {
       {
         type: "paragraph",
         lines: [[{ type: "text", value: "Hello" }], [{ type: "text", value: "there" }]],
+      },
+    ])
+  })
+
+  it("links a markdown email on the first paragraph line without nesting", () => {
+    expect(
+      parseAnnouncementMarkdown(
+        "[harry@eararts.org](mailto:harry@eararts.org)\nharry@eararts.org"
+      )
+    ).toEqual([
+      {
+        type: "paragraph",
+        lines: [
+          [
+            {
+              type: "link",
+              href: "mailto:harry@eararts.org",
+              children: [{ type: "text", value: "harry@eararts.org" }],
+            },
+          ],
+          [
+            {
+              type: "link",
+              href: "mailto:harry@eararts.org",
+              children: [{ type: "text", value: "harry@eararts.org" }],
+            },
+          ],
+        ],
       },
     ])
   })

@@ -4,6 +4,7 @@ import fontkit from "@pdf-lib/fontkit"
 import type { PDFFont } from "pdf-lib"
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib"
 import { EAR_PDF_LOGO_TITLE_GAP, embedEarPdfLogo, scaleEarPdfLogoSize } from "@/lib/pdf/ear-pdf-logo"
+import { embedMignoloPdfLogo, scaleMignoloPdfLogoSize } from "@/lib/pdf/mignolo-pdf-logo"
 
 export type GenerateDonationPdfInput = {
   donorName: string
@@ -141,12 +142,25 @@ async function buildDonationPdf(input: GenerateDonationPdfInput, fontMode: "noto
 
   const receiptTitle = "Donation receipt"
   const receiptTitleSize = 20
-  const logo = await embedEarPdfLogo(doc)
-  if (logo) {
-    const { width: logoW, height: logoH } = scaleEarPdfLogoSize(logo)
+  /** Space between the stacked EAR and mignolo marks. Title gap stays below the lower logo. */
+  const logoStackGap = 10
+  const earLogo = await embedEarPdfLogo(doc)
+  const mignoloLogo = await embedMignoloPdfLogo(doc)
+  if (earLogo) {
+    const { width: logoW, height: logoH } = scaleEarPdfLogoSize(earLogo)
     const logoBottom = y - logoH
-    page.drawImage(logo, { x: LABEL_X, y: logoBottom, width: logoW, height: logoH })
-    y = logoBottom - EAR_PDF_LOGO_TITLE_GAP
+    page.drawImage(earLogo, { x: LABEL_X, y: logoBottom, width: logoW, height: logoH })
+    y = logoBottom
+  }
+  if (mignoloLogo) {
+    if (earLogo) y -= logoStackGap
+    const { width: logoW, height: logoH } = scaleMignoloPdfLogoSize(mignoloLogo)
+    const logoBottom = y - logoH
+    page.drawImage(mignoloLogo, { x: LABEL_X, y: logoBottom, width: logoW, height: logoH })
+    y = logoBottom
+  }
+  if (earLogo || mignoloLogo) {
+    y -= EAR_PDF_LOGO_TITLE_GAP
   } else {
     y -= 4
   }
