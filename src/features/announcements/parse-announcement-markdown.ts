@@ -16,7 +16,7 @@ export type BlockNode =
   | { type: "ol"; items: InlineNode[][] }
   | { type: "spacer"; count: number }
 
-/** Copy for admin fields that accept announcement markdown. */
+/** Copy for fields that accept this markdown. */
 export const ANNOUNCEMENT_MARKDOWN_HINT =
   "Use **bold**, *italic*, headings (# to ####), and dash or numbered lists. Paste stays plain text — add the marks here."
 
@@ -253,4 +253,33 @@ export function parseAnnouncementMarkdown(source: string): BlockNode[] {
   }
 
   return blocks
+}
+
+function inlineNodesToPlainText(nodes: InlineNode[]): string {
+  return nodes
+    .map((node) => (node.type === "text" ? node.value : inlineNodesToPlainText(node.children)))
+    .join("")
+}
+
+function blockToPlainText(block: BlockNode): string {
+  switch (block.type) {
+    case "spacer":
+      return ""
+    case "heading":
+      return inlineNodesToPlainText(block.children)
+    case "paragraph":
+      return block.lines.map(inlineNodesToPlainText).join(" ")
+    case "ul":
+    case "ol":
+      return block.items.map(inlineNodesToPlainText).join(" ")
+  }
+}
+
+/** Visible words only, for meta descriptions that must not include markdown marks. */
+export function announcementMarkdownToPlainText(source: string): string {
+  return parseAnnouncementMarkdown(source)
+    .map(blockToPlainText)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim()
 }

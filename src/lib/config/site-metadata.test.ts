@@ -23,6 +23,12 @@ describe("site metadata canonical URLs", () => {
   it("sets canonical on donation metadata built via buildPageMetadata", () => {
     expect(buildOrgDonationMetadata().alternates?.canonical).toBe("/donate")
   })
+
+  it("keeps the EAR donation share description short", () => {
+    expect(buildOrgDonationMetadata().description).toBe(
+      "Your donation directly supports emerging artists by funding opportunities, resources, and access to creative work."
+    )
+  })
 })
 
 describe("buildNoIndexMetadata", () => {

@@ -35,6 +35,7 @@ import {
   uploadDonationPageImage,
 } from "@/lib/storage/uploadDonationPageImage"
 import { saveDonationPageWithImageChanges } from "@/lib/storage/saveDonationPageImageChanges"
+import { ANNOUNCEMENT_MARKDOWN_HINT } from "@/features/announcements/parse-announcement-markdown"
 import { fiscalSponsorshipDashboard } from "@/lib/content/fiscal-sponsorship-dashboard"
 import { DonationPageImageField } from "@/components/profile/fiscal-sponsorship/DonationPageImageField"
 
@@ -185,6 +186,7 @@ export function CustomizeDonationPageModal({
             form={form}
             name="donation_page_message"
             label={copy.message.label}
+            note={ANNOUNCEMENT_MARKDOWN_HINT}
             placeholder={copy.message.placeholder}
             rows={4}
             showAsterisk={false}
