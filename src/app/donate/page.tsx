@@ -2,12 +2,13 @@ import { DonationForm, type OrgDonationHero } from "@/components/donations/Donat
 import {
   buildOrgDonationMetadata,
   ORG_DONATION_HERO_MESSAGE,
+  ORG_DONATION_OG_IMAGE,
 } from "@/lib/config/site-metadata"
 
 export const metadata = buildOrgDonationMetadata()
 
 const ORG_DONATION_HERO: OrgDonationHero = {
-  imageSrc: "/donate-ear-hero.JPG",
+  imageSrc: ORG_DONATION_OG_IMAGE,
   message: ORG_DONATION_HERO_MESSAGE,
   alt: "Support Emerging Artist Resources",
 }

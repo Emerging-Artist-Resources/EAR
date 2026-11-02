@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useLayoutEffect, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useForm, zodResolver } from "@/lib/vendor/react-hook-form-zod"
 import type { Resolver } from "react-hook-form"
 import {
@@ -21,14 +21,11 @@ import { useToast } from "@/contexts/ToastContext"
 import { apiPost, apiGet } from "@/lib/client/fetch-utils"
 import { H2, Text } from "@/components/ui/typography"
 import { Card } from "@/components/ui/card"
+import { AnnouncementMarkdown } from "@/components/announcements/AnnouncementMarkdown"
 import { DonationFunnelTrustHeader } from "@/components/donations/DonationFunnelTrustHeader"
 import { computeGrossChargeCents } from "@/lib/payments/computeDonationCharge"
 import { DONATION_PAGE_IMAGE_ASPECT } from "@/lib/images/donation-page-image-frame"
 import { Lock } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { LinkifiedText } from "@/components/shared/LinkifiedText"
-
-const donationMessageLinkClass = "text-primary hover:underline break-all"
 
 interface ProfileData {
   name: string | null
@@ -100,37 +97,7 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
   }, [orgHeroImageSrc])
 
   const artistMessageText = lockedRecipient?.donationPageMessage?.trim() ?? ""
-  const [artistMessageExpanded, setArtistMessageExpanded] = useState(false)
-  const [artistMessageOverflows, setArtistMessageOverflows] = useState(false)
-  const artistMessageRef = useRef<HTMLParagraphElement>(null)
-
-  const [orgMessageExpanded, setOrgMessageExpanded] = useState(false)
-  const [orgMessageOverflows, setOrgMessageOverflows] = useState(false)
-  const orgMessageRef = useRef<HTMLParagraphElement>(null)
-
-  useEffect(() => {
-    setArtistMessageExpanded(false)
-  }, [artistMessageText])
-
-  useEffect(() => {
-    setOrgMessageExpanded(false)
-  }, [orgHeroMessageText])
-
-  useLayoutEffect(() => {
-    if (!artistMessageText) return
-    const el = artistMessageRef.current
-    if (!el) return
-    if (artistMessageExpanded) return
-    setArtistMessageOverflows(el.scrollHeight > el.clientHeight + 1)
-  }, [artistMessageText, artistMessageExpanded])
-
-  useLayoutEffect(() => {
-    if (!orgHeroMessageText) return
-    const el = orgMessageRef.current
-    if (!el) return
-    if (orgMessageExpanded) return
-    setOrgMessageOverflows(el.scrollHeight > el.clientHeight + 1)
-  }, [orgHeroMessageText, orgMessageExpanded])
+  const pageMessage = artistMessageText || orgHeroMessageText
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -321,49 +288,9 @@ export function DonationForm({ lockedRecipient, statusMessage, orgDonationHero, 
           </Text>
         )}
       </div>
-      {artistMessageText ? (
+      {pageMessage ? (
         <div className="mb-4">
-          <p
-            ref={artistMessageRef}
-            className={cn(
-              "text-sm leading-6 text-gray-700 whitespace-pre-wrap",
-              !artistMessageExpanded && "line-clamp-2",
-            )}
-          >
-            <LinkifiedText text={artistMessageText} linkClassName={donationMessageLinkClass} />
-          </p>
-          {(artistMessageOverflows || artistMessageExpanded) && (
-            <button
-              type="button"
-              className="mt-2 text-sm font-medium text-primary hover:underline"
-              aria-expanded={artistMessageExpanded}
-              onClick={() => setArtistMessageExpanded((v) => !v)}
-            >
-              {artistMessageExpanded ? "Read less" : "Read more"}
-            </button>
-          )}
-        </div>
-      ) : orgHeroMessageText ? (
-        <div className="mb-4">
-          <p
-            ref={orgMessageRef}
-            className={cn(
-              "text-sm leading-6 text-gray-700 whitespace-pre-wrap",
-              !orgMessageExpanded && "line-clamp-2",
-            )}
-          >
-            <LinkifiedText text={orgHeroMessageText} linkClassName={donationMessageLinkClass} />
-          </p>
-          {(orgMessageOverflows || orgMessageExpanded) && (
-            <button
-              type="button"
-              className="mt-2 text-sm font-medium text-primary hover:underline"
-              aria-expanded={orgMessageExpanded}
-              onClick={() => setOrgMessageExpanded((v) => !v)}
-            >
-              {orgMessageExpanded ? "Read less" : "Read more"}
-            </button>
-          )}
+          <AnnouncementMarkdown markdown={pageMessage} clampClassName="line-clamp-2" />
         </div>
       ) : null}
 

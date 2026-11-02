@@ -7,10 +7,37 @@ export const DEFAULT_DESCRIPTION =
   "Free arts opportunities, performances, classes, auditions, and resources for emerging artists in New York City."
 export const DEFAULT_OG_IMAGE = "/images/og-image.png"
 
-export const ORG_DONATION_HERO_MESSAGE =
+export const ORG_DONATION_HERO_MESSAGE = `**Artists deserve systems that support them.**
+
+[Emerging Artist Resources (EAR)](https://www.eararts.org/) is reimagining the arts ecosystem.
+
+Founded in June, 2026 by working artists, EAR is transforming how artists discover opportunities, access resources, and interact with the communities they need to thrive. We believe that with access to resources, support, and connections, artists can build sustainable and fulfilling creative careers.
+
+**We're building the support system we wish we'd had.**
+
+At EAR, we are developing a digital platform that centralizes the opportunities, resources, services, and people that make our artistic landscape. Our vision is an accessible, all-in-one platform where artists can discover and pursue opportunities, track their progress, build connections, access professional support, and navigate their careers with greater confidence.
+
+But access to information is only one part of the equation.
+
+Through hands-on services, including fiscal sponsorship, educational workshops, photography & videography, and accessible community programming, EAR is already providing artists with the support they need to move their careers forward.
+
+By combining technology with direct services, we're building more than a resource hub. We're creating an interconnected infrastructure designed to support artists at every stage of their creative careers.
+
+**Building this takes a community!**
+
+Your contribution directly supports the expansion of our platform, the creation of new opportunities, and invests in the long-term sustainability of the artists who make our communities vibrant.
+
+**Support the artists. Strengthen the community. Help build what's next.**
+
+*Interested in giving through a donor-advised fund, learning more about EAR, or getting involved in other ways? We'd love to hear from you! Every contribution, connection, and helping hand makes a difference.*
+
+Reach out to us at [**info@eararts.org**](mailto:info@eararts.org).`
+
+/** Share and search text. The page message above is too long for a link preview. */
+const ORG_DONATION_DESCRIPTION =
   "Your donation directly supports emerging artists by funding opportunities, resources, and access to creative work."
 
-export const ORG_DONATION_OG_IMAGE = "/donate-ear-hero.JPG"
+export const ORG_DONATION_OG_IMAGE = "/ear-donation-hero.jpg"
 
 const DEFAULT_OG_TITLE = `${SITE_NAME} | ${DEFAULT_TITLE}`
 
@@ -113,7 +140,7 @@ export function buildPageMetadata(options: PageMetadataOptions): Metadata {
 export function buildOrgDonationMetadata(): Metadata {
   return buildPageMetadata({
     title: "Donate",
-    description: ORG_DONATION_HERO_MESSAGE,
+    description: ORG_DONATION_DESCRIPTION,
     path: "/donate",
     images: [ORG_DONATION_OG_IMAGE],
     imageAlt: "Support Emerging Artist Resources",

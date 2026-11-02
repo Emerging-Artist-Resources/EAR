@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { DonationForm } from "@/components/donations/DonationForm"
+import { announcementMarkdownToPlainText } from "@/features/announcements/parse-announcement-markdown"
 import { getProfileBySlugForDonationRepo } from "@/features/profile/server/repository"
 import { buildArtistDonationMetadata } from "@/lib/config/site-metadata"
 
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const displayName = profile.donation_recipient_display_name?.trim() || "this artist"
   const description =
-    profile.donation_page_message?.trim() ||
+    announcementMarkdownToPlainText(profile.donation_page_message ?? "") ||
     `Support ${displayName} through Emerging Artist Resources fiscal sponsorship.`
 
   return buildArtistDonationMetadata({

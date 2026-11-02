@@ -1,4 +1,5 @@
 import {
+  announcementMarkdownToPlainText,
   parseAnnouncementHeading,
   parseAnnouncementInline,
   parseAnnouncementMarkdown,
@@ -204,5 +205,23 @@ describe("parseAnnouncementMarkdown", () => {
     expect(parseAnnouncementMarkdown("\n\nHello\n\n")).toEqual([
       { type: "paragraph", lines: [[{ type: "text", value: "Hello" }]] },
     ])
+  })
+})
+
+describe("announcementMarkdownToPlainText", () => {
+  it("drops bold, italic, headings, and list marks", () => {
+    expect(
+      announcementMarkdownToPlainText("# Thanks\n**Bold** and *italic*\n- one\n- two")
+    ).toBe("Thanks Bold and italic one two")
+  })
+
+  it("keeps link labels and drops the URL", () => {
+    expect(
+      announcementMarkdownToPlainText("See [Dance on Camera](https://www.dancefilms.org/)")
+    ).toBe("See Dance on Camera")
+  })
+
+  it("collapses blank lines", () => {
+    expect(announcementMarkdownToPlainText("Hello\n\n\nthere")).toBe("Hello there")
   })
 })
