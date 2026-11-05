@@ -158,12 +158,12 @@ export function AnnouncementCard({
     return frame(
       <Card padding="none" className={cardChrome}>
         {hasImage ? (
-          <div className="h-64 w-full overflow-hidden bg-ear-black/5 sm:h-80 lg:h-[28rem]">
+          <div className="aspect-video w-full overflow-hidden bg-ear-black/5">
             {/* eslint-disable-next-line @next/next/no-img-element -- hero URL may be /public or an arbitrary https host */}
             <img
               src={announcement.heroImageUrl ?? ""}
               alt=""
-              className="h-full w-full object-cover object-top"
+              className="h-full w-full object-cover"
             />
           </div>
         ) : null}
@@ -186,7 +186,7 @@ export function AnnouncementCard({
   return frame(
     <Card padding="none" className={cardChrome}>
       {hasImage ? (
-        <div className="aspect-[3/2] w-full overflow-hidden bg-ear-black/5">
+        <div className="aspect-video w-full overflow-hidden bg-ear-black/5">
           {/* eslint-disable-next-line @next/next/no-img-element -- hero URL may be /public or an arbitrary https host */}
           <img
             src={announcement.heroImageUrl ?? ""}

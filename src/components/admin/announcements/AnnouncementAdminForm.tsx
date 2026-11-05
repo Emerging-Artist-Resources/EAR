@@ -227,7 +227,10 @@ export function AnnouncementAdminForm({
           />
         </Field>
 
-        <Field label="Hero image URL">
+        <Field
+          label="Hero image URL"
+          hint="Recommended upload: 1600 × 900px (16:9). Earlier updates crop this image to a centered square."
+        >
           <Input
             value={formData.heroImageUrl}
             onChange={(e) => patch("heroImageUrl", e.target.value)}

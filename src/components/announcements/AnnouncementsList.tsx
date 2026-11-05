@@ -25,7 +25,7 @@ function AnnouncementsFeedSkeleton() {
   return (
     <div className="space-y-10" aria-hidden>
       <div className="overflow-hidden border border-ear-black/15">
-        <div className="h-64 w-full animate-pulse bg-ear-black/10 sm:h-80" />
+        <div className="aspect-video w-full animate-pulse bg-ear-black/10" />
         <div className="space-y-3 p-6">
           <div className="h-7 w-2/3 animate-pulse bg-ear-black/10" />
           <div className="h-4 w-full animate-pulse bg-ear-black/10" />
