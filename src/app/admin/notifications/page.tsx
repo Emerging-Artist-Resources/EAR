@@ -18,6 +18,11 @@ import {
   type AnnouncementAdminFormState,
 } from "@/components/admin/announcements/AnnouncementAdminForm"
 import type { AdminAnnouncement } from "@/features/announcements/types"
+import { saveAnnouncementWithImageChanges } from "@/lib/storage/saveAnnouncementImageChanges"
+import {
+  removeAnnouncementImageByPublicUrl,
+  uploadAnnouncementImage,
+} from "@/lib/storage/uploadAnnouncementImage"
 
 export default function AdminNotificationsPage() {
   const [notifications, setNotifications] = useState<AdminAnnouncement[]>([])
@@ -25,6 +30,8 @@ export default function AdminNotificationsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingNotification, setEditingNotification] = useState<AdminAnnouncement | null>(null)
   const [formData, setFormData] = useState<AnnouncementAdminFormState>(emptyAnnouncementForm)
+  const [pendingHeroFile, setPendingHeroFile] = useState<File | null>(null)
+  const [removeHeroImage, setRemoveHeroImage] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -59,23 +66,34 @@ export default function AdminNotificationsPage() {
         : "/api/announcements"
 
       const method = editingNotification ? "PATCH" : "POST"
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
+      await saveAnnouncementWithImageChanges({
+        payload: toAnnouncementSavePayload(formData, editingNotification),
+        pendingFile: pendingHeroFile,
+        removeExisting: removeHeroImage,
+        previousImageUrl: editingNotification?.heroImageUrl ?? null,
+        deps: {
+          upload: uploadAnnouncementImage,
+          remove: removeAnnouncementImageByPublicUrl,
+          save: async (body) => {
+            const response = await fetch(url, {
+              method,
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(body),
+            })
+            if (!response.ok) {
+              throw new Error("Failed to save notification")
+            }
+          },
         },
-        body: JSON.stringify(toAnnouncementSavePayload(formData, editingNotification)),
       })
 
-      if (response.ok) {
-        await fetchNotifications()
-        handleCloseModal()
-      } else {
-        alert("Failed to save notification")
-      }
+      await fetchNotifications()
+      handleCloseModal()
     } catch (error) {
       console.error("Error saving notification:", error)
-      alert("An error occurred")
+      alert(error instanceof Error ? error.message : "An error occurred")
     } finally {
       setSubmitting(false)
     }
@@ -102,9 +120,15 @@ export default function AdminNotificationsPage() {
     }
   }
 
+  const resetImageDraft = () => {
+    setPendingHeroFile(null)
+    setRemoveHeroImage(false)
+  }
+
   const handleEdit = (notification: AdminAnnouncement) => {
     setEditingNotification(notification)
     setFormData(formFromAnnouncement(notification))
+    resetImageDraft()
     setIsModalOpen(true)
   }
 
@@ -112,11 +136,13 @@ export default function AdminNotificationsPage() {
     setIsModalOpen(false)
     setEditingNotification(null)
     setFormData(emptyAnnouncementForm)
+    resetImageDraft()
   }
 
   const handleCreateNew = () => {
     setEditingNotification(null)
     setFormData(emptyAnnouncementForm)
+    resetImageDraft()
     setIsModalOpen(true)
   }
 
@@ -204,6 +230,10 @@ export default function AdminNotificationsPage() {
           submitting={submitting}
           onSubmit={handleSubmit}
           onCancel={handleCloseModal}
+          pendingHeroFile={pendingHeroFile}
+          onPendingHeroFileChange={setPendingHeroFile}
+          removeHeroImage={removeHeroImage}
+          onRemoveHeroImageChange={setRemoveHeroImage}
         />
       </Modal>
     </AdminLayout>

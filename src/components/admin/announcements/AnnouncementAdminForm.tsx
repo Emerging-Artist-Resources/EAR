@@ -23,7 +23,35 @@ import {
   type AdminAnnouncement,
   type AnnouncementDashboardWidgetKind,
 } from "@/features/announcements/types"
+import { SingleImageField } from "@/components/forms/blocks/SingleImageField"
+import {
+  ANNOUNCEMENT_IMAGE_ASPECT,
+  ANNOUNCEMENT_IMAGE_DEFAULT_FILL_COLOR,
+  ANNOUNCEMENT_IMAGE_OUTPUT_WIDTH,
+} from "@/lib/images/announcement-image-frame"
 import type { AnnouncementAdminFormState } from "./announcement-admin-form"
+
+const announcementImageCopy = {
+  previewAlt: "Announcement image",
+  replaceLabel: "Replace",
+  removeLabel: "Remove",
+  removedHint: "Image will be removed when you save.",
+  chooseLabel: "Choose image",
+  dropHint: "Click to upload an image or drag and drop",
+  sizeHint: "JPEG, PNG, or WebP. You’ll crop it to 16:9 next.",
+  processingLabel: "Processing…",
+  unsupportedTypeError:
+    "This image format isn’t supported. Please use a JPG, JPEG, PNG, or WebP file. HEIC photos from iPhone aren’t supported—save or export as JPEG first.",
+  notImageError: "Please choose an image file (JPG, JPEG, PNG, or WebP).",
+  processError: "We couldn’t process that image. Please try a different JPEG, PNG, or WebP file.",
+  cropTitle: "Frame your announcement image",
+  cropHint: "Drag to reposition. Zoom out to show the full image; empty areas use the background fill.",
+  cropConfirmLabel: "Use image",
+  cropCancelLabel: "Cancel",
+  blurFillLabel: "Blur background",
+  colorFillLabel: "Solid background",
+  zoomLabel: "Zoom",
+} as const
 
 export {
   emptyAnnouncementForm,
@@ -39,6 +67,10 @@ type AnnouncementAdminFormProps = {
   submitting: boolean
   onSubmit: (event: FormEvent) => void
   onCancel: () => void
+  pendingHeroFile: File | null
+  onPendingHeroFileChange: (file: File | null) => void
+  removeHeroImage: boolean
+  onRemoveHeroImageChange: (remove: boolean) => void
 }
 
 function FormSection({
@@ -177,6 +209,10 @@ export function AnnouncementAdminForm({
   submitting,
   onSubmit,
   onCancel,
+  pendingHeroFile,
+  onPendingHeroFileChange,
+  removeHeroImage,
+  onRemoveHeroImageChange,
 }: AnnouncementAdminFormProps) {
   const patch = <K extends keyof AnnouncementAdminFormState>(
     key: K,
@@ -228,13 +264,19 @@ export function AnnouncementAdminForm({
         </Field>
 
         <Field
-          label="Hero image URL"
+          label="Hero image"
           hint="Recommended upload: 1600 × 900px (16:9). Earlier updates crop this image to a centered square."
         >
-          <Input
-            value={formData.heroImageUrl}
-            onChange={(e) => patch("heroImageUrl", e.target.value)}
-            placeholder="/images/workshop.jpg or https://…"
+          <SingleImageField
+            existingImageUrl={formData.heroImageUrl.trim() || null}
+            pendingFile={pendingHeroFile}
+            onPendingFileChange={onPendingHeroFileChange}
+            removeExisting={removeHeroImage}
+            onRemoveExistingChange={onRemoveHeroImageChange}
+            aspect={ANNOUNCEMENT_IMAGE_ASPECT}
+            outputWidth={ANNOUNCEMENT_IMAGE_OUTPUT_WIDTH}
+            defaultFillColor={ANNOUNCEMENT_IMAGE_DEFAULT_FILL_COLOR}
+            copy={announcementImageCopy}
           />
         </Field>
 
