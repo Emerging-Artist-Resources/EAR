@@ -1,0 +1,276 @@
+"use client"
+
+import { useEffect, useRef, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Text } from "@/components/ui/typography"
+import { ImageCropModal } from "@/components/forms/blocks/ImageCropModal"
+import { compressListingImage } from "@/lib/listings/compress-listing-image"
+import {
+  SUPPORTED_WEB_IMAGE_ACCEPT,
+  isSupportedWebImageFile,
+} from "@/lib/images/supported-web-image"
+
+export type SingleImageFieldCopy = {
+  previewAlt: string
+  replaceLabel: string
+  removeLabel: string
+  dropHint: string
+  sizeHint: string
+  chooseLabel: string
+  processingLabel: string
+  unsupportedTypeError: string
+  notImageError: string
+  processError: string
+  removedHint: string
+  cropTitle: string
+  cropHint: string
+  cropConfirmLabel: string
+  cropCancelLabel: string
+  blurFillLabel: string
+  colorFillLabel: string
+  zoomLabel: string
+}
+
+type SingleImageFieldProps = {
+  existingImageUrl: string | null
+  pendingFile: File | null
+  onPendingFileChange: (file: File | null) => void
+  removeExisting: boolean
+  onRemoveExistingChange: (remove: boolean) => void
+  aspect: number
+  outputWidth: number
+  defaultFillColor: string
+  copy: SingleImageFieldCopy
+}
+
+function toFriendlyImageProcessError(error: unknown, processError: string): string {
+  const message = error instanceof Error ? error.message : ""
+  if (
+    /failed to load image/i.test(message) ||
+    /image compression failed/i.test(message) ||
+    /could not get canvas context/i.test(message)
+  ) {
+    return processError
+  }
+  if (/too large after compression/i.test(message)) {
+    return message
+  }
+  return message || processError
+}
+
+export function SingleImageField({
+  existingImageUrl,
+  pendingFile,
+  onPendingFileChange,
+  removeExisting,
+  onRemoveExistingChange,
+  aspect,
+  outputWidth,
+  defaultFillColor,
+  copy,
+}: SingleImageFieldProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [cropSourceUrl, setCropSourceUrl] = useState<string | null>(null)
+  const [cropOpen, setCropOpen] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [processingPick, setProcessingPick] = useState(false)
+  const [pickError, setPickError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!pendingFile) {
+      setPreviewUrl(null)
+      return
+    }
+    const url = URL.createObjectURL(pendingFile)
+    setPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [pendingFile])
+
+  useEffect(() => {
+    if (pendingFile && removeExisting) {
+      onRemoveExistingChange(false)
+    }
+  }, [onRemoveExistingChange, pendingFile, removeExisting])
+
+  useEffect(() => {
+    return () => {
+      if (cropSourceUrl) URL.revokeObjectURL(cropSourceUrl)
+    }
+  }, [cropSourceUrl])
+
+  const showExistingPreview = Boolean(existingImageUrl) && !removeExisting && !pendingFile
+  const showPendingPreview = Boolean(previewUrl)
+
+  const clearCropSource = () => {
+    setCropOpen(false)
+    setCropSourceUrl((current) => {
+      if (current) URL.revokeObjectURL(current)
+      return null
+    })
+  }
+
+  const handleRemoveExisting = () => {
+    onRemoveExistingChange(true)
+    onPendingFileChange(null)
+  }
+
+  const handleClearPending = () => {
+    onPendingFileChange(null)
+  }
+
+  const openFilePicker = () => {
+    setPickError(null)
+    inputRef.current?.click()
+  }
+
+  const handleFileSelected = async (fileList: FileList | null) => {
+    const file = fileList?.[0]
+    if (!file || processingPick) return
+
+    if (!isSupportedWebImageFile(file)) {
+      setPickError(
+        file.type.startsWith("image/") || /\.(hei[cf]|gif|bmp|tiff?|svg)$/i.test(file.name)
+          ? copy.unsupportedTypeError
+          : copy.notImageError
+      )
+      if (inputRef.current) inputRef.current.value = ""
+      return
+    }
+
+    setProcessingPick(true)
+    setPickError(null)
+
+    try {
+      setCropSourceUrl((current) => {
+        if (current) URL.revokeObjectURL(current)
+        return URL.createObjectURL(file)
+      })
+      setCropOpen(true)
+    } finally {
+      setProcessingPick(false)
+      if (inputRef.current) inputRef.current.value = ""
+    }
+  }
+
+  const handleCropComplete = async (framedFile: File) => {
+    try {
+      const compressed = await compressListingImage(framedFile)
+      onPendingFileChange(compressed)
+      onRemoveExistingChange(false)
+      clearCropSource()
+    } catch (err) {
+      setPickError(toFriendlyImageProcessError(err, copy.processError))
+      clearCropSource()
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {showExistingPreview ? (
+        <div
+          className="relative overflow-hidden rounded-md border border-gray-200"
+          style={{ aspectRatio: aspect }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={existingImageUrl ?? undefined}
+            alt={copy.previewAlt}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute top-2 right-2 flex gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={openFilePicker}>
+              {copy.replaceLabel}
+            </Button>
+            <Button type="button" variant="destructive" size="sm" onClick={handleRemoveExisting}>
+              {copy.removeLabel}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {showPendingPreview ? (
+        <div
+          className="relative overflow-hidden rounded-md border border-gray-200"
+          style={{ aspectRatio: aspect }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={previewUrl ?? undefined}
+            alt={copy.previewAlt}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute top-2 right-2 flex gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={openFilePicker}>
+              {copy.replaceLabel}
+            </Button>
+            <Button type="button" variant="destructive" size="sm" onClick={handleClearPending}>
+              {copy.removeLabel}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {!showExistingPreview && !showPendingPreview ? (
+        <Card className="border-2 border-dashed border-gray-400 bg-ear-off-white p-4">
+          <div
+            className="rounded-md bg-ear-off-white p-6 text-center"
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={async (event) => {
+              event.preventDefault()
+              await handleFileSelected(event.dataTransfer.files)
+            }}
+          >
+            <Text className="text-gray-700">{copy.dropHint}</Text>
+            <Text className="text-xs text-gray-500">{copy.sizeHint}</Text>
+            <div className="mt-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={openFilePicker}
+                disabled={processingPick}
+              >
+                {processingPick ? copy.processingLabel : copy.chooseLabel}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      ) : null}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={SUPPORTED_WEB_IMAGE_ACCEPT}
+        className="hidden"
+        onChange={async (event) => {
+          await handleFileSelected(event.target.files)
+        }}
+      />
+
+      {pickError ? <Text className="text-sm text-error-600">{pickError}</Text> : null}
+
+      {removeExisting && !pendingFile ? (
+        <Text className="text-sm text-gray-600">{copy.removedHint}</Text>
+      ) : null}
+
+      <ImageCropModal
+        isOpen={cropOpen}
+        imageSrc={cropSourceUrl}
+        title={copy.cropTitle}
+        aspect={aspect}
+        outputWidth={outputWidth}
+        defaultFillColor={defaultFillColor}
+        onCancel={clearCropSource}
+        onComplete={handleCropComplete}
+        confirmLabel={copy.cropConfirmLabel}
+        cancelLabel={copy.cropCancelLabel}
+        processingLabel={copy.processingLabel}
+        blurFillLabel={copy.blurFillLabel}
+        colorFillLabel={copy.colorFillLabel}
+        zoomLabel={copy.zoomLabel}
+        hint={copy.cropHint}
+        processErrorMessage={copy.processError}
+      />
+    </div>
+  )
+}
