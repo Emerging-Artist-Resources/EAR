@@ -392,6 +392,9 @@ export interface ProfileData {
   pronouns: string | null;
   website: string | null;
   organization_name: string | null;
+  profile_type: string | null;
+  /** Stored name after "Support". Null until the recipient saves a donation page title. */
+  donation_page_title: string | null;
   location_place_id: string | null;
   location_label: string | null;
   artist_status: string | null;
@@ -420,7 +423,7 @@ export interface PublicDonationProfile {
   donation_preset_amounts: number[] | null;
   /**
    * Name to show on donation pages (e.g. "Support …").
-   * For company/festival, prefers organization_name when set; otherwise profile name.
+   * Prefers a saved donation page title; otherwise company/festival use organization_name when set, then profile name.
    */
   donation_recipient_display_name: string | null;
 }
@@ -442,7 +445,7 @@ export async function getProfileRepo(userId: string): Promise<ProfileData | null
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug, fiscal_sponsorship_status, fiscal_sponsorship_approved_at, fiscal_sponsorship_approved_by, fiscal_sponsorship_note, donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts",
+      "id, name, email, pronouns, website, organization_name, profile_type, donation_page_title, location_place_id, location_label, artist_status, slug, fiscal_sponsorship_status, fiscal_sponsorship_approved_at, fiscal_sponsorship_approved_by, fiscal_sponsorship_note, donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts",
     )
     .eq("id", userId)
     .single();
@@ -463,7 +466,7 @@ export async function getProfileBySlugForDonationRepo(slug: string): Promise<Pub
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, name, slug, fiscal_sponsorship_status, donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts, profile_type, organization_name",
+      "id, name, slug, fiscal_sponsorship_status, donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts, profile_type, organization_name, donation_page_title",
     )
     .eq("slug", slug)
     .eq("fiscal_sponsorship_status", "approved")
@@ -492,6 +495,7 @@ export async function getProfileBySlugForDonationRepo(slug: string): Promise<Pub
     donation_preset_amounts?: unknown;
     profile_type: string | null;
     organization_name: string | null;
+    donation_page_title: string | null;
   };
 
   return {
@@ -507,6 +511,7 @@ export async function getProfileBySlugForDonationRepo(slug: string): Promise<Pub
       name: row.name,
       organization_name: row.organization_name,
       profile_type: row.profile_type,
+      donation_page_title: row.donation_page_title,
     }),
   };
 }
@@ -522,7 +527,7 @@ export async function getProfileBySlugForDonationSuccessRepo(
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, name, slug, fiscal_sponsorship_status, profile_type, organization_name")
+    .select("id, name, slug, fiscal_sponsorship_status, profile_type, organization_name, donation_page_title")
     .eq("slug", slug)
     .maybeSingle()
 
@@ -541,6 +546,7 @@ export async function getProfileBySlugForDonationSuccessRepo(
     fiscal_sponsorship_status: string
     profile_type: string | null
     organization_name: string | null
+    donation_page_title: string | null
   }
 
   return {
@@ -556,6 +562,7 @@ export async function getProfileBySlugForDonationSuccessRepo(
       name: row.name,
       organization_name: row.organization_name,
       profile_type: row.profile_type,
+      donation_page_title: row.donation_page_title,
     }),
   }
 }
@@ -582,7 +589,7 @@ export async function updateProfileRepo(
     .update(updateData)
     .eq("id", userId)
     .select(
-      "id, name, email, pronouns, website, organization_name, location_place_id, location_label, artist_status, slug, fiscal_sponsorship_status, fiscal_sponsorship_approved_at, fiscal_sponsorship_approved_by, fiscal_sponsorship_note, donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts",
+      "id, name, email, pronouns, website, organization_name, profile_type, donation_page_title, location_place_id, location_label, artist_status, slug, fiscal_sponsorship_status, fiscal_sponsorship_approved_at, fiscal_sponsorship_approved_by, fiscal_sponsorship_note, donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts",
     )
     .single();
 
@@ -598,6 +605,7 @@ export async function updateProfileRepo(
 }
 
 export interface UpdateDonationPagePayload {
+  donation_page_title: string;
   donation_page_message: string | null;
   donation_preset_amounts: number[];
   donation_designation_config: unknown | null;
@@ -606,6 +614,10 @@ export interface UpdateDonationPagePayload {
 
 async function resolveDonationPageSettings(
   row: {
+    donation_page_title: string | null;
+    name: string | null;
+    organization_name: string | null;
+    profile_type: string | null;
     donation_page_message: string | null;
     donation_page_image_path?: string | null;
     donation_designation_config: unknown;
@@ -613,6 +625,10 @@ async function resolveDonationPageSettings(
   },
 ): Promise<DonationPageSettings> {
   const settings = mapDonationPageSettingsFromRow({
+    donation_page_title: row.donation_page_title,
+    name: row.name,
+    organization_name: row.organization_name,
+    profile_type: row.profile_type,
     donation_page_message: row.donation_page_message,
     donation_page_image_path: row.donation_page_image_path ?? null,
     donation_designation_config: row.donation_designation_config,
@@ -636,6 +652,7 @@ export async function updateDonationPageRepo(
   const supabase = await getSupabaseServerClient();
 
   const updateData: Record<string, unknown> = {
+    donation_page_title: payload.donation_page_title,
     donation_page_message: payload.donation_page_message,
     donation_preset_amounts: payload.donation_preset_amounts,
     donation_designation_config: payload.donation_designation_config,
@@ -650,7 +667,7 @@ export async function updateDonationPageRepo(
     .update(updateData)
     .eq("id", userId)
     .select(
-      "donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts",
+      "donation_page_title, name, organization_name, profile_type, donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts",
     )
     .single();
 
@@ -663,6 +680,10 @@ export async function updateDonationPageRepo(
   }
 
   return resolveDonationPageSettings({
+    donation_page_title: data.donation_page_title as string | null,
+    name: data.name as string | null,
+    organization_name: data.organization_name as string | null,
+    profile_type: data.profile_type as string | null,
     donation_page_message: data.donation_page_message as string | null,
     donation_page_image_path: data.donation_page_image_path as string | null,
     donation_designation_config: data.donation_designation_config,
@@ -679,7 +700,7 @@ export async function fetchDonationPageSettingsRepo(
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts",
+      "donation_page_title, name, organization_name, profile_type, donation_page_message, donation_page_image_path, donation_designation_config, donation_preset_amounts",
     )
     .eq("id", userId)
     .maybeSingle();
@@ -692,6 +713,10 @@ export async function fetchDonationPageSettingsRepo(
   }
 
   return mapDonationPageSettingsFromRow({
+    donation_page_title: data.donation_page_title as string | null,
+    name: data.name as string | null,
+    organization_name: data.organization_name as string | null,
+    profile_type: data.profile_type as string | null,
     donation_page_message: data.donation_page_message as string | null,
     donation_page_image_path: data.donation_page_image_path as string | null,
     donation_designation_config: data.donation_designation_config,
@@ -888,6 +913,10 @@ export async function fetchFiscalSponsorshipDashboardRepo(
   });
 
   const donation_page = await resolveDonationPageSettings({
+    donation_page_title: profile.donation_page_title,
+    name: profile.name,
+    organization_name: profile.organization_name,
+    profile_type: profile.profile_type,
     donation_page_message: profile.donation_page_message,
     donation_page_image_path: profile.donation_page_image_path,
     donation_designation_config: profile.donation_designation_config,

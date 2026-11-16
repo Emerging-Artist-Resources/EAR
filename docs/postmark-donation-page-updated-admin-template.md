@@ -27,6 +27,7 @@ Admin-only. No email is sent to the user who saved the page. No PDF attachment.
 | `{{slug}}` | Public donation slug |
 | `{{donation_page_url}}` | Absolute URL to `/donate/{slug}` |
 | `{{has_image}}` | `"yes"` or `"no"` |
+| `{{donation_page_title}}` | Name after “Support” on the public page (may be empty) |
 | `{{donation_page_message}}` | Saved page message (may be empty) |
 | `{{preset_amounts}}` | Comma-separated preset dollar amounts |
 | `{{designation_enabled}}` | `"yes"` or `"no"` |
@@ -61,6 +62,7 @@ Donation page updated: {{user_name}}
 
 <h3>Current settings</h3>
 <p>
+  <strong>Title:</strong> {{donation_page_title}}<br />
   <strong>Hero image:</strong> {{has_image}}<br />
   <strong>Preset amounts:</strong> {{preset_amounts}}<br />
   <strong>Designation enabled:</strong> {{designation_enabled}}<br />
@@ -90,6 +92,7 @@ Organization: {{organization_name}}
 Slug: {{slug}}
 Public page: {{donation_page_url}}
 
+Title: {{donation_page_title}}
 Hero image: {{has_image}}
 Preset amounts: {{preset_amounts}}
 Designation enabled: {{designation_enabled}}

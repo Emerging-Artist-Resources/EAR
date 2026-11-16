@@ -87,6 +87,12 @@ export const fiscalSponsorshipDashboard = {
     savingLabel: "Saving…",
     cancelLabel: "Cancel",
     saveSuccess: "Donation page updated",
+    title: {
+      title: "Title",
+      description: "The public headline is “Support {what you type}”.",
+      label: "Page title",
+      placeholder: "e.g. The Engine Fund",
+    },
     message: {
       title: "Message",
       description: "Optional text shown on your public donation page below the headline.",

@@ -6,6 +6,7 @@ const PREVIOUS_PATH = `profiles/${USER_ID}/donation-hero.jpg`
 const NEW_PATH = `profiles/${USER_ID}/donation-hero-11111111-1111-1111-1111-111111111111.jpg`
 
 const basePayload: UpdateDonationPageData = {
+  donation_page_title: "Ada Lovelace",
   donation_page_message: "Hello",
   donation_preset_amounts: [25, 50],
   designation_enabled: false,

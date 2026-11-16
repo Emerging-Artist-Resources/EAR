@@ -45,6 +45,7 @@ function mapSettingsToFormValues(settings: DonationPageSettings): CustomizeDonat
   const designation = mapDesignationToFormRows(settings.donation_designation)
 
   return {
+    donation_page_title: settings.donation_page_title ?? "",
     donation_page_message: settings.donation_page_message ?? "",
     donation_preset_amounts: settings.donation_preset_amounts.map(String),
     designation_enabled: settings.designation_enabled,
@@ -180,6 +181,17 @@ export function CustomizeDonationPageModal({
             <Text className="text-sm">{saveError}</Text>
           </Alert>
         ) : null}
+
+        <Section title={copy.title.title} description={copy.title.description}>
+          <TextField
+            form={form}
+            name="donation_page_title"
+            label={copy.title.label}
+            placeholder={copy.title.placeholder}
+            required
+            inputClassName="bg-white"
+          />
+        </Section>
 
         <Section title={copy.message.title} description={copy.message.description}>
           <TextAreaField
