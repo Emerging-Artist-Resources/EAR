@@ -8,6 +8,7 @@ import { UserDropdown } from "@/components/ui/user-dropdown"
 import MobileNav from "@/components/mobile-nav"
 import { useAuth } from "@/hooks/use-auth"
 import { WavyLine } from "@/components/ui/wavy-line"
+import { AboutUsNav } from "@/components/layout/about-us-nav"
 import { ServicesNav } from "@/components/layout/services-nav"
 import { publicNavItems } from "@/lib/navigation/public-nav"
 import { cn } from "@/lib/utils"
@@ -93,14 +94,18 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="hidden lg:flex items-center space-x-4">
             {/* Public Navigation */}
             {publicNavItems.map((item) => (
-              <HeaderNavLink
-                key={item.href}
-                href={item.href}
-                pathname={pathname}
-                onDarkSurface={onDarkSurface}
-              >
-                {item.label}
-              </HeaderNavLink>
+              <React.Fragment key={item.href}>
+                {item.href === "/calendar" ? (
+                  <AboutUsNav onDarkSurface={onDarkSurface} />
+                ) : null}
+                <HeaderNavLink
+                  href={item.href}
+                  pathname={pathname}
+                  onDarkSurface={onDarkSurface}
+                >
+                  {item.label}
+                </HeaderNavLink>
+              </React.Fragment>
             ))}
             <ServicesNav onDarkSurface={onDarkSurface} />
             <HeaderNavLink href="/donate" pathname={pathname} onDarkSurface={onDarkSurface} openInNewTab>
