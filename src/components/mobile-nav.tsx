@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/use-auth"
 import { ROUTES } from "@/lib/config/constants"
+import { aboutNavItems } from "@/lib/navigation/about-nav"
 import { publicNavItems } from "@/lib/navigation/public-nav"
 import { servicesNavItems } from "@/lib/navigation/services-nav"
 import { dashboardNavItems } from "@/lib/navigation/dashboard-nav"
@@ -79,23 +80,50 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
           <div className="space-y-1 px-2 pt-2 pb-3">
             {/* Public Navigation */}
             {publicNavigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="block"
-                onClick={() => setIsOpen(false)}
-              >
-                <Button variant="ghost" className="w-full justify-start text-ear-black">{item.name}</Button>
-              </Link>
+              <div key={item.name}>
+                {item.href === "/calendar" ? (
+                  <div role="group" aria-label="About Us">
+                    <Button
+                      asChild
+                      variant="ghost"
+                      className="pointer-events-none w-full justify-start text-ear-black"
+                    >
+                    </Button>
+                    {aboutNavItems.map((aboutItem) => (
+                      <Link
+                        key={aboutItem.href}
+                        href={aboutItem.href}
+                        className="block"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <Button variant="ghost" className="w-full justify-start text-ear-black">
+                          {aboutItem.label}
+                        </Button>
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+                <Link
+                  href={item.href}
+                  className="block"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Button variant="ghost" className="w-full justify-start text-ear-black">{item.name}</Button>
+                </Link>
+              </div>
             ))}
-
-            {/* TEMPORARY DISABLED DONATE BUTTON 
-            <Link href="/donate" className="block" onClick={() => setIsOpen(false)}>
-              <Button variant="default" className="mt-1 w-full justify-start text-ear-off-white">
-                <Heart className="mr-2 h-4 w-4 text-ear-off-white" />
-                Support Artists
+            <Link
+              href="/donate"
+              className="block"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setIsOpen(false)}
+            >
+              <Button variant="ghost" className="w-full justify-start text-ear-black">
+                Donate to EAR
+                <span className="sr-only"> (opens in a new tab)</span>
               </Button>
-            </Link> */}
+            </Link>
 
             <div className="border-t border-border-default my-2" />
             <Link
