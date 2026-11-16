@@ -89,14 +89,6 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
               </Link>
             ))}
 
-            {/* TEMPORARY DISABLED DONATE BUTTON 
-            <Link href="/donate" className="block" onClick={() => setIsOpen(false)}>
-              <Button variant="default" className="mt-1 w-full justify-start text-ear-off-white">
-                <Heart className="mr-2 h-4 w-4 text-ear-off-white" />
-                Support Artists
-              </Button>
-            </Link> */}
-
             <div className="border-t border-border-default my-2" />
             <Link
               href="/services"
@@ -135,6 +127,19 @@ export default function MobileNav({ onSubmitPerformance, onDarkSurface = false }
                 ))}
               </div>
             ))}
+
+            <Link
+              href="/donate"
+              className="block"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setIsOpen(false)}
+            >
+              <Button variant="ghost" className="w-full justify-start text-ear-black">
+                Donate to EAR
+                <span className="sr-only"> (opens in a new tab)</span>
+              </Button>
+            </Link>
             
             {/* Admin Navigation - visually separated */}
             {adminNavigation.length > 0 && (
