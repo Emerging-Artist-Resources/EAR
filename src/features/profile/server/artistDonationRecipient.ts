@@ -18,6 +18,8 @@ export type ArtistDonationRecipientProfile = {
   fiscal_sponsorship_status: FiscalSponsorshipStatus
   profile_type: string | null
   organization_name: string | null
+  /** Stored name after "Support" on /donate/[slug]. Null falls through in the display-name resolver. */
+  donation_page_title: string | null
   /** Raw JSON from DB; parse with `parseActiveDonationDesignationConfig`. */
   donation_designation_config: unknown | null
 }
@@ -36,7 +38,7 @@ export async function getDonationRecipientByUserId(
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, name, slug, fiscal_sponsorship_status, profile_type, organization_name, donation_designation_config",
+      "id, name, slug, fiscal_sponsorship_status, profile_type, organization_name, donation_page_title, donation_designation_config",
     )
     .eq("id", userId)
     .maybeSingle()
@@ -55,6 +57,7 @@ export async function getDonationRecipientByUserId(
     fiscal_sponsorship_status: data.fiscal_sponsorship_status as FiscalSponsorshipStatus,
     profile_type: data.profile_type ?? null,
     organization_name: data.organization_name ?? null,
+    donation_page_title: data.donation_page_title ?? null,
     donation_designation_config: data.donation_designation_config ?? null,
   }
 }

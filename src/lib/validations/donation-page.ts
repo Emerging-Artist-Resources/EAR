@@ -19,13 +19,32 @@ import {
 /** Max length for customize donation page copy (`profiles.donation_page_message`). */
 export const DONATION_PAGE_MESSAGE_MAX_CHARS = 10_000
 
+/** Max length for the name after "Support" (`profiles.donation_page_title`). */
+export const DONATION_PAGE_TITLE_MAX_CHARS = 120
+
 function donationPageMessageMaxError(): string {
   return `Message must be at most ${DONATION_PAGE_MESSAGE_MAX_CHARS} characters`
 }
 
+function donationPageTitleMaxError(): string {
+  return `Title must be at most ${DONATION_PAGE_TITLE_MAX_CHARS} characters`
+}
+
+/** Required on the customize form and PATCH. Trimmed; blank or whitespace fails. */
+const donationPageTitleSchema = z
+  .string()
+  .transform((value) => value.trim())
+  .pipe(
+    z
+      .string()
+      .min(1, "Title is required")
+      .max(DONATION_PAGE_TITLE_MAX_CHARS, donationPageTitleMaxError()),
+  )
+
 /** Shared rule: customize form and PATCH must validate identically. */
 export const updateDonationPageSchema = z
   .object({
+    donation_page_title: donationPageTitleSchema,
     donation_page_message: z
       .string()
       .max(DONATION_PAGE_MESSAGE_MAX_CHARS, donationPageMessageMaxError())
@@ -75,6 +94,7 @@ const designationOptionFormRowSchema = z.object({
 /** Client form schema — validates UI fields then maps to `updateDonationPageSchema` on submit. */
 export const customizeDonationPageFormSchema = z
   .object({
+    donation_page_title: donationPageTitleSchema,
     donation_page_message: z
       .string()
       .max(DONATION_PAGE_MESSAGE_MAX_CHARS, donationPageMessageMaxError()),
@@ -194,6 +214,7 @@ export function mapCustomizeFormToUpdatePayload(
     : null
 
   return updateDonationPageSchema.parse({
+    donation_page_title: sanitized.donation_page_title,
     donation_page_message: sanitized.donation_page_message,
     donation_preset_amounts: amounts,
     designation_enabled: sanitized.designation_enabled,
@@ -203,6 +224,7 @@ export function mapCustomizeFormToUpdatePayload(
 
 /** Normalize PATCH payload for DB persistence. */
 export function toDonationPagePersistPayload(data: UpdateDonationPageData): {
+  donation_page_title: string
   donation_page_message: string | null
   donation_preset_amounts: number[]
   donation_designation_config: unknown | null
@@ -214,11 +236,13 @@ export function toDonationPagePersistPayload(data: UpdateDonationPageData): {
   }
 
   const payload: {
+    donation_page_title: string
     donation_page_message: string | null
     donation_preset_amounts: number[]
     donation_designation_config: unknown | null
     donation_page_image_path?: string | null
   } = {
+    donation_page_title: data.donation_page_title,
     donation_page_message: data.donation_page_message ?? null,
     donation_preset_amounts: validatedPresets,
     donation_designation_config: data.designation_enabled

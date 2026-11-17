@@ -32,6 +32,7 @@ export function buildDonationPageUpdatedAdminTemplateModel(
     slug,
     donation_page_url: `${baseUrl}/donate/${encodeURIComponent(slug)}`,
     has_image: input.donationPage.donation_page_image_path ? "yes" : "no",
+    donation_page_title: input.donationPage.donation_page_title?.trim() || "",
     donation_page_message: input.donationPage.donation_page_message?.trim() || "",
     preset_amounts: input.donationPage.donation_preset_amounts.join(", "),
     designation_enabled: designationEnabled ? "yes" : "no",
