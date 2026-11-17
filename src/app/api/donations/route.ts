@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
         name: recipientProfile.name,
         organization_name: recipientProfile.organization_name,
         profile_type: recipientProfile.profile_type,
+        donation_page_title: recipientProfile.donation_page_title,
       })
 
       const activeConfig = parseActiveDonationDesignationConfig(recipientProfile.donation_designation_config)

@@ -10,6 +10,7 @@ import { buildDesignationConfigFromFormRows } from "@/lib/donations/donationDesi
 describe("updateDonationPageSchema", () => {
   it("accepts valid message, presets, and designation", () => {
     const result = updateDonationPageSchema.safeParse({
+      donation_page_title: "  The Engine Fund  ",
       donation_page_message: "  Thank you!  ",
       donation_preset_amounts: [25, 50, 100],
       designation_enabled: true,
@@ -25,12 +26,44 @@ describe("updateDonationPageSchema", () => {
 
     expect(result.success).toBe(true)
     if (result.success) {
+      expect(result.data.donation_page_title).toBe("The Engine Fund")
       expect(result.data.donation_page_message).toBe("Thank you!")
     }
   })
 
+  it("rejects a blank or whitespace title", () => {
+    expect(
+      updateDonationPageSchema.safeParse({
+        donation_page_title: "   ",
+        donation_page_message: null,
+        donation_preset_amounts: [25, 50],
+        designation_enabled: false,
+      }).success,
+    ).toBe(false)
+    expect(
+      updateDonationPageSchema.safeParse({
+        donation_page_title: "",
+        donation_page_message: null,
+        donation_preset_amounts: [25, 50],
+        designation_enabled: false,
+      }).success,
+    ).toBe(false)
+  })
+
+  it("rejects a title longer than 120 characters", () => {
+    const result = updateDonationPageSchema.safeParse({
+      donation_page_title: "a".repeat(121),
+      donation_page_message: null,
+      donation_preset_amounts: [25, 50],
+      designation_enabled: false,
+    })
+
+    expect(result.success).toBe(false)
+  })
+
   it("rejects invalid preset amounts", () => {
     const result = updateDonationPageSchema.safeParse({
+      donation_page_title: "Ada",
       donation_page_message: null,
       donation_preset_amounts: [0, 25],
       designation_enabled: false,
@@ -41,6 +74,7 @@ describe("updateDonationPageSchema", () => {
 
   it("requires designation config when enabled", () => {
     const result = updateDonationPageSchema.safeParse({
+      donation_page_title: "Ada",
       donation_page_message: null,
       donation_preset_amounts: [25, 50],
       designation_enabled: true,
@@ -52,6 +86,7 @@ describe("updateDonationPageSchema", () => {
 
   it("accepts clearing the hero image path", () => {
     const result = updateDonationPageSchema.safeParse({
+      donation_page_title: "Ada",
       donation_page_message: null,
       donation_preset_amounts: [25, 50],
       designation_enabled: false,
@@ -64,6 +99,7 @@ describe("updateDonationPageSchema", () => {
   it("accepts a versioned hero image path", () => {
     const userId = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
     const result = updateDonationPageSchema.safeParse({
+      donation_page_title: "Ada",
       donation_page_message: null,
       donation_preset_amounts: [25, 50],
       designation_enabled: false,
@@ -78,6 +114,7 @@ describe("toDonationPagePersistPayload", () => {
   it("clears designation when disabled", () => {
     const payload = toDonationPagePersistPayload(
       updateDonationPageSchema.parse({
+        donation_page_title: "Ada",
         donation_page_message: "Hi",
         donation_preset_amounts: [10, 20],
         designation_enabled: false,
@@ -96,18 +133,21 @@ describe("toDonationPagePersistPayload", () => {
   it("includes image path when provided and omits it when absent", () => {
     const withImage = toDonationPagePersistPayload(
       updateDonationPageSchema.parse({
+        donation_page_title: "  Ada  ",
         donation_page_message: null,
         donation_preset_amounts: [10, 20],
         designation_enabled: false,
         donation_page_image_path: "profiles/user/donation-hero-11111111-1111-1111-1111-111111111111.jpg",
       }),
     )
+    expect(withImage.donation_page_title).toBe("Ada")
     expect(withImage.donation_page_image_path).toBe(
       "profiles/user/donation-hero-11111111-1111-1111-1111-111111111111.jpg",
     )
 
     const withoutImage = toDonationPagePersistPayload(
       updateDonationPageSchema.parse({
+        donation_page_title: "Ada",
         donation_page_message: null,
         donation_preset_amounts: [10, 20],
         designation_enabled: false,
@@ -120,6 +160,7 @@ describe("toDonationPagePersistPayload", () => {
 describe("customizeDonationPageFormSchema", () => {
   it("maps form values to API payload with built designation config", () => {
     const formData = customizeDonationPageFormSchema.parse({
+      donation_page_title: "  The Engine Fund  ",
       donation_page_message: "Support our work",
       donation_preset_amounts: ["25", "50"],
       designation_enabled: true,
@@ -132,6 +173,7 @@ describe("customizeDonationPageFormSchema", () => {
 
     const payload = mapCustomizeFormToUpdatePayload(formData, buildDesignationConfigFromFormRows)
 
+    expect(payload.donation_page_title).toBe("The Engine Fund")
     expect(payload.donation_preset_amounts).toEqual([25, 50])
     expect(payload.donation_designation_config?.allowNoPreference).toBe(false)
     expect(payload.donation_designation_config?.options).toHaveLength(2)
@@ -147,6 +189,7 @@ describe("customizeDonationPageFormSchema", () => {
 
   it("rejects zero preset amounts with a field error", () => {
     const result = customizeDonationPageFormSchema.safeParse({
+      donation_page_title: "Ada",
       donation_page_message: "",
       donation_preset_amounts: ["25", "0"],
       designation_enabled: false,
@@ -164,6 +207,7 @@ describe("customizeDonationPageFormSchema", () => {
 
   it("ignores blank preset rows when validating and saving", () => {
     const formData = customizeDonationPageFormSchema.parse({
+      donation_page_title: "Ada",
       donation_page_message: "",
       donation_preset_amounts: ["25", "50", "", "  "],
       designation_enabled: false,

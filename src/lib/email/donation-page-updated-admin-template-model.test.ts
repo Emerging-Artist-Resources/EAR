@@ -3,6 +3,7 @@ import type { DonationPageSettings } from "@/lib/donations/donationPageSettings"
 
 function settings(overrides: Partial<DonationPageSettings> = {}): DonationPageSettings {
   return {
+    donation_page_title: null,
     donation_page_message: null,
     donation_page_image_path: null,
     donation_page_image_url: null,
@@ -31,15 +32,16 @@ describe("buildDonationPageUpdatedAdminTemplateModel", () => {
       user_name: "Ada Lovelace",
       user_email: "ada@example.com",
       profile_type: "individual",
-      organization_name: "",
+      organization_name: "N/A",
       slug: "ada-lovelace",
       donation_page_url: "https://ear.example/donate/ada-lovelace",
       has_image: "no",
+      donation_page_title: "",
       donation_page_message: "",
       preset_amounts: "10, 25",
       designation_enabled: "no",
-      designation_field_label: "",
-      designation_options: "",
+      designation_field_label: "N/A",
+      designation_options: "N/A",
     })
   })
 
@@ -69,6 +71,7 @@ describe("buildDonationPageUpdatedAdminTemplateModel", () => {
       organizationName: "  Org  ",
       slug: "org-slug",
       donationPage: settings({
+        donation_page_title: "  The Engine Fund  ",
         donation_page_message: "  Thanks for supporting us.  ",
         donation_page_image_path: "user-id/hero-abc.jpg",
         donation_preset_amounts: [5, 15, 40],
@@ -91,6 +94,7 @@ describe("buildDonationPageUpdatedAdminTemplateModel", () => {
     expect(model.profile_type).toBe("unknown")
     expect(model.organization_name).toBe("Org")
     expect(model.has_image).toBe("yes")
+    expect(model.donation_page_title).toBe("The Engine Fund")
     expect(model.donation_page_message).toBe("Thanks for supporting us.")
     expect(model.preset_amounts).toBe("5, 15, 40")
     expect(model.designation_enabled).toBe("yes")
@@ -98,7 +102,7 @@ describe("buildDonationPageUpdatedAdminTemplateModel", () => {
     expect(model.designation_options).toBe("General, Tour")
   })
 
-  it("treats designation_enabled false as empty designation fields even if config present", () => {
+  it("treats designation_enabled false as N/A designation fields even if config present", () => {
     const model = buildDonationPageUpdatedAdminTemplateModel({
       userName: "X",
       userEmail: "x@example.com",
@@ -117,7 +121,7 @@ describe("buildDonationPageUpdatedAdminTemplateModel", () => {
     })
 
     expect(model.designation_enabled).toBe("no")
-    expect(model.designation_field_label).toBe("")
-    expect(model.designation_options).toBe("")
+    expect(model.designation_field_label).toBe("N/A")
+    expect(model.designation_options).toBe("N/A")
   })
 })
