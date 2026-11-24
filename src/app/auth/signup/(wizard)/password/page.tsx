@@ -84,7 +84,7 @@ export default function SignUpPasswordPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <form className="space-y-6" onSubmit={handleSubmit} noValidate>
       {error && (
         <Alert variant="error">
           {accountExists ? (
@@ -109,10 +109,10 @@ export default function SignUpPasswordPage() {
         >
           Back
         </Button>
-        <Button type="button" variant="primary" onClick={() => handleSubmit()} disabled={loading}>
+        <Button type="submit" variant="primary" disabled={loading}>
           {loading ? "Creating account..." : "Create account"}
         </Button>
       </div>
-    </div>
+    </form>
   )
 }

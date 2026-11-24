@@ -59,7 +59,7 @@ export function useStepValidation(
           "newsletter_calendar_opt_in",
         ]
       case SIGNUP_STEPS.PASSWORD:
-        return ["password", "confirmPassword"]
+        return ["password", "confirmPassword", "accept_account_terms_and_privacy"]
       default:
         return []
     }

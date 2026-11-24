@@ -49,6 +49,8 @@ export default function SignUpWizardLayout({ children }: LayoutProps) {
       has_501c3_other_text: null,
       password: "",
       confirmPassword: "",
+      // Unchecked until the person opts in. The schema accepts only true.
+      accept_account_terms_and_privacy: false as true,
     },
     mode: "onChange",
     reValidateMode: "onChange",

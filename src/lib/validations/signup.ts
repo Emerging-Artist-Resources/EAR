@@ -141,7 +141,11 @@ const WRAP_UP_FIELD_KEYS = new Set<string>([
   "newsletter_calendar_opt_in",
 ])
 
-const PASSWORD_FIELD_KEYS = new Set<string>(["password", "confirmPassword"])
+const PASSWORD_FIELD_KEYS = new Set<string>([
+  "password",
+  "confirmPassword",
+  "accept_account_terms_and_privacy",
+])
 
 export function getSignupErrorStepForPath(path: ReadonlyArray<PropertyKey>): SignupErrorStep {
   const key = String(path[0] ?? "")
@@ -188,19 +192,35 @@ const eligibilityFields = z.object({
   has_501c3_other_text: z.string().optional().nullable(),
 })
 
-const passwordFields = z
-  .object({
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  })
+const passwordFields = z.object({
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string().min(1, "Password confirmation is required"),
+  accept_account_terms_and_privacy: z.literal(
+    true,
+    "You must agree to the Account Terms & Conditions and Privacy Policy."
+  ),
+})
 
-// Main Schema
-export const signupFormSchema = withSignupOtherRefinements(
-  profileFields.merge(eligibilityFields).merge(passwordFields)
+function withPasswordConfirmation<T extends z.ZodType>(schema: T) {
+  return schema.refine(
+    (data) => {
+      const value = data as { password?: string; confirmPassword?: string }
+      return value.password === value.confirmPassword
+    },
+    {
+      message: "Passwords do not match",
+      path: ["confirmPassword"],
+    }
+  )
+}
+
+// Zod 4 merge discards object-level checks. Field checks stay on the merged
+// shape, and the "other" text checks are added after the merge. The password
+// match check has to be added after the merge as well.
+const mergedSignupFields = profileFields.merge(eligibilityFields).merge(passwordFields)
+
+export const signupFormSchema = withPasswordConfirmation(
+  withSignupOtherRefinements(mergedSignupFields)
 )
 
 export type SignupFormData = z.infer<typeof signupFormSchema>
@@ -223,4 +243,4 @@ export const wrapUpSchema = withSignupOtherRefinements(
   })
 )
 
-export const passwordSchema = passwordFields
+export const passwordSchema = withPasswordConfirmation(passwordFields)

@@ -27,6 +27,7 @@ const FIELD_LABELS: Record<keyof SignupFormData, string> = {
   has_501c3_other_text: "501c3 status (other)",
   password: "Password",
   confirmPassword: "Password confirmation",
+  accept_account_terms_and_privacy: "Terms & Conditions and Privacy Policy",
 } as const
 
 const EVENT_FIELD_LABELS: Partial<Record<keyof EventFormData, string>> = {

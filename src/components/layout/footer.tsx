@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Text } from "@/components/ui/typography"
 import { FOOTER_SOCIAL_PLATFORMS } from "@/lib/config/social-links"
 import { SITE_CONTACT_ADDRESS, SITE_CONTACT_EMAIL } from "@/lib/config/site-contact"
+import { LEGAL_DOCUMENTS } from "@/lib/content/legal"
 import { cn } from "@/lib/utils"
 
 const footerHeadingClass = "font-header text-xl font-bold text-ear-off-white md:text-2xl"
@@ -78,6 +79,20 @@ export function Footer() {
             </Link>
           </div>
         </div>
+        <nav aria-label="Legal" className="mt-10 border-t border-ear-off-white/15 pt-6">
+          <ul className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-8 sm:gap-y-2">
+            {LEGAL_DOCUMENTS.map((document) => (
+              <li key={document.path}>
+                <Link
+                  href={document.path}
+                  className={cn(footerLinkClass, "font-sans text-sm underline underline-offset-4")}
+                >
+                  {document.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
     </footer>
   )
