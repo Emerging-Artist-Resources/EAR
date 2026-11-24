@@ -75,7 +75,7 @@ export async function trySendInternalDonationNotifications({
 
   if (fetchError || !donation) {
     console.error(`${logPrefix(donationId)} Internal notification: donation not found`, { error: fetchError })
-    return
+    throw new Error(`Internal donation notification could not load donation ${donationId}`)
   }
 
   const row = donation as DonationRow
@@ -131,6 +131,7 @@ export async function trySendInternalDonationNotifications({
   }
 
   const isoNow = new Date().toISOString()
+  // Best-effort claim written before send. A set timestamp does not prove delivery.
   const { data: claimedRows, error: claimError } = await supabase
     .from("donations")
     .update({ internal_notification_sent_at: isoNow })
@@ -141,7 +142,7 @@ export async function trySendInternalDonationNotifications({
 
   if (claimError) {
     console.error(`${logPrefix(donationId)} Internal notification: claim failed`, { error: claimError })
-    return
+    throw new Error(`Internal donation notification claim failed for donation ${donationId}`)
   }
 
   if (!claimedRows?.length) {
@@ -271,7 +272,16 @@ export async function trySendInternalDonationNotifications({
       })
     }
   } catch (error) {
-    await supabase.from("donations").update({ internal_notification_sent_at: null }).eq("id", donationId)
+    const { error: clearError } = await supabase
+      .from("donations")
+      .update({ internal_notification_sent_at: null })
+      .eq("id", donationId)
+    if (clearError) {
+      console.error(`${logPrefix(donationId)} Internal notification: failed to release claim`, {
+        error: clearError,
+      })
+    }
     console.error(`${logPrefix(donationId)} Internal notification send failed`, { error })
+    throw error
   }
 }
