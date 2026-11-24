@@ -6,6 +6,7 @@ import { createProfileRepo, createEligibilitySubmissionRepo } from "./repository
 import { getSupabaseServiceClient } from "@/lib/supabase/service"
 import { sendNewProfileAdminEmail, sendEmailVerificationEmail } from "./service"
 import { syncNewsletterPreferences } from "@/features/newsletter/server/syncNewsletterPreferences"
+import { recordRegistrationAcceptances } from "./record-registration-acceptances"
 
 export type SignupActionResult =
   | { success: true }
@@ -56,6 +57,7 @@ export async function signupAction(formData: unknown): Promise<SignupActionResul
     try {
       const profile = await createProfileRepo(validatedData, userId)
       await createEligibilitySubmissionRepo(validatedData, profile.id)
+      await recordRegistrationAcceptances(userId)
 
       try {
         await syncNewsletterPreferences({

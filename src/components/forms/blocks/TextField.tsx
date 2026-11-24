@@ -13,6 +13,7 @@ interface TextFieldProps<T extends Record<string, unknown>> {
   note?: string
   placeholder?: string
   type?: string
+  autoComplete?: string
   required?: boolean
   showAsterisk?: boolean
   errorMode?: "touched" | "always"
@@ -30,6 +31,7 @@ export function TextField<T extends Record<string, unknown>>({
   note,
   placeholder,
   type = "text",
+  autoComplete,
   required,
   showAsterisk = true,
   errorMode = "touched",
@@ -64,6 +66,7 @@ export function TextField<T extends Record<string, unknown>>({
         <Input
           {...register(name as unknown as never)}
           type={type}
+          autoComplete={autoComplete}
           placeholder={placeholder}
           required={required}
           aria-required={required ? true : undefined}
