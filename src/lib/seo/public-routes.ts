@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next"
+import { LEGAL_DOCUMENTS } from "@/lib/content/legal"
 
 type ChangeFrequency = NonNullable<MetadataRoute.Sitemap[number]["changeFrequency"]>
 
@@ -14,7 +15,7 @@ export type PublicSitemapEntry = {
  * Excludes auth, profile, admin, forms, funnel pages, and dynamic slug routes.
  * When crawlable listing pages ship (Phase 2), extend via dynamic sitemap generation.
  */
-export const PUBLIC_SITEMAP_ENTRIES: readonly PublicSitemapEntry[] = [
+const MARKETING_SITEMAP_ENTRIES = [
   { path: "/", priority: 1.0, changeFrequency: "weekly" },
   { path: "/calendar", priority: 0.9, changeFrequency: "daily" },
   { path: "/about-us", priority: 0.8, changeFrequency: "monthly" },
@@ -27,6 +28,15 @@ export const PUBLIC_SITEMAP_ENTRIES: readonly PublicSitemapEntry[] = [
   { path: "/services/photography-videography", priority: 0.7, changeFrequency: "monthly" },
   { path: "/donate", priority: 0.5, changeFrequency: "monthly" },
 ] as const
+
+export const PUBLIC_SITEMAP_ENTRIES: readonly PublicSitemapEntry[] = [
+  ...MARKETING_SITEMAP_ENTRIES,
+  ...LEGAL_DOCUMENTS.map((document) => ({
+    path: document.path,
+    priority: 0.3,
+    changeFrequency: "yearly" as const,
+  })),
+]
 
 /**
  * Path prefixes blocked in robots.txt.
