@@ -13,6 +13,25 @@ Operational guide for EAR (performance-calendar) launch and incident response.
 | `SENTRY_ORG` | Build | Sentry org slug (source maps upload) |
 | `SENTRY_PROJECT` | Build | Sentry project slug |
 | `SENTRY_AUTH_TOKEN` | Build | Sentry auth token for releases |
+| `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | Client | PostHog project token. One free-tier project is shared by development, preview, and production. |
+| `NEXT_PUBLIC_POSTHOG_HOST` | Client | PostHog ingestion host. US projects use `https://us.i.posthog.com`. |
+| `NEXT_PUBLIC_POSTHOG_ENABLED` | Client | Set to `true` to send events outside production (local or preview). Set to `false` to stop capture, including in production. |
+
+PostHog sends only when the token and host are set and either `NEXT_PUBLIC_VERCEL_ENV` is `production` or `NEXT_PUBLIC_POSTHOG_ENABLED=true`. Each event includes `environment`: `production`, `preview`, or `development` (local and any other value are `development`).
+
+Filter dashboards and web analytics with `environment` equals `production`. Use `environment` equals `development` while checking local events. The shared project does not separate traffic any other way.
+
+Local test: put the production token and host in `.env.local` with `NEXT_PUBLIC_POSTHOG_ENABLED=true`, restart `next dev`, and confirm captured events are tagged `development`. There should be no `ph_` cookie or PostHog `localStorage` entry.
+
+### PostHog privacy launch checks
+
+Do these before production traffic is trusted:
+
+- In the PostHog project, turn on **Enable cookieless tracking**. If it is off, PostHog discards the events.
+- Leave session replay, autocapture, heatmaps, and surveys off in project settings. The client also turns them off and does not load remote config.
+- Cookieless mode stores no PostHog cookie or browser storage. Same-day visitor and session counts work. A person is new again the next day, so returning visitors and multi-day uniques are not reliable. GeoIP is not available on these events.
+- A privacy policy update discloses this collection. It is not consent. This integration does not set an analytics cookie and does not add a consent banner.
+- Say in the public privacy policy, when that page exists, that pageviews are sent to PostHog and that IP is used to build a daily hash and then dropped. The app does not have that page today.
 
 ### Rate limiting (Upstash)
 
@@ -32,6 +51,7 @@ Set to `true` in Vercel → redeploy. Never default in production.
 | `DISABLE_RATE_LIMIT` | Skip Upstash rate limits |
 | `DISABLE_SENTRY` | Disable server-side Sentry init and capture |
 | `NEXT_PUBLIC_DISABLE_SENTRY` | Disable client-side Sentry init and capture (set both to fully disable) |
+| `NEXT_PUBLIC_POSTHOG_ENABLED=false` | Stop PostHog capture, including in production. Redeploy after changing it. |
 | `DISABLE_EMAILS` | Skip Postmark sends (DB writes continue) |
 | `DISABLE_BACKGROUND_SYNC` | Skip newsletter Mailchimp cron processing |
 

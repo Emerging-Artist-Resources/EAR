@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs"
+import { initPostHog } from "@/lib/analytics/posthog"
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN ?? process.env.SENTRY_DSN
 
@@ -13,5 +14,11 @@ Sentry.init({
   replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 0,
 })
+
+try {
+  initPostHog()
+} catch {
+  // PostHog must not affect Sentry or the page.
+}
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart
